@@ -3,43 +3,65 @@
 @tailwind utilities;
 
 :root {
-  --background: hsl(210, 40%, 98%);
-  --foreground: hsl(222.2, 84%, 4.9%);
+  /* Light gray background matching the design */
+  --background: hsl(210, 20%, 96%);
+  --foreground: hsl(224, 71.4%, 4.1%);
+  
+  /* Clean white cards with subtle shadows */
   --card: hsl(0, 0%, 100%);
-  --card-foreground: hsl(222.2, 84%, 4.9%);
+  --card-foreground: hsl(224, 71.4%, 4.1%);
+  
+  /* Popover styling */
   --popover: hsl(0, 0%, 100%);
-  --popover-foreground: hsl(222.2, 84%, 4.9%);
-  --primary: hsl(221.2, 83.2%, 53.3%);
-  --primary-foreground: hsl(210, 40%, 98%);
-  --secondary: hsl(210, 40%, 96%);
-  --secondary-foreground: hsl(222.2, 84%, 4.9%);
-  --muted: hsl(210, 40%, 96%);
-  --muted-foreground: hsl(215.4, 16.3%, 46.9%);
-  --accent: hsl(210, 40%, 96%);
-  --accent-foreground: hsl(222.2, 84%, 4.9%);
-  --destructive: hsl(0, 62.8%, 30.6%);
-  --destructive-foreground: hsl(210, 40%, 98%);
-  --border: hsl(214.3, 31.8%, 91.4%);
-  --input: hsl(214.3, 31.8%, 91.4%);
-  --ring: hsl(221.2, 83.2%, 53.3%);
-  --chart-1: hsl(221.2, 83.2%, 53.3%);
-  --chart-2: hsl(159.7826, 100%, 36.0784%);
-  --chart-3: hsl(42.0290, 92.8251%, 56.2745%);
-  --chart-4: hsl(147.1429, 78.5047%, 41.9608%);
-  --chart-5: hsl(341.4894, 75.2000%, 50.9804%);
-  --sidebar: hsl(210, 40%, 96%);
-  --sidebar-foreground: hsl(222.2, 84%, 4.9%);
-  --sidebar-primary: hsl(221.2, 83.2%, 53.3%);
-  --sidebar-primary-foreground: hsl(210, 40%, 98%);
-  --sidebar-accent: hsl(210, 40%, 96%);
-  --sidebar-accent-foreground: hsl(222.2, 84%, 4.9%);
-  --sidebar-border: hsl(214.3, 31.8%, 91.4%);
-  --sidebar-ring: hsl(221.2, 83.2%, 53.3%);
-  --saudi-green: hsl(150, 100%, 20%);
-  --font-sans: Inter, var(--font-sans);
-  --font-serif: Georgia, serif;
-  --font-mono: Menlo, monospace;
-  --radius: 0.5rem;
+  --popover-foreground: hsl(224, 71.4%, 4.1%);
+  
+  /* Green accent color matching the Bankas design */
+  --primary: hsl(142.1, 70.6%, 45.3%);
+  --primary-foreground: hsl(0, 0%, 100%);
+  
+  /* Subtle gray tones */
+  --secondary: hsl(210, 20%, 98%);
+  --secondary-foreground: hsl(220, 8.9%, 46.1%);
+  
+  --muted: hsl(210, 20%, 96%);
+  --muted-foreground: hsl(220, 8.9%, 46.1%);
+  
+  --accent: hsl(210, 20%, 96%);
+  --accent-foreground: hsl(220, 8.9%, 46.1%);
+  
+  --destructive: hsl(0, 84.2%, 60.2%);
+  --destructive-foreground: hsl(0, 0%, 100%);
+  
+  /* Clean borders and inputs */
+  --border: hsl(220, 13%, 91%);
+  --input: hsl(220, 13%, 91%);
+  --ring: hsl(142.1, 70.6%, 45.3%);
+  
+  /* Chart colors with green theme */
+  --chart-1: hsl(142.1, 70.6%, 45.3%);
+  --chart-2: hsl(160, 84.1%, 39.4%);
+  --chart-3: hsl(291.3, 95.9%, 61.4%);
+  --chart-4: hsl(262.1, 83.3%, 57.8%);
+  --chart-5: hsl(221.2, 83.2%, 53.3%);
+  
+  /* Clean sidebar styling */
+  --sidebar: hsl(0, 0%, 100%);
+  --sidebar-foreground: hsl(224, 71.4%, 4.1%);
+  --sidebar-primary: hsl(142.1, 70.6%, 45.3%);
+  --sidebar-primary-foreground: hsl(0, 0%, 100%);
+  --sidebar-accent: hsl(210, 20%, 96%);
+  --sidebar-accent-foreground: hsl(220, 8.9%, 46.1%);
+  --sidebar-border: hsl(220, 13%, 91%);
+  --sidebar-ring: hsl(142.1, 70.6%, 45.3%);
+  
+  --saudi-green: hsl(142.1, 70.6%, 45.3%);
+  
+  /* Inter font family */
+  --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
+  --font-serif: ui-serif, Georgia, Cambria, 'Times New Roman', Times, serif;
+  --font-mono: ui-monospace, 'JetBrains Mono', 'Fira Code', Consolas, 'Liberation Mono', Menlo, Monaco, 'Courier New', monospace;
+  
+  --radius: 0.75rem;
   --shadow-2xs: 0px 2px 0px 0px hsl(221.2, 83.2%, 53.3% / 0.00);
   --shadow-xs: 0px 2px 0px 0px hsl(221.2, 83.2%, 53.3% / 0.00);
   --shadow-sm: 0px 2px 0px 0px hsl(221.2, 83.2%, 53.3% / 0.00), 0px 1px 2px -1px hsl(221.2, 83.2%, 53.3% / 0.00);
@@ -87,11 +109,77 @@
 
   body {
     @apply font-sans antialiased bg-background text-foreground;
+    font-family: var(--font-sans);
+    font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11';
+    font-weight: 400;
+    letter-spacing: -0.011em;
+  }
+  
+  /* Improved typography hierarchy */
+  h1, h2, h3, h4, h5, h6 {
+    font-family: var(--font-sans);
+    font-weight: 600;
+    letter-spacing: -0.025em;
+    line-height: 1.2;
+  }
+  
+  h1 {
+    font-weight: 700;
+    font-size: 2.25rem;
+  }
+  
+  h2 {
+    font-weight: 600;
+    font-size: 1.875rem;
+  }
+  
+  h3 {
+    font-weight: 600;
+    font-size: 1.5rem;
+  }
+  
+  /* Clean text styling */
+  p {
+    line-height: 1.6;
+    letter-spacing: -0.011em;
+  }
+  
+  /* Number formatting for financial data */
+  .number-display {
+    font-feature-settings: 'tnum';
+    font-variant-numeric: tabular-nums;
   }
 
-  /* Saudi market specific styles */
+  /* Saudi market specific styles with green theme */
   .saudi {
     background-color: var(--saudi-green);
+  }
+  
+  /* Enhanced card styling with proper shadows */
+  .modern-card {
+    background: hsl(0, 0%, 100%);
+    border: 1px solid hsl(220, 13%, 91%);
+    border-radius: var(--radius);
+    box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
+    transition: all 0.2s ease-in-out;
+  }
+  
+  .modern-card:hover {
+    box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+  }
+  
+  /* Clean button styling */
+  .btn-primary {
+    background: hsl(142.1, 70.6%, 45.3%);
+    color: hsl(0, 0%, 100%);
+    border: none;
+    border-radius: var(--radius);
+    font-weight: 500;
+    transition: all 0.2s ease-in-out;
+  }
+  
+  .btn-primary:hover {
+    background: hsl(142.1, 70.6%, 40%);
   }
 
   /* Chart container styling */
