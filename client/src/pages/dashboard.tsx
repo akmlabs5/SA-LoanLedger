@@ -26,6 +26,9 @@ import {
 import { Link } from "wouter";
 import AIInsightsPanel from "@/components/AIInsightsPanel";
 import PortfolioChart from "@/components/charts/PortfolioChart";
+import PortfolioPerformanceChart from "@/components/charts/PortfolioPerformanceChart";
+import LoanDistributionChart from "@/components/charts/LoanDistributionChart";
+import LTVTrendChart from "@/components/charts/LTVTrendChart";
 import { isUnauthorizedError } from "@/lib/authUtils";
 import { PortfolioSummary, SiborRate, LoanWithDetails } from "@shared/types";
 
@@ -566,64 +569,54 @@ export default function Dashboard() {
           </CardContent>
         </Card>
 
-        {/* Enhanced Charts and Analytics Section */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-          <div className="transform hover:scale-[1.02] transition-transform duration-300">
-            <PortfolioChart portfolioSummary={portfolioSummary} />
+        {/* Enhanced Interactive Charts Section */}
+        <div className="space-y-6 mb-8">
+          {/* Main Portfolio Charts Row */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div className="transform hover:scale-[1.01] transition-transform duration-300">
+              <PortfolioChart portfolioSummary={portfolioSummary} />
+            </div>
+            <div className="transform hover:scale-[1.01] transition-transform duration-300">
+              <PortfolioPerformanceChart 
+                timeframe="month" 
+                showInterestTrend={false} 
+                portfolioSummary={portfolioSummary}
+                loans={activeLoans}
+                isLoading={portfolioLoading || loansLoading}
+              />
+            </div>
           </div>
           
-          {/* Enhanced LTV Trend Visualization */}
-          <Card className="border-0 shadow-lg bg-white/50 dark:bg-gray-800/50 backdrop-blur-sm overflow-hidden">
-            <CardHeader className="pb-4">
-              <CardTitle className="text-xl font-semibold flex items-center space-x-2">
-                <TrendingUp className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
-                <span>LTV Analytics</span>
-              </CardTitle>
-              <p className="text-sm text-gray-600 dark:text-gray-400">Loan-to-Value ratio performance over time</p>
-            </CardHeader>
-            <CardContent>
-              <div className="h-[280px] bg-gradient-to-br from-emerald-50 via-green-100 to-teal-100 dark:from-emerald-900/30 dark:via-green-800/20 dark:to-teal-800/20 rounded-xl flex items-center justify-center relative overflow-hidden">
-                {/* Background Pattern */}
-                <div className="absolute inset-0 opacity-20">
-                  <div className="absolute top-4 right-4 w-16 h-16 bg-emerald-200 dark:bg-emerald-700 rounded-full opacity-50" />
-                  <div className="absolute bottom-6 left-6 w-24 h-24 bg-green-200 dark:bg-green-700 rounded-full opacity-30" />
-                </div>
-                
-                <div className="text-center z-10">
-                  <div className="w-16 h-16 bg-gradient-to-br from-emerald-500 to-green-600 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-lg">
-                    <BarChart3 className="h-8 w-8 text-white" />
-                  </div>
-                  <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-2">Portfolio Health Score</h3>
-                  <div className="space-y-2">
-                    <div className="flex items-center justify-center space-x-2">
-                      <span className="text-3xl font-bold text-emerald-600 dark:text-emerald-400">
-                        {portfolioSummary ? `${portfolioSummary.portfolioLtv.toFixed(1)}%` : '68.4%'}
-                      </span>
-                      <Badge className="bg-emerald-100 text-emerald-800 hover:bg-emerald-200 dark:bg-emerald-900/20 dark:text-emerald-400">
-                        Optimal
-                      </Badge>
-                    </div>
-                    <p className="text-sm text-gray-600 dark:text-gray-400">Current LTV Ratio</p>
-                  </div>
-                  
-                  <div className="mt-6 grid grid-cols-3 gap-4 text-center">
-                    <div>
-                      <p className="text-lg font-bold text-gray-900 dark:text-gray-100">+2.1%</p>
-                      <p className="text-xs text-gray-500 dark:text-gray-400">6M Trend</p>
-                    </div>
-                    <div>
-                      <p className="text-lg font-bold text-gray-900 dark:text-gray-100">75%</p>
-                      <p className="text-xs text-gray-500 dark:text-gray-400">Target Max</p>
-                    </div>
-                    <div>
-                      <p className="text-lg font-bold text-gray-900 dark:text-gray-100">85</p>
-                      <p className="text-xs text-gray-500 dark:text-gray-400">Health Score</p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+          {/* Advanced Analytics Row */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div className="transform hover:scale-[1.01] transition-transform duration-300">
+              <LTVTrendChart 
+                timeframe="month" 
+                showRiskBands={true} 
+                portfolioSummary={portfolioSummary}
+                loans={activeLoans}
+                isLoading={portfolioLoading || loansLoading}
+              />
+            </div>
+            <div className="transform hover:scale-[1.01] transition-transform duration-300">
+              <PortfolioPerformanceChart 
+                timeframe="quarter" 
+                showInterestTrend={true} 
+                portfolioSummary={portfolioSummary}
+                loans={activeLoans}
+                isLoading={portfolioLoading || loansLoading}
+              />
+            </div>
+          </div>
+          
+          {/* Loan Distribution Analysis */}
+          <div className="transform hover:scale-[1.01] transition-transform duration-300">
+            <LoanDistributionChart 
+              loans={activeLoans} 
+              showTimeDistribution={false} 
+              isLoading={loansLoading}
+            />
+          </div>
         </div>
       </div>
     </div>
