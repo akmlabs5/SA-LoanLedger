@@ -331,6 +331,16 @@ export default function Banks() {
                     </div>
                     
                     <div className="flex items-center space-x-2">
+                      <Link href={`/banks/${bank.id}`}>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="text-blue-600 border-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20"
+                        >
+                          <ArrowRight className="mr-2 h-4 w-4" />
+                          View Details
+                        </Button>
+                      </Link>
                       {isConnected ? (
                         <div className="flex items-center space-x-2">
                           <span className="text-xs text-emerald-600 dark:text-emerald-400 font-medium">
