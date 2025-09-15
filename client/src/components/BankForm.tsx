@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation } from "@tanstack/react-query";
@@ -125,7 +125,7 @@ export default function BankForm({ banks, onSuccess, onCancel }: BankFormProps) 
   const startDate = form.watch("startDate");
   const facilityType = form.watch("facilityType");
   
-  React.useEffect(() => {
+  useEffect(() => {
     if (startDate && facilityType) {
       const newExpiryDate = calculateExpiryDate(startDate, facilityType);
       if (newExpiryDate) {

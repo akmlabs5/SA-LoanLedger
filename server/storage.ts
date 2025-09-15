@@ -35,7 +35,7 @@ export interface IStorage {
   createBank(bank: InsertBank): Promise<Bank>;
   
   // Facility operations
-  getUserFacilities(userId: string): Promise<Facility[]>;
+  getUserFacilities(userId: string): Promise<Array<Facility & { bank: Bank }>>;
   getFacilityWithBank(facilityId: string): Promise<(Facility & { bank: Bank }) | undefined>;
   createFacility(facility: InsertFacility): Promise<Facility>;
   updateFacility(facilityId: string, facility: Partial<InsertFacility>): Promise<Facility>;
@@ -111,12 +111,18 @@ export class DatabaseStorage implements IStorage {
   }
 
   // Facility operations
-  async getUserFacilities(userId: string): Promise<Facility[]> {
-    return await db
+  async getUserFacilities(userId: string): Promise<Array<Facility & { bank: Bank }>> {
+    const results = await db
       .select()
       .from(facilities)
+      .innerJoin(banks, eq(facilities.bankId, banks.id))
       .where(and(eq(facilities.userId, userId), eq(facilities.isActive, true)))
       .orderBy(desc(facilities.createdAt));
+
+    return results.map(result => ({
+      ...result.facilities,
+      bank: result.banks,
+    }));
   }
 
   async getFacilityWithBank(facilityId: string): Promise<(Facility & { bank: Bank }) | undefined> {

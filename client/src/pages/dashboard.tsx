@@ -23,6 +23,7 @@ import { Link } from "wouter";
 import AIInsightsPanel from "@/components/AIInsightsPanel";
 import PortfolioChart from "@/components/charts/PortfolioChart";
 import { isUnauthorizedError } from "@/lib/authUtils";
+import { PortfolioSummary, SiborRate, LoanWithDetails } from "@shared/types";
 
 export default function Dashboard() {
   const { user, isLoading, isAuthenticated } = useAuth();
@@ -43,17 +44,17 @@ export default function Dashboard() {
     }
   }, [isAuthenticated, isLoading, toast]);
 
-  const { data: portfolioSummary, isLoading: portfolioLoading, error: portfolioError } = useQuery({
+  const { data: portfolioSummary, isLoading: portfolioLoading, error: portfolioError } = useQuery<PortfolioSummary>({
     queryKey: ["/api/dashboard/portfolio"],
     enabled: isAuthenticated,
   });
 
-  const { data: activeLoans, isLoading: loansLoading } = useQuery({
+  const { data: activeLoans, isLoading: loansLoading } = useQuery<LoanWithDetails[]>({
     queryKey: ["/api/loans"],
     enabled: isAuthenticated,
   });
 
-  const { data: siborRate } = useQuery({
+  const { data: siborRate } = useQuery<SiborRate>({
     queryKey: ["/api/sibor-rate"],
     enabled: isAuthenticated,
   });

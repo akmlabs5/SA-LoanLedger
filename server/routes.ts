@@ -47,6 +47,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get('/api/facilities', isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
+      
+      // Initialize sample facilities for new users
+      await initializeSampleFacilities(userId);
+      
       const facilities = await storage.getUserFacilities(userId);
       res.json(facilities);
     } catch (error) {
@@ -280,5 +284,62 @@ async function initializeDefaultBanks() {
     }
   } catch (error) {
     console.error("Error initializing default banks:", error);
+  }
+}
+
+async function initializeSampleFacilities(userId: string) {
+  try {
+    const userFacilities = await storage.getUserFacilities(userId);
+    
+    if (userFacilities.length === 0) {
+      const banks = await storage.getAllBanks();
+      
+      if (banks.length > 0) {
+        // Create sample facilities for the first few banks
+        const sampleFacilities = [
+          {
+            bankId: banks[0].id, // ANB
+            userId,
+            facilityType: "revolving",
+            creditLimit: "5000000.00",
+            costOfFunding: "2.50",
+            startDate: new Date().toISOString().split('T')[0],
+            expiryDate: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+            terms: "Standard revolving credit line with monthly interest payments",
+            isActive: true
+          },
+          {
+            bankId: banks[1].id, // SABB
+            userId,
+            facilityType: "term",
+            creditLimit: "10000000.00", 
+            costOfFunding: "2.75",
+            startDate: new Date().toISOString().split('T')[0],
+            expiryDate: new Date(Date.now() + 2 * 365 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+            terms: "Two-year term loan facility with quarterly payments",
+            isActive: true
+          },
+          {
+            bankId: banks[2].id, // Al Rajhi Bank
+            userId,
+            facilityType: "working_capital",
+            creditLimit: "3000000.00",
+            costOfFunding: "2.25", 
+            startDate: new Date().toISOString().split('T')[0],
+            expiryDate: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+            terms: "Working capital facility for operational needs",
+            isActive: true
+          }
+        ];
+
+        for (const facility of sampleFacilities) {
+          await storage.createFacility(facility);
+        }
+        
+        console.log(`Sample facilities created for user: ${userId}`);
+      }
+    }
+  } catch (error) {
+    console.error("Error initializing sample facilities:", error);
   }
 }

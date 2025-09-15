@@ -11,7 +11,8 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { apiRequest } from "@/lib/queryClient";
-import { insertLoanSchema } from "@shared/schema";
+import { insertLoanSchema, Facility, Bank } from "@shared/schema";
+import { SiborRate } from "@shared/types";
 import { z } from "zod";
 
 const loanFormSchema = insertLoanSchema.extend({
@@ -36,11 +37,11 @@ export default function LoanForm({ onSuccess, onCancel }: LoanFormProps) {
   const { toast } = useToast();
   const [isOpen, setIsOpen] = useState(true);
 
-  const { data: facilities, isLoading: facilitiesLoading } = useQuery({
+  const { data: facilities, isLoading: facilitiesLoading } = useQuery<Array<Facility & { bank: Bank }>>({
     queryKey: ["/api/facilities"],
   });
 
-  const { data: siborRate } = useQuery({
+  const { data: siborRate } = useQuery<SiborRate>({
     queryKey: ["/api/sibor-rate"],
   });
 
