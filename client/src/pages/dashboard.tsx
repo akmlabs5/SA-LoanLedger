@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { 
   TrendingUp, 
   TrendingDown,
@@ -23,7 +24,7 @@ import {
   Target,
   BarChart3
 } from "lucide-react";
-import { Link } from "wouter";
+import { Link, useLocation } from "wouter";
 import AIInsightsPanel from "@/components/AIInsightsPanel";
 import PortfolioChart from "@/components/charts/PortfolioChart";
 import PortfolioPerformanceChart from "@/components/charts/PortfolioPerformanceChart";
@@ -35,6 +36,7 @@ import { PortfolioSummary, SiborRate, LoanWithDetails } from "@shared/types";
 export default function Dashboard() {
   const { user, isLoading, isAuthenticated } = useAuth();
   const { toast } = useToast();
+  const [, setLocation] = useLocation();
 
   // Redirect to login if not authenticated
   useEffect(() => {
@@ -81,6 +83,27 @@ export default function Dashboard() {
     }
   }, [portfolioError, toast]);
 
+  // Navigation handlers
+  const handleBankRowClick = (bankId: string, bankName: string) => {
+    setLocation(`/banks/${bankId}`);
+    // Removed navigation toast to reduce noise - users can see navigation visually
+  };
+
+  const handleBankSwitcherChange = (bankId: string) => {
+    const bank = portfolioSummary?.bankExposures?.find(exp => exp.bankId === bankId);
+    if (bank) {
+      handleBankRowClick(bankId, bank.bankName);
+    }
+  };
+
+  // Keyboard event handler for table rows
+  const handleBankRowKeyDown = (event: React.KeyboardEvent, bankId: string, bankName: string) => {
+    if (event.key === 'Enter' || event.key === ' ') {
+      event.preventDefault();
+      handleBankRowClick(bankId, bankName);
+    }
+  };
+
   if (isLoading || portfolioLoading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
@@ -122,6 +145,40 @@ export default function Dashboard() {
             </p>
           </div>
           <div className="flex items-center space-x-3 mt-4 sm:mt-0">
+            {/* Quick Bank Switcher */}
+            {portfolioSummary?.bankExposures && portfolioSummary.bankExposures.length > 0 && (
+              <div className="flex items-center space-x-2">
+                <span className="text-sm text-gray-600 dark:text-gray-400">Quick Access:</span>
+                <Select onValueChange={handleBankSwitcherChange}>
+                  <SelectTrigger 
+                    className="w-48 bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 hover:border-blue-400 dark:hover:border-blue-500 transition-colors focus:ring-2 focus:ring-blue-500 focus:border-blue-500" 
+                    data-testid="select-bank-switcher"
+                    aria-label="Quick access to bank details"
+                  >
+                    <SelectValue placeholder="Select bank..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {portfolioSummary.bankExposures.map((exposure) => (
+                      <SelectItem 
+                        key={exposure.bankId} 
+                        value={exposure.bankId}
+                        className="flex items-center"
+                        data-testid={`option-bank-${exposure.bankId}`}
+                      >
+                        <div className="flex items-center space-x-2">
+                          <div className="w-6 h-6 bg-gradient-to-br from-indigo-500 to-indigo-600 rounded-lg flex items-center justify-center">
+                            <span className="text-white font-bold text-xs">
+                              {exposure.bankName.charAt(0)}
+                            </span>
+                          </div>
+                          <span>{exposure.bankName}</span>
+                        </div>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
             <Badge variant="outline" className="flex items-center space-x-1">
               <Activity className="h-3 w-3" />
               <span>Live</span>
@@ -302,9 +359,17 @@ export default function Dashboard() {
                               {urgency.label}
                             </Badge>
                             <div>
-                              <p className="font-semibold text-gray-900 dark:text-gray-100" data-testid={`text-loan-reference-${loan.id}`}>
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleBankRowClick(loan.facility.bank.id, loan.facility.bank.name);
+                                }}
+                                className="font-semibold text-gray-900 dark:text-gray-100 hover:text-indigo-600 dark:hover:text-indigo-400 hover:underline transition-colors duration-200"
+                                data-testid={`text-loan-reference-${loan.id}`}
+                                title={`Click to view ${loan.facility.bank.name} details`}
+                              >
                                 {loan.facility.bank.name}
-                              </p>
+                              </button>
                               <p className="text-sm text-gray-600 dark:text-gray-400">{loan.referenceNumber}</p>
                             </div>
                           </div>
@@ -450,8 +515,19 @@ export default function Dashboard() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
-                  {portfolioSummary?.bankExposures?.map((exposure, index) => (
-                    <tr key={exposure.bankId} className="hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-all duration-200" data-testid={`row-bank-${exposure.bankId}`}>
+                  {portfolioSummary?.bankExposures && portfolioSummary.bankExposures.length > 0 ? (
+                    portfolioSummary.bankExposures.map((exposure, index) => (
+                      <tr 
+                        key={exposure.bankId} 
+                        className="group hover:bg-gradient-to-r hover:from-indigo-50 hover:to-blue-50 dark:hover:from-indigo-900/20 dark:hover:to-blue-900/20 hover:shadow-md cursor-pointer transition-all duration-300 hover:scale-[1.02] hover:border-l-4 hover:border-indigo-500 focus-within:ring-2 focus-within:ring-indigo-500 focus-within:ring-opacity-50" 
+                        data-testid={`row-bank-${exposure.bankId}`}
+                        onClick={() => handleBankRowClick(exposure.bankId, exposure.bankName)}
+                        onKeyDown={(e) => handleBankRowKeyDown(e, exposure.bankId, exposure.bankName)}
+                        tabIndex={0}
+                        role="button"
+                        aria-label={`View details for ${exposure.bankName}. Outstanding: ${(exposure.outstanding / 1000000).toFixed(1)}M SAR. Utilization: ${exposure.utilization.toFixed(0)}%`}
+                        title={`Click to view ${exposure.bankName} details`}
+                      >
                       <td className="py-4 px-6">
                         <div className="flex items-center space-x-4">
                           <div className="w-10 h-10 bg-gradient-to-br from-indigo-500 to-indigo-600 rounded-xl flex items-center justify-center shadow-sm">
@@ -492,7 +568,7 @@ export default function Dashboard() {
                         </div>
                       </td>
                       <td className="py-4 px-6 text-right">
-                        <div className="flex items-center justify-end space-x-2">
+                        <div className="flex items-center justify-end space-x-3">
                           <div className="w-16 bg-gray-200 dark:bg-gray-700 rounded-full h-2">
                             <div 
                               className={`h-2 rounded-full transition-all duration-300 ${
@@ -510,16 +586,41 @@ export default function Dashboard() {
                           }`} data-testid={`text-bank-utilization-${exposure.bankId}`}>
                             {exposure.utilization.toFixed(0)}%
                           </Badge>
+                          <Button 
+                            size="sm" 
+                            variant="outline" 
+                            className="hidden group-hover:flex bg-white dark:bg-gray-800 border-indigo-300 dark:border-indigo-700 text-indigo-700 dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 focus:ring-2 focus:ring-indigo-500"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setLocation(`/banks/${exposure.bankId}#facilities`);
+                            }}
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter' || e.key === ' ') {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                setLocation(`/banks/${exposure.bankId}#facilities`);
+                              }
+                            }}
+                            aria-label={`View facilities for ${exposure.bankName}`}
+                            data-testid={`button-facilities-${exposure.bankId}`}
+                          >
+                            View Facilities
+                          </Button>
                         </div>
                       </td>
-                    </tr>
-                  )) || (
+                      </tr>
+                    ))
+                  ) : (
                     <tr>
                       <td colSpan={5} className="text-center py-12">
                         <Building className="h-12 w-12 text-gray-300 dark:text-gray-600 mx-auto mb-4" />
                         <p className="text-gray-600 dark:text-gray-400 mb-2">No banking relationships found</p>
                         <Link href="/banks">
-                          <Button variant="outline" className="text-indigo-600 border-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-900/20">
+                          <Button 
+                            variant="outline" 
+                            className="text-indigo-600 border-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 focus:ring-2 focus:ring-indigo-500"
+                            data-testid="button-add-first-facility"
+                          >
                             <Plus className="mr-2 h-4 w-4" />
                             Set up your first facility
                           </Button>
