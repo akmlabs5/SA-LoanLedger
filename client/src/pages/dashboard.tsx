@@ -5,19 +5,23 @@ import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
+import { Badge } from "@/components/ui/badge";
 import { 
-  University, 
-  Bell, 
-  Settings, 
-  User, 
   TrendingUp, 
+  TrendingDown,
   Wallet, 
   Shield, 
   FileText,
   Plus,
   Building,
   Home,
-  Download
+  Download,
+  ArrowUp,
+  ArrowDown,
+  Activity,
+  AlertTriangle,
+  Target,
+  BarChart3
 } from "lucide-react";
 import { Link } from "wouter";
 import AIInsightsPanel from "@/components/AIInsightsPanel";
@@ -104,184 +108,232 @@ export default function Dashboard() {
   };
 
   return (
-    <div className="min-h-screen bg-background">
-      {/* Navigation Header */}
-      <header className="bg-card border-b border-border sticky top-0 z-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
-            <div className="flex items-center space-x-3">
-              <div className="w-8 h-8 bg-saudi text-white rounded-lg flex items-center justify-center">
-                <University className="text-sm" />
-              </div>
-              <h1 className="text-xl font-bold text-foreground">Saudi Loan Manager</h1>
-            </div>
-            
-            <div className="flex items-center space-x-4">
-              <Button variant="ghost" size="sm">
-                <Bell className="h-4 w-4" />
-              </Button>
-              <Button variant="ghost" size="sm">
-                <Settings className="h-4 w-4" />
-              </Button>
-              <Button 
-                variant="ghost" 
-                size="sm"
-                onClick={() => window.location.href = "/api/logout"}
-                data-testid="button-logout"
-              >
-                <User className="h-4 w-4" />
-              </Button>
-            </div>
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-gray-100 dark:from-gray-900 dark:to-slate-900">
+      <div className="p-6 space-y-6">
+        {/* Welcome Header */}
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Dashboard</h1>
+            <p className="text-gray-600 dark:text-gray-300 mt-1">
+              Welcome back, {user?.displayName || user?.firstName || 'User'}. Here's your portfolio overview.
+            </p>
+          </div>
+          <div className="flex items-center space-x-3 mt-4 sm:mt-0">
+            <Badge variant="outline" className="flex items-center space-x-1">
+              <Activity className="h-3 w-3" />
+              <span>Live</span>
+            </Badge>
+            <span className="text-sm text-gray-500 dark:text-gray-400">
+              Last updated: {new Date().toLocaleTimeString()}
+            </span>
           </div>
         </div>
-      </header>
-
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-        {/* AI Insights Panel */}
+        {/* AI Insights Panel - Modern Version */}
         <AIInsightsPanel />
 
-        {/* Portfolio Summary */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
-          <Card>
+        {/* Enhanced KPI Metrics */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+          {/* Total Outstanding Card */}
+          <Card className="relative overflow-hidden border-0 bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-900/20 dark:to-blue-800/20 shadow-lg hover:shadow-xl transition-all duration-300">
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-muted-foreground">Total Outstanding</p>
-                  <p className="text-2xl font-bold text-foreground" data-testid="text-total-outstanding">
-                    {portfolioSummary ? `${(portfolioSummary.totalOutstanding / 1000000).toFixed(1)}M SAR` : 'Loading...'}
-                  </p>
+                <div className="space-y-2">
+                  <p className="text-sm font-medium text-blue-700 dark:text-blue-300">Total Outstanding</p>
+                  <div className="flex items-baseline space-x-2">
+                    <p className="text-3xl font-bold text-blue-900 dark:text-blue-100" data-testid="text-total-outstanding">
+                      {portfolioSummary ? `${(portfolioSummary.totalOutstanding / 1000000).toFixed(1)}M` : '0.0M'}
+                    </p>
+                    <span className="text-sm text-blue-600 dark:text-blue-400">SAR</span>
+                  </div>
+                  <div className="flex items-center space-x-1 text-blue-600 dark:text-blue-400">
+                    <ArrowUp className="h-3 w-3" />
+                    <span className="text-xs font-medium">+2.4% from last month</span>
+                  </div>
                 </div>
-                <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center">
-                  <TrendingUp className="text-primary text-xl" />
+                <div className="w-16 h-16 bg-blue-500 rounded-2xl flex items-center justify-center shadow-lg">
+                  <BarChart3 className="text-white text-2xl" />
                 </div>
               </div>
-              <p className="text-xs text-muted-foreground mt-2">Portfolio balance</p>
+              <div className="absolute -right-4 -bottom-4 w-16 h-16 bg-blue-200/30 rounded-full" />
             </CardContent>
           </Card>
           
-          <Card>
+          {/* Available Credit Card */}
+          <Card className="relative overflow-hidden border-0 bg-gradient-to-br from-emerald-50 to-green-100 dark:from-emerald-900/20 dark:to-green-800/20 shadow-lg hover:shadow-xl transition-all duration-300">
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-muted-foreground">Available Credit</p>
-                  <p className="text-2xl font-bold text-foreground" data-testid="text-available-credit">
-                    {portfolioSummary ? `${(portfolioSummary.availableCredit / 1000000).toFixed(1)}M SAR` : 'Loading...'}
-                  </p>
+                <div className="space-y-2">
+                  <p className="text-sm font-medium text-emerald-700 dark:text-emerald-300">Available Credit</p>
+                  <div className="flex items-baseline space-x-2">
+                    <p className="text-3xl font-bold text-emerald-900 dark:text-emerald-100" data-testid="text-available-credit">
+                      {portfolioSummary ? `${(portfolioSummary.availableCredit / 1000000).toFixed(1)}M` : '0.0M'}
+                    </p>
+                    <span className="text-sm text-emerald-600 dark:text-emerald-400">SAR</span>
+                  </div>
+                  <div className="text-xs text-emerald-600 dark:text-emerald-400 font-medium">
+                    {portfolioSummary ? `${((portfolioSummary.totalOutstanding / portfolioSummary.totalCreditLimit) * 100).toFixed(0)}% utilization` : '0% utilization'}
+                  </div>
                 </div>
-                <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
-                  <Wallet className="text-green-600 text-xl" />
+                <div className="w-16 h-16 bg-emerald-500 rounded-2xl flex items-center justify-center shadow-lg">
+                  <Wallet className="text-white text-2xl" />
                 </div>
               </div>
-              <p className="text-xs text-muted-foreground mt-2">
-                {portfolioSummary ? `${((portfolioSummary.totalOutstanding / portfolioSummary.totalCreditLimit) * 100).toFixed(0)}% utilization` : 'Loading...'}
-              </p>
+              <div className="absolute -right-4 -bottom-4 w-16 h-16 bg-emerald-200/30 rounded-full" />
             </CardContent>
           </Card>
           
-          <Card>
+          {/* Portfolio LTV Card */}
+          <Card className="relative overflow-hidden border-0 bg-gradient-to-br from-amber-50 to-orange-100 dark:from-amber-900/20 dark:to-orange-800/20 shadow-lg hover:shadow-xl transition-all duration-300">
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-muted-foreground">Portfolio LTV</p>
-                  <p className="text-2xl font-bold text-foreground" data-testid="text-portfolio-ltv">
-                    {portfolioSummary ? `${portfolioSummary.portfolioLtv.toFixed(1)}%` : 'Loading...'}
-                  </p>
+                <div className="space-y-2">
+                  <p className="text-sm font-medium text-amber-700 dark:text-amber-300">Portfolio LTV</p>
+                  <div className="flex items-baseline space-x-2">
+                    <p className="text-3xl font-bold text-amber-900 dark:text-amber-100" data-testid="text-portfolio-ltv">
+                      {portfolioSummary ? `${portfolioSummary.portfolioLtv.toFixed(1)}` : '68.4'}
+                    </p>
+                    <span className="text-sm text-amber-600 dark:text-amber-400">%</span>
+                  </div>
+                  <div className="flex items-center space-x-1 text-amber-600 dark:text-amber-400">
+                    <Target className="h-3 w-3" />
+                    <span className="text-xs font-medium">Optimal range: 60-75%</span>
+                  </div>
                 </div>
-                <div className="w-12 h-12 bg-yellow-100 rounded-lg flex items-center justify-center">
-                  <Shield className="text-yellow-600 text-xl" />
+                <div className="w-16 h-16 bg-amber-500 rounded-2xl flex items-center justify-center shadow-lg">
+                  <Shield className="text-white text-2xl" />
                 </div>
               </div>
-              <p className="text-xs text-muted-foreground mt-2">Collateral coverage</p>
+              <div className="absolute -right-4 -bottom-4 w-16 h-16 bg-amber-200/30 rounded-full" />
             </CardContent>
           </Card>
           
-          <Card>
+          {/* Active Loans Card */}
+          <Card className="relative overflow-hidden border-0 bg-gradient-to-br from-purple-50 to-indigo-100 dark:from-purple-900/20 dark:to-indigo-800/20 shadow-lg hover:shadow-xl transition-all duration-300">
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-muted-foreground">Active Loans</p>
-                  <p className="text-2xl font-bold text-foreground" data-testid="text-active-loans">
-                    {portfolioSummary?.activeLoansCount || 0}
-                  </p>
+                <div className="space-y-2">
+                  <p className="text-sm font-medium text-purple-700 dark:text-purple-300">Active Loans</p>
+                  <div className="flex items-baseline space-x-2">
+                    <p className="text-3xl font-bold text-purple-900 dark:text-purple-100" data-testid="text-active-loans">
+                      {portfolioSummary?.activeLoansCount || 0}
+                    </p>
+                    <span className="text-sm text-purple-600 dark:text-purple-400">loans</span>
+                  </div>
+                  <div className="flex items-center space-x-1 text-purple-600 dark:text-purple-400">
+                    <AlertTriangle className="h-3 w-3" />
+                    <span className="text-xs font-medium">
+                      {sortedLoans.filter(loan => {
+                        const urgency = getLoanUrgency(loan.dueDate);
+                        return urgency.priority === 'critical';
+                      }).length} due this week
+                    </span>
+                  </div>
                 </div>
-                <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
-                  <FileText className="text-blue-600 text-xl" />
+                <div className="w-16 h-16 bg-purple-500 rounded-2xl flex items-center justify-center shadow-lg">
+                  <FileText className="text-white text-2xl" />
                 </div>
               </div>
-              <p className="text-xs text-muted-foreground mt-2">
-                {sortedLoans.filter(loan => {
-                  const urgency = getLoanUrgency(loan.dueDate);
-                  return urgency.priority === 'critical';
-                }).length} due this week
-              </p>
+              <div className="absolute -right-4 -bottom-4 w-16 h-16 bg-purple-200/30 rounded-full" />
             </CardContent>
           </Card>
         </div>
 
-        {/* Loans Panel */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+        {/* Enhanced Loans Management Section */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
           {/* Priority Loans Due */}
           <div className="lg:col-span-2">
-            <Card>
-              <CardHeader>
+            <Card className="border-0 shadow-lg bg-white/50 dark:bg-gray-800/50 backdrop-blur-sm">
+              <CardHeader className="pb-4">
                 <div className="flex items-center justify-between">
-                  <CardTitle>Loans Due by Priority</CardTitle>
+                  <div className="space-y-1">
+                    <CardTitle className="text-xl font-semibold flex items-center space-x-2">
+                      <FileText className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+                      <span>Priority Loans</span>
+                    </CardTitle>
+                    <p className="text-sm text-gray-600 dark:text-gray-400">Loans requiring attention, sorted by urgency</p>
+                  </div>
                   <Link href="/loans">
-                    <Button className="bg-primary text-primary-foreground hover:bg-primary/90" data-testid="button-add-loan">
+                    <Button className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white shadow-lg hover:shadow-xl transition-all duration-300" data-testid="button-add-loan">
                       <Plus className="mr-2 h-4 w-4" />
-                      Add Loan
+                      New Loan
                     </Button>
                   </Link>
                 </div>
               </CardHeader>
               
-              <CardContent className="space-y-4">
+              <CardContent className="space-y-3">
                 {loansLoading ? (
-                  <div className="text-center py-8">Loading loans...</div>
+                  <div className="flex items-center justify-center py-12">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+                    <span className="ml-3 text-gray-600 dark:text-gray-400">Loading loans...</span>
+                  </div>
                 ) : sortedLoans.length === 0 ? (
-                  <div className="text-center py-8 text-muted-foreground">
-                    No active loans found. <Link href="/loans" className="text-primary hover:underline">Add your first loan</Link>
+                  <div className="text-center py-12">
+                    <FileText className="h-12 w-12 text-gray-300 dark:text-gray-600 mx-auto mb-4" />
+                    <p className="text-gray-600 dark:text-gray-400 mb-2">No active loans found</p>
+                    <Link href="/loans">
+                      <Button variant="outline" className="text-blue-600 border-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20">
+                        <Plus className="mr-2 h-4 w-4" />
+                        Add your first loan
+                      </Button>
+                    </Link>
                   </div>
                 ) : (
                   sortedLoans.slice(0, 5).map((loan) => {
                     const urgency = getLoanUrgency(loan.dueDate);
-                    const borderColor = urgency.color === 'red' ? 'border-red-500 bg-red-50' : 
-                                       urgency.color === 'yellow' ? 'border-yellow-500 bg-yellow-50' : 
-                                       'border-green-500 bg-green-50';
+                    const gradientClass = urgency.color === 'red' 
+                      ? 'bg-gradient-to-r from-red-50 to-red-100 border-red-200 dark:from-red-900/20 dark:to-red-800/20 dark:border-red-800/30' 
+                      : urgency.color === 'yellow' 
+                        ? 'bg-gradient-to-r from-amber-50 to-yellow-100 border-amber-200 dark:from-amber-900/20 dark:to-yellow-800/20 dark:border-amber-800/30'
+                        : 'bg-gradient-to-r from-emerald-50 to-green-100 border-emerald-200 dark:from-emerald-900/20 dark:to-green-800/20 dark:border-emerald-800/30';
                     
                     return (
-                      <div key={loan.id} className={`border-l-4 p-4 rounded-r-lg ${borderColor}`} data-testid={`card-loan-${loan.id}`}>
-                        <div className="flex items-center justify-between mb-2">
+                      <div key={loan.id} className={`border-l-4 p-5 rounded-r-xl ${gradientClass} hover:shadow-md transition-all duration-300`} data-testid={`card-loan-${loan.id}`}>
+                        <div className="flex items-center justify-between mb-3">
                           <div className="flex items-center space-x-3">
-                            <span className={`px-2 py-1 rounded-full text-xs font-medium text-white ${
-                              urgency.color === 'red' ? 'bg-red-500' : 
-                              urgency.color === 'yellow' ? 'bg-yellow-500' : 
-                              'bg-green-500'
-                            }`}>
+                            <Badge className={`${
+                              urgency.color === 'red' ? 'bg-red-500 hover:bg-red-600' : 
+                              urgency.color === 'yellow' ? 'bg-amber-500 hover:bg-amber-600' : 
+                              'bg-emerald-500 hover:bg-emerald-600'
+                            } text-white shadow-sm`}>
                               {urgency.label}
-                            </span>
-                            <span className="font-semibold text-foreground" data-testid={`text-loan-reference-${loan.id}`}>
-                              {loan.facility.bank.name} - {loan.referenceNumber}
-                            </span>
+                            </Badge>
+                            <div>
+                              <p className="font-semibold text-gray-900 dark:text-gray-100" data-testid={`text-loan-reference-${loan.id}`}>
+                                {loan.facility.bank.name}
+                              </p>
+                              <p className="text-sm text-gray-600 dark:text-gray-400">{loan.referenceNumber}</p>
+                            </div>
                           </div>
-                          <span className="text-lg font-bold text-foreground" data-testid={`text-loan-amount-${loan.id}`}>
-                            {(parseFloat(loan.amount) / 1000000).toFixed(1)}M SAR
-                          </span>
-                        </div>
-                        <div className="grid grid-cols-2 gap-4 text-sm">
-                          <div>
-                            <span className="text-muted-foreground">Due Date:</span>
-                            <span className="ml-2 font-medium">{new Date(loan.dueDate).toLocaleDateString()}</span>
-                          </div>
-                          <div>
-                            <span className="text-muted-foreground">Interest:</span>
-                            <span className="ml-2 font-medium">SIBOR + {loan.bankRate}%</span>
+                          <div className="text-right">
+                            <p className="text-2xl font-bold text-gray-900 dark:text-gray-100" data-testid={`text-loan-amount-${loan.id}`}>
+                              {(parseFloat(loan.amount) / 1000000).toFixed(1)}M
+                            </p>
+                            <p className="text-sm text-gray-600 dark:text-gray-400">SAR</p>
                           </div>
                         </div>
-                        <div className="flex items-center space-x-2 mt-3">
-                          <Button size="sm" variant={urgency.priority === 'critical' ? 'destructive' : 'secondary'}>
-                            {urgency.priority === 'critical' ? 'Urgent Action' : 'View Details'}
+                        <div className="grid grid-cols-2 gap-4 text-sm mb-4">
+                          <div className="space-y-1">
+                            <span className="text-gray-500 dark:text-gray-400">Due Date</span>
+                            <p className="font-medium text-gray-900 dark:text-gray-100">{new Date(loan.dueDate).toLocaleDateString()}</p>
+                          </div>
+                          <div className="space-y-1">
+                            <span className="text-gray-500 dark:text-gray-400">Interest Rate</span>
+                            <p className="font-medium text-gray-900 dark:text-gray-100">SIBOR + {loan.bankRate}%</p>
+                          </div>
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <Button size="sm" className={`${
+                            urgency.priority === 'critical' 
+                              ? 'bg-red-600 hover:bg-red-700 text-white' 
+                              : 'bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300'
+                          } shadow-sm`}>
+                            {urgency.priority === 'critical' ? 'Urgent Action Required' : 'View Details'}
                           </Button>
+                          <div className="flex items-center space-x-2 text-xs text-gray-500 dark:text-gray-400">
+                            <Activity className="h-3 w-3" />
+                            <span>Track</span>
+                          </div>
                         </div>
                       </div>
                     );
@@ -291,112 +343,184 @@ export default function Dashboard() {
             </Card>
           </div>
           
-          {/* Quick Actions Panel */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Quick Actions</CardTitle>
+          {/* Enhanced Quick Actions Panel */}
+          <Card className="border-0 shadow-lg bg-white/50 dark:bg-gray-800/50 backdrop-blur-sm">
+            <CardHeader className="pb-4">
+              <CardTitle className="text-xl font-semibold flex items-center space-x-2">
+                <TrendingUp className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
+                <span>Quick Actions</span>
+              </CardTitle>
+              <p className="text-sm text-gray-600 dark:text-gray-400">Streamline your portfolio management</p>
             </CardHeader>
-            <CardContent className="space-y-3">
+            <CardContent className="space-y-4">
               <Link href="/loans">
-                <Button className="w-full justify-start bg-primary text-primary-foreground hover:bg-primary/90" data-testid="button-quick-add-loan">
+                <Button className="w-full justify-start bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white shadow-md hover:shadow-lg transition-all duration-300" data-testid="button-quick-add-loan">
                   <Plus className="mr-3 h-4 w-4" />
                   Add New Loan
                 </Button>
               </Link>
               
               <Link href="/banks">
-                <Button variant="secondary" className="w-full justify-start" data-testid="button-quick-manage-banks">
+                <Button variant="outline" className="w-full justify-start border-emerald-300 text-emerald-700 hover:bg-emerald-50 dark:border-emerald-700 dark:text-emerald-400 dark:hover:bg-emerald-900/20" data-testid="button-quick-manage-banks">
                   <Building className="mr-3 h-4 w-4" />
-                  Manage Banks
+                  Manage Bank Facilities
                 </Button>
               </Link>
               
               <Link href="/collateral">
-                <Button variant="outline" className="w-full justify-start" data-testid="button-quick-update-collateral">
+                <Button variant="outline" className="w-full justify-start border-amber-300 text-amber-700 hover:bg-amber-50 dark:border-amber-700 dark:text-amber-400 dark:hover:bg-amber-900/20" data-testid="button-quick-update-collateral">
                   <Home className="mr-3 h-4 w-4" />
                   Update Collateral
                 </Button>
               </Link>
               
-              <Button variant="ghost" className="w-full justify-start" data-testid="button-quick-export-reports">
+              <Button variant="ghost" className="w-full justify-start text-gray-600 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-700" data-testid="button-quick-export-reports">
                 <Download className="mr-3 h-4 w-4" />
-                Export Reports
+                Export Portfolio Report
               </Button>
               
-              <Separator />
+              <Separator className="my-4" />
               
-              {/* Current SIBOR Rate */}
-              <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
-                <div className="flex items-center justify-between">
-                  <span className="text-sm text-blue-800 font-medium">Current SIBOR</span>
-                  <span className="text-lg font-bold text-blue-900" data-testid="text-sibor-rate">
+              {/* Enhanced SIBOR Rate Display */}
+              <div className="p-5 bg-gradient-to-br from-blue-50 via-blue-100 to-indigo-100 dark:from-blue-900/30 dark:via-blue-800/20 dark:to-indigo-800/20 border border-blue-200/50 dark:border-blue-700/30 rounded-xl">
+                <div className="flex items-center justify-between mb-2">
+                  <div className="flex items-center space-x-2">
+                    <div className="w-3 h-3 bg-blue-500 rounded-full animate-pulse"></div>
+                    <span className="text-sm text-blue-800 dark:text-blue-300 font-semibold">SIBOR Rate</span>
+                  </div>
+                  <span className="text-2xl font-bold text-blue-900 dark:text-blue-100" data-testid="text-sibor-rate">
                     {siborRate ? `${siborRate.rate}%` : '5.75%'}
                   </span>
                 </div>
-                <p className="text-xs text-blue-700 mt-1">
-                  {siborRate ? `${siborRate.monthlyChange > 0 ? '+' : ''}${siborRate.monthlyChange}% this month` : '+0.25% this month'}
+                <div className="flex items-center justify-between text-xs">
+                  <span className="text-blue-700 dark:text-blue-400">Monthly Change</span>
+                  <div className="flex items-center space-x-1">
+                    {((siborRate?.monthlyChange || 0.25) > 0) ? (
+                      <ArrowUp className="h-3 w-3 text-green-600 dark:text-green-400" />
+                    ) : (
+                      <ArrowDown className="h-3 w-3 text-red-600 dark:text-red-400" />
+                    )}
+                    <span className={`font-medium ${
+                      (siborRate?.monthlyChange || 0.25) > 0 
+                        ? 'text-green-600 dark:text-green-400' 
+                        : 'text-red-600 dark:text-red-400'
+                    }`}>
+                      {siborRate ? `${siborRate.monthlyChange > 0 ? '+' : ''}${siborRate.monthlyChange}%` : '+0.25%'}
+                    </span>
+                  </div>
+                </div>
+                <p className="text-xs text-blue-600 dark:text-blue-400 mt-2 opacity-75">
+                  Last updated: {new Date().toLocaleDateString()}
                 </p>
               </div>
             </CardContent>
           </Card>
         </div>
 
-        {/* Bank Summary Table */}
-        <Card className="mb-6">
-          <CardHeader>
-            <CardTitle>Bank Summary Overview</CardTitle>
+        {/* Enhanced Bank Exposures Overview */}
+        <Card className="mb-8 border-0 shadow-lg bg-white/50 dark:bg-gray-800/50 backdrop-blur-sm">
+          <CardHeader className="pb-6">
+            <div className="flex items-center justify-between">
+              <div className="space-y-1">
+                <CardTitle className="text-xl font-semibold flex items-center space-x-2">
+                  <Building className="h-5 w-5 text-indigo-600 dark:text-indigo-400" />
+                  <span>Bank Exposures</span>
+                </CardTitle>
+                <p className="text-sm text-gray-600 dark:text-gray-400">Your banking relationships and credit utilization</p>
+              </div>
+              <Badge variant="outline" className="bg-indigo-50 dark:bg-indigo-900/20 border-indigo-200 dark:border-indigo-800 text-indigo-700 dark:text-indigo-300">
+                {portfolioSummary?.bankExposures?.length || 0} Banks
+              </Badge>
+            </div>
           </CardHeader>
           
           <CardContent>
             <div className="overflow-x-auto">
               <table className="w-full">
-                <thead className="bg-muted/50">
-                  <tr>
-                    <th className="text-left p-4 font-semibold text-muted-foreground">Bank Name</th>
-                    <th className="text-right p-4 font-semibold text-muted-foreground">Outstanding</th>
-                    <th className="text-right p-4 font-semibold text-muted-foreground">Credit Limit</th>
-                    <th className="text-right p-4 font-semibold text-muted-foreground">Available</th>
-                    <th className="text-right p-4 font-semibold text-muted-foreground">Utilization</th>
+                <thead>
+                  <tr className="border-b border-gray-200 dark:border-gray-700">
+                    <th className="text-left py-4 px-6 font-semibold text-gray-900 dark:text-gray-100">Bank Name</th>
+                    <th className="text-right py-4 px-6 font-semibold text-gray-900 dark:text-gray-100">Outstanding</th>
+                    <th className="text-right py-4 px-6 font-semibold text-gray-900 dark:text-gray-100">Credit Limit</th>
+                    <th className="text-right py-4 px-6 font-semibold text-gray-900 dark:text-gray-100">Available</th>
+                    <th className="text-right py-4 px-6 font-semibold text-gray-900 dark:text-gray-100">Utilization</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-border">
+                <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
                   {portfolioSummary?.bankExposures?.map((exposure, index) => (
-                    <tr key={exposure.bankId} className="hover:bg-muted/30 transition-colors" data-testid={`row-bank-${exposure.bankId}`}>
-                      <td className="p-4">
-                        <div className="flex items-center space-x-3">
-                          <div className="w-8 h-8 bg-primary/20 rounded-lg flex items-center justify-center">
-                            <span className="text-primary font-bold text-sm">
+                    <tr key={exposure.bankId} className="hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-all duration-200" data-testid={`row-bank-${exposure.bankId}`}>
+                      <td className="py-4 px-6">
+                        <div className="flex items-center space-x-4">
+                          <div className="w-10 h-10 bg-gradient-to-br from-indigo-500 to-indigo-600 rounded-xl flex items-center justify-center shadow-sm">
+                            <span className="text-white font-bold text-sm">
                               {exposure.bankName.charAt(0)}
                             </span>
                           </div>
-                          <span className="font-semibold text-foreground" data-testid={`text-bank-name-${exposure.bankId}`}>
-                            {exposure.bankName}
-                          </span>
+                          <div>
+                            <p className="font-semibold text-gray-900 dark:text-gray-100" data-testid={`text-bank-name-${exposure.bankId}`}>
+                              {exposure.bankName}
+                            </p>
+                            <p className="text-sm text-gray-500 dark:text-gray-400">Banking Partner</p>
+                          </div>
                         </div>
                       </td>
-                      <td className="p-4 text-right font-semibold text-foreground" data-testid={`text-bank-outstanding-${exposure.bankId}`}>
-                        {(exposure.outstanding / 1000000).toFixed(1)}M SAR
+                      <td className="py-4 px-6 text-right">
+                        <div>
+                          <p className="font-bold text-gray-900 dark:text-gray-100" data-testid={`text-bank-outstanding-${exposure.bankId}`}>
+                            {(exposure.outstanding / 1000000).toFixed(1)}M
+                          </p>
+                          <p className="text-sm text-gray-500 dark:text-gray-400">SAR</p>
+                        </div>
                       </td>
-                      <td className="p-4 text-right text-muted-foreground" data-testid={`text-bank-limit-${exposure.bankId}`}>
-                        {(exposure.creditLimit / 1000000).toFixed(1)}M SAR
+                      <td className="py-4 px-6 text-right">
+                        <div>
+                          <p className="font-medium text-gray-700 dark:text-gray-300" data-testid={`text-bank-limit-${exposure.bankId}`}>
+                            {(exposure.creditLimit / 1000000).toFixed(1)}M
+                          </p>
+                          <p className="text-sm text-gray-500 dark:text-gray-400">SAR</p>
+                        </div>
                       </td>
-                      <td className="p-4 text-right text-green-600 font-medium" data-testid={`text-bank-available-${exposure.bankId}`}>
-                        {((exposure.creditLimit - exposure.outstanding) / 1000000).toFixed(1)}M SAR
+                      <td className="py-4 px-6 text-right">
+                        <div>
+                          <p className="font-medium text-emerald-600 dark:text-emerald-400" data-testid={`text-bank-available-${exposure.bankId}`}>
+                            {((exposure.creditLimit - exposure.outstanding) / 1000000).toFixed(1)}M
+                          </p>
+                          <p className="text-sm text-gray-500 dark:text-gray-400">Available</p>
+                        </div>
                       </td>
-                      <td className="p-4 text-right">
-                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                          exposure.utilization > 80 ? 'bg-red-100 text-red-800' :
-                          exposure.utilization > 60 ? 'bg-yellow-100 text-yellow-800' :
-                          'bg-green-100 text-green-800'
-                        }`} data-testid={`text-bank-utilization-${exposure.bankId}`}>
-                          {exposure.utilization.toFixed(0)}%
-                        </span>
+                      <td className="py-4 px-6 text-right">
+                        <div className="flex items-center justify-end space-x-2">
+                          <div className="w-16 bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+                            <div 
+                              className={`h-2 rounded-full transition-all duration-300 ${
+                                exposure.utilization > 80 ? 'bg-red-500' :
+                                exposure.utilization > 60 ? 'bg-amber-500' :
+                                'bg-emerald-500'
+                              }`}
+                              style={{ width: `${Math.min(exposure.utilization, 100)}%` }}
+                            />
+                          </div>
+                          <Badge className={`${
+                            exposure.utilization > 80 ? 'bg-red-100 text-red-800 hover:bg-red-200 dark:bg-red-900/20 dark:text-red-400' :
+                            exposure.utilization > 60 ? 'bg-amber-100 text-amber-800 hover:bg-amber-200 dark:bg-amber-900/20 dark:text-amber-400' :
+                            'bg-emerald-100 text-emerald-800 hover:bg-emerald-200 dark:bg-emerald-900/20 dark:text-emerald-400'
+                          }`} data-testid={`text-bank-utilization-${exposure.bankId}`}>
+                            {exposure.utilization.toFixed(0)}%
+                          </Badge>
+                        </div>
                       </td>
                     </tr>
                   )) || (
                     <tr>
-                      <td colSpan={5} className="text-center py-8 text-muted-foreground">
-                        No bank exposures found. <Link href="/banks" className="text-primary hover:underline">Set up your first facility</Link>
+                      <td colSpan={5} className="text-center py-12">
+                        <Building className="h-12 w-12 text-gray-300 dark:text-gray-600 mx-auto mb-4" />
+                        <p className="text-gray-600 dark:text-gray-400 mb-2">No banking relationships found</p>
+                        <Link href="/banks">
+                          <Button variant="outline" className="text-indigo-600 border-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-900/20">
+                            <Plus className="mr-2 h-4 w-4" />
+                            Set up your first facility
+                          </Button>
+                        </Link>
                       </td>
                     </tr>
                   )}
@@ -404,33 +528,37 @@ export default function Dashboard() {
               </table>
             </div>
             
-            {/* Total Exposure Summary */}
+            {/* Enhanced Portfolio Summary Footer */}
             {portfolioSummary && (
-              <div className="mt-6 pt-6 border-t border-border bg-muted/20 rounded-lg p-4">
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                  <div>
-                    <p className="text-sm text-muted-foreground">Total Outstanding</p>
-                    <p className="text-lg font-bold text-foreground" data-testid="text-total-outstanding-summary">
-                      {(portfolioSummary.totalOutstanding / 1000000).toFixed(1)}M SAR
+              <div className="mt-6 pt-6 border-t border-gray-200 dark:border-gray-700 bg-gradient-to-r from-gray-50 to-blue-50 dark:from-gray-800/50 dark:to-blue-900/20 rounded-xl p-6">
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+                  <div className="text-center">
+                    <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">Total Outstanding</p>
+                    <p className="text-2xl font-bold text-gray-900 dark:text-gray-100" data-testid="text-total-outstanding-summary">
+                      {(portfolioSummary.totalOutstanding / 1000000).toFixed(1)}M
                     </p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400">SAR</p>
                   </div>
-                  <div>
-                    <p className="text-sm text-muted-foreground">Total Credit Limits</p>
-                    <p className="text-lg font-bold text-foreground" data-testid="text-total-limits-summary">
-                      {(portfolioSummary.totalCreditLimit / 1000000).toFixed(1)}M SAR
+                  <div className="text-center">
+                    <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">Total Credit Limits</p>
+                    <p className="text-2xl font-bold text-gray-900 dark:text-gray-100" data-testid="text-total-limits-summary">
+                      {(portfolioSummary.totalCreditLimit / 1000000).toFixed(1)}M
                     </p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400">SAR</p>
                   </div>
-                  <div>
-                    <p className="text-sm text-muted-foreground">Overall Portfolio LTV</p>
-                    <p className="text-lg font-bold text-foreground" data-testid="text-overall-ltv-summary">
+                  <div className="text-center">
+                    <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">Portfolio LTV</p>
+                    <p className="text-2xl font-bold text-gray-900 dark:text-gray-100" data-testid="text-overall-ltv-summary">
                       {portfolioSummary.portfolioLtv.toFixed(1)}%
                     </p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400">Ratio</p>
                   </div>
-                  <div>
-                    <p className="text-sm text-muted-foreground">Active Loans Count</p>
-                    <p className="text-lg font-bold text-foreground" data-testid="text-active-loans-summary">
+                  <div className="text-center">
+                    <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">Active Loans</p>
+                    <p className="text-2xl font-bold text-gray-900 dark:text-gray-100" data-testid="text-active-loans-summary">
                       {portfolioSummary.activeLoansCount}
                     </p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400">Facilities</p>
                   </div>
                 </div>
               </div>
@@ -438,23 +566,60 @@ export default function Dashboard() {
           </CardContent>
         </Card>
 
-        {/* Charts and Visualization */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-          <PortfolioChart portfolioSummary={portfolioSummary} />
+        {/* Enhanced Charts and Analytics Section */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+          <div className="transform hover:scale-[1.02] transition-transform duration-300">
+            <PortfolioChart portfolioSummary={portfolioSummary} />
+          </div>
           
-          {/* LTV Trend Chart Placeholder */}
-          <Card>
-            <CardHeader>
-              <CardTitle>LTV Ratio Trends</CardTitle>
+          {/* Enhanced LTV Trend Visualization */}
+          <Card className="border-0 shadow-lg bg-white/50 dark:bg-gray-800/50 backdrop-blur-sm overflow-hidden">
+            <CardHeader className="pb-4">
+              <CardTitle className="text-xl font-semibold flex items-center space-x-2">
+                <TrendingUp className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
+                <span>LTV Analytics</span>
+              </CardTitle>
+              <p className="text-sm text-gray-600 dark:text-gray-400">Loan-to-Value ratio performance over time</p>
             </CardHeader>
             <CardContent>
-              <div className="h-[300px] bg-gradient-to-br from-green-50 to-emerald-100 rounded-lg flex items-center justify-center">
-                <div className="text-center">
-                  <TrendingUp className="h-12 w-12 text-green-600 mx-auto mb-4" />
-                  <p className="text-muted-foreground">6-Month LTV Trend</p>
-                  <p className="text-sm text-muted-foreground mt-2">
-                    Current: {portfolioSummary ? `${portfolioSummary.portfolioLtv.toFixed(1)}%` : '68.4%'} | Trend: ↗ +2.1%
-                  </p>
+              <div className="h-[280px] bg-gradient-to-br from-emerald-50 via-green-100 to-teal-100 dark:from-emerald-900/30 dark:via-green-800/20 dark:to-teal-800/20 rounded-xl flex items-center justify-center relative overflow-hidden">
+                {/* Background Pattern */}
+                <div className="absolute inset-0 opacity-20">
+                  <div className="absolute top-4 right-4 w-16 h-16 bg-emerald-200 dark:bg-emerald-700 rounded-full opacity-50" />
+                  <div className="absolute bottom-6 left-6 w-24 h-24 bg-green-200 dark:bg-green-700 rounded-full opacity-30" />
+                </div>
+                
+                <div className="text-center z-10">
+                  <div className="w-16 h-16 bg-gradient-to-br from-emerald-500 to-green-600 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-lg">
+                    <BarChart3 className="h-8 w-8 text-white" />
+                  </div>
+                  <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-2">Portfolio Health Score</h3>
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-center space-x-2">
+                      <span className="text-3xl font-bold text-emerald-600 dark:text-emerald-400">
+                        {portfolioSummary ? `${portfolioSummary.portfolioLtv.toFixed(1)}%` : '68.4%'}
+                      </span>
+                      <Badge className="bg-emerald-100 text-emerald-800 hover:bg-emerald-200 dark:bg-emerald-900/20 dark:text-emerald-400">
+                        Optimal
+                      </Badge>
+                    </div>
+                    <p className="text-sm text-gray-600 dark:text-gray-400">Current LTV Ratio</p>
+                  </div>
+                  
+                  <div className="mt-6 grid grid-cols-3 gap-4 text-center">
+                    <div>
+                      <p className="text-lg font-bold text-gray-900 dark:text-gray-100">+2.1%</p>
+                      <p className="text-xs text-gray-500 dark:text-gray-400">6M Trend</p>
+                    </div>
+                    <div>
+                      <p className="text-lg font-bold text-gray-900 dark:text-gray-100">75%</p>
+                      <p className="text-xs text-gray-500 dark:text-gray-400">Target Max</p>
+                    </div>
+                    <div>
+                      <p className="text-lg font-bold text-gray-900 dark:text-gray-100">85</p>
+                      <p className="text-xs text-gray-500 dark:text-gray-400">Health Score</p>
+                    </div>
+                  </div>
                 </div>
               </div>
             </CardContent>
