@@ -9,7 +9,8 @@ import {
   University,
   User,
   Bell,
-  Search
+  Search,
+  History
 } from "lucide-react";
 import {
   Sidebar,
@@ -65,6 +66,11 @@ const navigation = [
         title: "Collateral",
         url: "/collateral",
         icon: Shield,
+      },
+      {
+        title: "History",
+        url: "/history",
+        icon: History,
       },
     ],
   },
