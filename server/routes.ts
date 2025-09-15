@@ -10,6 +10,9 @@ import {
   insertCollateralSchema,
   insertLoanSchema,
   insertAiInsightConfigSchema,
+  insertExposureSnapshotSchema,
+  insertTransactionSchema,
+  transactionTypeZodEnum,
 } from "@shared/schema";
 import { z } from "zod";
 
@@ -252,6 +255,108 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Create validation schemas for query parameters
+  const dateStringSchema = z.string()
+    .refine((val) => /^\d{4}-\d{2}-\d{2}$/.test(val), "Date must be in YYYY-MM-DD format")
+    .refine((val) => !isNaN(Date.parse(val)), "Must be a valid date")
+    .optional();
+
+  const uuidSchema = z.string()
+    .refine((val) => /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(val), "Must be a valid UUID")
+    .optional();
+
+  const exposureHistoryQuerySchema = z.object({
+    from: dateStringSchema,
+    to: dateStringSchema,
+    bankId: uuidSchema,
+    facilityId: uuidSchema,
+  }).refine((data) => {
+    if (data.from && data.to) {
+      const fromDate = new Date(data.from);
+      const toDate = new Date(data.to);
+      return fromDate <= toDate;
+    }
+    return true;
+  }, "From date must be before or equal to To date");
+
+  const transactionHistoryQuerySchema = z.object({
+    from: dateStringSchema,
+    to: dateStringSchema,
+    bankId: uuidSchema,
+    facilityId: uuidSchema,
+    loanId: uuidSchema,
+    type: transactionTypeZodEnum.optional(),
+    limit: z.coerce.number().int().nonnegative().max(1000).default(50).optional(),
+    offset: z.coerce.number().int().nonnegative().default(0).optional(),
+  }).refine((data) => {
+    if (data.from && data.to) {
+      const fromDate = new Date(data.from);
+      const toDate = new Date(data.to);
+      return fromDate <= toDate;
+    }
+    return true;
+  }, "From date must be before or equal to To date");
+
+  // History routes
+  app.get('/api/history/exposures', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      
+      // Initialize sample exposure snapshots for new users (idempotent)
+      await ensureSampleExposureSnapshots(userId);
+
+      // Validate query parameters
+      const queryResult = exposureHistoryQuerySchema.safeParse(req.query);
+      if (!queryResult.success) {
+        return res.status(400).json({ 
+          message: "Invalid query parameters",
+          errors: queryResult.error.errors 
+        });
+      }
+
+      const filters = { userId, ...queryResult.data };
+      const exposures = await storage.listExposureSnapshots(filters);
+      res.json(exposures);
+    } catch (error) {
+      console.error("Error fetching exposure history:", error);
+      res.status(500).json({ message: "Failed to fetch exposure history" });
+    }
+  });
+
+  app.get('/api/history/transactions', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      
+      // Initialize sample transaction history for new users (idempotent)
+      await ensureSampleTransactionHistory(userId);
+
+      // Validate query parameters
+      const queryResult = transactionHistoryQuerySchema.safeParse(req.query);
+      if (!queryResult.success) {
+        return res.status(400).json({ 
+          message: "Invalid query parameters",
+          errors: queryResult.error.errors 
+        });
+      }
+
+      const filters = { userId, ...queryResult.data };
+      
+      // Get total count for pagination
+      const totalCount = await storage.getTransactionCount(filters);
+      const transactions = await storage.listTransactions(filters);
+      
+      res.json({
+        data: transactions,
+        total: totalCount,
+        limit: queryResult.data.limit || 50,
+        offset: queryResult.data.offset || 0
+      });
+    } catch (error) {
+      console.error("Error fetching transaction history:", error);
+      res.status(500).json({ message: "Failed to fetch transaction history" });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }
@@ -300,7 +405,7 @@ async function initializeSampleFacilities(userId: string) {
           {
             bankId: banks[0].id, // ANB
             userId,
-            facilityType: "revolving",
+            facilityType: "revolving" as const,
             creditLimit: "5000000.00",
             costOfFunding: "2.50",
             startDate: new Date().toISOString().split('T')[0],
@@ -311,7 +416,7 @@ async function initializeSampleFacilities(userId: string) {
           {
             bankId: banks[1].id, // SABB
             userId,
-            facilityType: "term",
+            facilityType: "term" as const,
             creditLimit: "10000000.00", 
             costOfFunding: "2.75",
             startDate: new Date().toISOString().split('T')[0],
@@ -322,7 +427,7 @@ async function initializeSampleFacilities(userId: string) {
           {
             bankId: banks[2].id, // Al Rajhi Bank
             userId,
-            facilityType: "working_capital",
+            facilityType: "working_capital" as const,
             creditLimit: "3000000.00",
             costOfFunding: "2.25", 
             startDate: new Date().toISOString().split('T')[0],
@@ -341,5 +446,243 @@ async function initializeSampleFacilities(userId: string) {
     }
   } catch (error) {
     console.error("Error initializing sample facilities:", error);
+  }
+}
+
+// Per-user seeding status cache to prevent unnecessary re-seeding
+const userSeedingStatus = new Map<string, { exposuresDone: boolean; transactionsDone: boolean }>();
+
+async function ensureSampleExposureSnapshots(userId: string) {
+  try {
+    // Check cache first to avoid unnecessary database queries
+    let status = userSeedingStatus.get(userId);
+    if (status?.exposuresDone) {
+      return;
+    }
+
+    // Double-check in database with a more specific query to handle race conditions
+    const existingSnapshots = await storage.listExposureSnapshots({ 
+      userId, 
+      from: '2024-01-01', 
+      to: '2025-09-15' 
+    });
+    
+    if (existingSnapshots.length === 0) {
+      const banks = await storage.getAllBanks();
+      const userFacilities = await storage.getUserFacilities(userId);
+      
+      if (banks.length > 0 && userFacilities.length > 0) {
+        const snapshots = [];
+        const dates = ['2024-01-01', '2025-01-01', '2025-09-15'];
+        
+        // Find the main banks used in facilities
+        const facilityBanks = new Map();
+        userFacilities.forEach(facility => {
+          facilityBanks.set(facility.bank.id, facility.bank);
+        });
+        
+        for (const date of dates) {
+          let totalOutstanding = 0;
+          let totalCreditLimit = 0;
+          
+          // Create bank-level snapshots
+          for (const [bankId, bank] of Array.from(facilityBanks)) {
+            const bankFacilities = userFacilities.filter(f => f.bank.id === bankId);
+            const bankCreditLimit = bankFacilities.reduce((sum, f) => sum + parseFloat(f.creditLimit), 0);
+            
+            // Progressive increase in exposure over time
+            const progressFactor = date === '2024-01-01' ? 0.3 : date === '2025-01-01' ? 0.6 : 0.8;
+            const bankOutstanding = bankCreditLimit * progressFactor;
+            
+            snapshots.push({
+              userId,
+              date,
+              bankId,
+              outstanding: bankOutstanding.toFixed(2),
+              creditLimit: bankCreditLimit.toFixed(2),
+            });
+            
+            totalOutstanding += bankOutstanding;
+            totalCreditLimit += bankCreditLimit;
+            
+            // Create facility-level snapshots for each bank
+            for (const facility of bankFacilities) {
+              const facilityOutstanding = parseFloat(facility.creditLimit) * progressFactor;
+              snapshots.push({
+                userId,
+                date,
+                bankId: facility.bank.id,
+                facilityId: facility.id,
+                outstanding: facilityOutstanding.toFixed(2),
+                creditLimit: facility.creditLimit,
+              });
+            }
+          }
+          
+          // Create global total snapshot (bankId and facilityId both null)
+          snapshots.push({
+            userId,
+            date,
+            outstanding: totalOutstanding.toFixed(2),
+            creditLimit: totalCreditLimit.toFixed(2),
+          });
+        }
+        
+        try {
+          await storage.addExposureSnapshots(snapshots);
+          console.log(`Sample exposure snapshots created for user: ${userId}`);
+          
+          // Mark as done in cache
+          if (!status) {
+            status = { exposuresDone: false, transactionsDone: false };
+            userSeedingStatus.set(userId, status);
+          }
+          status.exposuresDone = true;
+        } catch (error: any) {
+          // If error is due to unique constraint violation, consider it already seeded
+          if (error.code === '23505' || error.message?.includes('duplicate key')) {
+            console.log(`Sample exposure snapshots already exist for user: ${userId}`);
+            if (!status) {
+              status = { exposuresDone: false, transactionsDone: false };
+              userSeedingStatus.set(userId, status);
+            }
+            status.exposuresDone = true;
+          } else {
+            throw error;
+          }
+        }
+      }
+    } else {
+      // Mark as done in cache since data already exists
+      if (!status) {
+        status = { exposuresDone: false, transactionsDone: false };
+        userSeedingStatus.set(userId, status);
+      }
+      status.exposuresDone = true;
+    }
+  } catch (error) {
+    console.error("Error ensuring sample exposure snapshots:", error);
+  }
+}
+
+async function ensureSampleTransactionHistory(userId: string) {
+  try {
+    // Check cache first to avoid unnecessary database queries
+    let status = userSeedingStatus.get(userId);
+    if (status?.transactionsDone) {
+      return;
+    }
+
+    // Check with a specific date range to detect our sample transactions
+    const threeMonthsAgo = new Date();
+    threeMonthsAgo.setMonth(threeMonthsAgo.getMonth() - 3);
+    const existingTransactions = await storage.listTransactions({ 
+      userId, 
+      from: threeMonthsAgo.toISOString().split('T')[0],
+      limit: 5 
+    });
+    
+    if (existingTransactions.length === 0) {
+      const banks = await storage.getAllBanks();
+      const userFacilities = await storage.getUserFacilities(userId);
+      const activeLoans = await storage.getActiveLoansByUser(userId);
+      
+      if (banks.length > 0 && userFacilities.length > 0) {
+        const transactions = [];
+        const dates = [];
+        
+        // Generate dates for the last 3 months
+        for (let i = 0; i < 90; i += 7) { // Weekly transactions
+          const date = new Date();
+          date.setDate(date.getDate() - i);
+          dates.push(date.toISOString().split('T')[0]);
+        }
+        
+        let transactionCounter = 1;
+        
+        for (const date of dates) {
+          // Mix of different transaction types
+          const transactionTypes = ['draw', 'repayment', 'fee', 'interest'];
+          const numTransactions = Math.floor(Math.random() * 3) + 1; // 1-3 transactions per date
+          
+          for (let i = 0; i < numTransactions; i++) {
+            const facility = userFacilities[Math.floor(Math.random() * userFacilities.length)];
+            const type = transactionTypes[Math.floor(Math.random() * transactionTypes.length)] as 'draw' | 'repayment' | 'fee' | 'interest';
+            
+            let amount;
+            switch (type) {
+              case 'draw':
+                amount = (Math.random() * 500000 + 100000).toFixed(2); // 100K-600K draws
+                break;
+              case 'repayment':
+                amount = (Math.random() * 300000 + 50000).toFixed(2); // 50K-350K repayments
+                break;
+              case 'fee':
+                amount = (Math.random() * 5000 + 500).toFixed(2); // 500-5500 fees
+                break;
+              case 'interest':
+                amount = (Math.random() * 15000 + 2000).toFixed(2); // 2K-17K interest
+                break;
+              default:
+                amount = (Math.random() * 10000 + 1000).toFixed(2);
+            }
+            
+            transactions.push({
+              userId,
+              date,
+              bankId: facility.bank.id,
+              facilityId: facility.id,
+              loanId: activeLoans.length > 0 ? activeLoans[Math.floor(Math.random() * activeLoans.length)].id : undefined,
+              type,
+              amount,
+              reference: `TXN-${String(transactionCounter).padStart(6, '0')}`,
+              notes: `Sample ${type} transaction for ${facility.bank.name}`,
+            });
+            
+            transactionCounter++;
+          }
+        }
+        
+        try {
+          // Insert transactions one by one to handle potential conflicts gracefully
+          let successCount = 0;
+          for (const transaction of transactions) {
+            try {
+              await storage.addTransaction(transaction);
+              successCount++;
+            } catch (error: any) {
+              // Skip transaction on conflict but continue with others
+              console.log(`Transaction with reference ${transaction.reference} already exists, skipping`);
+            }
+          }
+          
+          console.log(`Sample transaction history created for user: ${userId} (${successCount} transactions)`);
+          
+          // Mark as done in cache
+          if (!status) {
+            status = { exposuresDone: false, transactionsDone: false };
+            userSeedingStatus.set(userId, status);
+          }
+          status.transactionsDone = true;
+        } catch (error: any) {
+          console.error("Error creating sample transactions:", error);
+          // Still mark as done to prevent repeated attempts if it's a systemic issue
+          if (!status) {
+            status = { exposuresDone: false, transactionsDone: false };
+            userSeedingStatus.set(userId, status);
+          }
+          status.transactionsDone = true;
+        }
+      }
+    } else {
+      // Mark as done in cache since data already exists
+      if (!status) {
+        status = { exposuresDone: false, transactionsDone: false };
+        userSeedingStatus.set(userId, status);
+      }
+      status.transactionsDone = true;
+    }
+  } catch (error) {
+    console.error("Error ensuring sample transaction history:", error);
   }
 }

@@ -6,6 +6,8 @@ import {
   loans,
   documents,
   aiInsightConfig,
+  exposureSnapshots,
+  transactions,
   type User,
   type UpsertUser,
   type Bank,
@@ -20,9 +22,14 @@ import {
   type InsertDocument,
   type AiInsightConfig,
   type InsertAiInsightConfig,
+  type ExposureSnapshot,
+  type InsertExposureSnapshot,
+  type Transaction,
+  type InsertTransaction,
+  type TransactionType,
 } from "@shared/schema";
 import { db } from "./db";
-import { eq, and, desc, asc, sql } from "drizzle-orm";
+import { eq, and, desc, asc, sql, gte, lte, isNull, isNotNull } from "drizzle-orm";
 
 // Interface for storage operations
 export interface IStorage {
@@ -76,6 +83,39 @@ export interface IStorage {
       utilization: number;
     }>;
   }>;
+
+  // Exposure Snapshot operations
+  listExposureSnapshots(filters: {
+    userId: string;
+    from?: string;
+    to?: string;
+    bankId?: string;
+    facilityId?: string;
+  }): Promise<Array<ExposureSnapshot & { bank?: Bank; facility?: Facility }>>;
+  addExposureSnapshots(snapshots: InsertExposureSnapshot[]): Promise<ExposureSnapshot[]>;
+
+  // Transaction operations
+  listTransactions(filters: {
+    userId: string;
+    from?: string;
+    to?: string;
+    bankId?: string;
+    facilityId?: string;
+    loanId?: string;
+    type?: TransactionType;
+    limit?: number;
+    offset?: number;
+  }): Promise<Array<Transaction & { bank: Bank; facility?: Facility; loan?: Loan }>>;
+  getTransactionCount(filters: {
+    userId: string;
+    from?: string;
+    to?: string;
+    bankId?: string;
+    facilityId?: string;
+    loanId?: string;
+    type?: TransactionType;
+  }): Promise<number>;
+  addTransaction(transaction: InsertTransaction): Promise<Transaction>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -378,6 +418,158 @@ export class DatabaseStorage implements IStorage {
       activeLoansCount: activeLoans.length,
       bankExposures,
     };
+  }
+
+  // Exposure Snapshot operations
+  async listExposureSnapshots(filters: {
+    userId: string;
+    from?: string;
+    to?: string;
+    bankId?: string;
+    facilityId?: string;
+  }): Promise<Array<ExposureSnapshot & { bank?: Bank; facility?: Facility }>> {
+    // Build dynamic where conditions
+    const conditions = [eq(exposureSnapshots.userId, filters.userId)];
+
+    if (filters.from) {
+      conditions.push(gte(exposureSnapshots.date, filters.from));
+    }
+
+    if (filters.to) {
+      conditions.push(lte(exposureSnapshots.date, filters.to));
+    }
+
+    if (filters.bankId) {
+      conditions.push(eq(exposureSnapshots.bankId, filters.bankId));
+    }
+
+    if (filters.facilityId) {
+      conditions.push(eq(exposureSnapshots.facilityId, filters.facilityId));
+    }
+
+    const results = await db
+      .select()
+      .from(exposureSnapshots)
+      .leftJoin(banks, eq(exposureSnapshots.bankId, banks.id))
+      .leftJoin(facilities, eq(exposureSnapshots.facilityId, facilities.id))
+      .where(and(...conditions))
+      .orderBy(desc(exposureSnapshots.date), asc(banks.name));
+
+    return results.map(result => ({
+      ...result.exposure_snapshots,
+      bank: result.banks || undefined,
+      facility: result.facilities || undefined,
+    }));
+  }
+
+  async addExposureSnapshots(snapshots: InsertExposureSnapshot[]): Promise<ExposureSnapshot[]> {
+    const results = await db.insert(exposureSnapshots).values(snapshots).returning();
+    return results;
+  }
+
+  // Transaction operations
+  async listTransactions(filters: {
+    userId: string;
+    from?: string;
+    to?: string;
+    bankId?: string;
+    facilityId?: string;
+    loanId?: string;
+    type?: TransactionType;
+    limit?: number;
+    offset?: number;
+  }): Promise<Array<Transaction & { bank: Bank; facility?: Facility; loan?: Loan }>> {
+    const conditions = [eq(transactions.userId, filters.userId)];
+
+    if (filters.from) {
+      conditions.push(gte(transactions.date, filters.from));
+    }
+
+    if (filters.to) {
+      conditions.push(lte(transactions.date, filters.to));
+    }
+
+    if (filters.bankId) {
+      conditions.push(eq(transactions.bankId, filters.bankId));
+    }
+
+    if (filters.facilityId) {
+      conditions.push(eq(transactions.facilityId, filters.facilityId));
+    }
+
+    if (filters.loanId) {
+      conditions.push(eq(transactions.loanId, filters.loanId));
+    }
+
+    if (filters.type) {
+      conditions.push(eq(transactions.type, filters.type));
+    }
+
+    const results = await db
+      .select()
+      .from(transactions)
+      .innerJoin(banks, eq(transactions.bankId, banks.id))
+      .leftJoin(facilities, eq(transactions.facilityId, facilities.id))
+      .leftJoin(loans, eq(transactions.loanId, loans.id))
+      .where(and(...conditions))
+      .orderBy(desc(transactions.date), desc(transactions.createdAt))
+      .limit(filters.limit || 50)
+      .offset(filters.offset || 0);
+
+    return results.map(result => ({
+      ...result.transactions,
+      bank: result.banks,
+      facility: result.facilities || undefined,
+      loan: result.loans || undefined,
+    }));
+  }
+
+  async getTransactionCount(filters: {
+    userId: string;
+    from?: string;
+    to?: string;
+    bankId?: string;
+    facilityId?: string;
+    loanId?: string;
+    type?: TransactionType;
+  }): Promise<number> {
+    const conditions = [eq(transactions.userId, filters.userId)];
+
+    if (filters.from) {
+      conditions.push(gte(transactions.date, filters.from));
+    }
+
+    if (filters.to) {
+      conditions.push(lte(transactions.date, filters.to));
+    }
+
+    if (filters.bankId) {
+      conditions.push(eq(transactions.bankId, filters.bankId));
+    }
+
+    if (filters.facilityId) {
+      conditions.push(eq(transactions.facilityId, filters.facilityId));
+    }
+
+    if (filters.loanId) {
+      conditions.push(eq(transactions.loanId, filters.loanId));
+    }
+
+    if (filters.type) {
+      conditions.push(eq(transactions.type, filters.type));
+    }
+
+    const [result] = await db
+      .select({ count: sql<number>`count(*)` })
+      .from(transactions)
+      .where(and(...conditions));
+
+    return result.count;
+  }
+
+  async addTransaction(transaction: InsertTransaction): Promise<Transaction> {
+    const [result] = await db.insert(transactions).values(transaction).returning();
+    return result;
   }
 }
 
