@@ -10,10 +10,43 @@ import {
   integer,
   boolean,
   date,
+  unique,
+  uniqueIndex,
+  pgEnum,
 } from "drizzle-orm/pg-core";
 import { relations } from "drizzle-orm";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
+
+// Enums
+export const transactionTypeEnum = pgEnum('transaction_type', [
+  'draw',
+  'repayment', 
+  'fee',
+  'interest',
+  'limit_change',
+  'other'
+]);
+
+export const facilityTypeEnum = pgEnum('facility_type', [
+  'revolving',
+  'term',
+  'bullet', 
+  'bridge',
+  'working_capital'
+]);
+
+export const collateralTypeEnum = pgEnum('collateral_type', [
+  'real_estate',
+  'liquid_stocks',
+  'other'
+]);
+
+export const loanStatusEnum = pgEnum('loan_status', [
+  'active',
+  'settled',
+  'overdue'
+]);
 
 // Session storage table.
 // (IMPORTANT) This table is mandatory for Replit Auth, don't drop it.
@@ -53,7 +86,7 @@ export const facilities = pgTable("facilities", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   bankId: varchar("bank_id").references(() => banks.id).notNull(),
   userId: varchar("user_id").references(() => users.id).notNull(),
-  facilityType: varchar("facility_type", { length: 50 }).notNull(), // 'revolving', 'term', 'bullet', 'bridge', 'working_capital'
+  facilityType: facilityTypeEnum("facility_type").notNull(),
   creditLimit: decimal("credit_limit", { precision: 15, scale: 2 }).notNull(),
   costOfFunding: decimal("cost_of_funding", { precision: 5, scale: 2 }).notNull(), // SIBOR + margin
   startDate: date("start_date").notNull(),
@@ -67,7 +100,7 @@ export const facilities = pgTable("facilities", {
 export const collateral = pgTable("collateral", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   userId: varchar("user_id").references(() => users.id).notNull(),
-  type: varchar("type", { length: 50 }).notNull(), // 'real_estate', 'liquid_stocks', 'other'
+  type: collateralTypeEnum("type").notNull(),
   name: varchar("name", { length: 200 }).notNull(),
   description: text("description"),
   currentValue: decimal("current_value", { precision: 15, scale: 2 }).notNull(),
@@ -91,7 +124,7 @@ export const loans = pgTable("loans", {
   siborRate: decimal("sibor_rate", { precision: 5, scale: 2 }).notNull(),
   bankRate: decimal("bank_rate", { precision: 5, scale: 2 }).notNull(),
   notes: text("notes"),
-  status: varchar("status", { length: 20 }).default('active'), // 'active', 'settled', 'overdue'
+  status: loanStatusEnum("status").default('active'),
   settledDate: date("settled_date"),
   settledAmount: decimal("settled_amount", { precision: 15, scale: 2 }),
   createdAt: timestamp("created_at").defaultNow(),
@@ -126,6 +159,52 @@ export const documents = pgTable("documents", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
+// Exposure Snapshots for tracking exposure over time
+export const exposureSnapshots = pgTable("exposure_snapshots", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").references(() => users.id).notNull(),
+  date: date("date").notNull(),
+  bankId: varchar("bank_id").references(() => banks.id), // nullable for total aggregation
+  facilityId: varchar("facility_id").references(() => facilities.id), // optional for facility-specific snapshots
+  outstanding: decimal("outstanding", { precision: 15, scale: 2 }).notNull(),
+  creditLimit: decimal("credit_limit", { precision: 15, scale: 2 }).notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
+}, (table) => [
+  // Prevent duplicate global totals (where both bankId and facilityId are NULL)
+  uniqueIndex("unique_global_exposure").on(table.userId, table.date).where(sql`${table.bankId} IS NULL AND ${table.facilityId} IS NULL`),
+  
+  // Prevent duplicate bank-level totals (where facilityId is NULL but bankId is not NULL)
+  uniqueIndex("unique_bank_exposure").on(table.userId, table.date, table.bankId).where(sql`${table.facilityId} IS NULL AND ${table.bankId} IS NOT NULL`),
+  
+  // Prevent duplicate facility-level snapshots (where both bankId and facilityId are not NULL)
+  uniqueIndex("unique_facility_exposure").on(table.userId, table.date, table.bankId, table.facilityId).where(sql`${table.bankId} IS NOT NULL AND ${table.facilityId} IS NOT NULL`),
+  
+  // Performance indexes for common queries
+  index("idx_exposure_user_date").on(table.userId, table.date),
+  index("idx_exposure_user_bank_date").on(table.userId, table.bankId, table.date),
+  index("idx_exposure_user_bank_facility_date").on(table.userId, table.bankId, table.facilityId, table.date),
+]);
+
+// Transaction History
+export const transactions = pgTable("transactions", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").references(() => users.id).notNull(),
+  date: date("date").notNull(),
+  bankId: varchar("bank_id").references(() => banks.id).notNull(),
+  facilityId: varchar("facility_id").references(() => facilities.id),
+  loanId: varchar("loan_id").references(() => loans.id),
+  type: transactionTypeEnum("type").notNull(),
+  amount: decimal("amount", { precision: 15, scale: 2 }).notNull(),
+  reference: varchar("reference", { length: 100 }),
+  notes: text("notes"),
+  createdAt: timestamp("created_at").defaultNow(),
+}, (table) => [
+  // Performance indexes for common queries
+  index("idx_transaction_user_date").on(table.userId, table.date),
+  index("idx_transaction_user_bank_date").on(table.userId, table.bankId, table.date),
+  index("idx_transaction_type_date").on(table.type, table.date),
+]);
+
 // Relations
 export const usersRelations = relations(users, ({ many, one }) => ({
   facilities: many(facilities),
@@ -133,10 +212,14 @@ export const usersRelations = relations(users, ({ many, one }) => ({
   collateral: many(collateral),
   documents: many(documents),
   aiInsightConfig: one(aiInsightConfig),
+  exposureSnapshots: many(exposureSnapshots),
+  transactions: many(transactions),
 }));
 
 export const banksRelations = relations(banks, ({ many }) => ({
   facilities: many(facilities),
+  exposureSnapshots: many(exposureSnapshots),
+  transactions: many(transactions),
 }));
 
 export const facilitiesRelations = relations(facilities, ({ one, many }) => ({
@@ -150,6 +233,8 @@ export const facilitiesRelations = relations(facilities, ({ one, many }) => ({
   }),
   loans: many(loans),
   documents: many(documents),
+  exposureSnapshots: many(exposureSnapshots),
+  transactions: many(transactions),
 }));
 
 export const loansRelations = relations(loans, ({ one, many }) => ({
@@ -162,6 +247,7 @@ export const loansRelations = relations(loans, ({ one, many }) => ({
     references: [users.id],
   }),
   documents: many(documents),
+  transactions: many(transactions),
 }));
 
 export const collateralRelations = relations(collateral, ({ one, many }) => ({
@@ -198,13 +284,162 @@ export const aiInsightConfigRelations = relations(aiInsightConfig, ({ one }) => 
   }),
 }));
 
-// Insert Schemas
+export const exposureSnapshotsRelations = relations(exposureSnapshots, ({ one }) => ({
+  user: one(users, {
+    fields: [exposureSnapshots.userId],
+    references: [users.id],
+  }),
+  bank: one(banks, {
+    fields: [exposureSnapshots.bankId],
+    references: [banks.id],
+  }),
+  facility: one(facilities, {
+    fields: [exposureSnapshots.facilityId],
+    references: [facilities.id],
+  }),
+}));
+
+export const transactionsRelations = relations(transactions, ({ one }) => ({
+  user: one(users, {
+    fields: [transactions.userId],
+    references: [users.id],
+  }),
+  bank: one(banks, {
+    fields: [transactions.bankId],
+    references: [banks.id],
+  }),
+  facility: one(facilities, {
+    fields: [transactions.facilityId],
+    references: [facilities.id],
+  }),
+  loan: one(loans, {
+    fields: [transactions.loanId],
+    references: [loans.id],
+  }),
+}));
+
+// Zod Enums for validation
+export const transactionTypeZodEnum = z.enum(['draw', 'repayment', 'fee', 'interest', 'limit_change', 'other']);
+export const facilityTypeZodEnum = z.enum(['revolving', 'term', 'bullet', 'bridge', 'working_capital']);
+export const collateralTypeZodEnum = z.enum(['real_estate', 'liquid_stocks', 'other']);
+export const loanStatusZodEnum = z.enum(['active', 'settled', 'overdue']);
+
+// Helper function to validate decimal strings
+const decimalString = (precision: number, scale: number) => 
+  z.string()
+    .refine((val) => !isNaN(Number(val)), "Must be a valid number")
+    .refine((val) => Number(val) >= 0, "Must be non-negative")
+    .refine((val) => {
+      const [integer, decimal] = val.split('.');
+      const integerLength = integer?.length || 0;
+      const decimalLength = decimal?.length || 0;
+      return integerLength <= (precision - scale) && decimalLength <= scale;
+    }, `Must have at most ${precision - scale} integer digits and ${scale} decimal places`);
+
+const positiveDecimalString = (precision: number, scale: number) => 
+  z.string()
+    .refine((val) => !isNaN(Number(val)), "Must be a valid number")
+    .refine((val) => Number(val) > 0, "Must be positive")
+    .refine((val) => {
+      const [integer, decimal] = val.split('.');
+      const integerLength = integer?.length || 0;
+      const decimalLength = decimal?.length || 0;
+      return integerLength <= (precision - scale) && decimalLength <= scale;
+    }, `Must have at most ${precision - scale} integer digits and ${scale} decimal places`);
+
+// Insert Schemas with enhanced validation
 export const insertBankSchema = createInsertSchema(banks).omit({ id: true, createdAt: true });
-export const insertFacilitySchema = createInsertSchema(facilities).omit({ id: true, createdAt: true });
-export const insertCollateralSchema = createInsertSchema(collateral).omit({ id: true, createdAt: true });
-export const insertLoanSchema = createInsertSchema(loans).omit({ id: true, createdAt: true });
-export const insertDocumentSchema = createInsertSchema(documents).omit({ id: true, createdAt: true });
-export const insertAiInsightConfigSchema = createInsertSchema(aiInsightConfig).omit({ id: true, updatedAt: true });
+
+export const insertFacilitySchema = createInsertSchema(facilities)
+  .omit({ id: true, createdAt: true })
+  .extend({
+    facilityType: facilityTypeZodEnum,
+    creditLimit: positiveDecimalString(15, 2),
+    costOfFunding: z.string()
+      .refine((val) => !isNaN(Number(val)), "Must be a valid number")
+      .refine((val) => Number(val) >= 0, "Must be non-negative")
+      .refine((val) => Number(val) <= 100, "Must be 100% or less"),
+    startDate: z.string().refine((val) => !isNaN(Date.parse(val)), "Must be a valid date"),
+    expiryDate: z.string().refine((val) => !isNaN(Date.parse(val)), "Must be a valid date"),
+  });
+
+export const insertCollateralSchema = createInsertSchema(collateral)
+  .omit({ id: true, createdAt: true })
+  .extend({
+    type: collateralTypeZodEnum,
+    currentValue: positiveDecimalString(15, 2),
+    valuationDate: z.string().refine((val) => !isNaN(Date.parse(val)), "Must be a valid date"),
+  });
+
+export const insertLoanSchema = createInsertSchema(loans)
+  .omit({ id: true, createdAt: true })
+  .extend({
+    amount: positiveDecimalString(15, 2),
+    siborRate: z.string()
+      .refine((val) => !isNaN(Number(val)), "Must be a valid number")
+      .refine((val) => Number(val) >= 0, "Must be non-negative")
+      .refine((val) => Number(val) <= 100, "Must be 100% or less"),
+    bankRate: z.string()
+      .refine((val) => !isNaN(Number(val)), "Must be a valid number")
+      .refine((val) => Number(val) >= 0, "Must be non-negative")
+      .refine((val) => Number(val) <= 100, "Must be 100% or less"),
+    status: loanStatusZodEnum.optional(),
+    settledAmount: z.string()
+      .refine((val) => !isNaN(Number(val)), "Must be a valid number")
+      .refine((val) => Number(val) >= 0, "Must be non-negative")
+      .optional(),
+    startDate: z.string().refine((val) => !isNaN(Date.parse(val)), "Must be a valid date"),
+    dueDate: z.string().refine((val) => !isNaN(Date.parse(val)), "Must be a valid date"),
+  });
+
+export const insertDocumentSchema = createInsertSchema(documents)
+  .omit({ id: true, createdAt: true })
+  .extend({
+    fileSize: z.number().int().positive("File size must be positive"),
+    version: z.number().int().positive("Version must be positive").optional(),
+  });
+
+export const insertAiInsightConfigSchema = createInsertSchema(aiInsightConfig)
+  .omit({ id: true, updatedAt: true })
+  .extend({
+    concentrationRiskThreshold: z.string()
+      .refine((val) => !isNaN(Number(val)), "Must be a valid number")
+      .refine((val) => Number(val) >= 0 && Number(val) <= 100, "Must be between 0 and 100")
+      .optional(),
+    ltvOutstandingThreshold: z.string()
+      .refine((val) => !isNaN(Number(val)), "Must be a valid number")
+      .refine((val) => Number(val) >= 0 && Number(val) <= 100, "Must be between 0 and 100")
+      .optional(),
+    ltvLimitThreshold: z.string()
+      .refine((val) => !isNaN(Number(val)), "Must be a valid number")
+      .refine((val) => Number(val) >= 0 && Number(val) <= 100, "Must be between 0 and 100")
+      .optional(),
+    cashFlowStrainThreshold: z.string()
+      .refine((val) => !isNaN(Number(val)), "Must be a valid number")
+      .refine((val) => Number(val) >= 0 && Number(val) <= 100, "Must be between 0 and 100")
+      .optional(),
+    rateDifferentialThreshold: z.string()
+      .refine((val) => !isNaN(Number(val)), "Must be a valid number")
+      .refine((val) => Number(val) >= 0, "Must be non-negative")
+      .optional(),
+    dueDateAlertDays: z.number().int().nonnegative("Must be non-negative").optional(),
+  });
+
+export const insertExposureSnapshotSchema = createInsertSchema(exposureSnapshots)
+  .omit({ id: true, createdAt: true })
+  .extend({
+    outstanding: decimalString(15, 2),
+    creditLimit: positiveDecimalString(15, 2),
+    date: z.string().refine((val) => !isNaN(Date.parse(val)), "Must be a valid date"),
+  });
+
+export const insertTransactionSchema = createInsertSchema(transactions)
+  .omit({ id: true, createdAt: true })
+  .extend({
+    type: transactionTypeZodEnum,
+    amount: decimalString(15, 2),
+    date: z.string().refine((val) => !isNaN(Date.parse(val)), "Must be a valid date"),
+  });
 
 // Types
 export type UpsertUser = typeof users.$inferInsert;
@@ -221,3 +456,13 @@ export type Document = typeof documents.$inferSelect;
 export type InsertDocument = z.infer<typeof insertDocumentSchema>;
 export type AiInsightConfig = typeof aiInsightConfig.$inferSelect;
 export type InsertAiInsightConfig = z.infer<typeof insertAiInsightConfigSchema>;
+export type ExposureSnapshot = typeof exposureSnapshots.$inferSelect;
+export type InsertExposureSnapshot = z.infer<typeof insertExposureSnapshotSchema>;
+export type Transaction = typeof transactions.$inferSelect;
+export type InsertTransaction = z.infer<typeof insertTransactionSchema>;
+
+// Export enum types for use in frontend
+export type TransactionType = z.infer<typeof transactionTypeZodEnum>;
+export type FacilityType = z.infer<typeof facilityTypeZodEnum>;
+export type CollateralType = z.infer<typeof collateralTypeZodEnum>;
+export type LoanStatus = z.infer<typeof loanStatusZodEnum>;
