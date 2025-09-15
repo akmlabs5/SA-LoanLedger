@@ -11,6 +11,7 @@ import Banks from "@/pages/banks";
 import BankDetail from "@/pages/bank-detail";
 import CollateralPage from "@/pages/collateral";
 import AIChatPage from "@/pages/ai-chat";
+import HistoryPage from "@/pages/history";
 import NotFound from "@/pages/not-found";
 
 function Router() {
@@ -27,6 +28,7 @@ function Router() {
           <Route path="/banks" component={Banks} />
           <Route path="/banks/:bankId" component={BankDetail} />
           <Route path="/collateral" component={CollateralPage} />
+          <Route path="/history" component={HistoryPage} />
           <Route path="/ai-chat" component={AIChatPage} />
         </AppLayout>
       )}
