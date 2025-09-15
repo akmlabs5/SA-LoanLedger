@@ -88,44 +88,47 @@ export default function AppLayout({ children }: AppLayoutProps) {
     <SidebarProvider>
       <Sidebar variant="inset" className="border-r border-border">
         <SidebarHeader className="border-b border-border">
-          <div className="flex items-center gap-2 px-2 py-2">
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-saudi text-white">
+          <div className="flex items-center gap-3 px-4 py-4">
+            <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-saudi text-white">
               <University className="h-4 w-4" />
             </div>
             <div className="flex flex-col">
-              <h1 className="text-sm font-semibold">Saudi Loan Manager</h1>
-              <p className="text-xs text-muted-foreground">Portfolio Management</p>
+              <h1 className="text-sm font-semibold tracking-tight">Saudi Loan Manager</h1>
+              <p className="text-xs text-muted-foreground font-normal">Portfolio Management</p>
             </div>
           </div>
         </SidebarHeader>
 
-        <SidebarContent className="px-2">
-          <div className="mb-4 mt-2">
+        <SidebarContent className="px-3">
+          <div className="mb-6 mt-4">
             <div className="relative">
-              <Search className="absolute left-2 h-4 w-4 text-muted-foreground top-1/2 -translate-y-1/2" />
+              <Search className="absolute left-3 h-4 w-4 text-muted-foreground top-1/2 -translate-y-1/2" />
               <Input 
                 placeholder="Search..." 
-                className="pl-8 h-9 bg-background/50 border-border"
+                className="pl-10 h-10 bg-background/50 border-border text-sm font-normal rounded-lg"
                 data-testid="input-search"
               />
             </div>
           </div>
 
           {navigation.map((group) => (
-            <SidebarGroup key={group.title}>
-              <SidebarGroupLabel>{group.title}</SidebarGroupLabel>
+            <SidebarGroup key={group.title} className="mb-6">
+              <SidebarGroupLabel className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-3 px-1">
+                {group.title}
+              </SidebarGroupLabel>
               <SidebarGroupContent>
-                <SidebarMenu>
+                <SidebarMenu className="space-y-1">
                   {group.items.map((item) => (
                     <SidebarMenuItem key={item.title}>
                       <SidebarMenuButton 
                         asChild 
                         isActive={location === item.url}
                         data-testid={`nav-${item.title.toLowerCase().replace(' ', '-')}`}
+                        className="h-10 px-3 font-medium text-sm hover:bg-accent/50 data-[state=open]:bg-accent/50 rounded-lg transition-all duration-200"
                       >
-                        <a href={item.url}>
+                        <a href={item.url} className="flex items-center gap-3">
                           <item.icon className="h-4 w-4" />
-                          <span>{item.title}</span>
+                          <span className="font-medium tracking-tight">{item.title}</span>
                         </a>
                       </SidebarMenuButton>
                     </SidebarMenuItem>
@@ -135,15 +138,21 @@ export default function AppLayout({ children }: AppLayoutProps) {
             </SidebarGroup>
           ))}
 
-          <SidebarGroup className="mt-auto">
-            <SidebarGroupLabel>System</SidebarGroupLabel>
+          <SidebarGroup className="mt-auto mb-6">
+            <SidebarGroupLabel className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-3 px-1">
+              System
+            </SidebarGroupLabel>
             <SidebarGroupContent>
-              <SidebarMenu>
+              <SidebarMenu className="space-y-1">
                 <SidebarMenuItem>
-                  <SidebarMenuButton asChild data-testid="nav-settings">
-                    <a href="/settings">
+                  <SidebarMenuButton 
+                    asChild 
+                    data-testid="nav-settings"
+                    className="h-10 px-3 font-medium text-sm hover:bg-accent/50 rounded-lg transition-all duration-200"
+                  >
+                    <a href="/settings" className="flex items-center gap-3">
                       <Settings className="h-4 w-4" />
-                      <span>Settings</span>
+                      <span className="font-medium tracking-tight">Settings</span>
                     </a>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
@@ -153,17 +162,17 @@ export default function AppLayout({ children }: AppLayoutProps) {
         </SidebarContent>
 
         <SidebarFooter className="border-t border-border">
-          <div className="flex items-center gap-2 p-2 rounded-lg hover:bg-accent hover:text-accent-foreground cursor-pointer">
-            <Avatar className="h-8 w-8">
-              <AvatarFallback className="bg-saudi text-white text-xs">
+          <div className="flex items-center gap-3 p-4 rounded-xl hover:bg-accent/50 hover:text-accent-foreground cursor-pointer transition-all duration-200">
+            <Avatar className="h-9 w-9">
+              <AvatarFallback className="bg-saudi text-white text-sm font-semibold">
                 {(user as any)?.firstName?.charAt(0) || (user as any)?.email?.charAt(0) || 'U'}
               </AvatarFallback>
             </Avatar>
             <div className="flex flex-col min-w-0">
-              <p className="text-sm font-medium truncate">
+              <p className="text-sm font-semibold truncate tracking-tight">
                 {(user as any)?.firstName} {(user as any)?.lastName}
               </p>
-              <p className="text-xs text-muted-foreground truncate">
+              <p className="text-xs text-muted-foreground truncate font-normal">
                 {(user as any)?.email}
               </p>
             </div>
