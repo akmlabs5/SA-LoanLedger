@@ -166,11 +166,6 @@ export default function Banks() {
                       <tr key={exposure.bankId} className="hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
                         <td className="py-4 px-2">
                           <div className="flex items-center space-x-3">
-                            <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg flex items-center justify-center">
-                              <span className="text-white font-bold text-xs">
-                                {exposure.bankName.substring(0, 3).toUpperCase()}
-                              </span>
-                            </div>
                             <span className="font-medium text-gray-900 dark:text-gray-100">
                               {exposure.bankName}
                             </span>
@@ -242,11 +237,6 @@ export default function Banks() {
                         <tr key={exposure.bankId} className="hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
                           <td className="py-4 px-2">
                             <div className="flex items-center space-x-3">
-                              <div className="w-8 h-8 bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-lg flex items-center justify-center">
-                                <span className="text-white font-bold text-xs">
-                                  {exposure.bankName.substring(0, 3).toUpperCase()}
-                                </span>
-                              </div>
                               <span className="font-medium text-gray-900 dark:text-gray-100">
                                 {exposure.bankName}
                               </span>
