@@ -526,9 +526,6 @@ export default function Dashboard() {
                       >
                       <td className="py-4 px-6">
                         <div className="flex items-center space-x-4">
-                          <div className="w-10 h-10 bg-gradient-to-br from-indigo-50 to-indigo-100 dark:from-indigo-900/20 dark:to-indigo-800/20 border border-indigo-200 dark:border-indigo-700 rounded-xl flex items-center justify-center">
-                            <Building className="h-5 w-5 text-indigo-600 dark:text-indigo-400" />
-                          </div>
                           <div>
                             <p className="font-semibold text-gray-900 dark:text-gray-100" data-testid={`text-bank-name-${exposure.bankId}`}>
                               {exposure.bankName}
