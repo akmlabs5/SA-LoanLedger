@@ -301,15 +301,10 @@ export default function Banks() {
                 const hasCredentials = bankCredentials.some(cred => cred.bankId === bank.id);
                 const isConnected = bankCredentials.find(cred => cred.bankId === bank.id)?.isConnected || false;
                 const hasFacility = (facilities as any[])?.some((f: any) => f.bankId === bank.id);
-                
+
                 return (
-                  <div key={bank.id} className="flex items-center justify-between p-4 border border-gray-200 dark:border-gray-700 rounded-xl hover:shadow-md transition-all duration-200">
+                  <div key={bank.id} className="flex items-center justify-between p-6 bg-gradient-to-r from-white to-gray-50 dark:from-gray-800 dark:to-gray-750 rounded-xl border border-gray-200 dark:border-gray-700 hover:shadow-lg hover:border-blue-300 dark:hover:border-blue-600 transition-all duration-300 group">
                     <div className="flex items-center space-x-4">
-                      <div className="w-12 h-12 bg-gradient-to-br from-indigo-500 to-indigo-600 rounded-xl flex items-center justify-center shadow-sm">
-                        <span className="text-white font-bold">
-                          {bank.code.substring(0, 3)}
-                        </span>
-                      </div>
                       <div>
                         <h4 className="font-semibold text-gray-900 dark:text-gray-100">
                           {bank.name}
@@ -329,7 +324,7 @@ export default function Banks() {
                         </div>
                       </div>
                     </div>
-                    
+
                     <div className="flex items-center space-x-2">
                       <Link href={`/banks/${bank.id}`}>
                         <Button
@@ -370,7 +365,7 @@ export default function Banks() {
                 );
               })}
             </div>
-            
+
             {/* Security Notice */}
             <div className="mt-6 p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-xl">
               <div className="flex items-start space-x-3">
@@ -406,7 +401,7 @@ export default function Banks() {
               </div>
             </CardContent>
           </Card>
-          
+
           <Card className="border-0 shadow-lg bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-900/20 dark:to-blue-800/20">
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
@@ -423,7 +418,7 @@ export default function Banks() {
               </div>
             </CardContent>
           </Card>
-          
+
           <Card className="border-0 shadow-lg bg-gradient-to-br from-emerald-50 to-emerald-100 dark:from-emerald-900/20 dark:to-emerald-800/20">
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
