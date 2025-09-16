@@ -165,11 +165,9 @@ export default function Banks() {
                     {bankExposures.map((exposure: any) => (
                       <tr key={exposure.bankId} className="hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
                         <td className="py-4 px-2">
-                          <div className="flex items-center space-x-3">
-                            <span className="font-medium text-gray-900 dark:text-gray-100">
-                              {exposure.bankName}
-                            </span>
-                          </div>
+                          <span className="font-medium text-gray-900 dark:text-gray-100">
+                            {exposure.bankName}
+                          </span>
                         </td>
                         <td className="py-4 px-2 text-right font-bold text-red-600 dark:text-red-400">
                           {formatCurrency(exposure.outstanding)}
@@ -236,11 +234,9 @@ export default function Banks() {
                       return (
                         <tr key={exposure.bankId} className="hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
                           <td className="py-4 px-2">
-                            <div className="flex items-center space-x-3">
-                              <span className="font-medium text-gray-900 dark:text-gray-100">
-                                {exposure.bankName}
-                              </span>
-                            </div>
+                            <span className="font-medium text-gray-900 dark:text-gray-100">
+                              {exposure.bankName}
+                            </span>
                           </td>
                           <td className="py-4 px-2 text-right font-bold text-emerald-600 dark:text-emerald-400">
                             {formatCurrency(available)}
