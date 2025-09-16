@@ -166,11 +166,7 @@ export default function Dashboard() {
                         data-testid={`option-bank-${exposure.bankId}`}
                       >
                         <div className="flex items-center space-x-2">
-                          <div className="w-6 h-6 bg-gradient-to-br from-indigo-500 to-indigo-600 rounded-lg flex items-center justify-center">
-                            <span className="text-white font-bold text-xs">
-                              {exposure.bankName.charAt(0)}
-                            </span>
-                          </div>
+                          <Building className="h-4 w-4 text-indigo-500" />
                           <span>{exposure.bankName}</span>
                         </div>
                       </SelectItem>
@@ -530,10 +526,8 @@ export default function Dashboard() {
                       >
                       <td className="py-4 px-6">
                         <div className="flex items-center space-x-4">
-                          <div className="w-10 h-10 bg-gradient-to-br from-indigo-500 to-indigo-600 rounded-xl flex items-center justify-center shadow-sm">
-                            <span className="text-white font-bold text-sm">
-                              {exposure.bankName.charAt(0)}
-                            </span>
+                          <div className="w-10 h-10 bg-gradient-to-br from-indigo-50 to-indigo-100 dark:from-indigo-900/20 dark:to-indigo-800/20 border border-indigo-200 dark:border-indigo-700 rounded-xl flex items-center justify-center">
+                            <Building className="h-5 w-5 text-indigo-600 dark:text-indigo-400" />
                           </div>
                           <div>
                             <p className="font-semibold text-gray-900 dark:text-gray-100" data-testid={`text-bank-name-${exposure.bankId}`}>
