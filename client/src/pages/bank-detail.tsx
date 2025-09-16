@@ -34,22 +34,22 @@ export default function BankDetail() {
   const { isAuthenticated } = useAuth();
   const { toast } = useToast();
 
-  const { data: banks } = useQuery({
+  const { data: banks, isLoading: banksLoading } = useQuery({
     queryKey: ["/api/banks"],
     enabled: isAuthenticated,
   });
 
-  const { data: facilities } = useQuery({
+  const { data: facilities, isLoading: facilitiesLoading } = useQuery({
     queryKey: ["/api/facilities"],
     enabled: isAuthenticated,
   });
 
-  const { data: portfolioSummary } = useQuery({
+  const { data: portfolioSummary, isLoading: portfolioLoading } = useQuery({
     queryKey: ["/api/dashboard/portfolio"],
     enabled: isAuthenticated,
   });
 
-  const { data: loans } = useQuery({
+  const { data: loans, isLoading: loansLoading } = useQuery({
     queryKey: ["/api/loans"],
     enabled: isAuthenticated,
   });
@@ -60,7 +60,21 @@ export default function BankDetail() {
   const bankExposure = (portfolioSummary as PortfolioSummary)?.bankExposures?.find(exp => exp.bankId === bankId);
   const bankLoans = (loans as any[])?.filter((l: any) => l.facility?.bankId === bankId) || [];
 
-  if (!bank) {
+  // Show loading state while data is being fetched
+  if (banksLoading || facilitiesLoading || portfolioLoading || loansLoading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-gray-100 dark:from-gray-900 dark:to-slate-900 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-indigo-600 mx-auto mb-4"></div>
+          <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">Loading Bank Details</h2>
+          <p className="text-gray-600 dark:text-gray-400">Please wait while we fetch your bank information...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Only show "not found" after data has loaded
+  if (!banksLoading && !bank) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-50 to-gray-100 dark:from-gray-900 dark:to-slate-900 flex items-center justify-center">
         <div className="text-center">
