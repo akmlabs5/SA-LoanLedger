@@ -16,20 +16,22 @@ import { SiborRate } from "@shared/types";
 import { z } from "zod";
 import { AlertCircle, DollarSign } from "lucide-react";
 
-const loanFormSchema = insertLoanSchema.extend({
-  facilityId: z.string().min(1, "Please select a facility"),
-  creditLineId: z.string().optional(),
-  referenceNumber: z.string().min(1, "Reference number is required"),
-  amount: z.string().min(1, "Amount is required").refine((val) => {
-    const amount = parseFloat(val);
-    return amount > 0;
-  }, "Amount must be greater than 0"),
-  startDate: z.string().min(1, "Start date is required"),
-  dueDate: z.string().min(1, "Due date is required"),
-  chargesDueDate: z.string().optional(),
-  siborRate: z.string().min(1, "SIBOR rate is required"),
-  notes: z.string().optional(),
-});
+const loanFormSchema = insertLoanSchema
+  .omit({ userId: true, bankRate: true }) // Exclude fields that aren't user inputs
+  .extend({
+    facilityId: z.string().min(1, "Please select a facility"),
+    creditLineId: z.string().optional(),
+    referenceNumber: z.string().min(1, "Reference number is required"),
+    amount: z.string().min(1, "Amount is required").refine((val) => {
+      const amount = parseFloat(val);
+      return amount > 0;
+    }, "Amount must be greater than 0"),
+    startDate: z.string().min(1, "Start date is required"),
+    dueDate: z.string().min(1, "Due date is required"),
+    chargesDueDate: z.string().optional(),
+    siborRate: z.string().min(1, "SIBOR rate is required"),
+    notes: z.string().optional(),
+  });
 
 type LoanFormData = z.infer<typeof loanFormSchema>;
 
@@ -143,8 +145,6 @@ export default function LoanForm({ onSuccess, onCancel }: LoanFormProps) {
   });
 
   const onSubmit = (data: LoanFormData) => {
-    console.log("🚀 Form submitted with data:", data);
-    console.log("🔍 Form errors:", form.formState.errors);
     createLoanMutation.mutate(data);
   };
 
@@ -504,12 +504,6 @@ export default function LoanForm({ onSuccess, onCancel }: LoanFormProps) {
                 disabled={createLoanMutation.isPending}
                 className="bg-primary text-primary-foreground hover:bg-primary/90"
                 data-testid="button-create-loan"
-                onClick={(e) => {
-                  console.log("🔥 Button clicked!");
-                  console.log("🔍 Form state:", form.formState);
-                  console.log("🔍 Form values:", form.getValues());
-                  console.log("🔍 Form errors:", form.formState.errors);
-                }}
               >
                 {createLoanMutation.isPending ? "Creating..." : "Create Loan"}
               </Button>
