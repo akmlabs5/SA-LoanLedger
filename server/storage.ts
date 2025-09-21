@@ -11,6 +11,7 @@ import {
   aiInsightConfig,
   exposureSnapshots,
   transactions,
+  auditLogs,
   type User,
   type UpsertUser,
   type Bank,
@@ -36,6 +37,11 @@ import {
   type TransactionType,
   type CollateralAssignment,
   type InsertCollateralAssignment,
+  type AuditLog,
+  type InsertAuditLog,
+  type PaymentRequest,
+  type SettlementRequest,
+  type RevolveRequest,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, desc, asc, sql, gte, lte, isNull, isNotNull } from "drizzle-orm";
@@ -89,10 +95,20 @@ export interface IStorage {
   getUserLoans(userId: string): Promise<Loan[]>;
   getActiveLoansByUser(userId: string): Promise<(Loan & { creditLine: CreditLine & { facility: Facility & { bank: Bank } } })[]>;
   getSettledLoansByUser(userId: string): Promise<(Loan & { creditLine: CreditLine & { facility: Facility & { bank: Bank } } })[]>;
+  getLoanById(loanId: string): Promise<Loan | undefined>;
   createLoan(loan: InsertLoan): Promise<Loan>;
-  updateLoan(loanId: string, loan: Partial<InsertLoan>): Promise<Loan>;
-  settleLoan(loanId: string, settledAmount: number): Promise<Loan>;
-  deleteLoan(loanId: string): Promise<void>;
+  updateLoan(loanId: string, loan: Partial<InsertLoan>, userId: string, reason?: string): Promise<Loan>;
+  deleteLoan(loanId: string, userId: string, reason?: string): Promise<void>;
+  
+  // Payment and settlement operations
+  processPayment(loanId: string, payment: PaymentRequest, userId: string): Promise<{ loan: Loan; transactions: Transaction[] }>;
+  settleLoan(loanId: string, settlement: SettlementRequest, userId: string): Promise<{ loan: Loan; transactions: Transaction[] }>;
+  revolveLoan(loanId: string, revolve: RevolveRequest, userId: string): Promise<{ oldLoan: Loan; newLoan: Loan; transactions: Transaction[] }>;
+  
+  // Ledger operations
+  getLoanLedger(loanId: string): Promise<Transaction[]>;
+  calculateLoanBalance(loanId: string): Promise<{ principal: number; interest: number; fees: number; total: number }>;
+  accrueInterest(loanId: string, toDate: string, userId: string): Promise<Transaction[]>;
   
   // Document operations
   createDocument(document: InsertDocument): Promise<Document>;
@@ -1354,10 +1370,177 @@ export class MemoryStorage implements IStorage {
       ...transaction,
       id: this.generateId(),
       createdAt: new Date(),
-      updatedAt: new Date(),
     };
     this.transactions.set(newTransaction.id, newTransaction);
     return newTransaction;
+  }
+
+  // New methods for loan lifecycle management
+  async getLoanById(loanId: string): Promise<Loan | undefined> {
+    return this.loans.get(loanId);
+  }
+
+  async createTransaction(transaction: InsertTransaction, userId: string): Promise<Transaction> {
+    const newTransaction: Transaction = {
+      ...transaction,
+      id: this.generateId(),
+      createdBy: userId,
+      createdAt: new Date(),
+    };
+    this.transactions.set(newTransaction.id, newTransaction);
+    return newTransaction;
+  }
+
+  async createAuditLog(auditLog: InsertAuditLog): Promise<AuditLog> {
+    const newAuditLog: AuditLog = {
+      ...auditLog,
+      id: this.generateId(),
+      createdAt: new Date(),
+    };
+    // For memory storage, we'll just log audit events
+    console.log(`🔍 AUDIT: ${auditLog.action} on ${auditLog.entityType}:${auditLog.entityId} by ${auditLog.userId}`);
+    return newAuditLog;
+  }
+
+  async getEntityAuditTrail(entityType: string, entityId: string): Promise<AuditLog[]> {
+    // For memory storage, return empty array
+    return [];
+  }
+
+  async processPayment(loanId: string, payment: PaymentRequest, userId: string): Promise<{ loan: Loan; transactions: Transaction[] }> {
+    const loan = this.loans.get(loanId);
+    if (!loan) throw new Error('Loan not found');
+
+    // Simple payment processing for memory storage
+    const paymentTransaction: Transaction = {
+      id: this.generateId(),
+      userId,
+      loanId,
+      facilityId: loan.facilityId,
+      bankId: '', // We'll need to get this from facility
+      type: 'repayment',
+      amount: payment.amount,
+      date: payment.date,
+      memo: payment.memo || 'Payment processed',
+      createdBy: userId,
+      createdAt: new Date(),
+      reference: null,
+      notes: null,
+      allocation: null,
+      idempotencyKey: payment.idempotencyKey || null,
+    };
+
+    this.transactions.set(paymentTransaction.id, paymentTransaction);
+
+    return { loan, transactions: [paymentTransaction] };
+  }
+
+  async settleLoan(loanId: string, settlement: SettlementRequest, userId: string): Promise<{ loan: Loan; transactions: Transaction[] }> {
+    const loan = this.loans.get(loanId);
+    if (!loan) throw new Error('Loan not found');
+
+    // Update loan status to settled
+    const updatedLoan: Loan = {
+      ...loan,
+      status: 'settled',
+      settledDate: settlement.date,
+      settledAmount: settlement.amount || loan.amount,
+      updatedAt: new Date(),
+    };
+    
+    this.loans.set(loanId, updatedLoan);
+
+    const settlementTransaction: Transaction = {
+      id: this.generateId(),
+      userId,
+      loanId,
+      facilityId: loan.facilityId,
+      bankId: '',
+      type: 'repayment',
+      amount: settlement.amount || loan.amount,
+      date: settlement.date,
+      memo: settlement.memo || 'Loan settled',
+      createdBy: userId,
+      createdAt: new Date(),
+      reference: null,
+      notes: null,
+      allocation: null,
+      idempotencyKey: null,
+    };
+
+    this.transactions.set(settlementTransaction.id, settlementTransaction);
+
+    return { loan: updatedLoan, transactions: [settlementTransaction] };
+  }
+
+  async revolveLoan(loanId: string, revolve: RevolveRequest, userId: string): Promise<{ oldLoan: Loan; newLoan: Loan; transactions: Transaction[] }> {
+    const oldLoan = this.loans.get(loanId);
+    if (!oldLoan) throw new Error('Loan not found');
+
+    // Mark old loan as settled
+    const settledLoan: Loan = {
+      ...oldLoan,
+      status: 'settled',
+      settledDate: new Date().toISOString().split('T')[0],
+      updatedAt: new Date(),
+    };
+    this.loans.set(loanId, settledLoan);
+
+    // Create new loan with updated terms
+    const newLoan: Loan = {
+      ...oldLoan,
+      id: this.generateId(),
+      parentLoanId: loanId,
+      cycleNumber: (oldLoan.cycleNumber || 1) + 1,
+      dueDate: revolve.dueDate,
+      siborTermMonths: revolve.siborTermMonths,
+      margin: revolve.margin,
+      status: 'active',
+      settledDate: null,
+      settledAmount: null,
+      lastAccrualDate: new Date().toISOString().split('T')[0],
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
+    this.loans.set(newLoan.id, newLoan);
+
+    return { oldLoan: settledLoan, newLoan, transactions: [] };
+  }
+
+  async getLoanLedger(loanId: string): Promise<Transaction[]> {
+    return Array.from(this.transactions.values()).filter(t => t.loanId === loanId);
+  }
+
+  async calculateLoanBalance(loanId: string): Promise<{ principal: number; interest: number; fees: number; total: number }> {
+    const loan = this.loans.get(loanId);
+    if (!loan) throw new Error('Loan not found');
+
+    const loanTransactions = Array.from(this.transactions.values()).filter(t => t.loanId === loanId);
+    
+    let principal = Number(loan.amount);
+    let interest = 0;
+    let fees = 0;
+
+    // Simple balance calculation for memory storage
+    loanTransactions.forEach(transaction => {
+      const amount = Number(transaction.amount);
+      if (transaction.type === 'repayment') {
+        principal -= amount;
+      } else if (transaction.type === 'interest') {
+        interest += amount;
+      } else if (transaction.type === 'fee') {
+        fees += amount;
+      }
+    });
+
+    const total = Math.max(0, principal + interest + fees);
+
+    return { principal: Math.max(0, principal), interest, fees, total };
+  }
+
+  async accrueInterest(loanId: string, toDate: string, userId: string): Promise<Transaction[]> {
+    // Simple interest accrual for memory storage
+    return [];
   }
 }
 

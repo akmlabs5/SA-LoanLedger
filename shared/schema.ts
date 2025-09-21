@@ -202,7 +202,7 @@ export const loans = pgTable("loans", {
   facilityId: varchar("facility_id").references(() => facilities.id, { onDelete: "restrict" }).notNull(),
   creditLineId: varchar("credit_line_id").references(() => creditLines.id, { onDelete: "restrict" }),
   userId: varchar("user_id").references(() => users.id).notNull(),
-  parentLoanId: varchar("parent_loan_id").references(() => loans.id, { onDelete: "restrict" }), // For revolving loans
+  parentLoanId: varchar("parent_loan_id"), // For revolving loans - forward reference
   cycleNumber: integer("cycle_number").default(1), // Track loan cycle for revolving facilities
   referenceNumber: varchar("reference_number", { length: 50 }).notNull(),
   amount: decimal("amount", { precision: 15, scale: 2 }).notNull(),
