@@ -751,11 +751,23 @@ export default function BankDetail() {
             {/* Active Loans */}
             <Card className="border-0 shadow-lg bg-white/50 dark:bg-gray-800/50 backdrop-blur-sm">
               <CardHeader>
-                <CardTitle className="text-xl font-semibold flex items-center space-x-2">
-                  <FileText className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
-                  <span>Active Loans</span>
-                </CardTitle>
-                <p className="text-sm text-gray-600 dark:text-gray-400">Current loan drawdowns from this bank</p>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <CardTitle className="text-xl font-semibold flex items-center space-x-2">
+                      <FileText className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
+                      <span>Active Loans</span>
+                    </CardTitle>
+                    <p className="text-sm text-gray-600 dark:text-gray-400">Current loan drawdowns from this bank</p>
+                  </div>
+                  <Button 
+                    onClick={() => setIsLoanDialogOpen(true)}
+                    className="bg-gradient-to-r from-emerald-600 to-blue-600 hover:from-emerald-700 hover:to-blue-700 text-white shadow-lg"
+                    data-testid="button-add-loan-header"
+                  >
+                    <Plus className="h-4 w-4 mr-2" />
+                    Add Loan
+                  </Button>
+                </div>
               </CardHeader>
               <CardContent>
                 {bankLoans.length === 0 ? (
