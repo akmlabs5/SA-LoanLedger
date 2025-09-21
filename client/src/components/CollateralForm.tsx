@@ -88,16 +88,16 @@ export default function CollateralForm({ collateral, onSuccess, onCancel }: Coll
       description: collateral?.description || "",
       valuationSource: collateral?.valuationSource || "",
       notes: collateral?.notes || "",
-      facilityId: currentAssignment?.facilityId || "",
-      creditLineId: currentAssignment?.creditLineId || "",
+      facilityId: currentAssignment?.facilityId || "no-assignment",
+      creditLineId: currentAssignment?.creditLineId || "entire-facility",
     },
   });
 
   // Update form when assignment data loads
   useEffect(() => {
     if (currentAssignment && isEditing) {
-      form.setValue("facilityId", currentAssignment.facilityId || "");
-      form.setValue("creditLineId", currentAssignment.creditLineId || "");
+      form.setValue("facilityId", currentAssignment.facilityId || "no-assignment");
+      form.setValue("creditLineId", currentAssignment.creditLineId || "entire-facility");
     }
   }, [currentAssignment, isEditing, form]);
 
@@ -125,14 +125,14 @@ export default function CollateralForm({ collateral, onSuccess, onCancel }: Coll
 
       // Handle collateral assignment changes
       const hasCurrentAssignment = !!currentAssignment?.facilityId;
-      const hasNewAssignment = !!data.facilityId;
+      const hasNewAssignment = data.facilityId && data.facilityId !== "no-assignment";
       
       if (hasNewAssignment) {
         // Create or update assignment
         const assignmentData = {
           collateralId,
           facilityId: data.facilityId,
-          creditLineId: data.creditLineId || null,
+          creditLineId: data.creditLineId && data.creditLineId !== "entire-facility" ? data.creditLineId : null,
         };
         await apiRequest("PUT", `/api/collateral-assignments`, assignmentData);
       } else if (hasCurrentAssignment && !hasNewAssignment) {
@@ -186,16 +186,17 @@ export default function CollateralForm({ collateral, onSuccess, onCancel }: Coll
   };
 
   // Filter credit lines based on selected facility
+  const watchedFacilityId = form.watch("facilityId");
   const availableCreditLines = creditLines?.filter(cl => 
-    cl.facilityId === form.watch("facilityId")
+    cl.facilityId === watchedFacilityId && watchedFacilityId !== "no-assignment"
   ) || [];
 
   // Get selected facility info
-  const selectedFacility = facilities?.find(f => f.id === form.watch("facilityId"));
+  const selectedFacility = facilities?.find(f => f.id === watchedFacilityId);
 
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto" data-testid="dialog-collateral-form">
+      <DialogContent className="max-w-4xl w-[90vw] max-h-[90vh] overflow-y-auto" data-testid="dialog-collateral-form">
         <DialogHeader>
           <DialogTitle>{isEditing ? 'Edit Collateral Asset' : 'Add Collateral Asset'}</DialogTitle>
         </DialogHeader>
@@ -396,7 +397,7 @@ export default function CollateralForm({ collateral, onSuccess, onCancel }: Coll
                         onValueChange={(value) => {
                           field.onChange(value);
                           // Clear credit line when facility changes
-                          form.setValue("creditLineId", "");
+                          form.setValue("creditLineId", "entire-facility");
                         }} 
                         value={field.value}
                       >
@@ -406,7 +407,7 @@ export default function CollateralForm({ collateral, onSuccess, onCancel }: Coll
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          <SelectItem value="">No Assignment</SelectItem>
+                          <SelectItem value="no-assignment">No Assignment</SelectItem>
                           {facilities?.map((facility) => (
                             <SelectItem key={facility.id} value={facility.id}>
                               {facility.bank.name} - {facility.facilityType} ({parseFloat(facility.creditLimit).toLocaleString()} SAR)
@@ -437,7 +438,7 @@ export default function CollateralForm({ collateral, onSuccess, onCancel }: Coll
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
-                            <SelectItem value="">Entire Facility</SelectItem>
+                            <SelectItem value="entire-facility">Entire Facility</SelectItem>
                             {availableCreditLines.map((creditLine) => (
                               <SelectItem key={creditLine.id} value={creditLine.id}>
                                 {creditLine.name} ({parseFloat(creditLine.creditLimit).toLocaleString()} SAR)
