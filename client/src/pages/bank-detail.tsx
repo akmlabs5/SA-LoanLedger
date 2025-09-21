@@ -42,8 +42,20 @@ import {
   Trash2,
   Star,
   User,
-  Gem
+  Gem,
+  MoreVertical,
+  Receipt,
+  RotateCcw,
+  CheckSquare,
+  History
 } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+  DropdownMenuSeparator,
+} from "@/components/ui/dropdown-menu";
 import { Link } from "wouter";
 import { PortfolioSummary } from "@shared/types";
 import BankContactsSection from "@/components/BankContactsSection";
@@ -766,9 +778,9 @@ export default function BankDetail() {
                       const urgency = daysUntilDue <= 7 ? 'critical' : daysUntilDue <= 15 ? 'warning' : 'normal';
                       
                       return (
-                        <div key={loan.id} className="p-4 border border-gray-200 dark:border-gray-700 rounded-xl">
+                        <div key={loan.id} className="p-4 border border-gray-200 dark:border-gray-700 rounded-xl bg-white dark:bg-gray-800/50 hover:shadow-md transition-shadow">
                           <div className="flex items-center justify-between mb-2">
-                            <div>
+                            <div className="flex-1">
                               <h5 className="font-semibold text-gray-900 dark:text-gray-100">
                                 {loan.referenceNumber}
                               </h5>
@@ -776,17 +788,66 @@ export default function BankDetail() {
                                 Due: {new Date(loan.dueDate).toLocaleDateString()}
                               </p>
                             </div>
-                            <div className="text-right">
-                              <p className="font-bold text-gray-900 dark:text-gray-100">
-                                {formatCurrency(parseFloat(loan.amount))}
-                              </p>
-                              <Badge className={
-                                urgency === 'critical' ? 'bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-400' :
-                                urgency === 'warning' ? 'bg-amber-100 text-amber-800 dark:bg-amber-900/20 dark:text-amber-400' :
-                                'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/20 dark:text-emerald-400'
-                              }>
-                                {daysUntilDue > 0 ? `${daysUntilDue} days` : 'Overdue'}
-                              </Badge>
+                            <div className="flex items-center space-x-3">
+                              <div className="text-right">
+                                <p className="font-bold text-gray-900 dark:text-gray-100">
+                                  {formatCurrency(parseFloat(loan.amount))}
+                                </p>
+                                <Badge className={
+                                  urgency === 'critical' ? 'bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-400' :
+                                  urgency === 'warning' ? 'bg-amber-100 text-amber-800 dark:bg-amber-900/20 dark:text-amber-400' :
+                                  'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/20 dark:text-emerald-400'
+                                }>
+                                  {daysUntilDue > 0 ? `${daysUntilDue} days` : 'Overdue'}
+                                </Badge>
+                              </div>
+                              
+                              {/* Loan Actions Dropdown */}
+                              <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    className="h-8 w-8 p-0"
+                                    data-testid={`button-loan-actions-${loan.id}`}
+                                  >
+                                    <MoreVertical className="h-4 w-4" />
+                                  </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="end" className="w-48">
+                                  <DropdownMenuItem onClick={() => {/* TODO: Open edit dialog */}} data-testid={`button-edit-loan-${loan.id}`}>
+                                    <Edit className="mr-2 h-4 w-4" />
+                                    Edit Details
+                                  </DropdownMenuItem>
+                                  <DropdownMenuItem onClick={() => {/* TODO: Open payment dialog */}} data-testid={`button-repay-loan-${loan.id}`}>
+                                    <Receipt className="mr-2 h-4 w-4" />
+                                    Make Payment
+                                  </DropdownMenuItem>
+                                  <DropdownMenuSeparator />
+                                  <DropdownMenuItem onClick={() => {/* TODO: Open settle dialog */}} data-testid={`button-settle-loan-${loan.id}`}>
+                                    <CheckSquare className="mr-2 h-4 w-4" />
+                                    Settle Loan
+                                  </DropdownMenuItem>
+                                  <DropdownMenuItem onClick={() => {/* TODO: Open revolve dialog */}} data-testid={`button-revolve-loan-${loan.id}`}>
+                                    <RotateCcw className="mr-2 h-4 w-4" />
+                                    Revolve Loan
+                                  </DropdownMenuItem>
+                                  <DropdownMenuSeparator />
+                                  <DropdownMenuItem onClick={() => {/* TODO: Open ledger view */}} data-testid={`button-ledger-loan-${loan.id}`}>
+                                    <History className="mr-2 h-4 w-4" />
+                                    View Ledger
+                                  </DropdownMenuItem>
+                                  <DropdownMenuSeparator />
+                                  <DropdownMenuItem 
+                                    onClick={() => {/* TODO: Cancel loan */}} 
+                                    className="text-red-600 dark:text-red-400 focus:text-red-600 dark:focus:text-red-400"
+                                    data-testid={`button-cancel-loan-${loan.id}`}
+                                  >
+                                    <Trash2 className="mr-2 h-4 w-4" />
+                                    Cancel Loan
+                                  </DropdownMenuItem>
+                                </DropdownMenuContent>
+                              </DropdownMenu>
                             </div>
                           </div>
                           <div className="text-sm text-gray-600 dark:text-gray-400">
