@@ -79,6 +79,7 @@ export interface IStorage {
   createLoan(loan: InsertLoan): Promise<Loan>;
   updateLoan(loanId: string, loan: Partial<InsertLoan>): Promise<Loan>;
   settleLoan(loanId: string, settledAmount: number): Promise<Loan>;
+  deleteLoan(loanId: string): Promise<void>;
   
   // Document operations
   createDocument(document: InsertDocument): Promise<Document>;
@@ -444,6 +445,16 @@ export class DatabaseStorage implements IStorage {
       .where(eq(loans.id, loanId))
       .returning();
     return settledLoan;
+  }
+
+  async deleteLoan(loanId: string): Promise<void> {
+    await db
+      .update(loans)
+      .set({
+        status: 'cancelled',
+        updatedAt: new Date()
+      })
+      .where(eq(loans.id, loanId));
   }
 
   // Document operations

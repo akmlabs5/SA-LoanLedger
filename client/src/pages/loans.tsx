@@ -38,7 +38,8 @@ import {
   Eye,
   MoreVertical,
   Download,
-  RefreshCw
+  RefreshCw,
+  Trash2
 } from "lucide-react";
 import { Link } from "wouter";
 import LoanForm from "@/components/LoanForm";
@@ -124,6 +125,38 @@ export default function Loans() {
       toast({
         title: "Error",
         description: "Failed to settle loan",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const deleteLoanMutation = useMutation({
+    mutationFn: async (loanId: string) => {
+      return apiRequest('DELETE', `/api/loans/${loanId}`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/loans"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/dashboard/portfolio"] });
+      toast({
+        title: "Success",
+        description: "Loan cancelled successfully",
+      });
+    },
+    onError: (error) => {
+      if (isUnauthorizedError(error as Error)) {
+        toast({
+          title: "Unauthorized",
+          description: "You are logged out. Logging in again...",
+          variant: "destructive",
+        });
+        setTimeout(() => {
+          window.location.href = "/api/login";
+        }, 500);
+        return;
+      }
+      toast({
+        title: "Error",
+        description: "Failed to cancel loan",
         variant: "destructive",
       });
     },
@@ -276,6 +309,12 @@ export default function Loans() {
       return;
     }
     settleLoanMutation.mutate({ loanId, settledAmount });
+  };
+
+  const handleDeleteLoan = (loanId: string) => {
+    if (window.confirm("Are you sure you want to cancel this loan? This action cannot be undone.")) {
+      deleteLoanMutation.mutate(loanId);
+    }
   };
 
   const formatCurrency = (amount: number) => {
@@ -671,6 +710,17 @@ export default function Loans() {
                           >
                             <CheckCircle className="mr-2 h-4 w-4" />
                             {settleLoanMutation.isPending ? 'Settling...' : 'Settle Loan'}
+                          </Button>
+                          <Button 
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleDeleteLoan(loan.id)}
+                            disabled={deleteLoanMutation.isPending}
+                            data-testid={`button-delete-loan-${loan.id}`}
+                            className="ml-2"
+                          >
+                            <Trash2 className="mr-2 h-4 w-4" />
+                            {deleteLoanMutation.isPending ? 'Cancelling...' : 'Cancel'}
                           </Button>
                         </div>
                       </CardContent>

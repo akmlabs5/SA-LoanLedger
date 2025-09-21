@@ -270,6 +270,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.delete('/api/loans/:id', isAuthenticated, async (req: any, res) => {
+    try {
+      const loanId = req.params.id;
+      await storage.deleteLoan(loanId);
+      res.json({ message: "Loan cancelled successfully" });
+    } catch (error) {
+      console.error("Error cancelling loan:", error);
+      res.status(500).json({ message: "Failed to cancel loan" });
+    }
+  });
+
   // Dashboard analytics
   app.get('/api/dashboard/portfolio', isAuthenticated, async (req: any, res) => {
     try {
