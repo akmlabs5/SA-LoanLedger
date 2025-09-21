@@ -168,6 +168,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.delete('/api/facilities/:facilityId', isAuthenticated, async (req: any, res) => {
+    try {
+      const { facilityId } = req.params;
+      await storage.deleteFacility(facilityId);
+      res.json({ message: "Facility deleted successfully" });
+    } catch (error) {
+      console.error("Error deleting facility:", error);
+      res.status(500).json({ message: "Failed to delete facility" });
+    }
+  });
+
   // Collateral routes
   app.get('/api/collateral', isAuthenticated, async (req: any, res) => {
     try {

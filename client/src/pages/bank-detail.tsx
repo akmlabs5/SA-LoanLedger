@@ -134,8 +134,32 @@ export default function BankDetail() {
     },
   });
 
+  const deleteFacilityMutation = useMutation({
+    mutationFn: async (facilityId: string) => {
+      return apiRequest('DELETE', `/api/facilities/${facilityId}`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/facilities"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/dashboard/portfolio"] });
+      toast({ title: "Facility deleted successfully" });
+    },
+    onError: (error) => {
+      toast({ 
+        title: "Failed to delete facility", 
+        description: error.message,
+        variant: "destructive" 
+      });
+    },
+  });
+
   const handleSubmitFacility = (data: z.infer<typeof facilityFormSchema>) => {
     createFacilityMutation.mutate(data);
+  };
+
+  const handleDeleteFacility = (facilityId: string) => {
+    if (window.confirm("Are you sure you want to delete this facility? This action cannot be undone.")) {
+      deleteFacilityMutation.mutate(facilityId);
+    }
   };
 
   const handleCloseFacilityDialog = () => {
@@ -567,6 +591,19 @@ export default function BankDetail() {
                             </p>
                           </div>
                         )}
+                        
+                        <div className="flex justify-end space-x-2 mt-4 pt-3 border-t border-gray-200 dark:border-gray-700">
+                          <Button 
+                            variant="outline" 
+                            size="sm"
+                            onClick={() => handleDeleteFacility(facility.id)}
+                            disabled={deleteFacilityMutation.isPending}
+                            data-testid={`button-delete-facility-${facility.id}`}
+                          >
+                            <Trash2 className="mr-1 h-4 w-4" />
+                            {deleteFacilityMutation.isPending ? "Deleting..." : "Delete"}
+                          </Button>
+                        </div>
                       </div>
                     ))}
                   </div>
