@@ -207,7 +207,7 @@ export default function LoanForm({ onSuccess, onCancel }: LoanFormProps) {
 
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto" data-testid="dialog-loan-form">
+      <DialogContent className="max-w-4xl w-[90vw] max-h-[90vh] overflow-y-auto" data-testid="dialog-loan-form">
         <DialogHeader>
           <DialogTitle>Add New Loan</DialogTitle>
         </DialogHeader>
