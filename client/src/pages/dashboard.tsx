@@ -151,7 +151,7 @@ export default function Dashboard() {
           </div>
           <div className="flex items-center space-x-3 mt-4 sm:mt-0">
             {/* Quick Bank Access */}
-            {allBanks && allBanks.length > 0 && (
+            {allBanks && Array.isArray(allBanks) && allBanks.length > 0 && (
               <div className="flex items-center space-x-2">
                 <span className="text-sm text-gray-600 dark:text-gray-400">Quick Access:</span>
                 <Select onValueChange={(bankId) => {
