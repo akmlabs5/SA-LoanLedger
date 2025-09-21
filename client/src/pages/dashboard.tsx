@@ -247,9 +247,9 @@ export default function Dashboard() {
         </div>
 
         {/* Enhanced Loans Management Section */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
-          {/* Priority Loans Due */}
-          <div className="lg:col-span-2">
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 mb-8">
+          {/* Priority Loans with Compact Cards */}
+          <div className="lg:col-span-3">
             <Card className="bg-card border border-border shadow-sm hover:shadow-md transition-shadow duration-200">
               <CardHeader className="pb-4">
                 <div className="flex items-center justify-between">
@@ -269,25 +269,25 @@ export default function Dashboard() {
                 </div>
               </CardHeader>
               
-              <CardContent className="space-y-3">
+              <CardContent className="space-y-2">
                 {loansLoading ? (
                   <div className="flex items-center justify-center py-12">
-                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-                    <span className="ml-3 text-gray-600 dark:text-gray-400">Loading loans...</span>
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+                    <span className="ml-3 text-muted-foreground">Loading loans...</span>
                   </div>
                 ) : sortedLoans.length === 0 ? (
                   <div className="text-center py-12">
-                    <FileText className="h-12 w-12 text-gray-300 dark:text-gray-600 mx-auto mb-4" />
-                    <p className="text-gray-600 dark:text-gray-400 mb-2">No active loans found</p>
+                    <FileText className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                    <p className="text-muted-foreground mb-2">No active loans found</p>
                     <Link href="/loans">
-                      <Button variant="outline" className="text-blue-600 border-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20">
+                      <Button variant="outline">
                         <Plus className="mr-2 h-4 w-4" />
                         Add your first loan
                       </Button>
                     </Link>
                   </div>
                 ) : (
-                  sortedLoans.slice(0, 5).map((loan) => {
+                  sortedLoans.slice(0, 6).map((loan) => {
                     const urgency = getLoanUrgency(loan.dueDate);
                     const urgencyBorderClass = urgency.color === 'red' 
                       ? 'border-l-destructive' 
@@ -296,59 +296,56 @@ export default function Dashboard() {
                         : 'border-l-primary';
                     
                     return (
-                      <div key={loan.id} className={`bg-card border border-border ${urgencyBorderClass} border-l-4 p-5 rounded-lg shadow-sm hover:shadow-md transition-shadow duration-200`} data-testid={`card-loan-${loan.id}`}>
-                        <div className="flex items-center justify-between mb-3">
-                          <div className="flex items-center space-x-3">
-                            <Badge className={`${
-                              urgency.color === 'red' ? 'bg-destructive text-destructive-foreground' : 
-                              urgency.color === 'yellow' ? 'bg-amber-500 text-white' : 
-                              'bg-primary text-primary-foreground'
-                            }`}>
-                              {urgency.label}
+                      <div key={loan.id} className={`bg-card border border-border ${urgencyBorderClass} border-l-4 p-4 rounded-lg shadow-sm hover:shadow-md transition-shadow duration-200`} data-testid={`card-loan-${loan.id}`}>
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center space-x-3 min-w-0 flex-1">
+                            <Badge 
+                              size="sm"
+                              className={`${
+                                urgency.color === 'red' ? 'bg-destructive text-destructive-foreground' : 
+                                urgency.color === 'yellow' ? 'bg-amber-500 text-white' : 
+                                'bg-primary text-primary-foreground'
+                              } text-xs`}
+                            >
+                              {urgency.priority === 'critical' ? 'Critical' : urgency.priority === 'warning' ? 'Warning' : 'Normal'}
                             </Badge>
-                            <div>
-                              <button
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  handleBankRowClick(loan.facility.bank.id, loan.facility.bank.name);
-                                }}
-                                className="font-semibold text-foreground hover:text-primary hover:underline transition-colors duration-200"
-                                data-testid={`text-loan-reference-${loan.id}`}
-                                title={`Click to view ${loan.facility.bank.name} details`}
-                              >
-                                {loan.facility.bank.name}
-                              </button>
-                              <p className="text-sm text-muted-foreground">{loan.referenceNumber}</p>
+                            <div className="min-w-0 flex-1">
+                              <div className="flex items-center space-x-2">
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleBankRowClick(loan.facility.bank.id, loan.facility.bank.name);
+                                  }}
+                                  className="font-medium text-foreground hover:text-primary hover:underline transition-colors duration-200 truncate"
+                                  data-testid={`text-loan-reference-${loan.id}`}
+                                  title={`Click to view ${loan.facility.bank.name} details`}
+                                >
+                                  {loan.facility.bank.name}
+                                </button>
+                                <span className="text-sm text-muted-foreground">•</span>
+                                <span className="text-sm text-muted-foreground truncate">{loan.referenceNumber}</span>
+                              </div>
+                              <div className="flex items-center space-x-4 text-xs text-muted-foreground mt-1">
+                                <span>Due {new Date(loan.dueDate).toLocaleDateString()}</span>
+                                <span>•</span>
+                                <span>SIBOR + {loan.bankRate}%</span>
+                              </div>
                             </div>
                           </div>
-                          <div className="text-right">
-                            <p className="text-2xl font-bold text-foreground" data-testid={`text-loan-amount-${loan.id}`}>
-                              {(parseFloat(loan.amount) / 1000000).toFixed(1)}M
-                            </p>
-                            <p className="text-sm text-muted-foreground">SAR</p>
-                          </div>
-                        </div>
-                        <div className="grid grid-cols-2 gap-4 text-sm mb-4">
-                          <div className="space-y-1">
-                            <span className="text-muted-foreground">Due Date</span>
-                            <p className="font-medium text-foreground">{new Date(loan.dueDate).toLocaleDateString()}</p>
-                          </div>
-                          <div className="space-y-1">
-                            <span className="text-muted-foreground">Interest Rate</span>
-                            <p className="font-medium text-foreground">SIBOR + {loan.bankRate}%</p>
-                          </div>
-                        </div>
-                        <div className="flex items-center justify-between">
-                          <Button size="sm" className={`${
-                            urgency.priority === 'critical' 
-                              ? 'bg-destructive hover:bg-destructive/90 text-destructive-foreground' 
-                              : 'bg-secondary hover:bg-secondary/80 text-secondary-foreground'
-                          } shadow-sm`}>
-                            {urgency.priority === 'critical' ? 'Urgent Action Required' : 'View Details'}
-                          </Button>
-                          <div className="flex items-center space-x-2 text-xs text-muted-foreground">
-                            <Activity className="h-3 w-3" />
-                            <span>Track</span>
+                          <div className="text-right flex items-center space-x-3">
+                            <div>
+                              <p className="text-lg font-bold text-foreground" data-testid={`text-loan-amount-${loan.id}`}>
+                                {(parseFloat(loan.amount) / 1000000).toFixed(1)}M
+                              </p>
+                              <p className="text-xs text-muted-foreground">SAR</p>
+                            </div>
+                            <Button 
+                              size="sm" 
+                              variant={urgency.priority === 'critical' ? 'destructive' : 'outline'}
+                              className="text-xs"
+                            >
+                              {urgency.priority === 'critical' ? 'Urgent' : 'View'}
+                            </Button>
                           </div>
                         </div>
                       </div>
@@ -359,9 +356,10 @@ export default function Dashboard() {
             </Card>
           </div>
           
-          {/* Enhanced Quick Actions Panel */}
-          <Card className="bg-card border border-border shadow-sm hover:shadow-md transition-shadow duration-200">
-            <CardHeader className="pb-4">
+          {/* Sticky Quick Actions Panel */}
+          <div className="lg:sticky lg:top-6 lg:self-start">
+            <Card className="bg-card border border-border shadow-sm hover:shadow-md transition-shadow duration-200">
+              <CardHeader className="pb-4">
               <CardTitle className="text-xl font-semibold flex items-center space-x-2">
                 <TrendingUp className="h-5 w-5 text-primary" />
                 <span>Quick Actions</span>
@@ -431,6 +429,7 @@ export default function Dashboard() {
               </div>
             </CardContent>
           </Card>
+          </div>
         </div>
 
         {/* Enhanced Bank Exposures Overview */}
