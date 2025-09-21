@@ -89,11 +89,43 @@ export default function BankDetail() {
     enabled: isAuthenticated,
   });
 
+  // Fetch credit lines for proper loan-to-bank mapping
+  const { data: creditLines } = useQuery({
+    queryKey: ["/api/credit-lines"],
+    enabled: isAuthenticated,
+  });
+
   // Find the specific bank
   const bank = (banks as any[])?.find((b: any) => b.id === bankId);
   const bankFacilities = (facilities as any[])?.filter((f: any) => f.bankId === bankId) || [];
   const bankExposure = (portfolioSummary as PortfolioSummary)?.bankExposures?.find(exp => exp.bankId === bankId);
-  const bankLoans = (loans as any[])?.filter((l: any) => l.facility?.bankId === bankId) || [];
+  
+  // Get credit lines for this bank's facilities
+  const bankCreditLineIds = (creditLines as any[])?.filter((cl: any) => {
+    const facility = bankFacilities.find(f => f.id === cl.facilityId);
+    return !!facility;
+  }).map(cl => cl.id) || [];
+  
+  // Get loans that belong to this bank via credit lines
+  const bankLoans = (loans as any[])?.filter((l: any) => 
+    l.creditLineId && bankCreditLineIds.includes(l.creditLineId)
+  ) || [];
+  
+  // Calculate fallback metrics when portfolio summary doesn't have bank data
+  const fallbackCreditLimit = bankFacilities.reduce((sum, f) => sum + Number(f.creditLimit || 0), 0);
+  const fallbackOutstanding = bankLoans
+    .filter(loan => loan.status === 'active')
+    .reduce((sum, loan) => sum + Number(loan.amount || 0), 0);
+  const fallbackUtilization = fallbackCreditLimit > 0 ? (fallbackOutstanding / fallbackCreditLimit) * 100 : 0;
+  const fallbackActiveLoans = bankLoans.filter(loan => loan.status === 'active').length;
+  
+  // Use portfolio summary data if available, otherwise use fallback calculations
+  const displayMetrics = {
+    creditLimit: bankExposure?.creditLimit || fallbackCreditLimit,
+    outstanding: bankExposure?.outstanding || fallbackOutstanding,
+    utilization: bankExposure?.utilization || fallbackUtilization,
+    activeLoansCount: fallbackActiveLoans,
+  };
   
   // Filter collateral assignments for this bank's facilities
   const bankCollateralAssignments = (collateralAssignments as any[])?.filter((assignment: any) => {
@@ -338,7 +370,7 @@ export default function BankDetail() {
                 <div>
                   <p className="text-sm font-medium text-blue-700 dark:text-blue-300">Total Exposure</p>
                   <p className="text-2xl font-bold text-blue-900 dark:text-blue-100">
-                    {bankExposure ? formatCurrency(bankExposure.outstanding) : '0M SAR'}
+                    {formatCurrency(displayMetrics.outstanding)}
                   </p>
                 </div>
                 <div className="w-12 h-12 bg-blue-500 rounded-2xl flex items-center justify-center">
@@ -354,7 +386,7 @@ export default function BankDetail() {
                 <div>
                   <p className="text-sm font-medium text-emerald-700 dark:text-emerald-300">Credit Limit</p>
                   <p className="text-2xl font-bold text-emerald-900 dark:text-emerald-100">
-                    {bankExposure ? formatCurrency(bankExposure.creditLimit) : '0M SAR'}
+                    {formatCurrency(displayMetrics.creditLimit)}
                   </p>
                 </div>
                 <div className="w-12 h-12 bg-emerald-500 rounded-2xl flex items-center justify-center">
@@ -370,7 +402,7 @@ export default function BankDetail() {
                 <div>
                   <p className="text-sm font-medium text-amber-700 dark:text-amber-300">Utilization</p>
                   <p className="text-2xl font-bold text-amber-900 dark:text-amber-100">
-                    {bankExposure ? `${bankExposure.utilization.toFixed(1)}%` : '0%'}
+                    {`${displayMetrics.utilization.toFixed(1)}%`}
                   </p>
                 </div>
                 <div className="w-12 h-12 bg-amber-500 rounded-2xl flex items-center justify-center">
@@ -386,7 +418,7 @@ export default function BankDetail() {
                 <div>
                   <p className="text-sm font-medium text-purple-700 dark:text-purple-300">Active Loans</p>
                   <p className="text-2xl font-bold text-purple-900 dark:text-purple-100">
-                    {bankLoans.length}
+                    {displayMetrics.activeLoansCount}
                   </p>
                 </div>
                 <div className="w-12 h-12 bg-purple-500 rounded-2xl flex items-center justify-center">
