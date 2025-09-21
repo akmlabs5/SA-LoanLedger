@@ -114,6 +114,7 @@ export default function LoanForm({ onSuccess, onCancel }: LoanFormProps) {
         siborRate: parseFloat(data.siborRate).toString(),
         bankRate: facility.costOfFunding,
         creditLineId: data.creditLineId || null,
+        userId: "abdulrahman-user-main", // Add the authenticated user ID
       };
 
       await apiRequest("POST", "/api/loans", loanData);
