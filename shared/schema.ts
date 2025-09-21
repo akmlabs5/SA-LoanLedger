@@ -48,6 +48,18 @@ export const loanStatusEnum = pgEnum('loan_status', [
   'overdue'
 ]);
 
+export const creditLineTypeEnum = pgEnum('credit_line_type', [
+  'working_capital',
+  'term_loan',
+  'trade_finance',
+  'real_estate_finance',
+  'equipment_finance',
+  'overdraft',
+  'letter_of_credit',
+  'bank_guarantee',
+  'other'
+]);
+
 // Session storage table.
 // (IMPORTANT) This table is mandatory for Replit Auth, don't drop it.
 export const sessions = pgTable(
@@ -96,6 +108,28 @@ export const facilities = pgTable("facilities", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
+// Credit Lines (intermediate layer between facilities and loans)
+export const creditLines = pgTable("credit_lines", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  facilityId: varchar("facility_id").references(() => facilities.id).notNull(),
+  userId: varchar("user_id").references(() => users.id).notNull(),
+  creditLineType: creditLineTypeEnum("credit_line_type").notNull(),
+  name: varchar("name", { length: 200 }).notNull(),
+  description: text("description"),
+  creditLimit: decimal("credit_limit", { precision: 15, scale: 2 }).notNull(),
+  availableLimit: decimal("available_limit", { precision: 15, scale: 2 }).notNull().default('0.00'),
+  interestRate: decimal("interest_rate", { precision: 5, scale: 2 }), // Optional override of facility rate
+  terms: text("terms"),
+  startDate: date("start_date"),
+  expiryDate: date("expiry_date"),
+  isActive: boolean("is_active").default(true),
+  createdAt: timestamp("created_at").defaultNow(),
+}, (table) => [
+  // Ensure credit line limit doesn't exceed facility limit via application logic
+  index("idx_credit_lines_facility").on(table.facilityId),
+  index("idx_credit_lines_user").on(table.userId),
+]);
+
 // Collateral
 export const collateral = pgTable("collateral", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
@@ -111,10 +145,10 @@ export const collateral = pgTable("collateral", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
-// Loans
+// Loans (drawdowns from specific credit lines)
 export const loans = pgTable("loans", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  facilityId: varchar("facility_id").references(() => facilities.id).notNull(),
+  creditLineId: varchar("credit_line_id").references(() => creditLines.id).notNull(),
   userId: varchar("user_id").references(() => users.id).notNull(),
   referenceNumber: varchar("reference_number", { length: 50 }).notNull(),
   amount: decimal("amount", { precision: 15, scale: 2 }).notNull(),
@@ -128,7 +162,11 @@ export const loans = pgTable("loans", {
   settledDate: date("settled_date"),
   settledAmount: decimal("settled_amount", { precision: 15, scale: 2 }),
   createdAt: timestamp("created_at").defaultNow(),
-});
+}, (table) => [
+  index("idx_loans_credit_line").on(table.creditLineId),
+  index("idx_loans_user").on(table.userId),
+  index("idx_loans_due_date").on(table.dueDate),
+]);
 
 // AI Insights Configuration
 export const aiInsightConfig = pgTable("ai_insight_config", {
@@ -208,6 +246,7 @@ export const transactions = pgTable("transactions", {
 // Relations
 export const usersRelations = relations(users, ({ many, one }) => ({
   facilities: many(facilities),
+  creditLines: many(creditLines),
   loans: many(loans),
   collateral: many(collateral),
   documents: many(documents),
@@ -231,16 +270,28 @@ export const facilitiesRelations = relations(facilities, ({ one, many }) => ({
     fields: [facilities.userId],
     references: [users.id],
   }),
-  loans: many(loans),
+  creditLines: many(creditLines),
   documents: many(documents),
   exposureSnapshots: many(exposureSnapshots),
   transactions: many(transactions),
 }));
 
-export const loansRelations = relations(loans, ({ one, many }) => ({
+export const creditLinesRelations = relations(creditLines, ({ one, many }) => ({
   facility: one(facilities, {
-    fields: [loans.facilityId],
+    fields: [creditLines.facilityId],
     references: [facilities.id],
+  }),
+  user: one(users, {
+    fields: [creditLines.userId],
+    references: [users.id],
+  }),
+  loans: many(loans),
+}));
+
+export const loansRelations = relations(loans, ({ one, many }) => ({
+  creditLine: one(creditLines, {
+    fields: [loans.creditLineId],
+    references: [creditLines.id],
   }),
   user: one(users, {
     fields: [loans.userId],
@@ -321,6 +372,7 @@ export const transactionsRelations = relations(transactions, ({ one }) => ({
 // Zod Enums for validation
 export const transactionTypeZodEnum = z.enum(['draw', 'repayment', 'fee', 'interest', 'limit_change', 'other']);
 export const facilityTypeZodEnum = z.enum(['revolving', 'term', 'bullet', 'bridge', 'working_capital']);
+export const creditLineTypeZodEnum = z.enum(['working_capital', 'term_loan', 'trade_finance', 'real_estate_finance', 'equipment_finance', 'overdraft', 'letter_of_credit', 'bank_guarantee', 'other']);
 export const collateralTypeZodEnum = z.enum(['real_estate', 'liquid_stocks', 'other']);
 export const loanStatusZodEnum = z.enum(['active', 'settled', 'overdue']);
 
@@ -361,6 +413,20 @@ export const insertFacilitySchema = createInsertSchema(facilities)
       .refine((val) => Number(val) <= 100, "Must be 100% or less"),
     startDate: z.string().refine((val) => !isNaN(Date.parse(val)), "Must be a valid date"),
     expiryDate: z.string().refine((val) => !isNaN(Date.parse(val)), "Must be a valid date"),
+  });
+
+export const insertCreditLineSchema = createInsertSchema(creditLines)
+  .omit({ id: true, createdAt: true, availableLimit: true })
+  .extend({
+    creditLineType: creditLineTypeZodEnum,
+    creditLimit: positiveDecimalString(15, 2),
+    interestRate: z.string()
+      .refine((val) => !isNaN(Number(val)), "Must be a valid number")
+      .refine((val) => Number(val) >= 0, "Must be non-negative")
+      .refine((val) => Number(val) <= 100, "Must be 100% or less")
+      .optional(),
+    startDate: z.string().refine((val) => !isNaN(Date.parse(val)), "Must be a valid date").optional(),
+    expiryDate: z.string().refine((val) => !isNaN(Date.parse(val)), "Must be a valid date").optional(),
   });
 
 export const insertCollateralSchema = createInsertSchema(collateral)
@@ -448,6 +514,8 @@ export type Bank = typeof banks.$inferSelect;
 export type InsertBank = z.infer<typeof insertBankSchema>;
 export type Facility = typeof facilities.$inferSelect;
 export type InsertFacility = z.infer<typeof insertFacilitySchema>;
+export type CreditLine = typeof creditLines.$inferSelect;
+export type InsertCreditLine = z.infer<typeof insertCreditLineSchema>;
 export type Collateral = typeof collateral.$inferSelect;
 export type InsertCollateral = z.infer<typeof insertCollateralSchema>;
 export type Loan = typeof loans.$inferSelect;
@@ -464,5 +532,6 @@ export type InsertTransaction = z.infer<typeof insertTransactionSchema>;
 // Export enum types for use in frontend
 export type TransactionType = z.infer<typeof transactionTypeZodEnum>;
 export type FacilityType = z.infer<typeof facilityTypeZodEnum>;
+export type CreditLineType = z.infer<typeof creditLineTypeZodEnum>;
 export type CollateralType = z.infer<typeof collateralTypeZodEnum>;
 export type LoanStatus = z.infer<typeof loanStatusZodEnum>;
