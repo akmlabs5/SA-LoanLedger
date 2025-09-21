@@ -1207,13 +1207,87 @@ export class MemoryStorage implements IStorage {
       utilization: number;
     }>;
   }> {
+    // Get user facilities
+    const userFacilities = Array.from(this.facilities.values()).filter(f => f.userId === userId);
+    
+    // Get user credit lines
+    const userCreditLines = Array.from(this.creditLines.values()).filter(cl => {
+      const facility = this.facilities.get(cl.facilityId);
+      return facility && facility.userId === userId;
+    });
+    
+    // Get user loans
+    const userLoans = Array.from(this.loans.values()).filter(loan => {
+      if (loan.creditLineId) {
+        const creditLine = this.creditLines.get(loan.creditLineId);
+        if (creditLine) {
+          const facility = this.facilities.get(creditLine.facilityId);
+          return facility && facility.userId === userId;
+        }
+      }
+      return false;
+    });
+    
+    // Calculate totals
+    const totalCreditLimit = userFacilities.reduce((sum, f) => sum + Number(f.creditLimit || 0), 0);
+    const totalOutstanding = userLoans
+      .filter(loan => loan.status === 'active')
+      .reduce((sum, loan) => sum + Number(loan.amount || 0), 0);
+    const activeLoansCount = userLoans.filter(loan => loan.status === 'active').length;
+    
+    // Group by bank to create bank exposures
+    const bankGroups = new Map<string, {
+      bankId: string;
+      bankName: string;
+      creditLimit: number;
+      outstanding: number;
+    }>();
+    
+    // Process facilities by bank
+    userFacilities.forEach(facility => {
+      const bank = this.banks.get(facility.bankId);
+      if (bank) {
+        const existing = bankGroups.get(facility.bankId) || {
+          bankId: facility.bankId,
+          bankName: bank.name,
+          creditLimit: 0,
+          outstanding: 0,
+        };
+        existing.creditLimit += Number(facility.creditLimit || 0);
+        bankGroups.set(facility.bankId, existing);
+      }
+    });
+    
+    // Add outstanding amounts by bank
+    userLoans.filter(loan => loan.status === 'active').forEach(loan => {
+      if (loan.creditLineId) {
+        const creditLine = this.creditLines.get(loan.creditLineId);
+        if (creditLine) {
+          const facility = this.facilities.get(creditLine.facilityId);
+          if (facility) {
+            const existing = bankGroups.get(facility.bankId);
+            if (existing) {
+              existing.outstanding += Number(loan.amount || 0);
+              bankGroups.set(facility.bankId, existing);
+            }
+          }
+        }
+      }
+    });
+    
+    // Create bank exposures array with utilization
+    const bankExposures = Array.from(bankGroups.values()).map(bank => ({
+      ...bank,
+      utilization: bank.creditLimit > 0 ? (bank.outstanding / bank.creditLimit) * 100 : 0,
+    }));
+    
     return {
-      totalOutstanding: 0,
-      totalCreditLimit: 0,
-      availableCredit: 0,
-      portfolioLtv: 0,
-      activeLoansCount: 0,
-      bankExposures: [],
+      totalOutstanding,
+      totalCreditLimit,
+      availableCredit: totalCreditLimit - totalOutstanding,
+      portfolioLtv: 0, // Would need collateral data for LTV calculation
+      activeLoansCount,
+      bankExposures,
     };
   }
 
