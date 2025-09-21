@@ -93,6 +93,28 @@ export const banks = pgTable("banks", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
+// Bank Contacts (Account Managers)
+export const bankContacts = pgTable("bank_contacts", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  bankId: varchar("bank_id").references(() => banks.id).notNull(),
+  userId: varchar("user_id").references(() => users.id).notNull(),
+  name: varchar("name", { length: 100 }).notNull(),
+  title: varchar("title", { length: 100 }),
+  department: varchar("department", { length: 100 }),
+  email: varchar("email", { length: 255 }),
+  phone: varchar("phone", { length: 50 }),
+  mobile: varchar("mobile", { length: 50 }),
+  extension: varchar("extension", { length: 20 }),
+  notes: text("notes"),
+  isPrimary: boolean("is_primary").default(false),
+  isActive: boolean("is_active").default(true),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+}, (table) => [
+  index("idx_bank_contacts_bank").on(table.bankId),
+  index("idx_bank_contacts_user").on(table.userId),
+]);
+
 // Bank Facilities
 export const facilities = pgTable("facilities", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
@@ -277,12 +299,25 @@ export const usersRelations = relations(users, ({ many, one }) => ({
   aiInsightConfig: one(aiInsightConfig),
   exposureSnapshots: many(exposureSnapshots),
   transactions: many(transactions),
+  bankContacts: many(bankContacts),
 }));
 
 export const banksRelations = relations(banks, ({ many }) => ({
   facilities: many(facilities),
   exposureSnapshots: many(exposureSnapshots),
   transactions: many(transactions),
+  contacts: many(bankContacts),
+}));
+
+export const bankContactsRelations = relations(bankContacts, ({ one }) => ({
+  bank: one(banks, {
+    fields: [bankContacts.bankId],
+    references: [banks.id],
+  }),
+  user: one(users, {
+    fields: [bankContacts.userId],
+    references: [users.id],
+  }),
 }));
 
 export const facilitiesRelations = relations(facilities, ({ one, many }) => ({
@@ -432,6 +467,20 @@ const positiveDecimalString = (precision: number, scale: number) =>
 // Insert Schemas with enhanced validation
 export const insertBankSchema = createInsertSchema(banks).omit({ id: true, createdAt: true });
 
+export const insertBankContactSchema = createInsertSchema(bankContacts)
+  .omit({ id: true, createdAt: true, updatedAt: true })
+  .extend({
+    name: z.string().min(1, "Name is required").max(100, "Name must be less than 100 characters"),
+    title: z.string().max(100, "Title must be less than 100 characters").optional(),
+    department: z.string().max(100, "Department must be less than 100 characters").optional(),
+    email: z.string().email("Must be a valid email address").optional(),
+    phone: z.string().max(50, "Phone must be less than 50 characters").optional(),
+    mobile: z.string().max(50, "Mobile must be less than 50 characters").optional(),
+    extension: z.string().max(20, "Extension must be less than 20 characters").optional(),
+    notes: z.string().optional(),
+    isPrimary: z.boolean().default(false),
+  });
+
 export const insertFacilitySchema = createInsertSchema(facilities)
   .omit({ id: true, createdAt: true })
   .extend({
@@ -558,6 +607,8 @@ export type UpsertUser = typeof users.$inferInsert;
 export type User = typeof users.$inferSelect;
 export type Bank = typeof banks.$inferSelect;
 export type InsertBank = z.infer<typeof insertBankSchema>;
+export type BankContact = typeof bankContacts.$inferSelect;
+export type InsertBankContact = z.infer<typeof insertBankContactSchema>;
 export type Facility = typeof facilities.$inferSelect;
 export type InsertFacility = z.infer<typeof insertFacilitySchema>;
 export type CreditLine = typeof creditLines.$inferSelect;
