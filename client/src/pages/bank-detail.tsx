@@ -587,7 +587,7 @@ export default function BankDetail() {
                     <Gem className="h-12 w-12 text-gray-300 dark:text-gray-600 mx-auto mb-4" />
                     <p className="text-gray-600 dark:text-gray-400 mb-4">No collateral assigned to this bank's facilities</p>
                     <Button 
-                      onClick={() => setIsCollateralDialogOpen(true)}
+                      onClick={() => setLocation("/collateral/new")}
                       className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white shadow-lg"
                       data-testid="button-add-collateral"
                     >

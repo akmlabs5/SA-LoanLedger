@@ -7,16 +7,14 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { University, Plus, ArrowLeft, Building, TrendingUp, Shield, Edit, Trash2 } from "lucide-react";
-import { Link } from "wouter";
-import CollateralForm from "@/components/CollateralForm";
+import { Link, useLocation } from "wouter";
 import { isUnauthorizedError } from "@/lib/authUtils";
 
 export default function CollateralPage() {
   const { isLoading, isAuthenticated } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const [showForm, setShowForm] = useState(false);
-  const [editingCollateral, setEditingCollateral] = useState<any>(null);
+  const [, setLocation] = useLocation();
 
   // Redirect to login if not authenticated
   useEffect(() => {
@@ -33,12 +31,12 @@ export default function CollateralPage() {
     }
   }, [isAuthenticated, isLoading, toast]);
 
-  const { data: collateral, isLoading: collateralLoading, error: collateralError } = useQuery({
+  const { data: collateral, isLoading: collateralLoading, error: collateralError } = useQuery<any[]>({
     queryKey: ["/api/collateral"],
     enabled: isAuthenticated,
   });
 
-  const { data: portfolioSummary } = useQuery({
+  const { data: portfolioSummary } = useQuery<{totalOutstanding: number; portfolioLtv: number}>({
     queryKey: ["/api/dashboard/portfolio"],
     enabled: isAuthenticated,
   });
@@ -116,20 +114,10 @@ export default function CollateralPage() {
     }
   };
 
-  const handleEdit = (collateralItem: any) => {
-    setEditingCollateral(collateralItem);
-    setShowForm(true);
-  };
-
   const handleDeleteCollateral = (collateralId: string) => {
     if (window.confirm("Are you sure you want to delete this collateral? This action cannot be undone.")) {
       deleteCollateralMutation.mutate(collateralId);
     }
-  };
-
-  const handleFormClose = () => {
-    setShowForm(false);
-    setEditingCollateral(null);
   };
 
   return (
@@ -152,8 +140,8 @@ export default function CollateralPage() {
             </div>
             
             <Button 
-              onClick={() => setShowForm(true)}
-              className="bg-primary text-primary-foreground hover:bg-primary/90"
+              onClick={() => setLocation("/collateral/new")}
+              className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white shadow-lg"
               data-testid="button-add-collateral"
             >
               <Plus className="mr-2 h-4 w-4" />
@@ -240,8 +228,8 @@ export default function CollateralPage() {
                 <Shield className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
                 <p className="text-muted-foreground mb-4">No collateral assets found</p>
                 <Button 
-                  onClick={() => setShowForm(true)}
-                  className="bg-primary text-primary-foreground hover:bg-primary/90"
+                  onClick={() => setLocation("/collateral/new")}
+                  className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white shadow-lg"
                   data-testid="button-add-first-collateral"
                 >
                   <Plus className="mr-2 h-4 w-4" />
@@ -364,18 +352,6 @@ export default function CollateralPage() {
         </Card>
       </div>
 
-      {/* Collateral Form Modal */}
-      {showForm && (
-        <CollateralForm
-          collateral={editingCollateral}
-          onSuccess={() => {
-            handleFormClose();
-            queryClient.invalidateQueries({ queryKey: ["/api/collateral"] });
-            queryClient.invalidateQueries({ queryKey: ["/api/dashboard/portfolio"] });
-          }}
-          onCancel={handleFormClose}
-        />
-      )}
     </div>
   );
 }
