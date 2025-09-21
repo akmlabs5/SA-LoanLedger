@@ -1112,15 +1112,27 @@ export class MemoryStorage implements IStorage {
   }
 
   async getUserLoans(userId: string): Promise<Loan[]> {
-    return [];
+    return Array.from(this.loans.values()).filter(loan => loan.userId === userId);
   }
 
   async getActiveLoansByUser(userId: string): Promise<(Loan & { creditLine: CreditLine & { facility: Facility & { bank: Bank } } })[]> {
-    return [];
+    const userLoans = Array.from(this.loans.values()).filter(loan => loan.userId === userId && loan.status === 'active');
+    
+    // Return simple structure without creditLine for now to avoid complex joins
+    return userLoans.map(loan => ({
+      ...loan,
+      creditLine: undefined as any
+    }));
   }
 
   async getSettledLoansByUser(userId: string): Promise<(Loan & { creditLine: CreditLine & { facility: Facility & { bank: Bank } } })[]> {
-    return [];
+    const userLoans = Array.from(this.loans.values()).filter(loan => loan.userId === userId && loan.status === 'settled');
+    
+    // Return simple structure without creditLine for now to avoid complex joins
+    return userLoans.map(loan => ({
+      ...loan,
+      creditLine: undefined as any
+    }));
   }
 
   async createLoan(loan: InsertLoan): Promise<Loan> {
