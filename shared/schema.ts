@@ -60,6 +60,12 @@ export const creditLineTypeEnum = pgEnum('credit_line_type', [
   'other'
 ]);
 
+export const pledgeTypeEnum = pgEnum('pledge_type', [
+  'first_lien',
+  'second_lien',
+  'blanket'
+]);
+
 // Session storage table.
 // (IMPORTANT) This table is mandatory for Replit Auth, don't drop it.
 export const sessions = pgTable(
@@ -167,10 +173,33 @@ export const collateral = pgTable("collateral", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
-// Loans (drawdowns from specific credit lines)
+// Collateral Assignments (Links collateral to facilities or credit lines)
+export const collateralAssignments = pgTable("collateral_assignments", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  collateralId: varchar("collateral_id").references(() => collateral.id, { onDelete: "restrict" }).notNull(),
+  facilityId: varchar("facility_id").references(() => facilities.id, { onDelete: "cascade" }),
+  creditLineId: varchar("credit_line_id").references(() => creditLines.id, { onDelete: "cascade" }),
+  userId: varchar("user_id").references(() => users.id).notNull(),
+  pledgeType: pledgeTypeEnum("pledge_type").notNull(),
+  pledgedValue: decimal("pledged_value", { precision: 15, scale: 2 }),
+  advanceRate: decimal("advance_rate", { precision: 5, scale: 2 }),
+  effectiveDate: date("effective_date").notNull(),
+  releaseDate: date("release_date"),
+  isActive: boolean("is_active").default(true),
+  createdAt: timestamp("created_at").defaultNow(),
+}, (table) => [
+  // XOR constraint: exactly one of facilityId or creditLineId must be set
+  index("idx_collateral_assignments_collateral").on(table.collateralId),
+  index("idx_collateral_assignments_facility").on(table.facilityId),
+  index("idx_collateral_assignments_credit_line").on(table.creditLineId),
+  index("idx_collateral_assignments_user").on(table.userId),
+]);
+
+// Loans (drawdowns from specific credit lines or facilities)
 export const loans = pgTable("loans", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  creditLineId: varchar("credit_line_id").references(() => creditLines.id).notNull(),
+  facilityId: varchar("facility_id").references(() => facilities.id, { onDelete: "restrict" }).notNull(),
+  creditLineId: varchar("credit_line_id").references(() => creditLines.id, { onDelete: "restrict" }),
   userId: varchar("user_id").references(() => users.id).notNull(),
   referenceNumber: varchar("reference_number", { length: 50 }).notNull(),
   amount: decimal("amount", { precision: 15, scale: 2 }).notNull(),
@@ -183,8 +212,10 @@ export const loans = pgTable("loans", {
   status: loanStatusEnum("status").default('active'),
   settledDate: date("settled_date"),
   settledAmount: decimal("settled_amount", { precision: 15, scale: 2 }),
+  updatedAt: timestamp("updated_at").defaultNow(),
   createdAt: timestamp("created_at").defaultNow(),
 }, (table) => [
+  index("idx_loans_facility").on(table.facilityId),
   index("idx_loans_credit_line").on(table.creditLineId),
   index("idx_loans_user").on(table.userId),
   index("idx_loans_due_date").on(table.dueDate),
@@ -436,6 +467,8 @@ export const loanTemplatesRelations = relations(loanTemplates, ({ many }) => ({
 export const transactionTypeZodEnum = z.enum(['draw', 'repayment', 'fee', 'interest', 'limit_change', 'other']);
 export const facilityTypeZodEnum = z.enum(['revolving', 'term', 'bullet', 'bridge', 'working_capital']);
 export const creditLineTypeZodEnum = z.enum(['working_capital', 'term_loan', 'trade_finance', 'real_estate_finance', 'equipment_finance', 'overdraft', 'letter_of_credit', 'bank_guarantee', 'other']);
+
+export const pledgeTypeZodEnum = z.enum(['first_lien', 'second_lien', 'blanket']);
 export const loanTypeZodEnum = z.enum(['working_capital', 'term_loan', 'trade_finance', 'real_estate_finance', 'equipment_finance', 'revolving_credit', 'overdraft', 'letter_of_credit', 'bank_guarantee', 'bridge_loan', 'murabaha', 'ijara', 'other']);
 export const repaymentStructureZodEnum = z.enum(['bullet', 'installments', 'revolving', 'quarterly', 'semi_annual', 'annual', 'on_demand']);
 export const collateralTypeZodEnum = z.enum(['real_estate', 'liquid_stocks', 'other']);
@@ -533,8 +566,9 @@ export const insertCollateralSchema = createInsertSchema(collateral)
   });
 
 export const insertLoanSchema = createInsertSchema(loans)
-  .omit({ id: true, createdAt: true })
+  .omit({ id: true, createdAt: true, updatedAt: true })
   .extend({
+    facilityId: z.string().min(1, "Facility is required"),
     amount: positiveDecimalString(15, 2),
     siborRate: z.string()
       .refine((val) => !isNaN(Number(val)), "Must be a valid number")
@@ -551,6 +585,20 @@ export const insertLoanSchema = createInsertSchema(loans)
       .optional(),
     startDate: z.string().refine((val) => !isNaN(Date.parse(val)), "Must be a valid date"),
     dueDate: z.string().refine((val) => !isNaN(Date.parse(val)), "Must be a valid date"),
+  });
+
+export const insertCollateralAssignmentSchema = createInsertSchema(collateralAssignments)
+  .omit({ id: true, createdAt: true })
+  .extend({
+    pledgeType: pledgeTypeZodEnum,
+    pledgedValue: positiveDecimalString(15, 2).optional(),
+    advanceRate: z.string()
+      .refine((val) => !isNaN(Number(val)), "Must be a valid number")
+      .refine((val) => Number(val) >= 0, "Must be non-negative")
+      .refine((val) => Number(val) <= 100, "Must be 100% or less")
+      .optional(),
+    effectiveDate: z.string().refine((val) => !isNaN(Date.parse(val)), "Must be a valid date"),
+    releaseDate: z.string().refine((val) => !isNaN(Date.parse(val)), "Must be a valid date").optional(),
   });
 
 export const insertDocumentSchema = createInsertSchema(documents)
@@ -615,6 +663,8 @@ export type CreditLine = typeof creditLines.$inferSelect;
 export type InsertCreditLine = z.infer<typeof insertCreditLineSchema>;
 export type Collateral = typeof collateral.$inferSelect;
 export type InsertCollateral = z.infer<typeof insertCollateralSchema>;
+export type CollateralAssignment = typeof collateralAssignments.$inferSelect;
+export type InsertCollateralAssignment = z.infer<typeof insertCollateralAssignmentSchema>;
 export type Loan = typeof loans.$inferSelect;
 export type InsertLoan = z.infer<typeof insertLoanSchema>;
 export type LoanTemplate = typeof loanTemplates.$inferSelect;
