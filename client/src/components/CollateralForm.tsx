@@ -1,7 +1,7 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -9,9 +9,12 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { apiRequest } from "@/lib/queryClient";
-import { insertCollateralSchema } from "@shared/schema";
+import { Separator } from "@/components/ui/separator";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { apiRequest, queryClient } from "@/lib/queryClient";
+import { insertCollateralSchema, Facility, Bank, CreditLine } from "@shared/schema";
 import { z } from "zod";
+import { Building, CreditCard, AlertCircle } from "lucide-react";
 
 const collateralFormSchema = insertCollateralSchema.extend({
   type: z.string().min(1, "Please select a collateral type"),
@@ -21,6 +24,18 @@ const collateralFormSchema = insertCollateralSchema.extend({
   description: z.string().optional(),
   valuationSource: z.string().optional(),
   notes: z.string().optional(),
+  // Optional collateral assignment fields
+  facilityId: z.string().optional(),
+  creditLineId: z.string().optional(),
+}).refine(data => {
+  // If creditLineId is provided, facilityId must also be provided
+  if (data.creditLineId && !data.facilityId) {
+    return false;
+  }
+  return true;
+}, {
+  message: "Credit line assignment requires facility selection",
+  path: ["facilityId"]
 });
 
 type CollateralFormData = z.infer<typeof collateralFormSchema>;
@@ -42,6 +57,27 @@ export default function CollateralForm({ collateral, onSuccess, onCancel }: Coll
   const [isOpen, setIsOpen] = useState(true);
   const isEditing = !!collateral;
 
+  // Fetch facilities and credit lines for assignment
+  const { data: facilities } = useQuery<Array<Facility & { bank: Bank }>>({ 
+    queryKey: ["/api/facilities"],
+  });
+  
+  const { data: creditLines } = useQuery<Array<CreditLine & { facility: Facility & { bank: Bank } }>>({ 
+    queryKey: ["/api/credit-lines"],
+  });
+
+  // Fetch current assignment if editing existing collateral
+  const { data: currentAssignment } = useQuery<{facilityId: string; creditLineId?: string}>({ 
+    queryKey: ["/api/collateral-assignments", { collateralId: collateral?.id }],
+    enabled: !!collateral?.id,
+    queryFn: async () => {
+      const response = await fetch(`/api/collateral-assignments?collateralId=${collateral.id}`);
+      if (!response.ok) return null;
+      const assignments = await response.json();
+      return assignments[0] || null;
+    },
+  });
+
   const form = useForm<CollateralFormData>({
     resolver: zodResolver(collateralFormSchema),
     defaultValues: {
@@ -52,23 +88,66 @@ export default function CollateralForm({ collateral, onSuccess, onCancel }: Coll
       description: collateral?.description || "",
       valuationSource: collateral?.valuationSource || "",
       notes: collateral?.notes || "",
+      facilityId: currentAssignment?.facilityId || "",
+      creditLineId: currentAssignment?.creditLineId || "",
     },
   });
+
+  // Update form when assignment data loads
+  useEffect(() => {
+    if (currentAssignment && isEditing) {
+      form.setValue("facilityId", currentAssignment.facilityId || "");
+      form.setValue("creditLineId", currentAssignment.creditLineId || "");
+    }
+  }, [currentAssignment, isEditing, form]);
 
   const createCollateralMutation = useMutation({
     mutationFn: async (data: CollateralFormData) => {
       const collateralData = {
-        ...data,
+        type: data.type,
+        name: data.name,
         currentValue: parseFloat(data.currentValue).toString(),
+        valuationDate: data.valuationDate,
+        description: data.description || null,
+        valuationSource: data.valuationSource || null,
+        notes: data.notes || null,
       };
 
+      let collateralId: string;
+      
       if (isEditing) {
         await apiRequest("PUT", `/api/collateral/${collateral.id}`, collateralData);
+        collateralId = collateral.id;
       } else {
-        await apiRequest("POST", "/api/collateral", collateralData);
+        const result = await apiRequest("POST", "/api/collateral", collateralData) as any;
+        collateralId = result.id;
+      }
+
+      // Handle collateral assignment changes
+      const hasCurrentAssignment = !!currentAssignment?.facilityId;
+      const hasNewAssignment = !!data.facilityId;
+      
+      if (hasNewAssignment) {
+        // Create or update assignment
+        const assignmentData = {
+          collateralId,
+          facilityId: data.facilityId,
+          creditLineId: data.creditLineId || null,
+        };
+        await apiRequest("PUT", `/api/collateral-assignments`, assignmentData);
+      } else if (hasCurrentAssignment && !hasNewAssignment) {
+        // Remove existing assignment (user selected "No Assignment")
+        await apiRequest("DELETE", `/api/collateral-assignments/${collateralId}`);
       }
     },
     onSuccess: () => {
+      // Invalidate relevant queries to refresh data
+      queryClient.invalidateQueries({ queryKey: ["/api/collateral"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/collateral-assignments"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/facilities"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/credit-lines"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/dashboard/portfolio"] });
+      
       toast({
         title: "Success",
         description: `Collateral ${isEditing ? 'updated' : 'created'} successfully`,
@@ -105,6 +184,14 @@ export default function CollateralForm({ collateral, onSuccess, onCancel }: Coll
         return "";
     }
   };
+
+  // Filter credit lines based on selected facility
+  const availableCreditLines = creditLines?.filter(cl => 
+    cl.facilityId === form.watch("facilityId")
+  ) || [];
+
+  // Get selected facility info
+  const selectedFacility = facilities?.find(f => f.id === form.watch("facilityId"));
 
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
@@ -283,6 +370,118 @@ export default function CollateralForm({ collateral, onSuccess, onCancel }: Coll
                 </FormItem>
               )}
             />
+
+            {/* Collateral Assignment Section */}
+            <Separator />
+            
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Building className="h-5 w-5" />
+                  Facility Assignment
+                </CardTitle>
+                <CardDescription>
+                  Optionally assign this collateral to a specific banking facility or credit line
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {/* Facility Selection */}
+                <FormField
+                  control={form.control}
+                  name="facilityId"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Banking Facility</FormLabel>
+                      <Select 
+                        onValueChange={(value) => {
+                          field.onChange(value);
+                          // Clear credit line when facility changes
+                          form.setValue("creditLineId", "");
+                        }} 
+                        value={field.value}
+                      >
+                        <FormControl>
+                          <SelectTrigger data-testid="select-facility">
+                            <SelectValue placeholder="Select a facility (optional)" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="">No Assignment</SelectItem>
+                          {facilities?.map((facility) => (
+                            <SelectItem key={facility.id} value={facility.id}>
+                              {facility.bank.name} - {facility.facilityType} ({parseFloat(facility.creditLimit).toLocaleString()} SAR)
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                {/* Credit Line Selection (only if facility selected) */}
+                {form.watch("facilityId") && availableCreditLines.length > 0 && (
+                  <FormField
+                    control={form.control}
+                    name="creditLineId"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="flex items-center gap-2">
+                          <CreditCard className="h-4 w-4" />
+                          Specific Credit Line (Optional)
+                        </FormLabel>
+                        <Select onValueChange={field.onChange} value={field.value}>
+                          <FormControl>
+                            <SelectTrigger data-testid="select-credit-line">
+                              <SelectValue placeholder="Assign to entire facility" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            <SelectItem value="">Entire Facility</SelectItem>
+                            {availableCreditLines.map((creditLine) => (
+                              <SelectItem key={creditLine.id} value={creditLine.id}>
+                                {creditLine.name} ({parseFloat(creditLine.creditLimit).toLocaleString()} SAR)
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                )}
+
+                {/* Assignment Summary */}
+                {selectedFacility && (
+                  <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                    <h4 className="font-medium text-blue-800 mb-2">Assignment Summary</h4>
+                    <div className="text-sm text-blue-700 space-y-1">
+                      <div>
+                        <span className="font-medium">Bank:</span> {selectedFacility.bank.name}
+                      </div>
+                      <div>
+                        <span className="font-medium">Facility:</span> {selectedFacility.facilityType}
+                      </div>
+                      {form.watch("creditLineId") && (
+                        <div>
+                          <span className="font-medium">Credit Line:</span> {
+                            availableCreditLines.find(cl => cl.id === form.watch("creditLineId"))?.name
+                          }
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                {/* Warning about assignment requirements */}
+                {form.watch("creditLineId") && !form.watch("facilityId") && (
+                  <div className="flex items-center gap-2 p-3 bg-yellow-50 border border-yellow-200 rounded-lg text-yellow-700">
+                    <AlertCircle className="h-4 w-4" />
+                    <span className="text-sm">Credit line assignment requires facility selection</span>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
 
             {/* Form Actions */}
             <div className="flex justify-end space-x-3 pt-6 border-t">
