@@ -14,7 +14,7 @@ import { apiRequest, queryClient } from "@/lib/queryClient";
 import { insertLoanSchema, Facility, Bank, Loan, CreditLine } from "@shared/schema";
 import { SiborRate } from "@shared/types";
 import { z } from "zod";
-import { AlertCircle, DollarSign } from "lucide-react";
+import { AlertCircle, DollarSign, Calendar } from "lucide-react";
 
 const loanFormSchema = insertLoanSchema
   .omit({ userId: true, bankRate: true }) // Exclude fields that aren't user inputs
@@ -373,7 +373,7 @@ export default function LoanForm({ onSuccess, onCancel }: LoanFormProps) {
             )}
 
             {/* Dates */}
-            <div className="grid grid-cols-3 gap-4">
+            <div className="space-y-4">
               <FormField
                 control={form.control}
                 name="startDate"
@@ -388,33 +388,104 @@ export default function LoanForm({ onSuccess, onCancel }: LoanFormProps) {
                 )}
               />
 
-              <FormField
-                control={form.control}
-                name="dueDate"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Due Date *</FormLabel>
-                    <FormControl>
-                      <Input {...field} type="date" data-testid="input-due-date" />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+              {/* Smart Term Selection */}
+              {form.watch("startDate") && (
+                <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                  <div className="flex items-center gap-2 mb-3">
+                    <Calendar className="h-4 w-4 text-blue-600" />
+                    <h4 className="font-medium text-blue-800">Quick Term Selection</h4>
+                  </div>
+                  <p className="text-sm text-blue-700 mb-3">
+                    Select a standard term to auto-calculate due date, or set manually below:
+                  </p>
+                  <div className="flex flex-wrap gap-2">
+                    {[
+                      { days: 30, label: "30 Days" },
+                      { days: 60, label: "60 Days" }, 
+                      { days: 90, label: "90 Days" },
+                      { days: 180, label: "180 Days" },
+                      { days: 360, label: "360 Days" }
+                    ].map(({ days, label }) => {
+                      const startDate = new Date(form.watch("startDate"));
+                      const dueDate = new Date(startDate);
+                      dueDate.setDate(startDate.getDate() + days);
+                      
+                      // Saudi business day adjustment (Friday=5, Saturday=6)
+                      while (dueDate.getDay() === 5 || dueDate.getDay() === 6) {
+                        dueDate.setDate(dueDate.getDate() + 1);
+                      }
+                      
+                      const dueDateStr = dueDate.toISOString().split('T')[0];
+                      const isSelected = form.watch("dueDate") === dueDateStr;
+                      
+                      return (
+                        <button
+                          key={days}
+                          type="button"
+                          onClick={() => {
+                            form.setValue("dueDate", dueDateStr);
+                            // Auto-select appropriate SIBOR rate based on term
+                            const siborRates = {
+                              30: "5.25",   // 1-month SIBOR
+                              60: "5.35",   // 2-month SIBOR  
+                              90: "5.45",   // 3-month SIBOR
+                              180: "5.65",  // 6-month SIBOR
+                              360: "5.85"   // 12-month SIBOR
+                            };
+                            form.setValue("siborRate", siborRates[days as keyof typeof siborRates] || "5.75");
+                          }}
+                          className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+                            isSelected 
+                              ? "bg-blue-600 text-white" 
+                              : "bg-white text-blue-700 border border-blue-300 hover:bg-blue-100"
+                          }`}
+                          data-testid={`button-term-${days}`}
+                        >
+                          <div className="text-center">
+                            <div>{label}</div>
+                            <div className="text-xs opacity-75">
+                              {dueDate.toLocaleDateString('en-SA')}
+                            </div>
+                          </div>
+                        </button>
+                      );
+                    })}
+                  </div>
+                  <p className="text-xs text-blue-600 mt-2">
+                    Dates auto-adjust for Saudi weekends (Friday-Saturday)
+                  </p>
+                </div>
+              )}
 
-              <FormField
-                control={form.control}
-                name="chargesDueDate"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Charges Due Date</FormLabel>
-                    <FormControl>
-                      <Input {...field} type="date" data-testid="input-charges-due-date" />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+              <div className="grid grid-cols-2 gap-4">
+                <FormField
+                  control={form.control}
+                  name="dueDate"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Due Date * <span className="text-sm font-normal text-muted-foreground">(or use quick select above)</span></FormLabel>
+                      <FormControl>
+                        <Input {...field} type="date" data-testid="input-due-date" />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="chargesDueDate"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Charges Due Date</FormLabel>
+                      <FormControl>
+                        <Input {...field} type="date" data-testid="input-charges-due-date" />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
             </div>
 
             {/* Interest Rates */}
