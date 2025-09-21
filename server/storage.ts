@@ -5,6 +5,7 @@ import {
   facilities,
   creditLines,
   collateral,
+  collateralAssignments,
   loans,
   documents,
   aiInsightConfig,
@@ -33,6 +34,8 @@ import {
   type Transaction,
   type InsertTransaction,
   type TransactionType,
+  type CollateralAssignment,
+  type InsertCollateralAssignment,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, desc, asc, sql, gte, lte, isNull, isNotNull } from "drizzle-orm";
@@ -66,6 +69,16 @@ export interface IStorage {
   createCollateral(collateral: InsertCollateral): Promise<Collateral>;
   updateCollateral(collateralId: string, collateral: Partial<InsertCollateral>): Promise<Collateral>;
   deleteCollateral(collateralId: string): Promise<void>;
+  
+  // Collateral Assignment operations
+  getUserCollateralAssignments(userId: string): Promise<Array<CollateralAssignment & { 
+    collateral: Collateral; 
+    facility?: Facility & { bank: Bank }; 
+    creditLine?: CreditLine & { facility: Facility & { bank: Bank } } 
+  }>>;
+  createCollateralAssignment(assignment: InsertCollateralAssignment): Promise<CollateralAssignment>;
+  updateCollateralAssignment(assignmentId: string, assignment: Partial<InsertCollateralAssignment>): Promise<CollateralAssignment>;
+  deleteCollateralAssignment(assignmentId: string): Promise<void>;
   
   // Credit Line operations
   getUserCreditLines(userId: string): Promise<Array<CreditLine & { facility: Facility & { bank: Bank } }>>;
@@ -365,6 +378,54 @@ export class DatabaseStorage implements IStorage {
         updatedAt: new Date() 
       })
       .where(eq(collateral.id, collateralId));
+  }
+
+  // Collateral Assignment operations
+  async getUserCollateralAssignments(userId: string): Promise<Array<CollateralAssignment & { 
+    collateral: Collateral; 
+    facility?: Facility & { bank: Bank }; 
+    creditLine?: CreditLine & { facility: Facility & { bank: Bank } } 
+  }>> {
+    const result = await db
+      .select()
+      .from(collateralAssignments)
+      .leftJoin(collateral, eq(collateralAssignments.collateralId, collateral.id))
+      .leftJoin(facilities, eq(collateralAssignments.facilityId, facilities.id))
+      .leftJoin(banks, eq(facilities.bankId, banks.id))
+      .leftJoin(creditLines, eq(collateralAssignments.creditLineId, creditLines.id))
+      .where(and(eq(collateralAssignments.userId, userId), eq(collateralAssignments.isActive, true)))
+      .orderBy(desc(collateralAssignments.createdAt));
+
+    return result.map(row => ({
+      ...row.collateral_assignments,
+      collateral: row.collateral!,
+      facility: row.facilities ? { ...row.facilities, bank: row.banks! } : undefined,
+      creditLine: row.credit_lines ? { 
+        ...row.credit_lines, 
+        facility: row.facilities ? { ...row.facilities, bank: row.banks! } : undefined as any
+      } : undefined,
+    }));
+  }
+
+  async createCollateralAssignment(assignmentData: InsertCollateralAssignment): Promise<CollateralAssignment> {
+    const [newAssignment] = await db.insert(collateralAssignments).values(assignmentData).returning();
+    return newAssignment;
+  }
+
+  async updateCollateralAssignment(assignmentId: string, assignmentData: Partial<InsertCollateralAssignment>): Promise<CollateralAssignment> {
+    const [updatedAssignment] = await db
+      .update(collateralAssignments)
+      .set(assignmentData)
+      .where(eq(collateralAssignments.id, assignmentId))
+      .returning();
+    return updatedAssignment;
+  }
+
+  async deleteCollateralAssignment(assignmentId: string): Promise<void> {
+    await db
+      .update(collateralAssignments)
+      .set({ isActive: false })
+      .where(eq(collateralAssignments.id, assignmentId));
   }
 
   // Loan operations
@@ -748,6 +809,7 @@ export class MemoryStorage implements IStorage {
   private facilities = new Map<string, Facility>();
   private creditLines = new Map<string, CreditLine>();
   private collateral = new Map<string, Collateral>();
+  private collateralAssignments = new Map<string, CollateralAssignment>();
   private loans = new Map<string, Loan>();
   private documents = new Map<string, Document>();
   private aiConfigs = new Map<string, AiInsightConfig>();
@@ -963,6 +1025,53 @@ export class MemoryStorage implements IStorage {
     };
     this.collateral.set(collateralId, updated);
     return updated;
+  }
+
+  async deleteCollateral(collateralId: string): Promise<void> {
+    const existing = this.collateral.get(collateralId);
+    if (existing) {
+      const updated = { ...existing, isActive: false, updatedAt: new Date() };
+      this.collateral.set(collateralId, updated);
+    }
+  }
+
+  // Collateral Assignment operations (simplified in-memory implementation)
+  async getUserCollateralAssignments(userId: string): Promise<Array<CollateralAssignment & { 
+    collateral: Collateral; 
+    facility?: Facility & { bank: Bank }; 
+    creditLine?: CreditLine & { facility: Facility & { bank: Bank } } 
+  }>> {
+    return [];
+  }
+
+  async createCollateralAssignment(assignment: InsertCollateralAssignment): Promise<CollateralAssignment> {
+    const newAssignment: CollateralAssignment = {
+      ...assignment,
+      id: this.generateId(),
+      createdAt: new Date(),
+    };
+    this.collateralAssignments.set(newAssignment.id, newAssignment);
+    return newAssignment;
+  }
+
+  async updateCollateralAssignment(assignmentId: string, assignment: Partial<InsertCollateralAssignment>): Promise<CollateralAssignment> {
+    const existing = this.collateralAssignments.get(assignmentId);
+    if (!existing) throw new Error('Collateral assignment not found');
+
+    const updated: CollateralAssignment = {
+      ...existing,
+      ...assignment,
+    };
+    this.collateralAssignments.set(assignmentId, updated);
+    return updated;
+  }
+
+  async deleteCollateralAssignment(assignmentId: string): Promise<void> {
+    const existing = this.collateralAssignments.get(assignmentId);
+    if (existing) {
+      const updated = { ...existing, isActive: false };
+      this.collateralAssignments.set(assignmentId, updated);
+    }
   }
 
   async getUserCreditLines(userId: string): Promise<Array<CreditLine & { facility: Facility & { bank: Bank } }>> {
