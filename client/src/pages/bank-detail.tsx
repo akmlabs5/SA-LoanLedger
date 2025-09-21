@@ -1,12 +1,23 @@
 import { useParams } from "wouter";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation } from "@tanstack/react-query";
 import { useState } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { apiRequest, queryClient } from "@/lib/queryClient";
+import { insertFacilitySchema } from "@shared/schema";
+import { z } from "zod";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Switch } from "@/components/ui/switch";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { 
   Building, 
   ArrowLeft, 
@@ -71,6 +82,66 @@ export default function BankDetail() {
   const bankFacilities = (facilities as any[])?.filter((f: any) => f.bankId === bankId) || [];
   const bankExposure = (portfolioSummary as PortfolioSummary)?.bankExposures?.find(exp => exp.bankId === bankId);
   const bankLoans = (loans as any[])?.filter((l: any) => l.facility?.bankId === bankId) || [];
+
+  // Facility form state and logic
+  const [isFacilityDialogOpen, setIsFacilityDialogOpen] = useState(false);
+  
+  const facilityFormSchema = insertFacilitySchema.omit({ userId: true, bankId: true }).extend({
+    creditLimit: z.string().min(1, "Credit limit is required").refine((val) => !isNaN(Number(val)) && Number(val) > 0, "Credit limit must be greater than 0"),
+    costOfFunding: z.string().min(1, "Cost of funding is required").refine((val) => !isNaN(Number(val)) && Number(val) >= 0 && Number(val) <= 20, "Cost of funding must be between 0 and 20"),
+    startDate: z.string().min(1, "Start date is required"),
+    expiryDate: z.string().min(1, "Expiry date is required"),
+  }).refine((data) => new Date(data.expiryDate) >= new Date(data.startDate), {
+    message: "Expiry date must be after start date",
+    path: ["expiryDate"],
+  });
+
+  const facilityForm = useForm<z.infer<typeof facilityFormSchema>>({
+    resolver: zodResolver(facilityFormSchema),
+    defaultValues: {
+      facilityType: "revolving",
+      creditLimit: "",
+      costOfFunding: "",
+      startDate: "",
+      expiryDate: "",
+      terms: "",
+      isActive: true,
+    },
+  });
+
+  const createFacilityMutation = useMutation({
+    mutationFn: async (data: z.infer<typeof facilityFormSchema>) => {
+      return apiRequest('POST', '/api/facilities', {
+        ...data,
+        bankId,
+        creditLimit: data.creditLimit,
+        costOfFunding: data.costOfFunding,
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/facilities"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/dashboard/portfolio"] });
+      setIsFacilityDialogOpen(false);
+      facilityForm.reset();
+      toast({ title: "Facility created successfully" });
+    },
+    onError: (error) => {
+      toast({ 
+        title: "Failed to create facility", 
+        description: error.message,
+        variant: "destructive" 
+      });
+    },
+  });
+
+  const handleSubmitFacility = (data: z.infer<typeof facilityFormSchema>) => {
+    createFacilityMutation.mutate(data);
+  };
+
+  const handleCloseFacilityDialog = () => {
+    setIsFacilityDialogOpen(false);
+    facilityForm.reset();
+  };
 
   // Show loading state while data is being fetched
   if (banksLoading || facilitiesLoading || portfolioLoading || loansLoading) {
@@ -243,10 +314,194 @@ export default function BankDetail() {
                     <CreditCard className="h-5 w-5 text-indigo-600 dark:text-indigo-400" />
                     <span>Credit Facilities</span>
                   </div>
-                  <Button size="sm" data-testid="button-add-facility">
-                    <Plus className="mr-2 h-4 w-4" />
-                    Add Facility
-                  </Button>
+                  <Dialog open={isFacilityDialogOpen} onOpenChange={setIsFacilityDialogOpen}>
+                    <DialogTrigger asChild>
+                      <Button size="sm" data-testid="button-add-facility">
+                        <Plus className="mr-2 h-4 w-4" />
+                        Add Facility
+                      </Button>
+                    </DialogTrigger>
+                    <DialogContent className="sm:max-w-[600px]">
+                      <DialogHeader>
+                        <DialogTitle>Add New Credit Facility</DialogTitle>
+                        <DialogDescription>
+                          Create a new credit facility for {bank?.name}.
+                        </DialogDescription>
+                      </DialogHeader>
+                      <Form {...facilityForm}>
+                        <form onSubmit={facilityForm.handleSubmit(handleSubmitFacility)} className="space-y-4">
+                          <div className="grid grid-cols-2 gap-4">
+                            <FormField
+                              control={facilityForm.control}
+                              name="facilityType"
+                              render={({ field }) => (
+                                <FormItem>
+                                  <FormLabel>Facility Type</FormLabel>
+                                  <Select onValueChange={field.onChange} value={field.value}>
+                                    <FormControl>
+                                      <SelectTrigger data-testid="select-facilityType">
+                                        <SelectValue placeholder="Select facility type" />
+                                      </SelectTrigger>
+                                    </FormControl>
+                                    <SelectContent>
+                                      <SelectItem value="revolving">Revolving Credit</SelectItem>
+                                      <SelectItem value="term">Term Loan</SelectItem>
+                                      <SelectItem value="bullet">Bullet Loan</SelectItem>
+                                      <SelectItem value="bridge">Bridge Financing</SelectItem>
+                                      <SelectItem value="working_capital">Working Capital</SelectItem>
+                                    </SelectContent>
+                                  </Select>
+                                  <FormMessage />
+                                </FormItem>
+                              )}
+                            />
+                            
+                            <FormField
+                              control={facilityForm.control}
+                              name="creditLimit"
+                              render={({ field }) => (
+                                <FormItem>
+                                  <FormLabel>Credit Limit (SAR)</FormLabel>
+                                  <FormControl>
+                                    <Input 
+                                      data-testid="input-creditLimit" 
+                                      type="number"
+                                      placeholder="e.g., 5000000" 
+                                      {...field} 
+                                    />
+                                  </FormControl>
+                                  <FormMessage />
+                                </FormItem>
+                              )}
+                            />
+                          </div>
+
+                          <div className="grid grid-cols-2 gap-4">
+                            <FormField
+                              control={facilityForm.control}
+                              name="costOfFunding"
+                              render={({ field }) => (
+                                <FormItem>
+                                  <FormLabel>Cost of Funding (%)</FormLabel>
+                                  <FormControl>
+                                    <Input 
+                                      data-testid="input-costOfFunding" 
+                                      type="number" 
+                                      step="0.01"
+                                      placeholder="e.g., 2.75" 
+                                      {...field} 
+                                    />
+                                  </FormControl>
+                                  <FormMessage />
+                                </FormItem>
+                              )}
+                            />
+                            
+                            <FormField
+                              control={facilityForm.control}
+                              name="isActive"
+                              render={({ field }) => (
+                                <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3">
+                                  <div className="space-y-0.5">
+                                    <FormLabel>Active Facility</FormLabel>
+                                    <p className="text-sm text-gray-600 dark:text-gray-400">
+                                      Set facility as active
+                                    </p>
+                                  </div>
+                                  <FormControl>
+                                    <Switch
+                                      data-testid="switch-isActive"
+                                      checked={field.value ?? true}
+                                      onCheckedChange={field.onChange}
+                                    />
+                                  </FormControl>
+                                </FormItem>
+                              )}
+                            />
+                          </div>
+
+                          <div className="grid grid-cols-2 gap-4">
+                            <FormField
+                              control={facilityForm.control}
+                              name="startDate"
+                              render={({ field }) => (
+                                <FormItem>
+                                  <FormLabel>Start Date</FormLabel>
+                                  <FormControl>
+                                    <Input 
+                                      data-testid="input-startDate" 
+                                      type="date" 
+                                      {...field} 
+                                    />
+                                  </FormControl>
+                                  <FormMessage />
+                                </FormItem>
+                              )}
+                            />
+                            
+                            <FormField
+                              control={facilityForm.control}
+                              name="expiryDate"
+                              render={({ field }) => (
+                                <FormItem>
+                                  <FormLabel>Expiry Date</FormLabel>
+                                  <FormControl>
+                                    <Input 
+                                      data-testid="input-expiryDate" 
+                                      type="date" 
+                                      {...field} 
+                                    />
+                                  </FormControl>
+                                  <FormMessage />
+                                </FormItem>
+                              )}
+                            />
+                          </div>
+                          
+                          <FormField
+                            control={facilityForm.control}
+                            name="terms"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Terms & Conditions (Optional)</FormLabel>
+                                <FormControl>
+                                  <Textarea 
+                                    data-testid="textarea-terms"
+                                    placeholder="Enter any specific terms and conditions for this facility..."
+                                    className="resize-none"
+                                    {...field}
+                                    value={field.value ?? ""}
+                                  />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                          
+                          <DialogFooter>
+                            <Button 
+                              type="button" 
+                              variant="outline" 
+                              onClick={handleCloseFacilityDialog}
+                              data-testid="button-cancel-facility"
+                            >
+                              Cancel
+                            </Button>
+                            <Button 
+                              type="submit" 
+                              disabled={createFacilityMutation.isPending}
+                              data-testid="button-submit-facility"
+                            >
+                              {createFacilityMutation.isPending
+                                ? "Creating..." 
+                                : "Create Facility"
+                              }
+                            </Button>
+                          </DialogFooter>
+                        </form>
+                      </Form>
+                    </DialogContent>
+                  </Dialog>
                 </CardTitle>
                 <p className="text-sm text-gray-600 dark:text-gray-400">Your active facilities with this bank</p>
               </CardHeader>
