@@ -59,7 +59,6 @@ import {
 import { Link } from "wouter";
 import { PortfolioSummary } from "@shared/types";
 import BankContactsSection from "@/components/BankContactsSection";
-import CollateralForm from "@/components/CollateralForm";
 
 export default function BankDetail() {
   const { bankId } = useParams();
@@ -157,8 +156,6 @@ export default function BankDetail() {
     return asset ? { ...asset, assignment, facility } : null;
   }).filter(Boolean);
 
-  // Dialog states for forms
-  const [isCollateralDialogOpen, setIsCollateralDialogOpen] = useState(false);
   
   const deleteFacilityMutation = useMutation({
     mutationFn: async (facilityId: string) => {
@@ -774,21 +771,6 @@ export default function BankDetail() {
         </div>
       </div>
 
-      {/* Collateral Form Dialog */}
-      {isCollateralDialogOpen && (
-        <CollateralForm
-          onSuccess={() => {
-            setIsCollateralDialogOpen(false);
-            queryClient.invalidateQueries({ queryKey: ["/api/collateral"] });
-            queryClient.invalidateQueries({ queryKey: ["/api/collateral-assignments"] });
-            toast({
-              title: "Success",
-              description: "Collateral added successfully",
-            });
-          }}
-          onCancel={() => setIsCollateralDialogOpen(false)}
-        />
-      )}
 
     </div>
   );
