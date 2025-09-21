@@ -145,14 +145,14 @@ export async function setupAuth(app: Express, databaseAvailable = true) {
 export const isAuthenticated: RequestHandler = async (req, res, next) => {
   // Development mode bypass when database is unavailable
   if (process.env.NODE_ENV === 'development' && !req.isAuthenticated()) {
-    console.log("🔧 Development mode: bypassing authentication for testing");
-    // Create a mock user for development testing
+    console.log("🔧 Development mode: bypassing authentication for Abdulrahman");
+    // Create a mock user for development testing using Abdulrahman's account
     (req as any).user = {
       claims: {
-        sub: 'dev-user-123',
-        email: 'developer@test.com',
-        first_name: 'Test',
-        last_name: 'Developer'
+        sub: 'abdulrahman-user-main',
+        email: 'abdulrahman@example.com',
+        first_name: 'Abdulrahman',
+        last_name: ''
       }
     };
     return next();
