@@ -132,15 +132,18 @@ export default function LoanForm({ onSuccess, onCancel }: LoanFormProps) {
       onSuccess();
     },
     onError: (error) => {
+      console.error("❌ Loan creation error:", error);
       toast({
         title: "Error",
-        description: "Failed to create loan",
+        description: error.message || "Failed to create loan",
         variant: "destructive",
       });
     },
   });
 
   const onSubmit = (data: LoanFormData) => {
+    console.log("🚀 Form submitted with data:", data);
+    console.log("🔍 Form errors:", form.formState.errors);
     createLoanMutation.mutate(data);
   };
 
