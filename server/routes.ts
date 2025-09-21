@@ -16,6 +16,9 @@ import {
   insertExposureSnapshotSchema,
   insertTransactionSchema,
   transactionTypeZodEnum,
+  paymentRequestSchema,
+  settlementRequestSchema,
+  revolveRequestSchema,
 } from "@shared/schema";
 import { z } from "zod";
 
@@ -445,22 +448,120 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.put('/api/loans/:id/settle', isAuthenticated, async (req: any, res) => {
+  // Enhanced Loan Lifecycle Management Routes
+  
+  // Get individual loan details
+  app.get('/api/loans/:id', isAuthenticated, async (req: any, res) => {
     try {
       const loanId = req.params.id;
-      const { settledAmount } = req.body;
-      const loan = await storage.settleLoan(loanId, settledAmount);
+      const loan = await storage.getLoanById(loanId);
+      
+      if (!loan) {
+        return res.status(404).json({ message: "Loan not found" });
+      }
+      
       res.json(loan);
+    } catch (error) {
+      console.error("Error fetching loan:", error);
+      res.status(500).json({ message: "Failed to fetch loan" });
+    }
+  });
+
+  // Update loan details
+  app.patch('/api/loans/:id', isAuthenticated, async (req: any, res) => {
+    try {
+      const loanId = req.params.id;
+      const userId = req.user.claims.sub;
+      const { reason, ...updateData } = req.body;
+      
+      // Validate update data
+      const validatedData = insertLoanSchema.partial().parse(updateData);
+      
+      const updatedLoan = await storage.updateLoan(loanId, validatedData, userId, reason);
+      res.json(updatedLoan);
+    } catch (error) {
+      console.error("Error updating loan:", error);
+      res.status(400).json({ message: "Failed to update loan" });
+    }
+  });
+
+  // Process payment against loan
+  app.post('/api/loans/:id/repayments', isAuthenticated, async (req: any, res) => {
+    try {
+      const loanId = req.params.id;
+      const userId = req.user.claims.sub;
+      const paymentData = paymentRequestSchema.parse(req.body);
+      
+      const result = await storage.processPayment(loanId, paymentData, userId);
+      res.json(result);
+    } catch (error) {
+      console.error("Error processing payment:", error);
+      res.status(400).json({ message: "Failed to process payment" });
+    }
+  });
+
+  // Settle loan (full payment)
+  app.post('/api/loans/:id/settle', isAuthenticated, async (req: any, res) => {
+    try {
+      const loanId = req.params.id;
+      const userId = req.user.claims.sub;
+      const settlementData = settlementRequestSchema.parse(req.body);
+      
+      const result = await storage.settleLoan(loanId, settlementData, userId);
+      res.json(result);
     } catch (error) {
       console.error("Error settling loan:", error);
       res.status(400).json({ message: "Failed to settle loan" });
     }
   });
 
+  // Revolve loan (renew for continuous credit)
+  app.post('/api/loans/:id/revolve', isAuthenticated, async (req: any, res) => {
+    try {
+      const loanId = req.params.id;
+      const userId = req.user.claims.sub;
+      const revolveData = revolveRequestSchema.parse(req.body);
+      
+      const result = await storage.revolveLoan(loanId, revolveData, userId);
+      res.json(result);
+    } catch (error) {
+      console.error("Error revolving loan:", error);
+      res.status(400).json({ message: "Failed to revolve loan" });
+    }
+  });
+
+  // Get loan ledger (transaction history)
+  app.get('/api/loans/:id/ledger', isAuthenticated, async (req: any, res) => {
+    try {
+      const loanId = req.params.id;
+      const transactions = await storage.getLoanLedger(loanId);
+      res.json(transactions);
+    } catch (error) {
+      console.error("Error fetching loan ledger:", error);
+      res.status(500).json({ message: "Failed to fetch loan ledger" });
+    }
+  });
+
+  // Get loan balance breakdown
+  app.get('/api/loans/:id/balance', isAuthenticated, async (req: any, res) => {
+    try {
+      const loanId = req.params.id;
+      const balance = await storage.calculateLoanBalance(loanId);
+      res.json(balance);
+    } catch (error) {
+      console.error("Error calculating loan balance:", error);
+      res.status(500).json({ message: "Failed to calculate loan balance" });
+    }
+  });
+
+  // Delete/Cancel loan (with audit trail)
   app.delete('/api/loans/:id', isAuthenticated, async (req: any, res) => {
     try {
       const loanId = req.params.id;
-      await storage.deleteLoan(loanId);
+      const userId = req.user.claims.sub;
+      const { reason } = req.body;
+      
+      await storage.deleteLoan(loanId, userId, reason);
       res.json({ message: "Loan cancelled successfully" });
     } catch (error) {
       console.error("Error cancelling loan:", error);
