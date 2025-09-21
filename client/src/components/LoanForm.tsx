@@ -30,6 +30,7 @@ const loanFormSchema = insertLoanSchema
     dueDate: z.string().min(1, "Due date is required"),
     chargesDueDate: z.string().optional(),
     siborRate: z.string().min(1, "SIBOR rate is required"),
+    siborTerm: z.string().optional(),
     notes: z.string().optional(),
   });
 
@@ -425,15 +426,17 @@ export default function LoanForm({ onSuccess, onCancel }: LoanFormProps) {
                           onClick={() => {
                             form.setValue("dueDate", dueDateStr);
                             form.setValue("chargesDueDate", dueDateStr); // Set charges due date to same as loan due date
-                            // Auto-select appropriate SIBOR rate based on term
-                            const siborRates = {
-                              30: "5.25",   // 1-month SIBOR
-                              60: "5.35",   // 2-month SIBOR  
-                              90: "5.45",   // 3-month SIBOR
-                              180: "5.65",  // 6-month SIBOR
-                              360: "5.85"   // 12-month SIBOR
+                            // Auto-select appropriate SIBOR rate and term based on selected term
+                            const siborConfig = {
+                              30: { rate: "5.25", term: "1 Month SIBOR" },
+                              60: { rate: "5.35", term: "2 Months SIBOR" },
+                              90: { rate: "5.45", term: "3 Months SIBOR" },
+                              180: { rate: "5.65", term: "6 Months SIBOR" },
+                              360: { rate: "5.85", term: "12 Months SIBOR" }
                             };
-                            form.setValue("siborRate", siborRates[days as keyof typeof siborRates] || "5.75");
+                            const config = siborConfig[days as keyof typeof siborConfig] || { rate: "5.75", term: "Custom Rate" };
+                            form.setValue("siborRate", config.rate);
+                            form.setValue("siborTerm", config.term);
                           }}
                           className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${
                             isSelected 
@@ -512,9 +515,12 @@ export default function LoanForm({ onSuccess, onCancel }: LoanFormProps) {
               />
 
               <div className="space-y-2">
-                <Label>Bank Rate (%)</Label>
+                <Label>SIBOR Term & Bank Rate (%)</Label>
                 <div className="px-3 py-2 border border-border rounded-md bg-muted text-muted-foreground">
-                  {selectedFacility ? `SIBOR + ${selectedFacility.costOfFunding}%` : 'Select facility first'}
+                  <div className="font-medium">{form.watch("siborTerm") || "Manual Rate"}</div>
+                  <div className="text-xs">
+                    {selectedFacility ? `SIBOR + ${selectedFacility.costOfFunding}%` : 'Select facility first'}
+                  </div>
                 </div>
               </div>
             </div>

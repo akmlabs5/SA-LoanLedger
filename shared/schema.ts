@@ -207,6 +207,7 @@ export const loans = pgTable("loans", {
   dueDate: date("due_date").notNull(),
   chargesDueDate: date("charges_due_date"),
   siborRate: decimal("sibor_rate", { precision: 5, scale: 2 }).notNull(),
+  siborTerm: varchar("sibor_term", { length: 50 }), // e.g., "3 Months SIBOR", "6 Months SIBOR"
   bankRate: decimal("bank_rate", { precision: 5, scale: 2 }).notNull(),
   notes: text("notes"),
   status: loanStatusEnum("status").default('active'),
