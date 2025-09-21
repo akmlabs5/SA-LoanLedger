@@ -30,7 +30,6 @@ import AIInsightsPanel from "@/components/AIInsightsPanel";
 import PortfolioChart from "@/components/charts/PortfolioChart";
 import PortfolioPerformanceChart from "@/components/charts/PortfolioPerformanceChart";
 import LoanDistributionChart from "@/components/charts/LoanDistributionChart";
-import LTVTrendChart from "@/components/charts/LTVTrendChart";
 import { isUnauthorizedError } from "@/lib/authUtils";
 import { PortfolioSummary, SiborRate, LoanWithDetails } from "@shared/types";
 
@@ -616,52 +615,55 @@ export default function Dashboard() {
 
         {/* Enhanced Interactive Charts Section */}
         <div className="space-y-6 mb-8">
-          {/* Main Portfolio Charts Row */}
+          {/* Row 1: Outstanding vs Credit Limits + Portfolio Distribution */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <div className="transform hover:scale-[1.01] transition-transform duration-300">
-              <PortfolioChart portfolioSummary={portfolioSummary} />
-            </div>
-            <div className="transform hover:scale-[1.01] transition-transform duration-300">
-              <PortfolioPerformanceChart 
-                timeframe="month" 
-                showInterestTrend={false} 
-                portfolioSummary={portfolioSummary}
-                loans={activeLoans}
-                isLoading={portfolioLoading || loansLoading}
-              />
-            </div>
+            <Card className="bg-card border border-border shadow-sm hover:shadow-md transition-all duration-200">
+              <CardHeader className="pb-4">
+                <CardTitle className="text-lg font-semibold flex items-center space-x-2">
+                  <BarChart3 className="h-5 w-5 text-primary" />
+                  <span>Outstanding vs Credit Limits</span>
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="pt-0">
+                <PortfolioChart portfolioSummary={portfolioSummary} />
+              </CardContent>
+            </Card>
+            
+            <Card className="bg-card border border-border shadow-sm hover:shadow-md transition-all duration-200">
+              <CardHeader className="pb-4">
+                <CardTitle className="text-lg font-semibold flex items-center space-x-2">
+                  <Target className="h-5 w-5 text-primary" />
+                  <span>Portfolio Distribution</span>
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="pt-0">
+                <LoanDistributionChart 
+                  loans={activeLoans} 
+                  showTimeDistribution={false} 
+                  isLoading={loansLoading}
+                />
+              </CardContent>
+            </Card>
           </div>
           
-          {/* Advanced Analytics Row */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <div className="transform hover:scale-[1.01] transition-transform duration-300">
-              <LTVTrendChart 
-                timeframe="month" 
-                showRiskBands={true} 
-                portfolioSummary={portfolioSummary}
-                loans={activeLoans}
-                isLoading={portfolioLoading || loansLoading}
-              />
-            </div>
-            <div className="transform hover:scale-[1.01] transition-transform duration-300">
+          {/* Row 2: Portfolio Performance (Full Width) */}
+          <Card className="bg-card border border-border shadow-sm hover:shadow-md transition-all duration-200">
+            <CardHeader className="pb-4">
+              <CardTitle className="text-lg font-semibold flex items-center space-x-2">
+                <Activity className="h-5 w-5 text-primary" />
+                <span>Portfolio Performance</span>
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="pt-0">
               <PortfolioPerformanceChart 
-                timeframe="quarter" 
+                timeframe="month" 
                 showInterestTrend={true} 
                 portfolioSummary={portfolioSummary}
                 loans={activeLoans}
                 isLoading={portfolioLoading || loansLoading}
               />
-            </div>
-          </div>
-          
-          {/* Loan Distribution Analysis */}
-          <div className="transform hover:scale-[1.01] transition-transform duration-300">
-            <LoanDistributionChart 
-              loans={activeLoans} 
-              showTimeDistribution={false} 
-              isLoading={loansLoading}
-            />
-          </div>
+            </CardContent>
+          </Card>
         </div>
       </div>
     </div>
