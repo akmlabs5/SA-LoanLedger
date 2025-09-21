@@ -238,9 +238,15 @@ export default function BankDetail() {
           <div className="lg:col-span-2 space-y-6">
             <Card className="border-0 shadow-lg bg-white/50 dark:bg-gray-800/50 backdrop-blur-sm">
               <CardHeader>
-                <CardTitle className="text-xl font-semibold flex items-center space-x-2">
-                  <CreditCard className="h-5 w-5 text-indigo-600 dark:text-indigo-400" />
-                  <span>Credit Facilities</span>
+                <CardTitle className="text-xl font-semibold flex items-center justify-between">
+                  <div className="flex items-center space-x-2">
+                    <CreditCard className="h-5 w-5 text-indigo-600 dark:text-indigo-400" />
+                    <span>Credit Facilities</span>
+                  </div>
+                  <Button size="sm" data-testid="button-add-facility">
+                    <Plus className="mr-2 h-4 w-4" />
+                    Add Facility
+                  </Button>
                 </CardTitle>
                 <p className="text-sm text-gray-600 dark:text-gray-400">Your active facilities with this bank</p>
               </CardHeader>
