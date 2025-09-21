@@ -41,7 +41,8 @@ import {
   Edit,
   Trash2,
   Star,
-  User
+  User,
+  Gem
 } from "lucide-react";
 import { Link } from "wouter";
 import { PortfolioSummary } from "@shared/types";
@@ -77,11 +78,35 @@ export default function BankDetail() {
     enabled: isAuthenticated && !!bankId,
   });
 
+  // Fetch collateral and assignments for this bank
+  const { data: collateral } = useQuery({
+    queryKey: ["/api/collateral"],
+    enabled: isAuthenticated,
+  });
+
+  const { data: collateralAssignments } = useQuery({
+    queryKey: ["/api/collateral-assignments"],
+    enabled: isAuthenticated,
+  });
+
   // Find the specific bank
   const bank = (banks as any[])?.find((b: any) => b.id === bankId);
   const bankFacilities = (facilities as any[])?.filter((f: any) => f.bankId === bankId) || [];
   const bankExposure = (portfolioSummary as PortfolioSummary)?.bankExposures?.find(exp => exp.bankId === bankId);
   const bankLoans = (loans as any[])?.filter((l: any) => l.facility?.bankId === bankId) || [];
+  
+  // Filter collateral assignments for this bank's facilities
+  const bankCollateralAssignments = (collateralAssignments as any[])?.filter((assignment: any) => {
+    const facility = bankFacilities.find(f => f.id === assignment.facilityId);
+    return !!facility;
+  }) || [];
+  
+  // Get collateral details for assignments
+  const bankCollateral = bankCollateralAssignments.map((assignment: any) => {
+    const asset = (collateral as any[])?.find((c: any) => c.id === assignment.collateralId);
+    const facility = bankFacilities.find(f => f.id === assignment.facilityId);
+    return asset ? { ...asset, assignment, facility } : null;
+  }).filter(Boolean);
 
   // Facility form state and logic
   const [isFacilityDialogOpen, setIsFacilityDialogOpen] = useState(false);
@@ -603,6 +628,96 @@ export default function BankDetail() {
                             <Trash2 className="mr-1 h-4 w-4" />
                             {deleteFacilityMutation.isPending ? "Deleting..." : "Delete"}
                           </Button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
+            {/* Collateral Assignments */}
+            <Card className="border-0 shadow-lg bg-white/50 dark:bg-gray-800/50 backdrop-blur-sm">
+              <CardHeader>
+                <CardTitle className="text-xl font-semibold flex items-center space-x-2">
+                  <Gem className="h-5 w-5 text-purple-600 dark:text-purple-400" />
+                  <span>Assigned Collateral</span>
+                </CardTitle>
+                <p className="text-sm text-gray-600 dark:text-gray-400">
+                  Assets securing facilities with this bank
+                </p>
+              </CardHeader>
+              <CardContent>
+                {bankCollateral.length === 0 ? (
+                  <div className="text-center py-12">
+                    <Gem className="h-12 w-12 text-gray-300 dark:text-gray-600 mx-auto mb-4" />
+                    <p className="text-gray-600 dark:text-gray-400">No collateral assigned to this bank's facilities</p>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {bankCollateral.map((asset: any) => (
+                      <div key={asset.id} className="p-4 border border-gray-200 dark:border-gray-700 rounded-xl">
+                        <div className="flex items-center justify-between mb-3">
+                          <div>
+                            <h4 className="font-semibold text-gray-900 dark:text-gray-100">
+                              {asset.name}
+                            </h4>
+                            <p className="text-sm text-gray-600 dark:text-gray-400 capitalize">
+                              {asset.type.replace('_', ' ')} • Valued {new Date(asset.valuationDate).toLocaleDateString()}
+                            </p>
+                          </div>
+                          <div className="text-right">
+                            <p className="font-bold text-gray-900 dark:text-gray-100">
+                              {formatCurrency(parseFloat(asset.currentValue))}
+                            </p>
+                            <Badge className="bg-purple-100 text-purple-800 dark:bg-purple-900/20 dark:text-purple-400">
+                              Assigned
+                            </Badge>
+                          </div>
+                        </div>
+                        
+                        <div className="grid grid-cols-2 gap-4 mb-3">
+                          <div>
+                            <p className="text-xs text-gray-500 dark:text-gray-400">Assigned to Facility</p>
+                            <p className="font-semibold text-gray-900 dark:text-gray-100 capitalize">
+                              {asset.facility?.facilityType?.replace('_', ' ')} Facility
+                            </p>
+                          </div>
+                          <div>
+                            <p className="text-xs text-gray-500 dark:text-gray-400">Facility Credit Limit</p>
+                            <p className="font-semibold text-gray-900 dark:text-gray-100">
+                              {asset.facility ? formatCurrency(parseFloat(asset.facility.creditLimit)) : 'N/A'}
+                            </p>
+                          </div>
+                        </div>
+                        
+                        {asset.assignment?.creditLineId && (
+                          <div className="mt-3 p-2 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+                            <p className="text-xs text-blue-700 dark:text-blue-300 mb-1">Specific Credit Line Assignment</p>
+                            <p className="text-sm font-medium text-blue-800 dark:text-blue-200">
+                              Credit Line ID: {asset.assignment.creditLineId}
+                            </p>
+                          </div>
+                        )}
+                        
+                        {asset.description && (
+                          <div className="mt-3">
+                            <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">Description</p>
+                            <p className="text-sm text-gray-700 dark:text-gray-300 bg-gray-50 dark:bg-gray-800 p-3 rounded-lg">
+                              {asset.description}
+                            </p>
+                          </div>
+                        )}
+                        
+                        <div className="mt-3 pt-3 border-t border-gray-200 dark:border-gray-700">
+                          <div className="flex items-center justify-between text-sm">
+                            <span className="text-gray-600 dark:text-gray-400">
+                              Valuation Source: {asset.valuationSource || 'Not specified'}
+                            </span>
+                            <span className="text-gray-600 dark:text-gray-400">
+                              Last Updated: {new Date(asset.valuationDate).toLocaleDateString()}
+                            </span>
+                          </div>
                         </div>
                       </div>
                     ))}
