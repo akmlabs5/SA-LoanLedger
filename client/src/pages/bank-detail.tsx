@@ -2,6 +2,7 @@ import { useParams } from "wouter";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import { useQuery } from "@tanstack/react-query";
+import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -24,10 +25,16 @@ import {
   Settings,
   Phone,
   Mail,
-  MapPin
+  MapPin,
+  Plus,
+  Edit,
+  Trash2,
+  Star,
+  User
 } from "lucide-react";
 import { Link } from "wouter";
 import { PortfolioSummary } from "@shared/types";
+import BankContactsSection from "@/components/BankContactsSection";
 
 export default function BankDetail() {
   const { bankId } = useParams();
@@ -52,6 +59,11 @@ export default function BankDetail() {
   const { data: loans, isLoading: loansLoading } = useQuery({
     queryKey: ["/api/loans"],
     enabled: isAuthenticated,
+  });
+
+  const { data: bankContacts, isLoading: contactsLoading } = useQuery({
+    queryKey: ["/api/banks", bankId, "contacts"],
+    enabled: isAuthenticated && !!bankId,
   });
 
   // Find the specific bank
@@ -360,12 +372,17 @@ export default function BankDetail() {
 
           {/* Bank Information & Actions */}
           <div className="space-y-6">
-            {/* Bank Contact Information */}
+            {/* Bank Contacts */}
+            <BankContactsSection 
+              bankId={bankId!} 
+              bankName={bank.name} 
+              isAuthenticated={isAuthenticated} 
+            />
             <Card className="border-0 shadow-lg bg-white/50 dark:bg-gray-800/50 backdrop-blur-sm">
               <CardHeader>
                 <CardTitle className="text-xl font-semibold flex items-center space-x-2">
                   <Building className="h-5 w-5 text-gray-600 dark:text-gray-400" />
-                  <span>Bank Information</span>
+                  <span>Quick Actions</span>
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
