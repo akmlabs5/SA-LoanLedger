@@ -168,6 +168,30 @@ export const loans = pgTable("loans", {
   index("idx_loans_due_date").on(table.dueDate),
 ]);
 
+// Loan Templates for Saudi Banking Standards
+export const loanTemplates = pgTable("loan_templates", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  name: varchar("name", { length: 200 }).notNull(),
+  description: text("description"),
+  loanType: varchar("loan_type", { length: 50 }).notNull(), // working_capital, term_loan, trade_finance, etc.
+  creditLineType: creditLineTypeEnum("credit_line_type").notNull(),
+  defaultDurationMonths: integer("default_duration_months").notNull(),
+  minAmount: decimal("min_amount", { precision: 15, scale: 2 }),
+  maxAmount: decimal("max_amount", { precision: 15, scale: 2 }),
+  defaultInterestMargin: decimal("default_interest_margin", { precision: 5, scale: 2 }).notNull(), // Margin over SIBOR
+  repaymentStructure: varchar("repayment_structure", { length: 50 }).notNull(), // bullet, installments, revolving
+  requiredDocuments: text("required_documents").array(), // Array of required document types
+  collateralRequired: boolean("collateral_required").default(false),
+  termsAndConditions: text("terms_and_conditions"),
+  eligibilityCriteria: text("eligibility_criteria"),
+  isActive: boolean("is_active").default(true),
+  isSystemTemplate: boolean("is_system_template").default(false), // True for built-in Saudi templates
+  createdAt: timestamp("created_at").defaultNow(),
+}, (table) => [
+  index("idx_loan_templates_type").on(table.loanType),
+  index("idx_loan_templates_credit_line_type").on(table.creditLineType),
+]);
+
 // AI Insights Configuration
 export const aiInsightConfig = pgTable("ai_insight_config", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
@@ -369,10 +393,16 @@ export const transactionsRelations = relations(transactions, ({ one }) => ({
   }),
 }));
 
+export const loanTemplatesRelations = relations(loanTemplates, ({ many }) => ({
+  // No explicit foreign key relations as templates are standalone reference data
+}));
+
 // Zod Enums for validation
 export const transactionTypeZodEnum = z.enum(['draw', 'repayment', 'fee', 'interest', 'limit_change', 'other']);
 export const facilityTypeZodEnum = z.enum(['revolving', 'term', 'bullet', 'bridge', 'working_capital']);
 export const creditLineTypeZodEnum = z.enum(['working_capital', 'term_loan', 'trade_finance', 'real_estate_finance', 'equipment_finance', 'overdraft', 'letter_of_credit', 'bank_guarantee', 'other']);
+export const loanTypeZodEnum = z.enum(['working_capital', 'term_loan', 'trade_finance', 'real_estate_finance', 'equipment_finance', 'revolving_credit', 'overdraft', 'letter_of_credit', 'bank_guarantee', 'bridge_loan', 'murabaha', 'ijara', 'other']);
+export const repaymentStructureZodEnum = z.enum(['bullet', 'installments', 'revolving', 'quarterly', 'semi_annual', 'annual', 'on_demand']);
 export const collateralTypeZodEnum = z.enum(['real_estate', 'liquid_stocks', 'other']);
 export const loanStatusZodEnum = z.enum(['active', 'settled', 'overdue']);
 
@@ -427,6 +457,22 @@ export const insertCreditLineSchema = createInsertSchema(creditLines)
       .optional(),
     startDate: z.string().refine((val) => !isNaN(Date.parse(val)), "Must be a valid date").optional(),
     expiryDate: z.string().refine((val) => !isNaN(Date.parse(val)), "Must be a valid date").optional(),
+  });
+
+export const insertLoanTemplateSchema = createInsertSchema(loanTemplates)
+  .omit({ id: true, createdAt: true })
+  .extend({
+    loanType: loanTypeZodEnum,
+    creditLineType: creditLineTypeZodEnum,
+    repaymentStructure: repaymentStructureZodEnum,
+    defaultInterestMargin: z.string()
+      .refine((val) => !isNaN(Number(val)), "Must be a valid number")
+      .refine((val) => Number(val) >= 0, "Must be non-negative")
+      .refine((val) => Number(val) <= 10, "Must be 10% or less"),
+    minAmount: positiveDecimalString(15, 2).optional(),
+    maxAmount: positiveDecimalString(15, 2).optional(),
+    defaultDurationMonths: z.number().int().positive("Duration must be positive"),
+    requiredDocuments: z.array(z.string()).optional(),
   });
 
 export const insertCollateralSchema = createInsertSchema(collateral)
@@ -520,6 +566,8 @@ export type Collateral = typeof collateral.$inferSelect;
 export type InsertCollateral = z.infer<typeof insertCollateralSchema>;
 export type Loan = typeof loans.$inferSelect;
 export type InsertLoan = z.infer<typeof insertLoanSchema>;
+export type LoanTemplate = typeof loanTemplates.$inferSelect;
+export type InsertLoanTemplate = z.infer<typeof insertLoanTemplateSchema>;
 export type Document = typeof documents.$inferSelect;
 export type InsertDocument = z.infer<typeof insertDocumentSchema>;
 export type AiInsightConfig = typeof aiInsightConfig.$inferSelect;
@@ -533,5 +581,7 @@ export type InsertTransaction = z.infer<typeof insertTransactionSchema>;
 export type TransactionType = z.infer<typeof transactionTypeZodEnum>;
 export type FacilityType = z.infer<typeof facilityTypeZodEnum>;
 export type CreditLineType = z.infer<typeof creditLineTypeZodEnum>;
+export type LoanType = z.infer<typeof loanTypeZodEnum>;
+export type RepaymentStructure = z.infer<typeof repaymentStructureZodEnum>;
 export type CollateralType = z.infer<typeof collateralTypeZodEnum>;
 export type LoanStatus = z.infer<typeof loanStatusZodEnum>;
