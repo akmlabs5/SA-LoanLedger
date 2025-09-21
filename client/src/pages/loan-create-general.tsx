@@ -468,6 +468,67 @@ export default function GeneralLoanCreatePage() {
 
                     <Separator />
 
+                    {/* Quick Term Selection */}
+                    {form.watch("startDate") && (
+                      <div className="p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
+                        <div className="flex items-center gap-2 mb-3">
+                          <Calendar className="h-4 w-4 text-blue-600" />
+                          <h4 className="font-medium text-blue-800 dark:text-blue-200">Quick Term Selection</h4>
+                        </div>
+                        <p className="text-sm text-blue-700 dark:text-blue-300 mb-3">
+                          Select a standard term to auto-calculate due date, or set manually below:
+                        </p>
+                        <div className="flex flex-wrap gap-2">
+                          {[
+                            { days: 30, label: "30 Days", siborTerm: "1M", siborRate: "5.25" },
+                            { days: 60, label: "60 Days", siborTerm: "3M", siborRate: "5.35" }, 
+                            { days: 90, label: "90 Days", siborTerm: "3M", siborRate: "5.45" },
+                            { days: 180, label: "180 Days", siborTerm: "6M", siborRate: "5.65" },
+                            { days: 360, label: "360 Days", siborTerm: "12M", siborRate: "5.85" }
+                          ].map(({ days, label, siborTerm, siborRate }) => {
+                            const startDate = new Date(form.watch("startDate"));
+                            const dueDate = new Date(startDate);
+                            dueDate.setDate(startDate.getDate() + days);
+                            
+                            // Saudi business day adjustment (Friday=5, Saturday=6)
+                            while (dueDate.getDay() === 5 || dueDate.getDay() === 6) {
+                              dueDate.setDate(dueDate.getDate() + 1);
+                            }
+                            
+                            const dueDateString = dueDate.toISOString().split('T')[0];
+                            const isSelected = form.watch("dueDate") === dueDateString;
+                            
+                            return (
+                              <Button
+                                key={days}
+                                type="button"
+                                variant={isSelected ? "default" : "outline"}
+                                size="sm"
+                                className={`text-xs hover:bg-blue-100 dark:hover:bg-blue-900/30 flex-col h-auto py-2 px-3 ${isSelected ? "bg-blue-600 text-white" : ""}`}
+                                onClick={() => {
+                                  form.setValue("dueDate", dueDateString);
+                                  form.setValue("chargesDueDate", dueDateString);
+                                  form.setValue("siborTerm", siborTerm);
+                                  form.setValue("siborRate", siborRate);
+                                }}
+                                data-testid={`button-${days}-days`}
+                              >
+                                <span>{label}</span>
+                                <span className="text-xs opacity-75 mt-1">
+                                  {dueDate.toLocaleDateString('en-SA')}
+                                </span>
+                              </Button>
+                            );
+                          })}
+                        </div>
+                        <p className="text-xs text-blue-600 dark:text-blue-400 mt-2">
+                          Dates auto-adjust for Saudi weekends (Friday-Saturday)
+                        </p>
+                      </div>
+                    )}
+
+                    <Separator />
+
                     {/* Duration */}
                     <div className="space-y-4">
                       <h3 className="text-lg font-medium flex items-center space-x-2">
