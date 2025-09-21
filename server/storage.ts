@@ -850,7 +850,28 @@ export class MemoryStorage implements IStorage {
 
   // Stub implementations for other methods (simplified for core functionality)
   async getUserFacilities(userId: string): Promise<Array<Facility & { bank: Bank }>> {
-    return [];
+    const userFacilities = Array.from(this.facilities.values())
+      .filter(facility => facility.userId === userId && (facility.isActive ?? true));
+    
+    return userFacilities.map(facility => {
+      const bank = this.banks.get(facility.bankId);
+      if (!bank) {
+        console.warn(`Bank not found for facility ${facility.id}: ${facility.bankId}`);
+        // Return facility with a placeholder bank to avoid breaking the UI
+        return {
+          ...facility,
+          bank: {
+            id: facility.bankId,
+            code: facility.bankId,
+            name: `Bank ${facility.bankId}`,
+            isActive: true,
+            createdAt: new Date(),
+            updatedAt: new Date(),
+          }
+        };
+      }
+      return { ...facility, bank };
+    }).sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
   }
 
   async getFacilityWithBank(facilityId: string): Promise<(Facility & { bank: Bank }) | undefined> {
@@ -861,10 +882,12 @@ export class MemoryStorage implements IStorage {
     const newFacility: Facility = {
       ...facility,
       id: this.generateId(),
+      isActive: facility.isActive ?? true, // Ensure isActive is set to true by default
       createdAt: new Date(),
       updatedAt: new Date(),
     };
     this.facilities.set(newFacility.id, newFacility);
+    console.log(`✅ Created facility: ${newFacility.facilityType} for bank ${newFacility.bankId} (ID: ${newFacility.id})`);
     return newFacility;
   }
 
