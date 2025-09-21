@@ -5,7 +5,8 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
-import { insertLoanSchema } from "@shared/schema";
+import { insertLoanSchema, Facility, Bank, Loan, CreditLine } from "@shared/schema";
+import { SiborRate } from "@shared/types";
 import { z } from "zod";
 import { useEffect, useMemo, useState } from "react";
 
@@ -33,15 +34,25 @@ import {
 
 import { Link } from "wouter";
 
-const loanFormSchema = insertLoanSchema.extend({
-  facilityId: z.string().min(1, "Please select a facility"),
-  amount: z.string().min(1, "Loan amount is required"),
-  siborRate: z.string().min(1, "SIBOR rate is required"),
-  startDate: z.string().min(1, "Start date is required"),
-  dueDate: z.string().min(1, "Due date is required"),
-  referenceNumber: z.string().optional(),
-  purpose: z.string().optional(),
-});
+const loanFormSchema = insertLoanSchema
+  .omit({ userId: true, bankRate: true })
+  .extend({
+    facilityId: z.string().min(1, "Please select a facility"),
+    creditLineId: z.string().optional(),
+    referenceNumber: z.string().min(1, "Reference number is required"),
+    amount: z.string().min(1, "Amount is required").refine((val) => {
+      const amount = parseFloat(val);
+      return amount > 0;
+    }, "Amount must be greater than 0"),
+    startDate: z.string().min(1, "Start date is required"),
+    dueDate: z.string().min(1, "Due date is required"),
+    chargesDueDate: z.string().optional(),
+    siborRate: z.string().min(1, "SIBOR rate is required"),
+    siborTerm: z.string().optional(),
+    notes: z.string().optional(),
+  });
+
+type LoanFormData = z.infer<typeof loanFormSchema>;
 
 export default function GeneralLoanCreatePage() {
   const [, setLocation] = useLocation();
@@ -49,26 +60,47 @@ export default function GeneralLoanCreatePage() {
   const { toast } = useToast();
 
   // Get facilities and banks for selection
-  const { data: facilities, isLoading: facilitiesLoading } = useQuery<any[]>({
+  const { data: facilities, isLoading: facilitiesLoading } = useQuery<Array<Facility & { bank: Bank }>>({
     queryKey: ["/api/facilities"],
     enabled: isAuthenticated,
   });
 
   // Get current SIBOR rate
-  const { data: siborData } = useQuery<{rate: number; lastUpdate: string; monthlyChange: number}>({
+  const { data: siborData } = useQuery<SiborRate>({
     queryKey: ["/api/sibor-rate"],
     enabled: isAuthenticated,
   });
 
-  const form = useForm<z.infer<typeof loanFormSchema>>({
+  // Get credit lines for facility selection
+  const { data: creditLines } = useQuery<Array<CreditLine & { facility: Facility & { bank: Bank } }>>({
+    queryKey: ["/api/credit-lines"],
+    enabled: isAuthenticated,
+  });
+
+  // Get active loans for credit calculation  
+  const { data: activeLoans } = useQuery<Array<Loan & { creditLine?: CreditLine & { facility: Facility & { bank: Bank } } }>>({
+    queryKey: ["/api/loans", "active"],
+    queryFn: async () => {
+      const response = await fetch('/api/loans?status=active');
+      if (!response.ok) throw new Error('Failed to fetch active loans');
+      return response.json();
+    },
+    enabled: isAuthenticated,
+  });
+
+  const form = useForm<LoanFormData>({
     resolver: zodResolver(loanFormSchema),
     defaultValues: {
-      facilityId: "",
+      referenceNumber: "",
       amount: "",
-      siborRate: siborData?.rate?.toString() || "5.75",
+      facilityId: "",
+      creditLineId: "",
       startDate: new Date().toISOString().split('T')[0],
       dueDate: "",
-      referenceNumber: "",
+      chargesDueDate: "",
+      siborRate: siborData?.rate?.toString() || "",
+      siborTerm: "3M",
+      notes: "",
     },
   });
 
@@ -82,15 +114,27 @@ export default function GeneralLoanCreatePage() {
   // Get selected facility details
   const selectedFacilityId = form.watch("facilityId");
   const selectedFacility = useMemo(() => {
-    return facilities?.find((f: any) => f.id === selectedFacilityId);
+    return facilities?.find((f: Facility & { bank: Bank }) => f.id === selectedFacilityId);
   }, [facilities, selectedFacilityId]);
+
+  // Calculate used credit for selected facility
+  const calculateUsedCredit = (facilityId: string) => {
+    if (!activeLoans || !creditLines) return 0;
+    
+    const facilityCreditLines = creditLines.filter(cl => cl.facilityId === facilityId);
+    const facilityCreditLineIds = facilityCreditLines.map(cl => cl.id);
+    
+    return activeLoans
+      .filter(loan => loan.creditLineId && facilityCreditLineIds.includes(loan.creditLineId))
+      .reduce((sum, loan) => sum + parseFloat(loan.amount), 0);
+  };
 
   // Calculate credit information for selected facility
   const getCreditInfo = () => {
     if (!selectedFacility) return null;
     
-    const totalCreditLimit = parseFloat(selectedFacility.creditLimit) || 0;
-    const usedCredit = parseFloat(selectedFacility.outstandingAmount) || 0;
+    const totalCreditLimit = parseFloat(selectedFacility.creditLimit);
+    const usedCredit = calculateUsedCredit(selectedFacility.id);
     const availableCredit = totalCreditLimit - usedCredit;
     
     return {
@@ -126,16 +170,18 @@ export default function GeneralLoanCreatePage() {
   const totalInterest = calculateInterest();
 
   const createLoanMutation = useMutation({
-    mutationFn: async (data: z.infer<typeof loanFormSchema>) => {
+    mutationFn: async (data: LoanFormData) => {
       const loanData = {
         ...data,
-        amount: parseFloat(data.amount).toString(),
-        siborRate: parseFloat(data.siborRate).toString(),
+        amount: parseFloat(data.amount),
+        siborRate: parseFloat(data.siborRate),
+        bankRate: selectedFacility ? parseFloat(selectedFacility.costOfFunding) : 0,
       };
-      return apiRequest("POST", "/api/loans", loanData);
+      return apiRequest('POST', '/api/loans', loanData);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/loans"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/loans", "active"] });
       queryClient.invalidateQueries({ queryKey: ["/api/dashboard/portfolio"] });
       queryClient.invalidateQueries({ queryKey: ["/api/facilities"] });
       toast({ 
@@ -144,16 +190,16 @@ export default function GeneralLoanCreatePage() {
       });
       setLocation("/loans");
     },
-    onError: (error) => {
+    onError: (error: any) => {
       toast({ 
         title: "Failed to create loan", 
-        description: error.message,
+        description: error.message || "An error occurred while creating the loan",
         variant: "destructive" 
       });
     },
   });
 
-  const onSubmit = (data: z.infer<typeof loanFormSchema>) => {
+  const onSubmit = (data: LoanFormData) => {
     // Validate credit limit
     if (creditInfo) {
       const loanAmount = parseFloat(data.amount);
@@ -228,35 +274,68 @@ export default function GeneralLoanCreatePage() {
                         <Building className="h-4 w-4" />
                         <span>Bank Facility</span>
                       </h3>
-                      <FormField
-                        control={form.control}
-                        name="facilityId"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Bank Facility *</FormLabel>
-                            <Select onValueChange={field.onChange} value={field.value} disabled={facilitiesLoading}>
-                              <FormControl>
-                                <SelectTrigger data-testid="select-facility">
-                                  <SelectValue placeholder="Select a bank facility" />
-                                </SelectTrigger>
-                              </FormControl>
-                              <SelectContent>
-                                {facilities?.map((facility: any) => (
-                                  <SelectItem key={facility.id} value={facility.id}>
-                                    <div className="flex flex-col">
-                                      <span>{facility.bank?.name || 'Unknown Bank'} - {facility.facilityType.replace('_', ' ')}</span>
-                                      <span className="text-xs text-muted-foreground">
-                                        Credit Limit: {parseFloat(facility.creditLimit).toLocaleString()} SAR | SIBOR + {facility.costOfFunding}%
-                                      </span>
-                                    </div>
-                                  </SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <FormField
+                          control={form.control}
+                          name="facilityId"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Bank Facility *</FormLabel>
+                              <Select onValueChange={field.onChange} value={field.value} disabled={facilitiesLoading}>
+                                <FormControl>
+                                  <SelectTrigger data-testid="select-facility">
+                                    <SelectValue placeholder="Select a bank facility" />
+                                  </SelectTrigger>
+                                </FormControl>
+                                <SelectContent>
+                                  {facilities?.map((facility) => (
+                                    <SelectItem key={facility.id} value={facility.id}>
+                                      <div className="flex flex-col">
+                                        <span>{facility.bank?.name || 'Unknown Bank'} - {facility.facilityType.replace('_', ' ')}</span>
+                                        <span className="text-xs text-muted-foreground">
+                                          Credit Limit: {parseFloat(facility.creditLimit).toLocaleString()} SAR | SIBOR + {facility.costOfFunding}%
+                                        </span>
+                                      </div>
+                                    </SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        
+                        <FormField
+                          control={form.control}
+                          name="creditLineId"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Credit Line (Optional)</FormLabel>
+                              <Select onValueChange={field.onChange} value={field.value || ""}>
+                                <FormControl>
+                                  <SelectTrigger data-testid="select-credit-line">
+                                    <SelectValue placeholder="Auto-assign or select specific line" />
+                                  </SelectTrigger>
+                                </FormControl>
+                                <SelectContent>
+                                  <SelectItem value="">Auto-assign</SelectItem>
+                                  {creditLines?.filter(cl => cl.facilityId === selectedFacilityId).map((creditLine) => (
+                                    <SelectItem key={creditLine.id} value={creditLine.id}>
+                                      <div className="flex flex-col">
+                                        <span>Line #{creditLine.lineNumber}</span>
+                                        <span className="text-xs text-muted-foreground">
+                                          Limit: {parseFloat(creditLine.creditLimit).toLocaleString()} SAR
+                                        </span>
+                                      </div>
+                                    </SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      </div>
 
                       {/* Credit Limit Information */}
                       {creditInfo && (
@@ -348,6 +427,30 @@ export default function GeneralLoanCreatePage() {
                             </FormItem>
                           )}
                         />
+                        
+                        <FormField
+                          control={form.control}
+                          name="siborTerm"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>SIBOR Term</FormLabel>
+                              <Select onValueChange={field.onChange} value={field.value || "3M"}>
+                                <FormControl>
+                                  <SelectTrigger data-testid="select-sibor-term">
+                                    <SelectValue placeholder="Select SIBOR term" />
+                                  </SelectTrigger>
+                                </FormControl>
+                                <SelectContent>
+                                  <SelectItem value="1M">1 Month</SelectItem>
+                                  <SelectItem value="3M">3 Months</SelectItem>
+                                  <SelectItem value="6M">6 Months</SelectItem>
+                                  <SelectItem value="12M">12 Months</SelectItem>
+                                </SelectContent>
+                              </Select>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
 
                         {/* Interest Calculation Display */}
                         {totalInterest > 0 && (
@@ -406,24 +509,42 @@ export default function GeneralLoanCreatePage() {
                             </FormItem>
                           )}
                         />
+                        
+                        <FormField
+                          control={form.control}
+                          name="chargesDueDate"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Charges Due Date</FormLabel>
+                              <FormControl>
+                                <Input 
+                                  data-testid="input-charges-due-date" 
+                                  type="date" 
+                                  {...field} 
+                                />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
                       </div>
                     </div>
 
                     <Separator />
 
-                    {/* Purpose */}
+                    {/* Notes */}
                     <div className="space-y-4">
-                      <h3 className="text-lg font-medium">Purpose</h3>
+                      <h3 className="text-lg font-medium">Additional Information</h3>
                       <FormField
                         control={form.control}
-                        name="purpose"
+                        name="notes"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Loan Purpose</FormLabel>
+                            <FormLabel>Notes</FormLabel>
                             <FormControl>
                               <Textarea 
-                                data-testid="input-purpose"
-                                placeholder="Describe the purpose of this loan..."
+                                data-testid="input-notes"
+                                placeholder="Additional notes about this loan..."
                                 className="min-h-[100px]"
                                 {...field} 
                               />
