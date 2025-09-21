@@ -140,9 +140,11 @@ export default function BankDetail() {
     return asset ? { ...asset, assignment, facility } : null;
   }).filter(Boolean);
 
-  // Facility form state and logic
+  // Dialog states for forms
   const [isFacilityDialogOpen, setIsFacilityDialogOpen] = useState(false);
   const [editingFacility, setEditingFacility] = useState<any>(null);
+  const [isCollateralDialogOpen, setIsCollateralDialogOpen] = useState(false);
+  const [isLoanDialogOpen, setIsLoanDialogOpen] = useState(false);
   
   const facilityFormSchema = insertFacilitySchema.omit({ userId: true, bankId: true }).extend({
     creditLimit: z.string().min(1, "Credit limit is required").refine((val) => !isNaN(Number(val)) && Number(val) > 0, "Credit limit must be greater than 0"),
@@ -743,7 +745,15 @@ export default function BankDetail() {
                 {bankCollateral.length === 0 ? (
                   <div className="text-center py-12">
                     <Gem className="h-12 w-12 text-gray-300 dark:text-gray-600 mx-auto mb-4" />
-                    <p className="text-gray-600 dark:text-gray-400">No collateral assigned to this bank's facilities</p>
+                    <p className="text-gray-600 dark:text-gray-400 mb-4">No collateral assigned to this bank's facilities</p>
+                    <Button 
+                      onClick={() => setIsCollateralDialogOpen(true)}
+                      className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white shadow-lg"
+                      data-testid="button-add-collateral"
+                    >
+                      <Plus className="h-4 w-4 mr-2" />
+                      Add Collateral
+                    </Button>
                   </div>
                 ) : (
                   <div className="space-y-4">
@@ -831,7 +841,15 @@ export default function BankDetail() {
                 {bankLoans.length === 0 ? (
                   <div className="text-center py-12">
                     <FileText className="h-12 w-12 text-gray-300 dark:text-gray-600 mx-auto mb-4" />
-                    <p className="text-gray-600 dark:text-gray-400">No active loans with this bank</p>
+                    <p className="text-gray-600 dark:text-gray-400 mb-4">No active loans with this bank</p>
+                    <Button 
+                      onClick={() => setIsLoanDialogOpen(true)}
+                      className="bg-gradient-to-r from-emerald-600 to-blue-600 hover:from-emerald-700 hover:to-blue-700 text-white shadow-lg"
+                      data-testid="button-add-loan"
+                    >
+                      <Plus className="h-4 w-4 mr-2" />
+                      Add Loan
+                    </Button>
                   </div>
                 ) : (
                   <div className="space-y-3">
