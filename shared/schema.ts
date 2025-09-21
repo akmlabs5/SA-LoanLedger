@@ -25,6 +25,7 @@ export const transactionTypeEnum = pgEnum('transaction_type', [
   'fee',
   'interest',
   'limit_change',
+  'void',
   'other'
 ]);
 
@@ -201,6 +202,8 @@ export const loans = pgTable("loans", {
   facilityId: varchar("facility_id").references(() => facilities.id, { onDelete: "restrict" }).notNull(),
   creditLineId: varchar("credit_line_id").references(() => creditLines.id, { onDelete: "restrict" }),
   userId: varchar("user_id").references(() => users.id).notNull(),
+  parentLoanId: varchar("parent_loan_id").references(() => loans.id, { onDelete: "restrict" }), // For revolving loans
+  cycleNumber: integer("cycle_number").default(1), // Track loan cycle for revolving facilities
   referenceNumber: varchar("reference_number", { length: 50 }).notNull(),
   amount: decimal("amount", { precision: 15, scale: 2 }).notNull(),
   startDate: date("start_date").notNull(),
@@ -208,18 +211,25 @@ export const loans = pgTable("loans", {
   chargesDueDate: date("charges_due_date"),
   siborRate: decimal("sibor_rate", { precision: 5, scale: 2 }).notNull(),
   siborTerm: varchar("sibor_term", { length: 50 }), // e.g., "3 Months SIBOR", "6 Months SIBOR"
+  siborTermMonths: integer("sibor_term_months"), // 3, 6, 12 for calculations
+  margin: decimal("margin", { precision: 5, scale: 2 }).notNull(), // Margin over SIBOR
   bankRate: decimal("bank_rate", { precision: 5, scale: 2 }).notNull(),
+  lastAccrualDate: date("last_accrual_date"), // Track last interest accrual
+  interestBasis: varchar("interest_basis", { length: 20 }).default('actual_360'), // Actual/360 or Actual/365
   notes: text("notes"),
   status: loanStatusEnum("status").default('active'),
   settledDate: date("settled_date"),
   settledAmount: decimal("settled_amount", { precision: 15, scale: 2 }),
+  isDeleted: boolean("is_deleted").default(false), // Soft delete for audit trail
   updatedAt: timestamp("updated_at").defaultNow(),
   createdAt: timestamp("created_at").defaultNow(),
 }, (table) => [
   index("idx_loans_facility").on(table.facilityId),
   index("idx_loans_credit_line").on(table.creditLineId),
   index("idx_loans_user").on(table.userId),
+  index("idx_loans_parent").on(table.parentLoanId),
   index("idx_loans_due_date").on(table.dueDate),
+  index("idx_loans_status").on(table.status),
 ]);
 
 // Loan Templates for Saudi Banking Standards
@@ -305,20 +315,43 @@ export const exposureSnapshots = pgTable("exposure_snapshots", {
 export const transactions = pgTable("transactions", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   userId: varchar("user_id").references(() => users.id).notNull(),
-  date: date("date").notNull(),
-  bankId: varchar("bank_id").references(() => banks.id).notNull(),
-  facilityId: varchar("facility_id").references(() => facilities.id),
   loanId: varchar("loan_id").references(() => loans.id),
+  facilityId: varchar("facility_id").references(() => facilities.id),
+  bankId: varchar("bank_id").references(() => banks.id).notNull(),
   type: transactionTypeEnum("type").notNull(),
   amount: decimal("amount", { precision: 15, scale: 2 }).notNull(),
+  date: date("date").notNull(),
   reference: varchar("reference", { length: 100 }),
-  notes: text("notes"),
+  memo: text("memo"), // User-provided description
+  allocation: jsonb("allocation"), // {"interest": 100.00, "principal": 900.00, "fees": 50.00}
+  createdBy: varchar("created_by").references(() => users.id).notNull(), // Audit trail
+  idempotencyKey: varchar("idempotency_key", { length: 100 }), // Prevent duplicate transactions
+  notes: text("notes"), // System-generated notes
   createdAt: timestamp("created_at").defaultNow(),
 }, (table) => [
-  // Performance indexes for common queries
+  unique("unique_idempotency_key").on(table.idempotencyKey),
   index("idx_transaction_user_date").on(table.userId, table.date),
-  index("idx_transaction_user_bank_date").on(table.userId, table.bankId, table.date),
+  index("idx_transaction_loan").on(table.loanId),
   index("idx_transaction_type_date").on(table.type, table.date),
+]);
+
+// Audit Logs for compliance and tracking changes
+export const auditLogs = pgTable("audit_logs", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").references(() => users.id).notNull(),
+  entityType: varchar("entity_type", { length: 50 }).notNull(), // 'loan', 'transaction', 'facility', etc.
+  entityId: varchar("entity_id", { length: 100 }).notNull(),
+  action: varchar("action", { length: 50 }).notNull(), // 'create', 'update', 'repay', 'settle', 'revolve', 'void', 'delete'
+  before: jsonb("before"), // Previous state
+  after: jsonb("after"), // New state
+  ipAddress: varchar("ip_address", { length: 45 }), // IPv4 or IPv6
+  userAgent: text("user_agent"),
+  reason: text("reason"), // Optional reason for the change
+  createdAt: timestamp("created_at").defaultNow(),
+}, (table) => [
+  index("idx_audit_logs_entity").on(table.entityType, table.entityId),
+  index("idx_audit_logs_user").on(table.userId),
+  index("idx_audit_logs_date").on(table.createdAt),
 ]);
 
 // Relations
@@ -567,7 +600,7 @@ export const insertCollateralSchema = createInsertSchema(collateral)
   });
 
 export const insertLoanSchema = createInsertSchema(loans)
-  .omit({ id: true, createdAt: true, updatedAt: true })
+  .omit({ id: true, createdAt: true, updatedAt: true, isDeleted: true, cycleNumber: true })
   .extend({
     facilityId: z.string().min(1, "Facility is required"),
     amount: positiveDecimalString(15, 2),
@@ -575,6 +608,10 @@ export const insertLoanSchema = createInsertSchema(loans)
       .refine((val) => !isNaN(Number(val)), "Must be a valid number")
       .refine((val) => Number(val) >= 0, "Must be non-negative")
       .refine((val) => Number(val) <= 100, "Must be 100% or less"),
+    margin: z.string()
+      .refine((val) => !isNaN(Number(val)), "Must be a valid number")
+      .refine((val) => Number(val) >= 0, "Must be non-negative")
+      .refine((val) => Number(val) <= 20, "Must be 20% or less"),
     bankRate: z.string()
       .refine((val) => !isNaN(Number(val)), "Must be a valid number")
       .refine((val) => Number(val) >= 0, "Must be non-negative")
@@ -586,6 +623,8 @@ export const insertLoanSchema = createInsertSchema(loans)
       .optional(),
     startDate: z.string().refine((val) => !isNaN(Date.parse(val)), "Must be a valid date"),
     dueDate: z.string().refine((val) => !isNaN(Date.parse(val)), "Must be a valid date"),
+    siborTermMonths: z.number().int().positive().optional(),
+    lastAccrualDate: z.string().refine((val) => !isNaN(Date.parse(val)), "Must be a valid date").optional(),
   });
 
 export const insertCollateralAssignmentSchema = createInsertSchema(collateralAssignments)
@@ -651,6 +690,39 @@ export const insertTransactionSchema = createInsertSchema(transactions)
     date: z.string().refine((val) => !isNaN(Date.parse(val)), "Must be a valid date"),
   });
 
+export const insertAuditLogSchema = createInsertSchema(auditLogs)
+  .omit({ id: true, createdAt: true })
+  .extend({
+    action: z.string().min(1, "Action is required"),
+    entityType: z.string().min(1, "Entity type is required"),
+    entityId: z.string().min(1, "Entity ID is required"),
+  });
+
+// Payment request schemas
+export const paymentRequestSchema = z.object({
+  amount: positiveDecimalString(15, 2),
+  date: z.string().refine((val) => !isNaN(Date.parse(val)), "Must be a valid date"),
+  memo: z.string().optional(),
+  idempotencyKey: z.string().optional(),
+});
+
+export const settlementRequestSchema = z.object({
+  date: z.string().refine((val) => !isNaN(Date.parse(val)), "Must be a valid date"),
+  amount: positiveDecimalString(15, 2).optional(), // If not provided, settle full outstanding
+  memo: z.string().optional(),
+});
+
+export const revolveRequestSchema = z.object({
+  newTerm: z.number().int().positive("Term must be positive"),
+  siborTermMonths: z.number().int().positive("SIBOR term must be positive"),
+  margin: z.string()
+    .refine((val) => !isNaN(Number(val)), "Must be a valid number")
+    .refine((val) => Number(val) >= 0, "Must be non-negative")
+    .refine((val) => Number(val) <= 20, "Must be 20% or less"),
+  dueDate: z.string().refine((val) => !isNaN(Date.parse(val)), "Must be a valid date"),
+  memo: z.string().optional(),
+});
+
 // Types
 export type UpsertUser = typeof users.$inferInsert;
 export type User = typeof users.$inferSelect;
@@ -678,6 +750,11 @@ export type ExposureSnapshot = typeof exposureSnapshots.$inferSelect;
 export type InsertExposureSnapshot = z.infer<typeof insertExposureSnapshotSchema>;
 export type Transaction = typeof transactions.$inferSelect;
 export type InsertTransaction = z.infer<typeof insertTransactionSchema>;
+export type AuditLog = typeof auditLogs.$inferSelect;
+export type InsertAuditLog = z.infer<typeof insertAuditLogSchema>;
+export type PaymentRequest = z.infer<typeof paymentRequestSchema>;
+export type SettlementRequest = z.infer<typeof settlementRequestSchema>;
+export type RevolveRequest = z.infer<typeof revolveRequestSchema>;
 
 // Export enum types for use in frontend
 export type TransactionType = z.infer<typeof transactionTypeZodEnum>;
