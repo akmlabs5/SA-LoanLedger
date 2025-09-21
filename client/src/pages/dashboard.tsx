@@ -134,14 +134,14 @@ export default function Dashboard() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-gray-100 dark:from-gray-900 dark:to-slate-900">
-      <div className="p-6 space-y-6">
+    <div className="min-h-screen bg-background">
+      <div className="max-w-7xl mx-auto px-6 py-6 space-y-6">
         {/* Welcome Header */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
           <div>
             <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Dashboard</h1>
             <p className="text-gray-600 dark:text-gray-300 mt-1">
-              Welcome back, {user?.displayName || user?.firstName || 'User'}. Here's your portfolio overview.
+              Welcome back, {(user as any)?.displayName || (user as any)?.firstName || 'User'}. Here's your portfolio overview.
             </p>
           </div>
           <div className="flex items-center space-x-3 mt-4 sm:mt-0">
@@ -190,92 +190,89 @@ export default function Dashboard() {
         {/* Enhanced KPI Metrics */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
           {/* Total Outstanding Card */}
-          <Card className="relative overflow-hidden border-0 bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-900/20 dark:to-blue-800/20 shadow-lg hover:shadow-xl transition-all duration-300">
+          <Card className="bg-card border border-border shadow-sm hover:shadow-md transition-shadow duration-200">
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div className="space-y-2">
-                  <p className="text-sm font-medium text-blue-700 dark:text-blue-300">Total Outstanding</p>
+                  <p className="text-sm font-medium text-muted-foreground">Total Outstanding</p>
                   <div className="flex items-baseline space-x-2">
-                    <p className="text-3xl font-bold text-blue-900 dark:text-blue-100" data-testid="text-total-outstanding">
+                    <p className="text-3xl font-bold text-foreground" data-testid="text-total-outstanding">
                       {portfolioSummary ? `${(portfolioSummary.totalOutstanding / 1000000).toFixed(1)}M` : '0.0M'}
                     </p>
-                    <span className="text-sm text-blue-600 dark:text-blue-400">SAR</span>
+                    <span className="text-sm text-muted-foreground">SAR</span>
                   </div>
-                  <div className="flex items-center space-x-1 text-blue-600 dark:text-blue-400">
+                  <div className="flex items-center space-x-1 text-muted-foreground">
                     <ArrowUp className="h-3 w-3" />
                     <span className="text-xs font-medium">+2.4% from last month</span>
                   </div>
                 </div>
-                <div className="w-16 h-16 bg-blue-500 rounded-2xl flex items-center justify-center shadow-lg">
-                  <BarChart3 className="text-white text-2xl" />
+                <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center">
+                  <BarChart3 className="text-primary h-6 w-6" />
                 </div>
               </div>
-              <div className="absolute -right-4 -bottom-4 w-16 h-16 bg-blue-200/30 rounded-full" />
             </CardContent>
           </Card>
           
           {/* Available Credit Card */}
-          <Card className="relative overflow-hidden border-0 bg-gradient-to-br from-emerald-50 to-green-100 dark:from-emerald-900/20 dark:to-green-800/20 shadow-lg hover:shadow-xl transition-all duration-300">
+          <Card className="bg-card border border-border shadow-sm hover:shadow-md transition-shadow duration-200">
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div className="space-y-2">
-                  <p className="text-sm font-medium text-emerald-700 dark:text-emerald-300">Available Credit</p>
+                  <p className="text-sm font-medium text-muted-foreground">Available Credit</p>
                   <div className="flex items-baseline space-x-2">
-                    <p className="text-3xl font-bold text-emerald-900 dark:text-emerald-100" data-testid="text-available-credit">
+                    <p className="text-3xl font-bold text-foreground" data-testid="text-available-credit">
                       {portfolioSummary ? `${(portfolioSummary.availableCredit / 1000000).toFixed(1)}M` : '0.0M'}
                     </p>
-                    <span className="text-sm text-emerald-600 dark:text-emerald-400">SAR</span>
+                    <span className="text-sm text-muted-foreground">SAR</span>
                   </div>
-                  <div className="text-xs text-emerald-600 dark:text-emerald-400 font-medium">
+                  <div className="text-xs text-muted-foreground font-medium">
                     {portfolioSummary ? `${((portfolioSummary.totalOutstanding / portfolioSummary.totalCreditLimit) * 100).toFixed(0)}% utilization` : '0% utilization'}
                   </div>
                 </div>
-                <div className="w-16 h-16 bg-emerald-500 rounded-2xl flex items-center justify-center shadow-lg">
-                  <Wallet className="text-white text-2xl" />
+                <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center">
+                  <Wallet className="text-primary h-6 w-6" />
                 </div>
               </div>
-              <div className="absolute -right-4 -bottom-4 w-16 h-16 bg-emerald-200/30 rounded-full" />
             </CardContent>
           </Card>
           
           {/* Portfolio LTV Card */}
-          <Card className="relative overflow-hidden border-0 bg-gradient-to-br from-amber-50 to-orange-100 dark:from-amber-900/20 dark:to-orange-800/20 shadow-lg hover:shadow-xl transition-all duration-300">
+          <Card className="bg-card border border-border shadow-sm hover:shadow-md transition-shadow duration-200">
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div className="space-y-2">
-                  <p className="text-sm font-medium text-amber-700 dark:text-amber-300">Portfolio LTV</p>
+                  <p className="text-sm font-medium text-muted-foreground">Portfolio LTV</p>
                   <div className="flex items-baseline space-x-2">
-                    <p className="text-3xl font-bold text-amber-900 dark:text-amber-100" data-testid="text-portfolio-ltv">
+                    <p className="text-3xl font-bold text-foreground" data-testid="text-portfolio-ltv">
                       {portfolioSummary ? `${portfolioSummary.portfolioLtv.toFixed(1)}` : '68.4'}
                     </p>
-                    <span className="text-sm text-amber-600 dark:text-amber-400">%</span>
+                    <span className="text-sm text-muted-foreground">%</span>
                   </div>
-                  <div className="flex items-center space-x-1 text-amber-600 dark:text-amber-400">
+                  <div className="flex items-center space-x-1 text-muted-foreground">
                     <Target className="h-3 w-3" />
                     <span className="text-xs font-medium">Optimal range: 60-75%</span>
                   </div>
                 </div>
-                <div className="w-16 h-16 bg-amber-500 rounded-2xl flex items-center justify-center shadow-lg">
-                  <Shield className="text-white text-2xl" />
+                <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center">
+                  <Shield className="text-primary h-6 w-6" />
                 </div>
               </div>
-              <div className="absolute -right-4 -bottom-4 w-16 h-16 bg-amber-200/30 rounded-full" />
             </CardContent>
           </Card>
           
           {/* Active Loans Card */}
-          <Card className="relative overflow-hidden border-0 bg-gradient-to-br from-purple-50 to-indigo-100 dark:from-purple-900/20 dark:to-indigo-800/20 shadow-lg hover:shadow-xl transition-all duration-300">
+          <Card className="bg-card border border-border shadow-sm hover:shadow-md transition-shadow duration-200">
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div className="space-y-2">
-                  <p className="text-sm font-medium text-purple-700 dark:text-purple-300">Active Loans</p>
+                  <p className="text-sm font-medium text-muted-foreground">Active Loans</p>
                   <div className="flex items-baseline space-x-2">
-                    <p className="text-3xl font-bold text-purple-900 dark:text-purple-100" data-testid="text-active-loans">
+                    <p className="text-3xl font-bold text-foreground" data-testid="text-active-loans">
                       {portfolioSummary?.activeLoansCount || 0}
                     </p>
-                    <span className="text-sm text-purple-600 dark:text-purple-400">loans</span>
+                    <span className="text-sm text-muted-foreground">loans</span>
                   </div>
-                  <div className="flex items-center space-x-1 text-purple-600 dark:text-purple-400">
+                  <div className="flex items-center space-x-1 text-muted-foreground">
                     <AlertTriangle className="h-3 w-3" />
                     <span className="text-xs font-medium">
                       {sortedLoans.filter(loan => {
@@ -285,11 +282,10 @@ export default function Dashboard() {
                     </span>
                   </div>
                 </div>
-                <div className="w-16 h-16 bg-purple-500 rounded-2xl flex items-center justify-center shadow-lg">
-                  <FileText className="text-white text-2xl" />
+                <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center">
+                  <FileText className="text-primary h-6 w-6" />
                 </div>
               </div>
-              <div className="absolute -right-4 -bottom-4 w-16 h-16 bg-purple-200/30 rounded-full" />
             </CardContent>
           </Card>
         </div>
@@ -298,18 +294,18 @@ export default function Dashboard() {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
           {/* Priority Loans Due */}
           <div className="lg:col-span-2">
-            <Card className="border-0 shadow-lg bg-white/50 dark:bg-gray-800/50 backdrop-blur-sm">
+            <Card className="bg-card border border-border shadow-sm hover:shadow-md transition-shadow duration-200">
               <CardHeader className="pb-4">
                 <div className="flex items-center justify-between">
                   <div className="space-y-1">
                     <CardTitle className="text-xl font-semibold flex items-center space-x-2">
-                      <FileText className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+                      <FileText className="h-5 w-5 text-primary" />
                       <span>Priority Loans</span>
                     </CardTitle>
-                    <p className="text-sm text-gray-600 dark:text-gray-400">Loans requiring attention, sorted by urgency</p>
+                    <p className="text-sm text-muted-foreground">Loans requiring attention, sorted by urgency</p>
                   </div>
                   <Link href="/loans">
-                    <Button className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white shadow-lg hover:shadow-xl transition-all duration-300" data-testid="button-add-loan">
+                    <Button className="bg-primary hover:bg-primary/90 text-primary-foreground" data-testid="button-add-loan">
                       <Plus className="mr-2 h-4 w-4" />
                       New Loan
                     </Button>
@@ -337,21 +333,21 @@ export default function Dashboard() {
                 ) : (
                   sortedLoans.slice(0, 5).map((loan) => {
                     const urgency = getLoanUrgency(loan.dueDate);
-                    const gradientClass = urgency.color === 'red' 
-                      ? 'bg-gradient-to-r from-red-50 to-red-100 border-red-200 dark:from-red-900/20 dark:to-red-800/20 dark:border-red-800/30' 
+                    const urgencyBorderClass = urgency.color === 'red' 
+                      ? 'border-l-destructive' 
                       : urgency.color === 'yellow' 
-                        ? 'bg-gradient-to-r from-amber-50 to-yellow-100 border-amber-200 dark:from-amber-900/20 dark:to-yellow-800/20 dark:border-amber-800/30'
-                        : 'bg-gradient-to-r from-emerald-50 to-green-100 border-emerald-200 dark:from-emerald-900/20 dark:to-green-800/20 dark:border-emerald-800/30';
+                        ? 'border-l-amber-500'
+                        : 'border-l-primary';
                     
                     return (
-                      <div key={loan.id} className={`border-l-4 p-5 rounded-r-xl ${gradientClass} hover:shadow-md transition-all duration-300`} data-testid={`card-loan-${loan.id}`}>
+                      <div key={loan.id} className={`bg-card border border-border ${urgencyBorderClass} border-l-4 p-5 rounded-lg shadow-sm hover:shadow-md transition-shadow duration-200`} data-testid={`card-loan-${loan.id}`}>
                         <div className="flex items-center justify-between mb-3">
                           <div className="flex items-center space-x-3">
                             <Badge className={`${
-                              urgency.color === 'red' ? 'bg-red-500 hover:bg-red-600' : 
-                              urgency.color === 'yellow' ? 'bg-amber-500 hover:bg-amber-600' : 
-                              'bg-emerald-500 hover:bg-emerald-600'
-                            } text-white shadow-sm`}>
+                              urgency.color === 'red' ? 'bg-destructive text-destructive-foreground' : 
+                              urgency.color === 'yellow' ? 'bg-amber-500 text-white' : 
+                              'bg-primary text-primary-foreground'
+                            }`}>
                               {urgency.label}
                             </Badge>
                             <div>
@@ -360,41 +356,41 @@ export default function Dashboard() {
                                   e.stopPropagation();
                                   handleBankRowClick(loan.facility.bank.id, loan.facility.bank.name);
                                 }}
-                                className="font-semibold text-gray-900 dark:text-gray-100 hover:text-indigo-600 dark:hover:text-indigo-400 hover:underline transition-colors duration-200"
+                                className="font-semibold text-foreground hover:text-primary hover:underline transition-colors duration-200"
                                 data-testid={`text-loan-reference-${loan.id}`}
                                 title={`Click to view ${loan.facility.bank.name} details`}
                               >
                                 {loan.facility.bank.name}
                               </button>
-                              <p className="text-sm text-gray-600 dark:text-gray-400">{loan.referenceNumber}</p>
+                              <p className="text-sm text-muted-foreground">{loan.referenceNumber}</p>
                             </div>
                           </div>
                           <div className="text-right">
-                            <p className="text-2xl font-bold text-gray-900 dark:text-gray-100" data-testid={`text-loan-amount-${loan.id}`}>
+                            <p className="text-2xl font-bold text-foreground" data-testid={`text-loan-amount-${loan.id}`}>
                               {(parseFloat(loan.amount) / 1000000).toFixed(1)}M
                             </p>
-                            <p className="text-sm text-gray-600 dark:text-gray-400">SAR</p>
+                            <p className="text-sm text-muted-foreground">SAR</p>
                           </div>
                         </div>
                         <div className="grid grid-cols-2 gap-4 text-sm mb-4">
                           <div className="space-y-1">
-                            <span className="text-gray-500 dark:text-gray-400">Due Date</span>
-                            <p className="font-medium text-gray-900 dark:text-gray-100">{new Date(loan.dueDate).toLocaleDateString()}</p>
+                            <span className="text-muted-foreground">Due Date</span>
+                            <p className="font-medium text-foreground">{new Date(loan.dueDate).toLocaleDateString()}</p>
                           </div>
                           <div className="space-y-1">
-                            <span className="text-gray-500 dark:text-gray-400">Interest Rate</span>
-                            <p className="font-medium text-gray-900 dark:text-gray-100">SIBOR + {loan.bankRate}%</p>
+                            <span className="text-muted-foreground">Interest Rate</span>
+                            <p className="font-medium text-foreground">SIBOR + {loan.bankRate}%</p>
                           </div>
                         </div>
                         <div className="flex items-center justify-between">
                           <Button size="sm" className={`${
                             urgency.priority === 'critical' 
-                              ? 'bg-red-600 hover:bg-red-700 text-white' 
-                              : 'bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300'
+                              ? 'bg-destructive hover:bg-destructive/90 text-destructive-foreground' 
+                              : 'bg-secondary hover:bg-secondary/80 text-secondary-foreground'
                           } shadow-sm`}>
                             {urgency.priority === 'critical' ? 'Urgent Action Required' : 'View Details'}
                           </Button>
-                          <div className="flex items-center space-x-2 text-xs text-gray-500 dark:text-gray-400">
+                          <div className="flex items-center space-x-2 text-xs text-muted-foreground">
                             <Activity className="h-3 w-3" />
                             <span>Track</span>
                           </div>
@@ -408,37 +404,37 @@ export default function Dashboard() {
           </div>
           
           {/* Enhanced Quick Actions Panel */}
-          <Card className="border-0 shadow-lg bg-white/50 dark:bg-gray-800/50 backdrop-blur-sm">
+          <Card className="bg-card border border-border shadow-sm hover:shadow-md transition-shadow duration-200">
             <CardHeader className="pb-4">
               <CardTitle className="text-xl font-semibold flex items-center space-x-2">
-                <TrendingUp className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
+                <TrendingUp className="h-5 w-5 text-primary" />
                 <span>Quick Actions</span>
               </CardTitle>
-              <p className="text-sm text-gray-600 dark:text-gray-400">Streamline your portfolio management</p>
+              <p className="text-sm text-muted-foreground">Streamline your portfolio management</p>
             </CardHeader>
             <CardContent className="space-y-4">
               <Link href="/loans">
-                <Button className="w-full justify-start bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white shadow-md hover:shadow-lg transition-all duration-300" data-testid="button-quick-add-loan">
+                <Button className="w-full justify-start bg-primary hover:bg-primary/90 text-primary-foreground" data-testid="button-quick-add-loan">
                   <Plus className="mr-3 h-4 w-4" />
                   Add New Loan
                 </Button>
               </Link>
               
               <Link href="/banks">
-                <Button variant="outline" className="w-full justify-start border-emerald-300 text-emerald-700 hover:bg-emerald-50 dark:border-emerald-700 dark:text-emerald-400 dark:hover:bg-emerald-900/20" data-testid="button-quick-manage-banks">
+                <Button variant="outline" className="w-full justify-start" data-testid="button-quick-manage-banks">
                   <Building className="mr-3 h-4 w-4" />
                   Manage Bank Facilities
                 </Button>
               </Link>
               
               <Link href="/collateral">
-                <Button variant="outline" className="w-full justify-start border-amber-300 text-amber-700 hover:bg-amber-50 dark:border-amber-700 dark:text-amber-400 dark:hover:bg-amber-900/20" data-testid="button-quick-update-collateral">
+                <Button variant="outline" className="w-full justify-start" data-testid="button-quick-update-collateral">
                   <Home className="mr-3 h-4 w-4" />
                   Update Collateral
                 </Button>
               </Link>
               
-              <Button variant="ghost" className="w-full justify-start text-gray-600 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-700" data-testid="button-quick-export-reports">
+              <Button variant="ghost" className="w-full justify-start" data-testid="button-quick-export-reports">
                 <Download className="mr-3 h-4 w-4" />
                 Export Portfolio Report
               </Button>
@@ -446,18 +442,18 @@ export default function Dashboard() {
               <Separator className="my-4" />
               
               {/* Enhanced SIBOR Rate Display */}
-              <div className="p-5 bg-gradient-to-br from-blue-50 via-blue-100 to-indigo-100 dark:from-blue-900/30 dark:via-blue-800/20 dark:to-indigo-800/20 border border-blue-200/50 dark:border-blue-700/30 rounded-xl">
+              <div className="p-5 bg-secondary border border-border rounded-lg">
                 <div className="flex items-center justify-between mb-2">
                   <div className="flex items-center space-x-2">
                     <div className="w-3 h-3 bg-blue-500 rounded-full animate-pulse"></div>
-                    <span className="text-sm text-blue-800 dark:text-blue-300 font-semibold">SIBOR Rate</span>
+                    <span className="text-sm text-foreground font-semibold">SIBOR Rate</span>
                   </div>
-                  <span className="text-2xl font-bold text-blue-900 dark:text-blue-100" data-testid="text-sibor-rate">
+                  <span className="text-2xl font-bold text-foreground" data-testid="text-sibor-rate">
                     {siborRate ? `${siborRate.rate}%` : '5.75%'}
                   </span>
                 </div>
                 <div className="flex items-center justify-between text-xs">
-                  <span className="text-blue-700 dark:text-blue-400">Monthly Change</span>
+                  <span className="text-muted-foreground">Monthly Change</span>
                   <div className="flex items-center space-x-1">
                     {((siborRate?.monthlyChange || 0.25) > 0) ? (
                       <ArrowUp className="h-3 w-3 text-green-600 dark:text-green-400" />
@@ -473,7 +469,7 @@ export default function Dashboard() {
                     </span>
                   </div>
                 </div>
-                <p className="text-xs text-blue-600 dark:text-blue-400 mt-2 opacity-75">
+                <p className="text-xs text-muted-foreground mt-2 opacity-75">
                   Last updated: {new Date().toLocaleDateString()}
                 </p>
               </div>
@@ -482,17 +478,17 @@ export default function Dashboard() {
         </div>
 
         {/* Enhanced Bank Exposures Overview */}
-        <Card className="mb-8 border-0 shadow-lg bg-white/50 dark:bg-gray-800/50 backdrop-blur-sm">
+        <Card className="mb-8 bg-card border border-border shadow-sm hover:shadow-md transition-shadow duration-200">
           <CardHeader className="pb-6">
             <div className="flex items-center justify-between">
               <div className="space-y-1">
                 <CardTitle className="text-xl font-semibold flex items-center space-x-2">
-                  <Building className="h-5 w-5 text-indigo-600 dark:text-indigo-400" />
+                  <Building className="h-5 w-5 text-primary" />
                   <span>Bank Exposures</span>
                 </CardTitle>
-                <p className="text-sm text-gray-600 dark:text-gray-400">Your banking relationships and credit utilization</p>
+                <p className="text-sm text-muted-foreground">Your banking relationships and credit utilization</p>
               </div>
-              <Badge variant="outline" className="bg-indigo-50 dark:bg-indigo-900/20 border-indigo-200 dark:border-indigo-800 text-indigo-700 dark:text-indigo-300">
+              <Badge variant="outline">
                 {portfolioSummary?.bankExposures?.length || 0} Banks
               </Badge>
             </div>
@@ -503,11 +499,11 @@ export default function Dashboard() {
               <table className="w-full">
                 <thead>
                   <tr className="border-b border-gray-200 dark:border-gray-700">
-                    <th className="text-left py-4 px-6 font-semibold text-gray-900 dark:text-gray-100">Bank Name</th>
-                    <th className="text-right py-4 px-6 font-semibold text-gray-900 dark:text-gray-100">Outstanding</th>
-                    <th className="text-right py-4 px-6 font-semibold text-gray-900 dark:text-gray-100">Credit Limit</th>
-                    <th className="text-right py-4 px-6 font-semibold text-gray-900 dark:text-gray-100">Available</th>
-                    <th className="text-right py-4 px-6 font-semibold text-gray-900 dark:text-gray-100">Utilization</th>
+                    <th className="text-left py-4 px-6 font-semibold text-foreground">Bank Name</th>
+                    <th className="text-right py-4 px-6 font-semibold text-foreground">Outstanding</th>
+                    <th className="text-right py-4 px-6 font-semibold text-foreground">Credit Limit</th>
+                    <th className="text-right py-4 px-6 font-semibold text-foreground">Available</th>
+                    <th className="text-right py-4 px-6 font-semibold text-foreground">Utilization</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
@@ -515,7 +511,7 @@ export default function Dashboard() {
                     portfolioSummary.bankExposures.map((exposure, index) => (
                       <tr 
                         key={exposure.bankId} 
-                        className="group hover:bg-gradient-to-r hover:from-indigo-50 hover:to-blue-50 dark:hover:from-indigo-900/20 dark:hover:to-blue-900/20 hover:shadow-md cursor-pointer transition-all duration-300 hover:scale-[1.02] hover:border-l-4 hover:border-indigo-500 focus-within:ring-2 focus-within:ring-indigo-500 focus-within:ring-opacity-50" 
+                        className="group hover:bg-accent cursor-pointer transition-colors duration-200 focus-within:ring-2 focus-within:ring-primary focus-within:ring-opacity-50" 
                         data-testid={`row-bank-${exposure.bankId}`}
                         onClick={() => handleBankRowClick(exposure.bankId, exposure.bankName)}
                         onKeyDown={(e) => handleBankRowKeyDown(e, exposure.bankId, exposure.bankName)}
