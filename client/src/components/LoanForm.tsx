@@ -10,15 +10,20 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { apiRequest } from "@/lib/queryClient";
-import { insertLoanSchema, Facility, Bank } from "@shared/schema";
+import { apiRequest, queryClient } from "@/lib/queryClient";
+import { insertLoanSchema, Facility, Bank, Loan, CreditLine } from "@shared/schema";
 import { SiborRate } from "@shared/types";
 import { z } from "zod";
+import { AlertCircle, DollarSign } from "lucide-react";
 
 const loanFormSchema = insertLoanSchema.extend({
   facilityId: z.string().min(1, "Please select a facility"),
+  creditLineId: z.string().optional(),
   referenceNumber: z.string().min(1, "Reference number is required"),
-  amount: z.string().min(1, "Amount is required"),
+  amount: z.string().min(1, "Amount is required").refine((val) => {
+    const amount = parseFloat(val);
+    return amount > 0;
+  }, "Amount must be greater than 0"),
   startDate: z.string().min(1, "Start date is required"),
   dueDate: z.string().min(1, "Due date is required"),
   chargesDueDate: z.string().optional(),
@@ -45,11 +50,26 @@ export default function LoanForm({ onSuccess, onCancel }: LoanFormProps) {
     queryKey: ["/api/sibor-rate"],
   });
 
+  const { data: creditLines } = useQuery<Array<CreditLine & { facility: Facility & { bank: Bank } }>>({ 
+    queryKey: ["/api/credit-lines"],
+  });
+
+  const { data: activeLoans } = useQuery<Array<Loan & { creditLine?: CreditLine & { facility: Facility & { bank: Bank } } }>>({ 
+    queryKey: ["/api/loans"],
+    queryFn: async () => {
+      const response = await fetch('/api/loans?status=active');
+      if (!response.ok) throw new Error('Failed to fetch active loans');
+      return response.json();
+    },
+  });
+
   const form = useForm<LoanFormData>({
     resolver: zodResolver(loanFormSchema),
     defaultValues: {
       referenceNumber: "",
       amount: "",
+      facilityId: "",
+      creditLineId: "",
       startDate: new Date().toISOString().split('T')[0],
       dueDate: "",
       chargesDueDate: "",
@@ -60,22 +80,51 @@ export default function LoanForm({ onSuccess, onCancel }: LoanFormProps) {
 
   const createLoanMutation = useMutation({
     mutationFn: async (data: LoanFormData) => {
-      // Get the selected facility to determine bank rate
-      const selectedFacility = facilities?.find(f => f.id === data.facilityId);
-      if (!selectedFacility) {
-        throw new Error("Selected facility not found");
+      const amount = parseFloat(data.amount);
+      
+      // Get fresh data for validation
+      const facility = facilities?.find(f => f.id === data.facilityId);
+      if (!facility) throw new Error("Facility not found");
+      
+      const facilityUsedCredit = calculateUsedCredit(data.facilityId);
+      const facilityAvailable = parseFloat(facility.creditLimit) - facilityUsedCredit;
+      
+      // Validate facility credit limit
+      if (amount > facilityAvailable) {
+        throw new Error(`Loan amount exceeds available facility credit. Available: ${facilityAvailable.toLocaleString()} SAR`);
+      }
+      
+      // Validate credit line limit if selected
+      if (data.creditLineId) {
+        const creditLine = creditLines?.find(cl => cl.id === data.creditLineId);
+        if (!creditLine) throw new Error("Credit line not found");
+        
+        const creditLineUsedCredit = activeLoans?.filter(loan => loan.creditLineId === data.creditLineId)
+          .reduce((sum, loan) => sum + parseFloat(loan.amount), 0) || 0;
+        const creditLineAvailable = parseFloat(creditLine.creditLimit) - creditLineUsedCredit;
+        
+        if (amount > creditLineAvailable) {
+          throw new Error(`Loan amount exceeds available credit line limit. Available: ${creditLineAvailable.toLocaleString()} SAR`);
+        }
       }
 
       const loanData = {
         ...data,
-        amount: parseFloat(data.amount).toString(),
+        amount: amount.toString(),
         siborRate: parseFloat(data.siborRate).toString(),
-        bankRate: selectedFacility.costOfFunding,
+        bankRate: facility.costOfFunding,
+        creditLineId: data.creditLineId || null,
       };
 
       await apiRequest("POST", "/api/loans", loanData);
     },
     onSuccess: () => {
+      // Invalidate relevant queries to refresh data
+      queryClient.invalidateQueries({ queryKey: ["/api/loans"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/facilities"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/credit-lines"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/dashboard/portfolio"] });
+      
       toast({
         title: "Success",
         description: "Loan created successfully",
@@ -101,6 +150,37 @@ export default function LoanForm({ onSuccess, onCancel }: LoanFormProps) {
   };
 
   const selectedFacility = facilities?.find(f => f.id === form.watch("facilityId"));
+  const selectedCreditLineId = form.watch("creditLineId");
+  const facilityId = form.watch("facilityId");
+  
+  // Calculate used credit for the selected facility
+  const calculateUsedCredit = (facilityId: string) => {
+    if (!activeLoans) return 0;
+    return activeLoans
+      .filter(loan => loan.facilityId === facilityId)
+      .reduce((sum, loan) => sum + parseFloat(loan.amount), 0);
+  };
+  
+  // Get available credit lines for selected facility
+  const availableCreditLines = creditLines?.filter(cl => cl.facility.id === facilityId) || [];
+  
+  // Calculate credit limit and availability
+  const getCreditInfo = () => {
+    if (!selectedFacility) return null;
+    
+    const totalCreditLimit = parseFloat(selectedFacility.creditLimit);
+    const usedCredit = calculateUsedCredit(selectedFacility.id);
+    const availableCredit = totalCreditLimit - usedCredit;
+    
+    return {
+      totalCreditLimit,
+      usedCredit,
+      availableCredit,
+      utilizationPercent: totalCreditLimit > 0 ? (usedCredit / totalCreditLimit) * 100 : 0
+    };
+  };
+  
+  const creditInfo = getCreditInfo();
   const calculateInterest = () => {
     const amount = parseFloat(form.watch("amount") || "0");
     const siborRate = parseFloat(form.watch("siborRate") || "0");
@@ -145,8 +225,12 @@ export default function LoanForm({ onSuccess, onCancel }: LoanFormProps) {
                     <SelectContent>
                       {facilities?.map((facility) => (
                         <SelectItem key={facility.id} value={facility.id}>
-                          {facility.bank?.name || 'Unknown Bank'} - {facility.facilityType.replace('_', ' ')} 
-                          (SIBOR + {facility.costOfFunding}%)
+                          <div className="flex flex-col">
+                            <span>{facility.bank?.name || 'Unknown Bank'} - {facility.facilityType.replace('_', ' ')}</span>
+                            <span className="text-xs text-muted-foreground">
+                              Credit Limit: {parseFloat(facility.creditLimit).toLocaleString()} SAR | SIBOR + {facility.costOfFunding}%
+                            </span>
+                          </div>
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -155,6 +239,84 @@ export default function LoanForm({ onSuccess, onCancel }: LoanFormProps) {
                 </FormItem>
               )}
             />
+
+            {/* Credit Limit Information */}
+            {creditInfo && (
+              <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
+                <div className="flex items-center gap-2 mb-3">
+                  <DollarSign className="h-4 w-4 text-green-600" />
+                  <h4 className="font-medium text-green-800">Credit Facility Information</h4>
+                </div>
+                <div className="grid grid-cols-3 gap-4 text-sm">
+                  <div>
+                    <span className="text-green-700">Total Credit Limit:</span>
+                    <div className="font-medium">{creditInfo.totalCreditLimit.toLocaleString()} SAR</div>
+                  </div>
+                  <div>
+                    <span className="text-green-700">Used Credit:</span>
+                    <div className="font-medium">{creditInfo.usedCredit.toLocaleString()} SAR</div>
+                  </div>
+                  <div>
+                    <span className="text-green-700">Available Credit:</span>
+                    <div className="font-medium text-green-600">{creditInfo.availableCredit.toLocaleString()} SAR</div>
+                  </div>
+                </div>
+                <div className="mt-3">
+                  <div className="flex justify-between text-xs text-green-700 mb-1">
+                    <span>Credit Utilization</span>
+                    <span>{creditInfo.utilizationPercent.toFixed(1)}%</span>
+                  </div>
+                  <div className="w-full bg-green-200 rounded-full h-2">
+                    <div 
+                      className="bg-green-600 h-2 rounded-full transition-all duration-300" 
+                      style={{ width: `${Math.min(creditInfo.utilizationPercent, 100)}%` }}
+                    ></div>
+                  </div>
+                </div>
+                {creditInfo.utilizationPercent > 80 && (
+                  <div className="flex items-center gap-2 mt-3 text-amber-700">
+                    <AlertCircle className="h-4 w-4" />
+                    <span className="text-xs">Warning: High credit utilization</span>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Credit Line Selection (if available) */}
+            {availableCreditLines.length > 0 && (
+              <FormField
+                control={form.control}
+                name="creditLineId"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Credit Line (Optional)</FormLabel>
+                    <Select onValueChange={field.onChange} value={field.value}>
+                      <FormControl>
+                        <SelectTrigger data-testid="select-credit-line">
+                          <SelectValue placeholder="Select a credit line (or use general facility)" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="">
+                          General Facility Credit
+                        </SelectItem>
+                        {availableCreditLines.map((creditLine) => (
+                          <SelectItem key={creditLine.id} value={creditLine.id}>
+                            <div className="flex flex-col">
+                              <span>{creditLine.name}</span>
+                              <span className="text-xs text-muted-foreground">
+                                Limit: {parseFloat(creditLine.creditLimit).toLocaleString()} SAR
+                              </span>
+                            </div>
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            )}
 
             {/* Loan Details */}
             <div className="grid grid-cols-2 gap-4">
@@ -192,6 +354,19 @@ export default function LoanForm({ onSuccess, onCancel }: LoanFormProps) {
                 )}
               />
             </div>
+
+            {/* Credit Limit Warning */}
+            {creditInfo && parseFloat(form.watch("amount") || "0") > creditInfo.availableCredit && (
+              <div className="flex items-center gap-2 p-3 bg-red-50 border border-red-200 rounded-lg text-red-700">
+                <AlertCircle className="h-5 w-5" />
+                <div>
+                  <div className="font-medium">Amount exceeds available credit limit</div>
+                  <div className="text-sm">
+                    Exceeds by {(parseFloat(form.watch("amount") || "0") - creditInfo.availableCredit).toLocaleString()} SAR
+                  </div>
+                </div>
+              </div>
+            )}
 
             {/* Dates */}
             <div className="grid grid-cols-3 gap-4">
