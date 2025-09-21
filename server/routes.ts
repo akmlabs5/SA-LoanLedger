@@ -6,6 +6,7 @@ import { generateAIInsights } from "./aiInsights";
 import { sendLoanDueNotification } from "./emailService";
 import {
   insertBankSchema,
+  insertBankContactSchema,
   insertFacilitySchema,
   insertCollateralSchema,
   insertLoanSchema,
@@ -43,6 +44,77 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error fetching banks:", error);
       res.status(500).json({ message: "Failed to fetch banks" });
+    }
+  });
+
+  // Bank Contact routes
+  app.get('/api/banks/:bankId/contacts', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const { bankId } = req.params;
+      const contacts = await storage.getBankContacts(bankId, userId);
+      res.json(contacts);
+    } catch (error) {
+      console.error("Error fetching bank contacts:", error);
+      res.status(500).json({ message: "Failed to fetch bank contacts" });
+    }
+  });
+
+  app.post('/api/banks/:bankId/contacts', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const { bankId } = req.params;
+      const contactData = insertBankContactSchema.parse({ 
+        ...req.body, 
+        userId, 
+        bankId 
+      });
+      const contact = await storage.createBankContact(contactData);
+      res.json(contact);
+    } catch (error) {
+      console.error("Error creating bank contact:", error);
+      res.status(400).json({ message: "Failed to create bank contact" });
+    }
+  });
+
+  app.put('/api/bank-contacts/:contactId', isAuthenticated, async (req: any, res) => {
+    try {
+      const { contactId } = req.params;
+      const contactData = req.body;
+      delete contactData.id; // Prevent ID updates
+      delete contactData.userId; // Prevent user ID updates
+      delete contactData.bankId; // Prevent bank ID updates
+      
+      const contact = await storage.updateBankContact(contactId, contactData);
+      res.json(contact);
+    } catch (error) {
+      console.error("Error updating bank contact:", error);
+      res.status(400).json({ message: "Failed to update bank contact" });
+    }
+  });
+
+  app.delete('/api/bank-contacts/:contactId', isAuthenticated, async (req: any, res) => {
+    try {
+      const { contactId } = req.params;
+      await storage.deleteBankContact(contactId);
+      res.json({ message: "Bank contact deleted successfully" });
+    } catch (error) {
+      console.error("Error deleting bank contact:", error);
+      res.status(500).json({ message: "Failed to delete bank contact" });
+    }
+  });
+
+  app.put('/api/bank-contacts/:contactId/set-primary', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const { contactId } = req.params;
+      const { bankId } = req.body;
+      
+      const contact = await storage.setPrimaryContact(contactId, bankId, userId);
+      res.json(contact);
+    } catch (error) {
+      console.error("Error setting primary contact:", error);
+      res.status(400).json({ message: "Failed to set primary contact" });
     }
   });
 
