@@ -424,6 +424,7 @@ export default function LoanForm({ onSuccess, onCancel }: LoanFormProps) {
                           type="button"
                           onClick={() => {
                             form.setValue("dueDate", dueDateStr);
+                            form.setValue("chargesDueDate", dueDateStr); // Set charges due date to same as loan due date
                             // Auto-select appropriate SIBOR rate based on term
                             const siborRates = {
                               30: "5.25",   // 1-month SIBOR
