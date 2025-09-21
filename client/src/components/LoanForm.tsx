@@ -3,7 +3,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -210,6 +210,9 @@ export default function LoanForm({ onSuccess, onCancel }: LoanFormProps) {
       <DialogContent className="max-w-4xl w-[90vw] max-h-[90vh] overflow-y-auto" data-testid="dialog-loan-form">
         <DialogHeader>
           <DialogTitle>Add New Loan</DialogTitle>
+          <DialogDescription>
+            Create a new loan drawdown from your available bank facilities. All loans will automatically calculate SIBOR-based interest and track payment schedules.
+          </DialogDescription>
         </DialogHeader>
 
         <Form {...form}>
