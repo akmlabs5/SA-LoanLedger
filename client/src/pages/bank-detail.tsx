@@ -110,6 +110,7 @@ export default function BankDetail() {
 
   // Facility form state and logic
   const [isFacilityDialogOpen, setIsFacilityDialogOpen] = useState(false);
+  const [editingFacility, setEditingFacility] = useState<any>(null);
   
   const facilityFormSchema = insertFacilitySchema.omit({ userId: true, bankId: true }).extend({
     creditLimit: z.string().min(1, "Credit limit is required").refine((val) => !isNaN(Number(val)) && Number(val) > 0, "Credit limit must be greater than 0"),
@@ -177,8 +178,51 @@ export default function BankDetail() {
     },
   });
 
+  const updateFacilityMutation = useMutation({
+    mutationFn: async ({ facilityId, data }: { facilityId: string; data: z.infer<typeof facilityFormSchema> }) => {
+      return apiRequest('PUT', `/api/facilities/${facilityId}`, {
+        ...data,
+        creditLimit: data.creditLimit,
+        costOfFunding: data.costOfFunding,
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/facilities"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/dashboard/portfolio"] });
+      setIsFacilityDialogOpen(false);
+      setEditingFacility(null);
+      facilityForm.reset();
+      toast({ title: "Facility updated successfully" });
+    },
+    onError: (error) => {
+      toast({ 
+        title: "Failed to update facility", 
+        description: error.message,
+        variant: "destructive" 
+      });
+    },
+  });
+
   const handleSubmitFacility = (data: z.infer<typeof facilityFormSchema>) => {
-    createFacilityMutation.mutate(data);
+    if (editingFacility) {
+      updateFacilityMutation.mutate({ facilityId: editingFacility.id, data });
+    } else {
+      createFacilityMutation.mutate(data);
+    }
+  };
+
+  const handleEditFacility = (facility: any) => {
+    setEditingFacility(facility);
+    facilityForm.reset({
+      facilityType: facility.facilityType,
+      creditLimit: facility.creditLimit,
+      costOfFunding: facility.costOfFunding,
+      startDate: facility.startDate,
+      expiryDate: facility.expiryDate,
+      terms: facility.terms || "",
+      isActive: facility.isActive,
+    });
+    setIsFacilityDialogOpen(true);
   };
 
   const handleDeleteFacility = (facilityId: string) => {
@@ -189,6 +233,7 @@ export default function BankDetail() {
 
   const handleCloseFacilityDialog = () => {
     setIsFacilityDialogOpen(false);
+    setEditingFacility(null);
     facilityForm.reset();
   };
 
@@ -372,9 +417,14 @@ export default function BankDetail() {
                     </DialogTrigger>
                     <DialogContent className="sm:max-w-[600px]">
                       <DialogHeader>
-                        <DialogTitle>Add New Credit Facility</DialogTitle>
+                        <DialogTitle>
+                          {editingFacility ? "Edit Credit Facility" : "Add New Credit Facility"}
+                        </DialogTitle>
                         <DialogDescription>
-                          Create a new credit facility for {bank?.name}.
+                          {editingFacility 
+                            ? `Update the details for your ${editingFacility.facilityType.replace('_', ' ')} facility with ${bank?.name}.`
+                            : `Create a new credit facility for ${bank?.name}.`
+                          }
                         </DialogDescription>
                       </DialogHeader>
                       <Form {...facilityForm}>
@@ -538,13 +588,14 @@ export default function BankDetail() {
                             </Button>
                             <Button 
                               type="submit" 
-                              disabled={createFacilityMutation.isPending}
+                              disabled={createFacilityMutation.isPending || updateFacilityMutation.isPending}
                               data-testid="button-submit-facility"
                             >
-                              {createFacilityMutation.isPending
-                                ? "Creating..." 
-                                : "Create Facility"
-                              }
+                              {editingFacility ? (
+                                updateFacilityMutation.isPending ? "Updating..." : "Update Facility"
+                              ) : (
+                                createFacilityMutation.isPending ? "Creating..." : "Create Facility"
+                              )}
                             </Button>
                           </DialogFooter>
                         </form>
@@ -618,6 +669,15 @@ export default function BankDetail() {
                         )}
                         
                         <div className="flex justify-end space-x-2 mt-4 pt-3 border-t border-gray-200 dark:border-gray-700">
+                          <Button 
+                            variant="outline" 
+                            size="sm"
+                            onClick={() => handleEditFacility(facility)}
+                            data-testid={`button-edit-facility-${facility.id}`}
+                          >
+                            <Edit className="mr-1 h-4 w-4" />
+                            Edit
+                          </Button>
                           <Button 
                             variant="outline" 
                             size="sm"
