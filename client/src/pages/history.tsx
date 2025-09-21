@@ -412,14 +412,14 @@ export default function HistoryPage() {
               <Label>Bank</Label>
               <Select
                 value={filters.bankId}
-                onValueChange={(value) => setFilters(prev => ({ ...prev, bankId: value }))}
+                onValueChange={(value) => setFilters(prev => ({ ...prev, bankId: value === 'all' ? '' : value }))}
                 data-testid="select-bank-filter"
               >
                 <SelectTrigger>
                   <SelectValue placeholder="All banks" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">All banks</SelectItem>
+                  <SelectItem value="all">All banks</SelectItem>
                   {banks.map((bank) => (
                     <SelectItem key={bank.id} value={bank.id}>
                       {bank.name}
@@ -432,14 +432,14 @@ export default function HistoryPage() {
               <Label>Transaction Type</Label>
               <Select
                 value={filters.transactionType}
-                onValueChange={(value) => setFilters(prev => ({ ...prev, transactionType: value }))}
+                onValueChange={(value) => setFilters(prev => ({ ...prev, transactionType: value === 'all' ? '' : value }))}
                 data-testid="select-transaction-type-filter"
               >
                 <SelectTrigger>
                   <SelectValue placeholder="All types" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">All types</SelectItem>
+                  <SelectItem value="all">All types</SelectItem>
                   <SelectItem value="draw">Draw</SelectItem>
                   <SelectItem value="repayment">Repayment</SelectItem>
                   <SelectItem value="fee">Fee</SelectItem>
