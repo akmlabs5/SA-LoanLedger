@@ -798,10 +798,12 @@ export class MemoryStorage implements IStorage {
     const newContact: BankContact = {
       ...contact,
       id: this.generateId(),
+      isActive: contact.isActive ?? true, // Ensure isActive is set to true by default
       createdAt: new Date(),
       updatedAt: new Date(),
     };
     this.bankContacts.set(newContact.id, newContact);
+    console.log(`✅ Created bank contact: ${newContact.name} for bank ${newContact.bankId} (ID: ${newContact.id})`);
     return newContact;
   }
 
