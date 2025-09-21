@@ -1,6 +1,7 @@
 import {
   users,
   banks,
+  bankContacts,
   facilities,
   creditLines,
   collateral,
@@ -13,6 +14,8 @@ import {
   type UpsertUser,
   type Bank,
   type InsertBank,
+  type BankContact,
+  type InsertBankContact,
   type Facility,
   type InsertFacility,
   type CreditLine,
@@ -43,6 +46,13 @@ export interface IStorage {
   // Bank operations
   getAllBanks(): Promise<Bank[]>;
   createBank(bank: InsertBank): Promise<Bank>;
+  
+  // Bank Contact operations
+  getBankContacts(bankId: string, userId: string): Promise<Array<BankContact & { bank: Bank }>>;
+  createBankContact(contact: InsertBankContact): Promise<BankContact>;
+  updateBankContact(contactId: string, contact: Partial<InsertBankContact>): Promise<BankContact>;
+  deleteBankContact(contactId: string): Promise<void>;
+  setPrimaryContact(contactId: string, bankId: string, userId: string): Promise<BankContact>;
   
   // Facility operations
   getUserFacilities(userId: string): Promise<Array<Facility & { bank: Bank }>>;
@@ -156,6 +166,81 @@ export class DatabaseStorage implements IStorage {
   async createBank(bank: InsertBank): Promise<Bank> {
     const [newBank] = await db.insert(banks).values(bank).returning();
     return newBank;
+  }
+
+  // Bank Contact operations
+  async getBankContacts(bankId: string, userId: string): Promise<Array<BankContact & { bank: Bank }>> {
+    return await db
+      .select()
+      .from(bankContacts)
+      .leftJoin(banks, eq(bankContacts.bankId, banks.id))
+      .where(and(
+        eq(bankContacts.bankId, bankId),
+        eq(bankContacts.userId, userId),
+        eq(bankContacts.isActive, true)
+      ))
+      .orderBy(desc(bankContacts.isPrimary), asc(bankContacts.name))
+      .then(rows => rows.map(row => ({
+        ...row.bank_contacts,
+        bank: row.banks!
+      })));
+  }
+
+  async createBankContact(contact: InsertBankContact): Promise<BankContact> {
+    const [newContact] = await db.insert(bankContacts).values({
+      ...contact,
+      updatedAt: new Date()
+    }).returning();
+    return newContact;
+  }
+
+  async updateBankContact(contactId: string, contact: Partial<InsertBankContact>): Promise<BankContact> {
+    const [updatedContact] = await db
+      .update(bankContacts)
+      .set({
+        ...contact,
+        updatedAt: new Date()
+      })
+      .where(eq(bankContacts.id, contactId))
+      .returning();
+    return updatedContact;
+  }
+
+  async deleteBankContact(contactId: string): Promise<void> {
+    await db
+      .update(bankContacts)
+      .set({ 
+        isActive: false, 
+        updatedAt: new Date() 
+      })
+      .where(eq(bankContacts.id, contactId));
+  }
+
+  async setPrimaryContact(contactId: string, bankId: string, userId: string): Promise<BankContact> {
+    // First, unset any existing primary contact for this bank and user
+    await db
+      .update(bankContacts)
+      .set({ 
+        isPrimary: false, 
+        updatedAt: new Date() 
+      })
+      .where(and(
+        eq(bankContacts.bankId, bankId),
+        eq(bankContacts.userId, userId),
+        eq(bankContacts.isPrimary, true)
+      ));
+
+    // Then, set the new primary contact
+    const [updatedContact] = await db
+      .update(bankContacts)
+      .set({ 
+        isPrimary: true, 
+        updatedAt: new Date() 
+      })
+      .where(eq(bankContacts.id, contactId))
+      .returning();
+    
+    return updatedContact;
   }
 
   // Facility operations
