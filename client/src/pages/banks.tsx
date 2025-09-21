@@ -18,8 +18,7 @@ import {
   Target,
   AlertTriangle
 } from "lucide-react";
-import { Link } from "wouter";
-import BankForm from "@/components/BankForm";
+import { Link, useLocation } from "wouter";
 import { isUnauthorizedError } from "@/lib/authUtils";
 import { PortfolioSummary } from "@shared/types";
 
@@ -34,7 +33,7 @@ export default function Banks() {
   const { isLoading, isAuthenticated } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const [showForm, setShowForm] = useState(false);
+  const [, setLocation] = useLocation();
   const [bankCredentials, setBankCredentials] = useState<BankLoginCredentials[]>([]);
   const [showCredentials, setShowCredentials] = useState<Record<string, boolean>>({});
 
@@ -129,8 +128,8 @@ export default function Banks() {
           </div>
           <div className="flex items-center space-x-3 mt-4 sm:mt-0">
             <Button 
-              onClick={() => setShowForm(true)}
-              className="bg-primary hover:bg-primary/90 text-primary-foreground"
+              onClick={() => setLocation("/facilities/new")}
+              className="bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white shadow-lg"
               data-testid="button-add-facility"
             >
               <Plus className="mr-2 h-4 w-4" />
@@ -330,18 +329,6 @@ export default function Banks() {
         </div>
       </div>
 
-      {/* Bank Facility Form Modal */}
-      {showForm && (
-        <BankForm
-          banks={(banks as any[]) || []}
-          onSuccess={() => {
-            setShowForm(false);
-            queryClient.invalidateQueries({ queryKey: ["/api/facilities"] });
-            queryClient.invalidateQueries({ queryKey: ["/api/dashboard/portfolio"] });
-          }}
-          onCancel={() => setShowForm(false)}
-        />
-      )}
     </div>
   );
 }
