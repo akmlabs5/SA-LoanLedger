@@ -41,8 +41,7 @@ import {
   RefreshCw,
   Trash2
 } from "lucide-react";
-import { Link } from "wouter";
-import LoanForm from "@/components/LoanForm";
+import { Link, useLocation } from "wouter";
 import { isUnauthorizedError } from "@/lib/authUtils";
 import { apiRequest } from "@/lib/queryClient";
 
@@ -54,7 +53,7 @@ export default function Loans() {
   const { isLoading, isAuthenticated } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const [showForm, setShowForm] = useState(false);
+  const [, setLocation] = useLocation();
   
   // Enhanced filtering and sorting state
   const [searchQuery, setSearchQuery] = useState("");
@@ -373,7 +372,7 @@ export default function Loans() {
               Export
             </Button>
             <Button 
-              onClick={() => setShowForm(true)}
+              onClick={() => setLocation("/loans/new")}
               className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white shadow-lg hover:shadow-xl transition-all duration-300"
               data-testid="button-add-loan"
             >
@@ -531,7 +530,7 @@ export default function Loans() {
                   </p>
                   {activeLoans?.length === 0 ? (
                     <Button 
-                      onClick={() => setShowForm(true)}
+                      onClick={() => setLocation("/loans/new")}
                       className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white"
                       data-testid="button-add-first-loan"
                     >
@@ -812,17 +811,6 @@ export default function Loans() {
         </Tabs>
       </div>
 
-      {/* Enhanced Loan Form Modal */}
-      {showForm && (
-        <LoanForm
-          onSuccess={() => {
-            setShowForm(false);
-            queryClient.invalidateQueries({ queryKey: ["/api/loans"] });
-            queryClient.invalidateQueries({ queryKey: ["/api/dashboard/portfolio"] });
-          }}
-          onCancel={() => setShowForm(false)}
-        />
-      )}
     </div>
   );
 }

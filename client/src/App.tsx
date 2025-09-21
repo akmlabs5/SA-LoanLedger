@@ -14,6 +14,7 @@ import FacilityCreatePage from "@/pages/facility-create";
 import CollateralCreatePage from "@/pages/collateral-create";
 import BankContactCreatePage from "@/pages/bank-contact-create";
 import GeneralFacilityCreatePage from "@/pages/facility-create-general";
+import GeneralLoanCreatePage from "@/pages/loan-create-general";
 import CollateralPage from "@/pages/collateral";
 import AIChatPage from "@/pages/ai-chat";
 import HistoryPage from "@/pages/history";
@@ -46,6 +47,7 @@ function Router() {
           <Route path="/banks" component={Banks} />
           <Route path="/banks/:bankId" component={BankDetail} />
           <Route path="/banks/:bankId/loans/new" component={LoanCreatePage} />
+          <Route path="/loans/new" component={GeneralLoanCreatePage} />
         <Route path="/banks/:bankId/facilities/new" component={FacilityCreatePage} />
           <Route path="/banks/:bankId/contacts/new" component={BankContactCreatePage} />
           <Route path="/facilities/new" component={GeneralFacilityCreatePage} />

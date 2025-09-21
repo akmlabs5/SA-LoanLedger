@@ -1,0 +1,535 @@
+import { useLocation } from "wouter";
+import { useAuth } from "@/hooks/useAuth";
+import { useToast } from "@/hooks/use-toast";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useMutation, useQuery } from "@tanstack/react-query";
+import { apiRequest, queryClient } from "@/lib/queryClient";
+import { insertLoanSchema } from "@shared/schema";
+import { z } from "zod";
+import { useEffect, useMemo, useState } from "react";
+
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Separator } from "@/components/ui/separator";
+import { Badge } from "@/components/ui/badge";
+
+import { 
+  ArrowLeft, 
+  FileText, 
+  Building,
+  CreditCard,
+  Calendar,
+  DollarSign,
+  Save,
+  X,
+  Calculator,
+  AlertTriangle
+} from "lucide-react";
+
+import { Link } from "wouter";
+
+const loanFormSchema = insertLoanSchema.extend({
+  facilityId: z.string().min(1, "Please select a facility"),
+  amount: z.string().min(1, "Loan amount is required"),
+  siborRate: z.string().min(1, "SIBOR rate is required"),
+  startDate: z.string().min(1, "Start date is required"),
+  dueDate: z.string().min(1, "Due date is required"),
+  referenceNumber: z.string().optional(),
+  purpose: z.string().optional(),
+});
+
+export default function GeneralLoanCreatePage() {
+  const [, setLocation] = useLocation();
+  const { isAuthenticated, isLoading } = useAuth();
+  const { toast } = useToast();
+
+  // Get facilities and banks for selection
+  const { data: facilities, isLoading: facilitiesLoading } = useQuery<any[]>({
+    queryKey: ["/api/facilities"],
+    enabled: isAuthenticated,
+  });
+
+  // Get current SIBOR rate
+  const { data: siborData } = useQuery<{rate: number; lastUpdate: string; monthlyChange: number}>({
+    queryKey: ["/api/sibor-rate"],
+    enabled: isAuthenticated,
+  });
+
+  const form = useForm<z.infer<typeof loanFormSchema>>({
+    resolver: zodResolver(loanFormSchema),
+    defaultValues: {
+      facilityId: "",
+      amount: "",
+      siborRate: siborData?.rate?.toString() || "5.75",
+      startDate: new Date().toISOString().split('T')[0],
+      dueDate: "",
+      referenceNumber: "",
+    },
+  });
+
+  // Update SIBOR rate when data loads
+  useEffect(() => {
+    if (siborData?.rate) {
+      form.setValue("siborRate", siborData.rate.toString());
+    }
+  }, [siborData, form]);
+
+  // Get selected facility details
+  const selectedFacilityId = form.watch("facilityId");
+  const selectedFacility = useMemo(() => {
+    return facilities?.find((f: any) => f.id === selectedFacilityId);
+  }, [facilities, selectedFacilityId]);
+
+  // Calculate credit information for selected facility
+  const getCreditInfo = () => {
+    if (!selectedFacility) return null;
+    
+    const totalCreditLimit = parseFloat(selectedFacility.creditLimit) || 0;
+    const usedCredit = parseFloat(selectedFacility.outstandingAmount) || 0;
+    const availableCredit = totalCreditLimit - usedCredit;
+    
+    return {
+      totalCreditLimit,
+      usedCredit,
+      availableCredit,
+      utilizationPercent: totalCreditLimit > 0 ? (usedCredit / totalCreditLimit) * 100 : 0
+    };
+  };
+  
+  const creditInfo = getCreditInfo();
+
+  // Calculate interest based on form values
+  const calculateInterest = () => {
+    const amount = parseFloat(form.watch("amount") || "0");
+    const siborRate = parseFloat(form.watch("siborRate") || "0");
+    const bankRate = selectedFacility ? parseFloat(selectedFacility.costOfFunding) : 0;
+    const totalRate = siborRate + bankRate;
+    
+    if (amount > 0 && totalRate > 0) {
+      const startDate = new Date(form.watch("startDate"));
+      const dueDate = new Date(form.watch("dueDate"));
+      const daysDiff = Math.ceil((dueDate.getTime() - startDate.getTime()) / (1000 * 3600 * 24));
+      
+      if (daysDiff > 0) {
+        const totalInterest = (amount * totalRate / 100) * (daysDiff / 365);
+        return totalInterest;
+      }
+    }
+    return 0;
+  };
+
+  const totalInterest = calculateInterest();
+
+  const createLoanMutation = useMutation({
+    mutationFn: async (data: z.infer<typeof loanFormSchema>) => {
+      const loanData = {
+        ...data,
+        amount: parseFloat(data.amount).toString(),
+        siborRate: parseFloat(data.siborRate).toString(),
+      };
+      return apiRequest("POST", "/api/loans", loanData);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/loans"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/dashboard/portfolio"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/facilities"] });
+      toast({ 
+        title: "Loan created successfully",
+        description: "The loan has been added to your portfolio."
+      });
+      setLocation("/loans");
+    },
+    onError: (error) => {
+      toast({ 
+        title: "Failed to create loan", 
+        description: error.message,
+        variant: "destructive" 
+      });
+    },
+  });
+
+  const onSubmit = (data: z.infer<typeof loanFormSchema>) => {
+    // Validate credit limit
+    if (creditInfo) {
+      const loanAmount = parseFloat(data.amount);
+      if (loanAmount > creditInfo.availableCredit) {
+        toast({
+          title: "Insufficient Credit",
+          description: `Loan amount (${loanAmount.toLocaleString()} SAR) exceeds available credit (${creditInfo.availableCredit.toLocaleString()} SAR)`,
+          variant: "destructive"
+        });
+        return;
+      }
+    }
+
+    createLoanMutation.mutate(data);
+  };
+
+  if (isLoading || !facilities) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
+
+  if (!isAuthenticated) {
+    return null;
+  }
+
+  return (
+    <div className="min-h-screen bg-background">
+      {/* Navigation Header */}
+      <header className="bg-card border-b border-border sticky top-0 z-50">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex items-center h-16">
+            <div className="flex items-center space-x-4">
+              <Link href="/loans">
+                <Button variant="ghost" size="sm" data-testid="button-back-loans">
+                  <ArrowLeft className="h-4 w-4 mr-2" />
+                  Back to Loans
+                </Button>
+              </Link>
+              <Separator orientation="vertical" className="h-6" />
+              <div className="w-10 h-10 bg-saudi text-white rounded-lg flex items-center justify-center">
+                <FileText className="h-5 w-5" />
+              </div>
+              <div>
+                <h1 className="text-xl font-bold text-foreground">Create New Loan</h1>
+                <p className="text-sm text-muted-foreground">Set up a new loan drawdown</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          {/* Main Form */}
+          <div className="lg:col-span-2">
+            <Card className="shadow-lg">
+              <CardHeader>
+                <CardTitle className="flex items-center space-x-2">
+                  <FileText className="h-5 w-5 text-primary" />
+                  <span>Loan Details</span>
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <Form {...form}>
+                  <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+                    {/* Facility Selection */}
+                    <div className="space-y-4">
+                      <h3 className="text-lg font-medium flex items-center space-x-2">
+                        <Building className="h-4 w-4" />
+                        <span>Bank Facility</span>
+                      </h3>
+                      <FormField
+                        control={form.control}
+                        name="facilityId"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Bank Facility *</FormLabel>
+                            <Select onValueChange={field.onChange} value={field.value} disabled={facilitiesLoading}>
+                              <FormControl>
+                                <SelectTrigger data-testid="select-facility">
+                                  <SelectValue placeholder="Select a bank facility" />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                {facilities?.map((facility: any) => (
+                                  <SelectItem key={facility.id} value={facility.id}>
+                                    <div className="flex flex-col">
+                                      <span>{facility.bank?.name || 'Unknown Bank'} - {facility.facilityType.replace('_', ' ')}</span>
+                                      <span className="text-xs text-muted-foreground">
+                                        Credit Limit: {parseFloat(facility.creditLimit).toLocaleString()} SAR | SIBOR + {facility.costOfFunding}%
+                                      </span>
+                                    </div>
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+
+                      {/* Credit Limit Information */}
+                      {creditInfo && (
+                        <div className="p-4 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg">
+                          <div className="flex items-center gap-2 mb-3">
+                            <DollarSign className="h-4 w-4 text-green-600" />
+                            <h4 className="font-medium text-green-800 dark:text-green-200">Credit Facility Information</h4>
+                          </div>
+                          <div className="grid grid-cols-3 gap-4 text-sm">
+                            <div>
+                              <span className="text-green-700 dark:text-green-300">Total Credit Limit:</span>
+                              <div className="font-medium">{creditInfo.totalCreditLimit.toLocaleString()} SAR</div>
+                            </div>
+                            <div>
+                              <span className="text-green-700 dark:text-green-300">Used Credit:</span>
+                              <div className="font-medium">{creditInfo.usedCredit.toLocaleString()} SAR</div>
+                            </div>
+                            <div>
+                              <span className="text-green-700 dark:text-green-300">Available Credit:</span>
+                              <div className="font-medium text-green-900 dark:text-green-100">{creditInfo.availableCredit.toLocaleString()} SAR</div>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+
+                    <Separator />
+
+                    {/* Loan Details */}
+                    <div className="space-y-4">
+                      <h3 className="text-lg font-medium flex items-center space-x-2">
+                        <Calculator className="h-4 w-4" />
+                        <span>Loan Information</span>
+                      </h3>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <FormField
+                          control={form.control}
+                          name="amount"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Loan Amount (SAR) *</FormLabel>
+                              <FormControl>
+                                <Input 
+                                  data-testid="input-amount" 
+                                  type="number" 
+                                  placeholder="e.g., 500000" 
+                                  {...field} 
+                                />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        
+                        <FormField
+                          control={form.control}
+                          name="referenceNumber"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Reference Number</FormLabel>
+                              <FormControl>
+                                <Input 
+                                  data-testid="input-reference" 
+                                  placeholder="Optional loan reference" 
+                                  {...field} 
+                                />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        
+                        <FormField
+                          control={form.control}
+                          name="siborRate"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>SIBOR Rate (%) *</FormLabel>
+                              <FormControl>
+                                <Input 
+                                  data-testid="input-sibor-rate" 
+                                  type="number" 
+                                  step="0.01"
+                                  placeholder="e.g., 5.75" 
+                                  {...field} 
+                                />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+
+                        {/* Interest Calculation Display */}
+                        {totalInterest > 0 && (
+                          <div className="p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
+                            <div className="text-sm text-blue-700 dark:text-blue-300">Estimated Interest</div>
+                            <div className="font-bold text-blue-900 dark:text-blue-100">{totalInterest.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})} SAR</div>
+                            <div className="text-xs text-blue-600 dark:text-blue-400">
+                              Total Rate: {selectedFacility ? (parseFloat(form.watch("siborRate") || "0") + parseFloat(selectedFacility.costOfFunding)).toFixed(2) : 0}%
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
+                    <Separator />
+
+                    {/* Duration */}
+                    <div className="space-y-4">
+                      <h3 className="text-lg font-medium flex items-center space-x-2">
+                        <Calendar className="h-4 w-4" />
+                        <span>Duration</span>
+                      </h3>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <FormField
+                          control={form.control}
+                          name="startDate"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Start Date *</FormLabel>
+                              <FormControl>
+                                <Input 
+                                  data-testid="input-start-date" 
+                                  type="date" 
+                                  {...field} 
+                                />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        
+                        <FormField
+                          control={form.control}
+                          name="dueDate"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Due Date *</FormLabel>
+                              <FormControl>
+                                <Input 
+                                  data-testid="input-due-date" 
+                                  type="date" 
+                                  {...field} 
+                                />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      </div>
+                    </div>
+
+                    <Separator />
+
+                    {/* Purpose */}
+                    <div className="space-y-4">
+                      <h3 className="text-lg font-medium">Purpose</h3>
+                      <FormField
+                        control={form.control}
+                        name="purpose"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Loan Purpose</FormLabel>
+                            <FormControl>
+                              <Textarea 
+                                data-testid="input-purpose"
+                                placeholder="Describe the purpose of this loan..."
+                                className="min-h-[100px]"
+                                {...field} 
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+
+                    {/* Submit Buttons */}
+                    <div className="flex items-center justify-end space-x-4 pt-6 border-t">
+                      <Button 
+                        type="button" 
+                        variant="outline"
+                        onClick={() => setLocation("/loans")}
+                        data-testid="button-cancel-loan"
+                      >
+                        <X className="mr-2 h-4 w-4" />
+                        Cancel
+                      </Button>
+                      <Button 
+                        type="submit" 
+                        disabled={createLoanMutation.isPending}
+                        className="bg-gradient-to-r from-emerald-600 to-blue-600 hover:from-emerald-700 hover:to-blue-700"
+                        data-testid="button-save-loan"
+                      >
+                        {createLoanMutation.isPending ? (
+                          <>
+                            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                            Creating...
+                          </>
+                        ) : (
+                          <>
+                            <Save className="mr-2 h-4 w-4" />
+                            Create Loan
+                          </>
+                        )}
+                      </Button>
+                    </div>
+                  </form>
+                </Form>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Sidebar Information */}
+          <div className="space-y-6">
+            <Card className="shadow-lg">
+              <CardHeader>
+                <CardTitle className="flex items-center space-x-2">
+                  <CreditCard className="h-5 w-5 text-primary" />
+                  <span>SIBOR Information</span>
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                <div className="text-sm text-muted-foreground space-y-2">
+                  <div><span className="font-medium">Current Rate:</span> {siborData?.rate || 'Loading...'}%</div>
+                  <div><span className="font-medium">Last Updated:</span> {siborData?.lastUpdate || 'N/A'}</div>
+                  <div><span className="font-medium">Monthly Change:</span> {siborData?.monthlyChange > 0 ? '+' : ''}{siborData?.monthlyChange || 0}%</div>
+                  <Separator className="my-3" />
+                  <p>• SIBOR rates are updated daily</p>
+                  <p>• Total interest = (SIBOR + Bank Margin) × Principal</p>
+                  <p>• Interest calculated on daily compounding basis</p>
+                </div>
+              </CardContent>
+            </Card>
+
+            {selectedFacility && (
+              <Card className="shadow-lg">
+                <CardHeader>
+                  <CardTitle className="flex items-center space-x-2">
+                    <Building className="h-5 w-5 text-primary" />
+                    <span>Selected Facility</span>
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  <div className="text-sm space-y-2">
+                    <div><span className="font-medium">Bank:</span> {selectedFacility.bank?.name}</div>
+                    <div><span className="font-medium">Type:</span> {selectedFacility.facilityType.replace('_', ' ')}</div>
+                    <div><span className="font-medium">Bank Margin:</span> {selectedFacility.costOfFunding}%</div>
+                    <div><span className="font-medium">Expiry:</span> {new Date(selectedFacility.expiryDate).toLocaleDateString()}</div>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
+            <Card className="shadow-lg">
+              <CardHeader>
+                <CardTitle className="flex items-center space-x-2">
+                  <AlertTriangle className="h-5 w-5 text-amber-500" />
+                  <span>Important Notes</span>
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                <div className="text-sm text-muted-foreground space-y-2">
+                  <p>• Ensure sufficient credit limit is available</p>
+                  <p>• Interest is calculated from start date</p>
+                  <p>• Due date must be within facility expiry</p>
+                  <p>• Reference number should be unique</p>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
