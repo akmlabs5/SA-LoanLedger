@@ -83,6 +83,8 @@ export default function BankForm({ banks, onSuccess, onCancel }: BankFormProps) 
   });
 
   const onSubmit = (data: FacilityFormData) => {
+    console.log("Form submitted with data:", data);
+    console.log("Form errors:", form.formState.errors);
     createFacilityMutation.mutate(data);
   };
 
@@ -332,6 +334,12 @@ export default function BankForm({ banks, onSuccess, onCancel }: BankFormProps) 
                 disabled={createFacilityMutation.isPending}
                 className="bg-primary text-primary-foreground hover:bg-primary/90"
                 data-testid="button-create-facility"
+                onClick={(e) => {
+                  console.log("Create Facility button clicked");
+                  console.log("Form state:", form.getValues());
+                  console.log("Form valid:", form.formState.isValid);
+                  console.log("Form errors:", form.formState.errors);
+                }}
               >
                 {createFacilityMutation.isPending ? "Creating..." : "Create Facility"}
               </Button>
