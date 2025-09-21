@@ -999,6 +999,15 @@ export class MemoryStorage implements IStorage {
     return updated;
   }
 
+  async deleteFacility(facilityId: string): Promise<void> {
+    const existing = this.facilities.get(facilityId);
+    if (!existing) throw new Error('Facility not found');
+    
+    // Remove the facility from memory
+    this.facilities.delete(facilityId);
+    console.log(`✅ Deleted facility: ${existing.facilityType} for bank ${existing.bankId} (ID: ${facilityId})`);
+  }
+
   async getUserCollateral(userId: string): Promise<Collateral[]> {
     return [];
   }
