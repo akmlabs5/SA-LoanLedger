@@ -503,6 +503,12 @@ export default function LoanForm({ onSuccess, onCancel }: LoanFormProps) {
                 disabled={createLoanMutation.isPending}
                 className="bg-primary text-primary-foreground hover:bg-primary/90"
                 data-testid="button-create-loan"
+                onClick={(e) => {
+                  console.log("🔥 Button clicked!");
+                  console.log("🔍 Form state:", form.formState);
+                  console.log("🔍 Form values:", form.getValues());
+                  console.log("🔍 Form errors:", form.formState.errors);
+                }}
               >
                 {createLoanMutation.isPending ? "Creating..." : "Create Loan"}
               </Button>
