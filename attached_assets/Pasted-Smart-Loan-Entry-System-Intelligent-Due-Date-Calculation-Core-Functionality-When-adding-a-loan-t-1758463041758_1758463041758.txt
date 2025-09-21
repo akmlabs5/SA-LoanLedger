@@ -1,0 +1,90 @@
+Smart Loan Entry System
+Intelligent Due Date Calculation
+Core Functionality: When adding a loan, the system should provide smart term selection options that automatically calculate due dates based on the loan start date.
+Term Options Required:
+•30 Days (1-Month term)
+•60 Days (2-Month term)
+•90 Days (3-Month term)
+•180 Days (6-Month term)
+•360 Days (12-Month term)
+Smart Behavior:
+•User selects loan start date
+•System presents term options showing calculated due dates for each option
+•Automatic adjustment for weekends and holidays to ensure due dates fall on business days
+•Clear display of what the due date will be for each term option before user confirms
+SIBOR Rate Matching System
+Intelligent Rate Selection: The system should automatically match the appropriate SIBOR rate based on the selected loan term:
+SIBOR Term Mapping:
+•30 Days → 1-Month SIBOR
+•60 Days → 2-Month SIBOR
+•90 Days → 3-Month SIBOR
+•180 Days → 6-Month SIBOR
+•360 Days → 12-Month SIBOR
+Or other custom if the user wanted
+The goal is to also use this information to track the SIBOR Rates in the system for example have a trend of 6 months SIBOR rate. 
+
+Rate Display Logic:
+•Automatically populate the appropriate SIBOR rate based on term selection
+•Allow manual override if needed for special circumstances
+•Display total rate calculation: SIBOR + Bank Margin (from facility setup)
+•Show real-time interest cost preview as user makes selections
+Business Day Intelligence
+Saudi Business Calendar Integration: The system must account for Saudi Arabia's unique business calendar:
+Weekend Handling:
+•Saudi weekends are Friday-Saturday (not Saturday-Sunday)
+•Automatically adjust due dates to avoid weekends
+•Move dates to the next business day (Sunday) when needed
+Holiday Management: Due dates should automatically avoid Saudi banking holidays and move to the next business day. 
+Saudi Holidays Database System
+Dynamic Holiday Management (Phase 2) 
+Separate Holiday Management Section in the software: Create a dedicated administrative area within the software for managing Saudi holidays that change annually.
+Required Holiday Categories
+1. Islamic Holidays  These holidays change dates each year:
+Eid Al-Fitr:
+•Duration: Typically, 3-4 days
+•Timing: End of Ramadan (varies annually)
+•Banking Impact: Complete banking closure
+•Notes: The user if he wants can input the dates to have better accuracy on loan dates
+Eid Al-Adha:
+•Duration: Typically 4-5 days
+•Timing: During Hajj season (varies annually)
+•Banking Impact: Complete banking closure
+•Notes: Dates follow Hajri calendar, announced officially
+Islamic New Year (Muharram 1):
+•Duration: 1 day
+•Timing: First day of Islamic calendar (varies annually)
+•Banking Impact: Banking holiday
+•Notes: Date shifts approximately 11 days earlier each Gregorian year
+Prophet Muhammad's Birthday (Mawlid):
+•Duration: 1 day
+•Timing: 12th day of Rabi' al-awwal (varies annually)
+•Banking Impact: Banking holiday
+•Notes: Some years may not be observed as official holiday
+2. National Holidays (Gregorian Calendar-Based) These holidays occur on fixed Gregorian dates:
+Saudi National Day:
+•Date: September 23rd (fixed annually)
+•Duration: 1-2 days (may extend if falls on weekend)
+•Banking Impact: Complete banking closure
+•Notes: Celebrates Kingdom's founding in 1932
+Founding Day:
+•Date: February 22nd (fixed annually)
+•Duration: 1 day
+•Banking Impact: Banking holiday
+•Notes: Relatively new holiday celebrating Saudi state founding in 1727
+Holiday Database Structure Requirements
+Annual Holiday Calendar Management:
+•Ability to input holidays for each calendar year
+•Support for both Hijri and Gregorian date systems
+•Flexible duration settings (1-5 days per holiday)
+• The user if he wants can input the dates to have better accuracy on loan dates
+Holiday Entry Fields Required:
+•Holiday Name (English)
+•Holiday Type (Islamic/National Holiday/Other)
+•Start Date (with calendar system indicator)
+•End Date (with calendar system indicator)
+Multi-Year Planning as the user continues to use the system for the next year, so the holiday when its over should not be there anymore. 
+Note the user can just not use this feature if they wanted. 
+Integration with Loan System:
+•Automatic due date adjustment based on holiday calendar
+•Warning system when loans are scheduled during holiday periods
+
