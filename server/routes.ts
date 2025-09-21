@@ -1,9 +1,10 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
-import { storage } from "./storage";
+import { createStorage, type IStorage } from "./storage";
 import { setupAuth, isAuthenticated } from "./replitAuth";
 import { generateAIInsights } from "./aiInsights";
 import { sendLoanDueNotification } from "./emailService";
+import { initializeDatabase } from "./db";
 import {
   insertBankSchema,
   insertBankContactSchema,
@@ -17,9 +18,18 @@ import {
 } from "@shared/schema";
 import { z } from "zod";
 
+// Global storage instance
+let storage: IStorage;
+
 export async function registerRoutes(app: Express): Promise<Server> {
-  // Auth middleware
-  await setupAuth(app);
+  // Initialize database connection with health check
+  const databaseAvailable = await initializeDatabase();
+  
+  // Create storage based on database availability
+  storage = createStorage(databaseAvailable);
+  
+  // Setup auth with database availability flag
+  await setupAuth(app, databaseAvailable);
 
   // Initialize default Saudi banks
   await initializeDefaultBanks();

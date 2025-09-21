@@ -707,4 +707,402 @@ export class DatabaseStorage implements IStorage {
   }
 }
 
-export const storage = new DatabaseStorage();
+// In-memory storage fallback implementation
+export class MemoryStorage implements IStorage {
+  private users = new Map<string, User>();
+  private banks = new Map<string, Bank>();
+  private bankContacts = new Map<string, BankContact>();
+  private facilities = new Map<string, Facility>();
+  private creditLines = new Map<string, CreditLine>();
+  private collateral = new Map<string, Collateral>();
+  private loans = new Map<string, Loan>();
+  private documents = new Map<string, Document>();
+  private aiConfigs = new Map<string, AiInsightConfig>();
+  private exposureSnapshots = new Map<string, ExposureSnapshot>();
+  private transactions = new Map<string, Transaction>();
+
+  constructor() {
+    // Initialize with default Saudi banks
+    this.initializeDefaultBanks();
+  }
+
+  private initializeDefaultBanks() {
+    const defaultBanks = [
+      { id: 'ANB', code: 'ANB', name: 'Arab National Bank', isActive: true, createdAt: new Date(), updatedAt: new Date() },
+      { id: 'SABB', code: 'SABB', name: 'Saudi British Bank', isActive: true, createdAt: new Date(), updatedAt: new Date() },
+      { id: 'RAJHI', code: 'RAJHI', name: 'Al Rajhi Bank', isActive: true, createdAt: new Date(), updatedAt: new Date() },
+      { id: 'NCB', code: 'NCB', name: 'National Commercial Bank', isActive: true, createdAt: new Date(), updatedAt: new Date() },
+      { id: 'RIYADBANK', code: 'RIYADBANK', name: 'Riyad Bank', isActive: true, createdAt: new Date(), updatedAt: new Date() },
+      { id: 'SAMBABANK', code: 'SAMBABANK', name: 'Samba Financial Group', isActive: true, createdAt: new Date(), updatedAt: new Date() },
+      { id: 'BANQUE', code: 'BANQUE', name: 'Banque Saudi Fransi', isActive: true, createdAt: new Date(), updatedAt: new Date() },
+      { id: 'ALBILAD', code: 'ALBILAD', name: 'Bank AlBilad', isActive: true, createdAt: new Date(), updatedAt: new Date() },
+      { id: 'ALJAZIRA', code: 'ALJAZIRA', name: 'Bank AlJazira', isActive: true, createdAt: new Date(), updatedAt: new Date() },
+      { id: 'ALINMA', code: 'ALINMA', name: 'Alinma Bank', isActive: true, createdAt: new Date(), updatedAt: new Date() }
+    ];
+
+    defaultBanks.forEach(bank => this.banks.set(bank.id, bank));
+  }
+
+  private generateId(): string {
+    return Math.random().toString(36).substr(2, 9);
+  }
+
+  // User operations
+  async getUser(id: string): Promise<User | undefined> {
+    return this.users.get(id);
+  }
+
+  async upsertUser(userData: UpsertUser): Promise<User> {
+    const existing = this.users.get(userData.id);
+    const user: User = {
+      ...userData,
+      createdAt: existing?.createdAt || new Date(),
+      updatedAt: new Date(),
+    };
+    this.users.set(userData.id, user);
+    return user;
+  }
+
+  // Bank operations
+  async getAllBanks(): Promise<Bank[]> {
+    return Array.from(this.banks.values()).filter(bank => bank.isActive);
+  }
+
+  async createBank(bank: InsertBank): Promise<Bank> {
+    const newBank: Bank = {
+      ...bank,
+      id: bank.id || this.generateId(),
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
+    this.banks.set(newBank.id, newBank);
+    return newBank;
+  }
+
+  // Bank Contact operations
+  async getBankContacts(bankId: string, userId: string): Promise<Array<BankContact & { bank: Bank }>> {
+    const bank = this.banks.get(bankId);
+    if (!bank) return [];
+
+    return Array.from(this.bankContacts.values())
+      .filter(contact => contact.bankId === bankId && contact.userId === userId && contact.isActive)
+      .map(contact => ({ ...contact, bank }))
+      .sort((a, b) => {
+        if (a.isPrimary && !b.isPrimary) return -1;
+        if (!a.isPrimary && b.isPrimary) return 1;
+        return a.name.localeCompare(b.name);
+      });
+  }
+
+  async createBankContact(contact: InsertBankContact): Promise<BankContact> {
+    const newContact: BankContact = {
+      ...contact,
+      id: this.generateId(),
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
+    this.bankContacts.set(newContact.id, newContact);
+    return newContact;
+  }
+
+  async updateBankContact(contactId: string, contact: Partial<InsertBankContact>): Promise<BankContact> {
+    const existing = this.bankContacts.get(contactId);
+    if (!existing) throw new Error('Contact not found');
+
+    const updated: BankContact = {
+      ...existing,
+      ...contact,
+      updatedAt: new Date(),
+    };
+    this.bankContacts.set(contactId, updated);
+    return updated;
+  }
+
+  async deleteBankContact(contactId: string): Promise<void> {
+    const existing = this.bankContacts.get(contactId);
+    if (existing) {
+      existing.isActive = false;
+      existing.updatedAt = new Date();
+      this.bankContacts.set(contactId, existing);
+    }
+  }
+
+  async setPrimaryContact(contactId: string, bankId: string, userId: string): Promise<BankContact> {
+    // First, unset all primary contacts for this bank/user
+    for (const contact of this.bankContacts.values()) {
+      if (contact.bankId === bankId && contact.userId === userId && contact.isPrimary) {
+        contact.isPrimary = false;
+        contact.updatedAt = new Date();
+      }
+    }
+
+    // Set the specified contact as primary
+    const contact = this.bankContacts.get(contactId);
+    if (!contact) throw new Error('Contact not found');
+
+    contact.isPrimary = true;
+    contact.updatedAt = new Date();
+    this.bankContacts.set(contactId, contact);
+    return contact;
+  }
+
+  // Stub implementations for other methods (simplified for core functionality)
+  async getUserFacilities(userId: string): Promise<Array<Facility & { bank: Bank }>> {
+    return [];
+  }
+
+  async getFacilityWithBank(facilityId: string): Promise<(Facility & { bank: Bank }) | undefined> {
+    return undefined;
+  }
+
+  async createFacility(facility: InsertFacility): Promise<Facility> {
+    const newFacility: Facility = {
+      ...facility,
+      id: this.generateId(),
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
+    this.facilities.set(newFacility.id, newFacility);
+    return newFacility;
+  }
+
+  async updateFacility(facilityId: string, facility: Partial<InsertFacility>): Promise<Facility> {
+    const existing = this.facilities.get(facilityId);
+    if (!existing) throw new Error('Facility not found');
+
+    const updated: Facility = {
+      ...existing,
+      ...facility,
+      updatedAt: new Date(),
+    };
+    this.facilities.set(facilityId, updated);
+    return updated;
+  }
+
+  async getUserCollateral(userId: string): Promise<Collateral[]> {
+    return [];
+  }
+
+  async createCollateral(collateral: InsertCollateral): Promise<Collateral> {
+    const newCollateral: Collateral = {
+      ...collateral,
+      id: this.generateId(),
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
+    this.collateral.set(newCollateral.id, newCollateral);
+    return newCollateral;
+  }
+
+  async updateCollateral(collateralId: string, collateral: Partial<InsertCollateral>): Promise<Collateral> {
+    const existing = this.collateral.get(collateralId);
+    if (!existing) throw new Error('Collateral not found');
+
+    const updated: Collateral = {
+      ...existing,
+      ...collateral,
+      updatedAt: new Date(),
+    };
+    this.collateral.set(collateralId, updated);
+    return updated;
+  }
+
+  async getUserCreditLines(userId: string): Promise<Array<CreditLine & { facility: Facility & { bank: Bank } }>> {
+    return [];
+  }
+
+  async createCreditLine(creditLine: InsertCreditLine): Promise<CreditLine> {
+    const newCreditLine: CreditLine = {
+      ...creditLine,
+      id: this.generateId(),
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
+    this.creditLines.set(newCreditLine.id, newCreditLine);
+    return newCreditLine;
+  }
+
+  async updateCreditLine(creditLineId: string, creditLine: Partial<InsertCreditLine>): Promise<CreditLine> {
+    const existing = this.creditLines.get(creditLineId);
+    if (!existing) throw new Error('Credit line not found');
+
+    const updated: CreditLine = {
+      ...existing,
+      ...creditLine,
+      updatedAt: new Date(),
+    };
+    this.creditLines.set(creditLineId, updated);
+    return updated;
+  }
+
+  async getUserLoans(userId: string): Promise<Loan[]> {
+    return [];
+  }
+
+  async getActiveLoansByUser(userId: string): Promise<(Loan & { creditLine: CreditLine & { facility: Facility & { bank: Bank } } })[]> {
+    return [];
+  }
+
+  async getSettledLoansByUser(userId: string): Promise<(Loan & { creditLine: CreditLine & { facility: Facility & { bank: Bank } } })[]> {
+    return [];
+  }
+
+  async createLoan(loan: InsertLoan): Promise<Loan> {
+    const newLoan: Loan = {
+      ...loan,
+      id: this.generateId(),
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
+    this.loans.set(newLoan.id, newLoan);
+    return newLoan;
+  }
+
+  async updateLoan(loanId: string, loan: Partial<InsertLoan>): Promise<Loan> {
+    const existing = this.loans.get(loanId);
+    if (!existing) throw new Error('Loan not found');
+
+    const updated: Loan = {
+      ...existing,
+      ...loan,
+      updatedAt: new Date(),
+    };
+    this.loans.set(loanId, updated);
+    return updated;
+  }
+
+  async settleLoan(loanId: string, settledAmount: number): Promise<Loan> {
+    const existing = this.loans.get(loanId);
+    if (!existing) throw new Error('Loan not found');
+
+    const updated: Loan = {
+      ...existing,
+      status: 'settled',
+      settledAmount,
+      settledDate: new Date(),
+      updatedAt: new Date(),
+    };
+    this.loans.set(loanId, updated);
+    return updated;
+  }
+
+  async createDocument(document: InsertDocument): Promise<Document> {
+    const newDocument: Document = {
+      ...document,
+      id: this.generateId(),
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
+    this.documents.set(newDocument.id, newDocument);
+    return newDocument;
+  }
+
+  async getLoanDocuments(loanId: string): Promise<Document[]> {
+    return Array.from(this.documents.values()).filter(doc => doc.loanId === loanId);
+  }
+
+  async getUserAiConfig(userId: string): Promise<AiInsightConfig | undefined> {
+    return Array.from(this.aiConfigs.values()).find(config => config.userId === userId);
+  }
+
+  async upsertAiConfig(config: InsertAiInsightConfig): Promise<AiInsightConfig> {
+    const existing = Array.from(this.aiConfigs.values()).find(c => c.userId === config.userId);
+    const newConfig: AiInsightConfig = {
+      ...config,
+      id: existing?.id || this.generateId(),
+      createdAt: existing?.createdAt || new Date(),
+      updatedAt: new Date(),
+    };
+    this.aiConfigs.set(newConfig.id, newConfig);
+    return newConfig;
+  }
+
+  async getUserPortfolioSummary(userId: string): Promise<{
+    totalOutstanding: number;
+    totalCreditLimit: number;
+    availableCredit: number;
+    portfolioLtv: number;
+    activeLoansCount: number;
+    bankExposures: Array<{
+      bankId: string;
+      bankName: string;
+      outstanding: number;
+      creditLimit: number;
+      utilization: number;
+    }>;
+  }> {
+    return {
+      totalOutstanding: 0,
+      totalCreditLimit: 0,
+      availableCredit: 0,
+      portfolioLtv: 0,
+      activeLoansCount: 0,
+      bankExposures: [],
+    };
+  }
+
+  async listExposureSnapshots(filters: {
+    userId: string;
+    from?: string;
+    to?: string;
+    bankId?: string;
+    facilityId?: string;
+  }): Promise<Array<ExposureSnapshot & { bank?: Bank; facility?: Facility }>> {
+    return [];
+  }
+
+  async addExposureSnapshots(snapshots: InsertExposureSnapshot[]): Promise<ExposureSnapshot[]> {
+    return [];
+  }
+
+  async listTransactions(filters: {
+    userId: string;
+    from?: string;
+    to?: string;
+    bankId?: string;
+    facilityId?: string;
+    loanId?: string;
+    type?: TransactionType;
+    limit?: number;
+    offset?: number;
+  }): Promise<Array<Transaction & { bank: Bank; facility?: Facility; loan?: Loan }>> {
+    return [];
+  }
+
+  async getTransactionCount(filters: {
+    userId: string;
+    from?: string;
+    to?: string;
+    bankId?: string;
+    facilityId?: string;
+    loanId?: string;
+    type?: TransactionType;
+  }): Promise<number> {
+    return 0;
+  }
+
+  async addTransaction(transaction: InsertTransaction): Promise<Transaction> {
+    const newTransaction: Transaction = {
+      ...transaction,
+      id: this.generateId(),
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
+    this.transactions.set(newTransaction.id, newTransaction);
+    return newTransaction;
+  }
+}
+
+// Storage factory based on database availability
+export function createStorage(databaseAvailable: boolean): IStorage {
+  if (databaseAvailable) {
+    console.log("✅ Using database storage");
+    return new DatabaseStorage();
+  } else {
+    console.log("🧠 Using in-memory storage fallback");
+    return new MemoryStorage();
+  }
+}
+
+// Will be initialized in routes after database check
+export let storage: IStorage;
