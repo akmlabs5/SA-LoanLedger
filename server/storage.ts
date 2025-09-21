@@ -1116,12 +1116,7 @@ export class MemoryStorage implements IStorage {
   }
 
   async getActiveLoansByUser(userId: string): Promise<(Loan & { creditLine: CreditLine & { facility: Facility & { bank: Bank } } })[]> {
-    const allLoans = Array.from(this.loans.values());
-    console.log(`🔍 Retrieving loans for user ${userId}. Total loans in storage: ${allLoans.length}`);
-    console.log(`🔍 All loans:`, allLoans.map(l => ({ id: l.id, userId: l.userId, status: l.status })));
-    
-    const userLoans = allLoans.filter(loan => loan.userId === userId && loan.status === 'active');
-    console.log(`🎯 Found ${userLoans.length} active loans for user ${userId}`);
+    const userLoans = Array.from(this.loans.values()).filter(loan => loan.userId === userId && loan.status === 'active');
     
     // Return simple structure without creditLine for now to avoid complex joins
     return userLoans.map(loan => ({
@@ -1150,7 +1145,6 @@ export class MemoryStorage implements IStorage {
       siborTerm: loan.siborTerm || null, // Handle new siborTerm field
     };
     this.loans.set(newLoan.id, newLoan);
-    console.log(`💾 Created loan ${newLoan.id} for user ${newLoan.userId}. Total loans in storage: ${this.loans.size}`);
     return newLoan;
   }
 
