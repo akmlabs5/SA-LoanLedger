@@ -47,6 +47,8 @@ import {
 import { Link } from "wouter";
 import { PortfolioSummary } from "@shared/types";
 import BankContactsSection from "@/components/BankContactsSection";
+import CollateralForm from "@/components/CollateralForm";
+import LoanForm from "@/components/LoanForm";
 
 export default function BankDetail() {
   const { bankId } = useParams();
@@ -730,6 +732,70 @@ export default function BankDetail() {
               </CardContent>
             </Card>
 
+            {/* Active Loans */}
+            <Card className="border-0 shadow-lg bg-white/50 dark:bg-gray-800/50 backdrop-blur-sm">
+              <CardHeader>
+                <CardTitle className="text-xl font-semibold flex items-center space-x-2">
+                  <FileText className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
+                  <span>Active Loans</span>
+                </CardTitle>
+                <p className="text-sm text-gray-600 dark:text-gray-400">Current loan drawdowns from this bank</p>
+              </CardHeader>
+              <CardContent>
+                {bankLoans.length === 0 ? (
+                  <div className="text-center py-12">
+                    <FileText className="h-12 w-12 text-gray-300 dark:text-gray-600 mx-auto mb-4" />
+                    <p className="text-gray-600 dark:text-gray-400 mb-4">No active loans with this bank</p>
+                    <Button 
+                      onClick={() => setIsLoanDialogOpen(true)}
+                      className="bg-gradient-to-r from-emerald-600 to-blue-600 hover:from-emerald-700 hover:to-blue-700 text-white shadow-lg"
+                      data-testid="button-add-loan"
+                    >
+                      <Plus className="h-4 w-4 mr-2" />
+                      Add Loan
+                    </Button>
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {bankLoans.slice(0, 5).map((loan: any) => {
+                      const daysUntilDue = Math.ceil((new Date(loan.dueDate).getTime() - new Date().getTime()) / (1000 * 3600 * 24));
+                      const urgency = daysUntilDue <= 7 ? 'critical' : daysUntilDue <= 15 ? 'warning' : 'normal';
+                      
+                      return (
+                        <div key={loan.id} className="p-4 border border-gray-200 dark:border-gray-700 rounded-xl">
+                          <div className="flex items-center justify-between mb-2">
+                            <div>
+                              <h5 className="font-semibold text-gray-900 dark:text-gray-100">
+                                {loan.referenceNumber}
+                              </h5>
+                              <p className="text-sm text-gray-600 dark:text-gray-400">
+                                Due: {new Date(loan.dueDate).toLocaleDateString()}
+                              </p>
+                            </div>
+                            <div className="text-right">
+                              <p className="font-bold text-gray-900 dark:text-gray-100">
+                                {formatCurrency(parseFloat(loan.amount))}
+                              </p>
+                              <Badge className={
+                                urgency === 'critical' ? 'bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-400' :
+                                urgency === 'warning' ? 'bg-amber-100 text-amber-800 dark:bg-amber-900/20 dark:text-amber-400' :
+                                'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/20 dark:text-emerald-400'
+                              }>
+                                {daysUntilDue > 0 ? `${daysUntilDue} days` : 'Overdue'}
+                              </Badge>
+                            </div>
+                          </div>
+                          <div className="text-sm text-gray-600 dark:text-gray-400">
+                            Interest: SIBOR + {loan.bankRate}% | Status: {loan.status}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
             {/* Collateral Assignments */}
             <Card className="border-0 shadow-lg bg-white/50 dark:bg-gray-800/50 backdrop-blur-sm">
               <CardHeader>
@@ -823,70 +889,6 @@ export default function BankDetail() {
                         </div>
                       </div>
                     ))}
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-
-            {/* Active Loans */}
-            <Card className="border-0 shadow-lg bg-white/50 dark:bg-gray-800/50 backdrop-blur-sm">
-              <CardHeader>
-                <CardTitle className="text-xl font-semibold flex items-center space-x-2">
-                  <FileText className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
-                  <span>Active Loans</span>
-                </CardTitle>
-                <p className="text-sm text-gray-600 dark:text-gray-400">Current loan drawdowns from this bank</p>
-              </CardHeader>
-              <CardContent>
-                {bankLoans.length === 0 ? (
-                  <div className="text-center py-12">
-                    <FileText className="h-12 w-12 text-gray-300 dark:text-gray-600 mx-auto mb-4" />
-                    <p className="text-gray-600 dark:text-gray-400 mb-4">No active loans with this bank</p>
-                    <Button 
-                      onClick={() => setIsLoanDialogOpen(true)}
-                      className="bg-gradient-to-r from-emerald-600 to-blue-600 hover:from-emerald-700 hover:to-blue-700 text-white shadow-lg"
-                      data-testid="button-add-loan"
-                    >
-                      <Plus className="h-4 w-4 mr-2" />
-                      Add Loan
-                    </Button>
-                  </div>
-                ) : (
-                  <div className="space-y-3">
-                    {bankLoans.slice(0, 5).map((loan: any) => {
-                      const daysUntilDue = Math.ceil((new Date(loan.dueDate).getTime() - new Date().getTime()) / (1000 * 3600 * 24));
-                      const urgency = daysUntilDue <= 7 ? 'critical' : daysUntilDue <= 15 ? 'warning' : 'normal';
-                      
-                      return (
-                        <div key={loan.id} className="p-4 border border-gray-200 dark:border-gray-700 rounded-xl">
-                          <div className="flex items-center justify-between mb-2">
-                            <div>
-                              <h5 className="font-semibold text-gray-900 dark:text-gray-100">
-                                {loan.referenceNumber}
-                              </h5>
-                              <p className="text-sm text-gray-600 dark:text-gray-400">
-                                Due: {new Date(loan.dueDate).toLocaleDateString()}
-                              </p>
-                            </div>
-                            <div className="text-right">
-                              <p className="font-bold text-gray-900 dark:text-gray-100">
-                                {formatCurrency(parseFloat(loan.amount))}
-                              </p>
-                              <Badge className={
-                                urgency === 'critical' ? 'bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-400' :
-                                urgency === 'warning' ? 'bg-amber-100 text-amber-800 dark:bg-amber-900/20 dark:text-amber-400' :
-                                'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/20 dark:text-emerald-400'
-                              }>
-                                {daysUntilDue > 0 ? `${daysUntilDue} days` : 'Overdue'}
-                              </Badge>
-                            </div>
-                          </div>
-                          <div className="text-sm text-gray-600 dark:text-gray-400">
-                            Interest: SIBOR + {loan.bankRate}% | Status: {loan.status}
-                          </div>
-                        </div>
-                      );
-                    })}
                   </div>
                 )}
               </CardContent>
@@ -997,6 +999,38 @@ export default function BankDetail() {
           </div>
         </div>
       </div>
+
+      {/* Collateral Form Dialog */}
+      {isCollateralDialogOpen && (
+        <CollateralForm
+          onSuccess={() => {
+            setIsCollateralDialogOpen(false);
+            queryClient.invalidateQueries({ queryKey: ["/api/collateral"] });
+            queryClient.invalidateQueries({ queryKey: ["/api/collateral-assignments"] });
+            toast({
+              title: "Success",
+              description: "Collateral added successfully",
+            });
+          }}
+          onCancel={() => setIsCollateralDialogOpen(false)}
+        />
+      )}
+
+      {/* Loan Form Dialog */}
+      {isLoanDialogOpen && (
+        <LoanForm
+          onSuccess={() => {
+            setIsLoanDialogOpen(false);
+            queryClient.invalidateQueries({ queryKey: ["/api/loans"] });
+            queryClient.invalidateQueries({ queryKey: ["/api/dashboard/portfolio"] });
+            toast({
+              title: "Success",
+              description: "Loan added successfully",
+            });
+          }}
+          onCancel={() => setIsLoanDialogOpen(false)}
+        />
+      )}
     </div>
   );
 }
