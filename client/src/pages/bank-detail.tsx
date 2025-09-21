@@ -158,58 +158,8 @@ export default function BankDetail() {
   }).filter(Boolean);
 
   // Dialog states for forms
-  const [isFacilityDialogOpen, setIsFacilityDialogOpen] = useState(false);
-  const [editingFacility, setEditingFacility] = useState<any>(null);
   const [isCollateralDialogOpen, setIsCollateralDialogOpen] = useState(false);
   
-  const facilityFormSchema = insertFacilitySchema.omit({ userId: true, bankId: true }).extend({
-    creditLimit: z.string().min(1, "Credit limit is required").refine((val) => !isNaN(Number(val)) && Number(val) > 0, "Credit limit must be greater than 0"),
-    costOfFunding: z.string().min(1, "Cost of funding is required").refine((val) => !isNaN(Number(val)) && Number(val) >= 0 && Number(val) <= 20, "Cost of funding must be between 0 and 20"),
-    startDate: z.string().min(1, "Start date is required"),
-    expiryDate: z.string().min(1, "Expiry date is required"),
-  }).refine((data) => new Date(data.expiryDate) >= new Date(data.startDate), {
-    message: "Expiry date must be after start date",
-    path: ["expiryDate"],
-  });
-
-  const facilityForm = useForm<z.infer<typeof facilityFormSchema>>({
-    resolver: zodResolver(facilityFormSchema),
-    defaultValues: {
-      facilityType: "revolving",
-      creditLimit: "",
-      costOfFunding: "",
-      startDate: "",
-      expiryDate: "",
-      terms: "",
-      isActive: true,
-    },
-  });
-
-  const createFacilityMutation = useMutation({
-    mutationFn: async (data: z.infer<typeof facilityFormSchema>) => {
-      return apiRequest('POST', '/api/facilities', {
-        ...data,
-        bankId,
-        creditLimit: data.creditLimit,
-        costOfFunding: data.costOfFunding,
-      });
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/facilities"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/dashboard/portfolio"] });
-      setIsFacilityDialogOpen(false);
-      facilityForm.reset();
-      toast({ title: "Facility created successfully" });
-    },
-    onError: (error) => {
-      toast({ 
-        title: "Failed to create facility", 
-        description: error.message,
-        variant: "destructive" 
-      });
-    },
-  });
-
   const deleteFacilityMutation = useMutation({
     mutationFn: async (facilityId: string) => {
       return apiRequest('DELETE', `/api/facilities/${facilityId}`);
@@ -228,63 +178,10 @@ export default function BankDetail() {
     },
   });
 
-  const updateFacilityMutation = useMutation({
-    mutationFn: async ({ facilityId, data }: { facilityId: string; data: z.infer<typeof facilityFormSchema> }) => {
-      return apiRequest('PUT', `/api/facilities/${facilityId}`, {
-        ...data,
-        creditLimit: data.creditLimit,
-        costOfFunding: data.costOfFunding,
-      });
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/facilities"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/dashboard/portfolio"] });
-      setIsFacilityDialogOpen(false);
-      setEditingFacility(null);
-      facilityForm.reset();
-      toast({ title: "Facility updated successfully" });
-    },
-    onError: (error) => {
-      toast({ 
-        title: "Failed to update facility", 
-        description: error.message,
-        variant: "destructive" 
-      });
-    },
-  });
-
-  const handleSubmitFacility = (data: z.infer<typeof facilityFormSchema>) => {
-    if (editingFacility) {
-      updateFacilityMutation.mutate({ facilityId: editingFacility.id, data });
-    } else {
-      createFacilityMutation.mutate(data);
-    }
-  };
-
-  const handleEditFacility = (facility: any) => {
-    setEditingFacility(facility);
-    facilityForm.reset({
-      facilityType: facility.facilityType,
-      creditLimit: facility.creditLimit,
-      costOfFunding: facility.costOfFunding,
-      startDate: facility.startDate,
-      expiryDate: facility.expiryDate,
-      terms: facility.terms || "",
-      isActive: facility.isActive,
-    });
-    setIsFacilityDialogOpen(true);
-  };
-
   const handleDeleteFacility = (facilityId: string) => {
     if (window.confirm("Are you sure you want to delete this facility? This action cannot be undone.")) {
       deleteFacilityMutation.mutate(facilityId);
     }
-  };
-
-  const handleCloseFacilityDialog = () => {
-    setIsFacilityDialogOpen(false);
-    setEditingFacility(null);
-    facilityForm.reset();
   };
 
   // Show loading state while data is being fetched
@@ -458,200 +355,15 @@ export default function BankDetail() {
                     <CreditCard className="h-5 w-5 text-indigo-600 dark:text-indigo-400" />
                     <span>Credit Facilities</span>
                   </div>
-                  <Dialog open={isFacilityDialogOpen} onOpenChange={setIsFacilityDialogOpen}>
-                    <DialogTrigger asChild>
-                      <Button size="sm" data-testid="button-add-facility">
-                        <Plus className="mr-2 h-4 w-4" />
-                        Add Facility
-                      </Button>
-                    </DialogTrigger>
-                    <DialogContent className="sm:max-w-[600px]">
-                      <DialogHeader>
-                        <DialogTitle>
-                          {editingFacility ? "Edit Credit Facility" : "Add New Credit Facility"}
-                        </DialogTitle>
-                        <DialogDescription>
-                          {editingFacility 
-                            ? `Update the details for your ${editingFacility.facilityType.replace('_', ' ')} facility with ${bank?.name}.`
-                            : `Create a new credit facility for ${bank?.name}.`
-                          }
-                        </DialogDescription>
-                      </DialogHeader>
-                      <Form {...facilityForm}>
-                        <form onSubmit={facilityForm.handleSubmit(handleSubmitFacility)} className="space-y-4">
-                          <div className="grid grid-cols-2 gap-4">
-                            <FormField
-                              control={facilityForm.control}
-                              name="facilityType"
-                              render={({ field }) => (
-                                <FormItem>
-                                  <FormLabel>Facility Type</FormLabel>
-                                  <Select onValueChange={field.onChange} value={field.value}>
-                                    <FormControl>
-                                      <SelectTrigger data-testid="select-facilityType">
-                                        <SelectValue placeholder="Select facility type" />
-                                      </SelectTrigger>
-                                    </FormControl>
-                                    <SelectContent>
-                                      <SelectItem value="revolving">Revolving Credit</SelectItem>
-                                      <SelectItem value="term">Term Loan</SelectItem>
-                                      <SelectItem value="bullet">Bullet Loan</SelectItem>
-                                      <SelectItem value="bridge">Bridge Financing</SelectItem>
-                                      <SelectItem value="working_capital">Working Capital</SelectItem>
-                                    </SelectContent>
-                                  </Select>
-                                  <FormMessage />
-                                </FormItem>
-                              )}
-                            />
-                            
-                            <FormField
-                              control={facilityForm.control}
-                              name="creditLimit"
-                              render={({ field }) => (
-                                <FormItem>
-                                  <FormLabel>Credit Limit (SAR)</FormLabel>
-                                  <FormControl>
-                                    <Input 
-                                      data-testid="input-creditLimit" 
-                                      type="number"
-                                      placeholder="e.g., 5000000" 
-                                      {...field} 
-                                    />
-                                  </FormControl>
-                                  <FormMessage />
-                                </FormItem>
-                              )}
-                            />
-                          </div>
-
-                          <div className="grid grid-cols-2 gap-4">
-                            <FormField
-                              control={facilityForm.control}
-                              name="costOfFunding"
-                              render={({ field }) => (
-                                <FormItem>
-                                  <FormLabel>Cost of Funding (%)</FormLabel>
-                                  <FormControl>
-                                    <Input 
-                                      data-testid="input-costOfFunding" 
-                                      type="number" 
-                                      step="0.01"
-                                      placeholder="e.g., 2.75" 
-                                      {...field} 
-                                    />
-                                  </FormControl>
-                                  <FormMessage />
-                                </FormItem>
-                              )}
-                            />
-                            
-                            <FormField
-                              control={facilityForm.control}
-                              name="isActive"
-                              render={({ field }) => (
-                                <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3">
-                                  <div className="space-y-0.5">
-                                    <FormLabel>Active Facility</FormLabel>
-                                    <p className="text-sm text-gray-600 dark:text-gray-400">
-                                      Set facility as active
-                                    </p>
-                                  </div>
-                                  <FormControl>
-                                    <Switch
-                                      data-testid="switch-isActive"
-                                      checked={field.value ?? true}
-                                      onCheckedChange={field.onChange}
-                                    />
-                                  </FormControl>
-                                </FormItem>
-                              )}
-                            />
-                          </div>
-
-                          <div className="grid grid-cols-2 gap-4">
-                            <FormField
-                              control={facilityForm.control}
-                              name="startDate"
-                              render={({ field }) => (
-                                <FormItem>
-                                  <FormLabel>Start Date</FormLabel>
-                                  <FormControl>
-                                    <Input 
-                                      data-testid="input-startDate" 
-                                      type="date" 
-                                      {...field} 
-                                    />
-                                  </FormControl>
-                                  <FormMessage />
-                                </FormItem>
-                              )}
-                            />
-                            
-                            <FormField
-                              control={facilityForm.control}
-                              name="expiryDate"
-                              render={({ field }) => (
-                                <FormItem>
-                                  <FormLabel>Expiry Date</FormLabel>
-                                  <FormControl>
-                                    <Input 
-                                      data-testid="input-expiryDate" 
-                                      type="date" 
-                                      {...field} 
-                                    />
-                                  </FormControl>
-                                  <FormMessage />
-                                </FormItem>
-                              )}
-                            />
-                          </div>
-                          
-                          <FormField
-                            control={facilityForm.control}
-                            name="terms"
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormLabel>Terms & Conditions (Optional)</FormLabel>
-                                <FormControl>
-                                  <Textarea 
-                                    data-testid="textarea-terms"
-                                    placeholder="Enter any specific terms and conditions for this facility..."
-                                    className="resize-none"
-                                    {...field}
-                                    value={field.value ?? ""}
-                                  />
-                                </FormControl>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
-                          
-                          <DialogFooter>
-                            <Button 
-                              type="button" 
-                              variant="outline" 
-                              onClick={handleCloseFacilityDialog}
-                              data-testid="button-cancel-facility"
-                            >
-                              Cancel
-                            </Button>
-                            <Button 
-                              type="submit" 
-                              disabled={createFacilityMutation.isPending || updateFacilityMutation.isPending}
-                              data-testid="button-submit-facility"
-                            >
-                              {editingFacility ? (
-                                updateFacilityMutation.isPending ? "Updating..." : "Update Facility"
-                              ) : (
-                                createFacilityMutation.isPending ? "Creating..." : "Create Facility"
-                              )}
-                            </Button>
-                          </DialogFooter>
-                        </form>
-                      </Form>
-                    </DialogContent>
-                  </Dialog>
+                  <Button 
+                    size="sm" 
+                    data-testid="button-add-facility"
+                    onClick={() => setLocation(`/banks/${bankId}/facilities/new`)}
+                    className="bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white shadow-lg"
+                  >
+                    <Plus className="mr-2 h-4 w-4" />
+                    Add Facility
+                  </Button>
                 </CardTitle>
                 <p className="text-sm text-gray-600 dark:text-gray-400">Your active facilities with this bank</p>
               </CardHeader>
@@ -719,15 +431,6 @@ export default function BankDetail() {
                         )}
                         
                         <div className="flex justify-end space-x-2 mt-4 pt-3 border-t border-gray-200 dark:border-gray-700">
-                          <Button 
-                            variant="outline" 
-                            size="sm"
-                            onClick={() => handleEditFacility(facility)}
-                            data-testid={`button-edit-facility-${facility.id}`}
-                          >
-                            <Edit className="mr-1 h-4 w-4" />
-                            Edit
-                          </Button>
                           <Button 
                             variant="outline" 
                             size="sm"
