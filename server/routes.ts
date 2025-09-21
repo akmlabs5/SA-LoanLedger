@@ -10,6 +10,7 @@ import {
   insertBankContactSchema,
   insertFacilitySchema,
   insertCollateralSchema,
+  insertCollateralAssignmentSchema,
   insertLoanSchema,
   insertAiInsightConfigSchema,
   insertExposureSnapshotSchema,
@@ -226,6 +227,130 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Collateral Assignment routes
+  app.get('/api/collateral-assignments', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const assignments = await storage.getUserCollateralAssignments(userId);
+      res.json(assignments);
+    } catch (error) {
+      console.error("Error fetching collateral assignments:", error);
+      res.status(500).json({ message: "Failed to fetch collateral assignments" });
+    }
+  });
+
+  app.post('/api/collateral-assignments', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const assignmentData = insertCollateralAssignmentSchema.parse({ ...req.body, userId });
+      
+      // Validate that user owns the collateral and facility/credit line
+      const userCollateral = await storage.getUserCollateral(userId);
+      const userFacilities = await storage.getUserFacilities(userId);
+      const userCreditLines = await storage.getUserCreditLines(userId);
+      
+      if (!userCollateral.find((c: any) => c.id === assignmentData.collateralId)) {
+        return res.status(403).json({ message: "Collateral not found or access denied" });
+      }
+      
+      // Validate at least one target is specified
+      if (!assignmentData.facilityId && !assignmentData.creditLineId) {
+        return res.status(400).json({ message: "Either facilityId or creditLineId must be specified" });
+      }
+      
+      // Check if facility or credit line belongs to user
+      if (assignmentData.facilityId) {
+        const facility = userFacilities.find((f: any) => f.id === assignmentData.facilityId);
+        if (!facility) {
+          return res.status(403).json({ message: "Facility not found or access denied" });
+        }
+      }
+      
+      if (assignmentData.creditLineId) {
+        const creditLine = userCreditLines.find((cl: any) => cl.id === assignmentData.creditLineId);
+        if (!creditLine) {
+          return res.status(403).json({ message: "Credit line not found or access denied" });
+        }
+        
+        // If both facility and credit line provided, ensure consistency
+        if (assignmentData.facilityId && creditLine.facility.id !== assignmentData.facilityId) {
+          return res.status(400).json({ message: "Credit line does not belong to the specified facility" });
+        }
+      }
+      
+      const assignment = await storage.createCollateralAssignment(assignmentData);
+      res.json(assignment);
+    } catch (error) {
+      console.error("Error creating collateral assignment:", error);
+      res.status(400).json({ message: "Failed to create collateral assignment" });
+    }
+  });
+
+  app.put('/api/collateral-assignments/:id', isAuthenticated, async (req: any, res) => {
+    try {
+      const assignmentId = req.params.id;
+      const userId = req.user.claims.sub;
+      const updates = req.body;
+      
+      // Validate ownership: check if assignment belongs to user
+      const userAssignments = await storage.getUserCollateralAssignments(userId);
+      const existingAssignment = userAssignments.find((a: any) => a.id === assignmentId);
+      
+      if (!existingAssignment) {
+        return res.status(403).json({ message: "Assignment not found or access denied" });
+      }
+      
+      // If updating facilityId or creditLineId, validate ownership
+      if (updates.facilityId || updates.creditLineId) {
+        const userFacilities = await storage.getUserFacilities(userId);
+        const userCreditLines = await storage.getUserCreditLines(userId);
+        
+        if (updates.facilityId && !userFacilities.find((f: any) => f.id === updates.facilityId)) {
+          return res.status(403).json({ message: "Facility not found or access denied" });
+        }
+        
+        if (updates.creditLineId && !userCreditLines.find((cl: any) => cl.id === updates.creditLineId)) {
+          return res.status(403).json({ message: "Credit line not found or access denied" });
+        }
+        
+        // Validate consistency: if both provided, ensure creditLine belongs to facility
+        if (updates.facilityId && updates.creditLineId) {
+          const creditLine = userCreditLines.find((cl: any) => cl.id === updates.creditLineId);
+          if (creditLine && creditLine.facility.id !== updates.facilityId) {
+            return res.status(400).json({ message: "Credit line does not belong to the specified facility" });
+          }
+        }
+      }
+      
+      const assignment = await storage.updateCollateralAssignment(assignmentId, updates);
+      res.json(assignment);
+    } catch (error) {
+      console.error("Error updating collateral assignment:", error);
+      res.status(400).json({ message: "Failed to update collateral assignment" });
+    }
+  });
+
+  app.delete('/api/collateral-assignments/:id', isAuthenticated, async (req: any, res) => {
+    try {
+      const assignmentId = req.params.id;
+      const userId = req.user.claims.sub;
+      
+      // Validate ownership: check if assignment belongs to user
+      const userAssignments = await storage.getUserCollateralAssignments(userId);
+      const existingAssignment = userAssignments.find((a: any) => a.id === assignmentId);
+      
+      if (!existingAssignment) {
+        return res.status(403).json({ message: "Assignment not found or access denied" });
+      }
+      
+      await storage.deleteCollateralAssignment(assignmentId);
+      res.json({ message: "Collateral assignment deleted successfully" });
+    } catch (error) {
+      console.error("Error deleting collateral assignment:", error);
+      res.status(500).json({ message: "Failed to delete collateral assignment" });
+    }
+  });
+
   // Loan routes
   app.get('/api/loans', isAuthenticated, async (req: any, res) => {
     try {
@@ -250,6 +375,36 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const userId = req.user.claims.sub;
       const loanData = insertLoanSchema.parse({ ...req.body, userId });
+      
+      // Validate that facilityId is required
+      if (!loanData.facilityId) {
+        return res.status(400).json({ message: "Facility is required for loan creation" });
+      }
+      
+      // Validate that user owns the facility
+      const userFacilities = await storage.getUserFacilities(userId);
+      const facility = userFacilities.find((f: any) => f.id === loanData.facilityId);
+      
+      if (!facility) {
+        return res.status(403).json({ message: "Facility not found or access denied" });
+      }
+      
+      // If creditLineId is provided, validate it belongs to the same facility and user
+      if (loanData.creditLineId) {
+        const userCreditLines = await storage.getUserCreditLines(userId);
+        const creditLine = userCreditLines.find((cl: any) => cl.id === loanData.creditLineId);
+        
+        if (!creditLine) {
+          return res.status(403).json({ message: "Credit line not found or access denied" });
+        }
+        
+        if (creditLine.facility.id !== loanData.facilityId) {
+          return res.status(400).json({ message: "Credit line does not belong to the specified facility" });
+        }
+      }
+      
+      // TODO: Additional validation - check available credit limit vs loan amount
+      
       const loan = await storage.createLoan(loanData);
       res.json(loan);
     } catch (error) {
