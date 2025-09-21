@@ -25,6 +25,7 @@ import {
   BarChart3
 } from "lucide-react";
 import { Link, useLocation } from "wouter";
+import StatisticCard from "@/components/StatisticCard";
 import AIInsightsPanel from "@/components/AIInsightsPanel";
 import PortfolioChart from "@/components/charts/PortfolioChart";
 import PortfolioPerformanceChart from "@/components/charts/PortfolioPerformanceChart";
@@ -189,105 +190,61 @@ export default function Dashboard() {
 
         {/* Enhanced KPI Metrics */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          {/* Total Outstanding Card */}
-          <Card className="bg-card border border-border shadow-sm hover:shadow-md transition-shadow duration-200">
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div className="space-y-2">
-                  <p className="text-sm font-medium text-muted-foreground">Total Outstanding</p>
-                  <div className="flex items-baseline space-x-2">
-                    <p className="text-3xl font-bold text-foreground" data-testid="text-total-outstanding">
-                      {portfolioSummary ? `${(portfolioSummary.totalOutstanding / 1000000).toFixed(1)}M` : '0.0M'}
-                    </p>
-                    <span className="text-sm text-muted-foreground">SAR</span>
-                  </div>
-                  <div className="flex items-center space-x-1 text-muted-foreground">
-                    <ArrowUp className="h-3 w-3" />
-                    <span className="text-xs font-medium">+2.4% from last month</span>
-                  </div>
-                </div>
-                <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center">
-                  <BarChart3 className="text-primary h-6 w-6" />
-                </div>
+          <StatisticCard
+            title="Total Outstanding"
+            value={portfolioSummary ? `${(portfolioSummary.totalOutstanding / 1000000).toFixed(1)}M` : '0.0M'}
+            suffix="SAR"
+            metaInfo={
+              <div className="flex items-center space-x-1">
+                <ArrowUp className="h-3 w-3" />
+                <span>+2.4% from last month</span>
               </div>
-            </CardContent>
-          </Card>
+            }
+            icon={BarChart3}
+            testId="text-total-outstanding"
+          />
           
-          {/* Available Credit Card */}
-          <Card className="bg-card border border-border shadow-sm hover:shadow-md transition-shadow duration-200">
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div className="space-y-2">
-                  <p className="text-sm font-medium text-muted-foreground">Available Credit</p>
-                  <div className="flex items-baseline space-x-2">
-                    <p className="text-3xl font-bold text-foreground" data-testid="text-available-credit">
-                      {portfolioSummary ? `${(portfolioSummary.availableCredit / 1000000).toFixed(1)}M` : '0.0M'}
-                    </p>
-                    <span className="text-sm text-muted-foreground">SAR</span>
-                  </div>
-                  <div className="text-xs text-muted-foreground font-medium">
-                    {portfolioSummary ? `${((portfolioSummary.totalOutstanding / portfolioSummary.totalCreditLimit) * 100).toFixed(0)}% utilization` : '0% utilization'}
-                  </div>
-                </div>
-                <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center">
-                  <Wallet className="text-primary h-6 w-6" />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+          <StatisticCard
+            title="Available Credit"
+            value={portfolioSummary ? `${(portfolioSummary.availableCredit / 1000000).toFixed(1)}M` : '0.0M'}
+            suffix="SAR"
+            metaInfo={portfolioSummary ? `${((portfolioSummary.totalOutstanding / portfolioSummary.totalCreditLimit) * 100).toFixed(0)}% utilization` : '0% utilization'}
+            icon={Wallet}
+            testId="text-available-credit"
+          />
           
-          {/* Portfolio LTV Card */}
-          <Card className="bg-card border border-border shadow-sm hover:shadow-md transition-shadow duration-200">
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div className="space-y-2">
-                  <p className="text-sm font-medium text-muted-foreground">Portfolio LTV</p>
-                  <div className="flex items-baseline space-x-2">
-                    <p className="text-3xl font-bold text-foreground" data-testid="text-portfolio-ltv">
-                      {portfolioSummary ? `${portfolioSummary.portfolioLtv.toFixed(1)}` : '68.4'}
-                    </p>
-                    <span className="text-sm text-muted-foreground">%</span>
-                  </div>
-                  <div className="flex items-center space-x-1 text-muted-foreground">
-                    <Target className="h-3 w-3" />
-                    <span className="text-xs font-medium">Optimal range: 60-75%</span>
-                  </div>
-                </div>
-                <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center">
-                  <Shield className="text-primary h-6 w-6" />
-                </div>
+          <StatisticCard
+            title="Portfolio LTV"
+            value={portfolioSummary ? `${portfolioSummary.portfolioLtv.toFixed(1)}` : '68.4'}
+            suffix="%"
+            metaInfo={
+              <div className="flex items-center space-x-1">
+                <Target className="h-3 w-3" />
+                <span>Optimal range: 60-75%</span>
               </div>
-            </CardContent>
-          </Card>
+            }
+            icon={Shield}
+            testId="text-portfolio-ltv"
+          />
           
-          {/* Active Loans Card */}
-          <Card className="bg-card border border-border shadow-sm hover:shadow-md transition-shadow duration-200">
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div className="space-y-2">
-                  <p className="text-sm font-medium text-muted-foreground">Active Loans</p>
-                  <div className="flex items-baseline space-x-2">
-                    <p className="text-3xl font-bold text-foreground" data-testid="text-active-loans">
-                      {portfolioSummary?.activeLoansCount || 0}
-                    </p>
-                    <span className="text-sm text-muted-foreground">loans</span>
-                  </div>
-                  <div className="flex items-center space-x-1 text-muted-foreground">
-                    <AlertTriangle className="h-3 w-3" />
-                    <span className="text-xs font-medium">
-                      {sortedLoans.filter(loan => {
-                        const urgency = getLoanUrgency(loan.dueDate);
-                        return urgency.priority === 'critical';
-                      }).length} due this week
-                    </span>
-                  </div>
-                </div>
-                <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center">
-                  <FileText className="text-primary h-6 w-6" />
-                </div>
+          <StatisticCard
+            title="Active Loans"
+            value={`${portfolioSummary?.activeLoansCount || 0}`}
+            suffix="loans"
+            metaInfo={
+              <div className="flex items-center space-x-1">
+                <AlertTriangle className="h-3 w-3" />
+                <span>
+                  {sortedLoans.filter(loan => {
+                    const urgency = getLoanUrgency(loan.dueDate);
+                    return urgency.priority === 'critical';
+                  }).length} due this week
+                </span>
               </div>
-            </CardContent>
-          </Card>
+            }
+            icon={FileText}
+            testId="text-active-loans"
+          />
         </div>
 
         {/* Enhanced Loans Management Section */}
