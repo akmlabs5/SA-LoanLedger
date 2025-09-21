@@ -113,10 +113,15 @@ export default function LoanCreatePage() {
         siborRate: parseFloat(data.siborRate),
         bankRate: selectedFacility ? parseFloat(selectedFacility.costOfFunding) : 0,
       };
-      return apiRequest('/api/loans', {
+      const response = await fetch('/api/loans', {
         method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
         body: JSON.stringify(loanData),
       });
+      if (!response.ok) throw new Error('Failed to create loan');
+      return response.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/loans"] });

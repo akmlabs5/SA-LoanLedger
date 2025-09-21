@@ -60,7 +60,6 @@ import { Link } from "wouter";
 import { PortfolioSummary } from "@shared/types";
 import BankContactsSection from "@/components/BankContactsSection";
 import CollateralForm from "@/components/CollateralForm";
-import LoanForm from "@/components/LoanForm";
 
 export default function BankDetail() {
   const { bankId } = useParams();
@@ -162,7 +161,6 @@ export default function BankDetail() {
   const [isFacilityDialogOpen, setIsFacilityDialogOpen] = useState(false);
   const [editingFacility, setEditingFacility] = useState<any>(null);
   const [isCollateralDialogOpen, setIsCollateralDialogOpen] = useState(false);
-  const [isLoanDialogOpen, setIsLoanDialogOpen] = useState(false);
   
   const facilityFormSchema = insertFacilitySchema.omit({ userId: true, bankId: true }).extend({
     creditLimit: z.string().min(1, "Credit limit is required").refine((val) => !isNaN(Number(val)) && Number(val) > 0, "Credit limit must be greater than 0"),
@@ -759,14 +757,15 @@ export default function BankDetail() {
                     </CardTitle>
                     <p className="text-sm text-gray-600 dark:text-gray-400">Current loan drawdowns from this bank</p>
                   </div>
-                  <Button 
-                    onClick={() => setIsLoanDialogOpen(true)}
-                    className="bg-gradient-to-r from-emerald-600 to-blue-600 hover:from-emerald-700 hover:to-blue-700 text-white shadow-lg"
-                    data-testid="button-add-loan-header"
-                  >
-                    <Plus className="h-4 w-4 mr-2" />
-                    Add Loan
-                  </Button>
+                  <Link href={`/banks/${bankId}/loans/new`}>
+                    <Button 
+                      className="bg-gradient-to-r from-emerald-600 to-blue-600 hover:from-emerald-700 hover:to-blue-700 text-white shadow-lg"
+                      data-testid="button-add-loan-header"
+                    >
+                      <Plus className="h-4 w-4 mr-2" />
+                      Add Loan
+                    </Button>
+                  </Link>
                 </div>
               </CardHeader>
               <CardContent>
@@ -774,14 +773,9 @@ export default function BankDetail() {
                   <div className="text-center py-12">
                     <FileText className="h-12 w-12 text-gray-300 dark:text-gray-600 mx-auto mb-4" />
                     <p className="text-gray-600 dark:text-gray-400 mb-4">No active loans with this bank</p>
-                    <Button 
-                      onClick={() => setIsLoanDialogOpen(true)}
-                      className="bg-gradient-to-r from-emerald-600 to-blue-600 hover:from-emerald-700 hover:to-blue-700 text-white shadow-lg"
-                      data-testid="button-add-loan"
-                    >
-                      <Plus className="h-4 w-4 mr-2" />
-                      Add Loan
-                    </Button>
+                    <p className="text-sm text-gray-500 dark:text-gray-400">
+                      Click "Add Loan" above to create your first loan from this bank's facilities.
+                    </p>
                   </div>
                 ) : (
                   <div className="space-y-3">
@@ -1093,21 +1087,6 @@ export default function BankDetail() {
         />
       )}
 
-      {/* Loan Form Dialog */}
-      {isLoanDialogOpen && (
-        <LoanForm
-          onSuccess={() => {
-            setIsLoanDialogOpen(false);
-            queryClient.invalidateQueries({ queryKey: ["/api/loans"] });
-            queryClient.invalidateQueries({ queryKey: ["/api/dashboard/portfolio"] });
-            toast({
-              title: "Success",
-              description: "Loan added successfully",
-            });
-          }}
-          onCancel={() => setIsLoanDialogOpen(false)}
-        />
-      )}
     </div>
   );
 }
