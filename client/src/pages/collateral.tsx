@@ -1,11 +1,12 @@
 import { useState, useEffect } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
+import { apiRequest } from "@/lib/queryClient";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { University, Plus, ArrowLeft, Building, TrendingUp, Shield, Edit } from "lucide-react";
+import { University, Plus, ArrowLeft, Building, TrendingUp, Shield, Edit, Trash2 } from "lucide-react";
 import { Link } from "wouter";
 import CollateralForm from "@/components/CollateralForm";
 import { isUnauthorizedError } from "@/lib/authUtils";
@@ -40,6 +41,24 @@ export default function CollateralPage() {
   const { data: portfolioSummary } = useQuery({
     queryKey: ["/api/dashboard/portfolio"],
     enabled: isAuthenticated,
+  });
+
+  const deleteCollateralMutation = useMutation({
+    mutationFn: async (collateralId: string) => {
+      return apiRequest('DELETE', `/api/collateral/${collateralId}`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/collateral"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/dashboard/portfolio"] });
+      toast({ title: "Collateral deleted successfully" });
+    },
+    onError: (error) => {
+      toast({ 
+        title: "Failed to delete collateral", 
+        description: error.message,
+        variant: "destructive" 
+      });
+    },
   });
 
   // Handle unauthorized errors
@@ -100,6 +119,12 @@ export default function CollateralPage() {
   const handleEdit = (collateralItem: any) => {
     setEditingCollateral(collateralItem);
     setShowForm(true);
+  };
+
+  const handleDeleteCollateral = (collateralId: string) => {
+    if (window.confirm("Are you sure you want to delete this collateral? This action cannot be undone.")) {
+      deleteCollateralMutation.mutate(collateralId);
+    }
   };
 
   const handleFormClose = () => {
@@ -307,6 +332,16 @@ export default function CollateralPage() {
                             >
                               <Edit className="mr-2 h-4 w-4" />
                               Edit
+                            </Button>
+                            <Button 
+                              variant="outline" 
+                              size="sm"
+                              onClick={() => handleDeleteCollateral(asset.id)}
+                              disabled={deleteCollateralMutation.isPending}
+                              data-testid={`button-delete-collateral-${asset.id}`}
+                            >
+                              <Trash2 className="mr-2 h-4 w-4" />
+                              {deleteCollateralMutation.isPending ? "Deleting..." : "Delete"}
                             </Button>
                             <Button variant="outline" size="sm" data-testid={`button-collateral-documents-${asset.id}`}>
                               Documents

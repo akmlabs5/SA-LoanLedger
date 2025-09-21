@@ -215,6 +215,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.delete('/api/collateral/:id', isAuthenticated, async (req: any, res) => {
+    try {
+      const collateralId = req.params.id;
+      await storage.deleteCollateral(collateralId);
+      res.json({ message: "Collateral deleted successfully" });
+    } catch (error) {
+      console.error("Error deleting collateral:", error);
+      res.status(500).json({ message: "Failed to delete collateral" });
+    }
+  });
+
   // Loan routes
   app.get('/api/loans', isAuthenticated, async (req: any, res) => {
     try {

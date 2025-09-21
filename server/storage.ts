@@ -65,6 +65,7 @@ export interface IStorage {
   getUserCollateral(userId: string): Promise<Collateral[]>;
   createCollateral(collateral: InsertCollateral): Promise<Collateral>;
   updateCollateral(collateralId: string, collateral: Partial<InsertCollateral>): Promise<Collateral>;
+  deleteCollateral(collateralId: string): Promise<void>;
   
   // Credit Line operations
   getUserCreditLines(userId: string): Promise<Array<CreditLine & { facility: Facility & { bank: Bank } }>>;
@@ -353,6 +354,16 @@ export class DatabaseStorage implements IStorage {
       .where(eq(collateral.id, collateralId))
       .returning();
     return updatedCollateral;
+  }
+
+  async deleteCollateral(collateralId: string): Promise<void> {
+    await db
+      .update(collateral)
+      .set({ 
+        isActive: false, 
+        updatedAt: new Date() 
+      })
+      .where(eq(collateral.id, collateralId));
   }
 
   // Loan operations
