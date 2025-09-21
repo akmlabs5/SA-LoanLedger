@@ -169,6 +169,38 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.put('/api/facilities/:facilityId', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const { facilityId } = req.params;
+      const updateData = req.body;
+      
+      // Remove fields that shouldn't be updated
+      delete updateData.id;
+      delete updateData.userId;
+      delete updateData.createdAt;
+      delete updateData.updatedAt;
+      
+      // Validate the facility belongs to the user
+      const userFacilities = await storage.getUserFacilities(userId);
+      const facility = userFacilities.find((f: any) => f.id === facilityId);
+      
+      if (!facility) {
+        return res.status(404).json({ message: "Facility not found or access denied" });
+      }
+      
+      // Validate update data against schema (partial update)
+      const facilityUpdateSchema = insertFacilitySchema.omit({ userId: true }).partial();
+      const validatedData = facilityUpdateSchema.parse(updateData);
+      
+      const updatedFacility = await storage.updateFacility(facilityId, validatedData);
+      res.json(updatedFacility);
+    } catch (error) {
+      console.error("Error updating facility:", error);
+      res.status(400).json({ message: "Failed to update facility" });
+    }
+  });
+
   app.delete('/api/facilities/:facilityId', isAuthenticated, async (req: any, res) => {
     try {
       const { facilityId } = req.params;
