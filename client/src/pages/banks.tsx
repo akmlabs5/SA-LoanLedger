@@ -98,7 +98,7 @@ export default function Banks() {
 
   if (isLoading || banksLoading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-gray-100 dark:from-gray-900 dark:to-slate-900 flex items-center justify-center">
+      <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary"></div>
       </div>
     );
@@ -117,20 +117,20 @@ export default function Banks() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-gray-100 dark:from-gray-900 dark:to-slate-900">
-      <div className="p-6 space-y-8">
+    <div className="min-h-screen bg-background">
+      <div className="max-w-7xl mx-auto px-6 py-6 space-y-6">
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Bank Exposures</h1>
-            <p className="text-gray-600 dark:text-gray-300 mt-1">
+            <h1 className="text-3xl font-bold text-foreground">Bank Exposures</h1>
+            <p className="text-muted-foreground mt-1">
               Manage your banking relationships and credit facilities
             </p>
           </div>
           <div className="flex items-center space-x-3 mt-4 sm:mt-0">
             <Button 
               onClick={() => setShowForm(true)}
-              className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white shadow-lg hover:shadow-xl transition-all duration-300"
+              className="bg-primary hover:bg-primary/90 text-primary-foreground"
               data-testid="button-add-facility"
             >
               <Plus className="mr-2 h-4 w-4" />
@@ -142,61 +142,61 @@ export default function Banks() {
         {/* Enhanced Bank Exposure Tables */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           {/* Total Outstanding & Limits Table */}
-          <Card className="border-0 shadow-lg bg-white/50 dark:bg-gray-800/50 backdrop-blur-sm">
+          <Card className="bg-card border border-border shadow-sm hover:shadow-md transition-shadow duration-200">
             <CardHeader>
               <CardTitle className="text-xl font-semibold flex items-center space-x-2">
-                <TrendingUp className="h-5 w-5 text-red-600 dark:text-red-400" />
+                <TrendingUp className="h-5 w-5 text-primary" />
                 <span>Outstanding & Limits</span>
               </CardTitle>
-              <p className="text-sm text-gray-600 dark:text-gray-400">Current exposure by banking partner</p>
+              <p className="text-sm text-muted-foreground">Current exposure by banking partner</p>
             </CardHeader>
             <CardContent>
               <div className="overflow-x-auto">
                 <table className="w-full">
                   <thead>
-                    <tr className="border-b-2 border-gray-200 dark:border-gray-700">
-                      <th className="text-left py-3 px-2 font-semibold text-gray-900 dark:text-gray-100">Banks</th>
-                      <th className="text-right py-3 px-2 font-semibold text-gray-900 dark:text-gray-100">Total Outstanding</th>
-                      <th className="text-right py-3 px-2 font-semibold text-gray-900 dark:text-gray-100">Total Limit</th>
-                      <th className="text-right py-3 px-2 font-semibold text-gray-900 dark:text-gray-100">% Utilized</th>
+                    <tr className="border-b border-border">
+                      <th className="text-left py-4 px-4 font-semibold text-foreground">Banks</th>
+                      <th className="text-right py-4 px-4 font-semibold text-foreground">Total Outstanding</th>
+                      <th className="text-right py-4 px-4 font-semibold text-foreground">Total Limit</th>
+                      <th className="text-right py-4 px-4 font-semibold text-foreground">% Utilized</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
+                  <tbody className="divide-y divide-border">
                     {bankExposures.map((exposure: any) => (
-                      <tr key={exposure.bankId} className="hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
-                        <td className="py-4 px-2">
-                          <span className="font-medium text-gray-900 dark:text-gray-100">
+                      <tr key={exposure.bankId} className="hover:bg-accent transition-colors">
+                        <td className="py-4 px-4">
+                          <span className="font-medium text-foreground">
                             {exposure.bankName}
                           </span>
                         </td>
-                        <td className="py-4 px-2 text-right font-bold text-red-600 dark:text-red-400">
+                        <td className="py-4 px-4 text-right font-semibold text-foreground">
                           {formatCurrency(exposure.outstanding)}
                         </td>
-                        <td className="py-4 px-2 text-right font-semibold text-gray-900 dark:text-gray-100">
+                        <td className="py-4 px-4 text-right font-semibold text-foreground">
                           {formatCurrency(exposure.creditLimit)}
                         </td>
-                        <td className="py-4 px-2 text-right">
-                          <Badge className={`${
-                            exposure.utilization > 80 ? 'bg-red-100 text-red-800 hover:bg-red-200 dark:bg-red-900/20 dark:text-red-400' :
-                            exposure.utilization > 60 ? 'bg-amber-100 text-amber-800 hover:bg-amber-200 dark:bg-amber-900/20 dark:text-amber-400' :
-                            'bg-emerald-100 text-emerald-800 hover:bg-emerald-200 dark:bg-emerald-900/20 dark:text-emerald-400'
-                          } font-bold`}>
+                        <td className="py-4 px-4 text-right">
+                          <Badge variant="outline" className={`${
+                            exposure.utilization > 80 ? 'border-destructive text-destructive' :
+                            exposure.utilization > 60 ? 'border-amber-500 text-amber-600 dark:text-amber-400' :
+                            'border-primary text-primary'
+                          }`}>
                             {exposure.utilization.toFixed(1)}%
                           </Badge>
                         </td>
                       </tr>
                     ))}
                     {/* Total Row */}
-                    <tr className="border-t-2 border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-800/30">
-                      <td className="py-4 px-2 font-bold text-gray-900 dark:text-gray-100">Total Exposure</td>
-                      <td className="py-4 px-2 text-right font-bold text-red-600 dark:text-red-400">
+                    <tr className="border-t border-border bg-secondary/50">
+                      <td className="py-4 px-4 font-bold text-foreground">Total Exposure</td>
+                      <td className="py-4 px-4 text-right font-bold text-foreground">
                         {formatCurrency(totalExposure.outstanding)}
                       </td>
-                      <td className="py-4 px-2 text-right font-bold text-gray-900 dark:text-gray-100">
+                      <td className="py-4 px-4 text-right font-bold text-foreground">
                         {formatCurrency(totalExposure.creditLimit)}
                       </td>
-                      <td className="py-4 px-2 text-right">
-                        <Badge className="bg-blue-100 text-blue-800 hover:bg-blue-200 dark:bg-blue-900/20 dark:text-blue-400 font-bold">
+                      <td className="py-4 px-4 text-right">
+                        <Badge variant="secondary">
                           {totalExposure.creditLimit > 0 ? ((totalExposure.outstanding / totalExposure.creditLimit) * 100).toFixed(1) : '0.0'}%
                         </Badge>
                       </td>
@@ -208,45 +208,45 @@ export default function Banks() {
           </Card>
 
           {/* Total Available Limits Table */}
-          <Card className="border-0 shadow-lg bg-white/50 dark:bg-gray-800/50 backdrop-blur-sm">
+          <Card className="bg-card border border-border shadow-sm hover:shadow-md transition-shadow duration-200">
             <CardHeader>
               <CardTitle className="text-xl font-semibold flex items-center space-x-2">
-                <Target className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
+                <Target className="h-5 w-5 text-primary" />
                 <span>Available Limits</span>
               </CardTitle>
-              <p className="text-sm text-gray-600 dark:text-gray-400">Remaining credit capacity by bank</p>
+              <p className="text-sm text-muted-foreground">Remaining credit capacity by bank</p>
             </CardHeader>
             <CardContent>
               <div className="overflow-x-auto">
                 <table className="w-full">
                   <thead>
-                    <tr className="border-b-2 border-gray-200 dark:border-gray-700">
-                      <th className="text-left py-3 px-2 font-semibold text-gray-900 dark:text-gray-100">Banks</th>
-                      <th className="text-right py-3 px-2 font-semibold text-gray-900 dark:text-gray-100">Available Credit</th>
-                      <th className="text-right py-3 px-2 font-semibold text-gray-900 dark:text-gray-100">Status</th>
+                    <tr className="border-b border-border">
+                      <th className="text-left py-4 px-4 font-semibold text-foreground">Banks</th>
+                      <th className="text-right py-4 px-4 font-semibold text-foreground">Available Credit</th>
+                      <th className="text-right py-4 px-4 font-semibold text-foreground">Status</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
+                  <tbody className="divide-y divide-border">
                     {bankExposures.map((exposure: any) => {
                       const available = exposure.creditLimit - exposure.outstanding;
                       const availabilityStatus = available < exposure.creditLimit * 0.2 ? 'Low' : 
                                                 available < exposure.creditLimit * 0.5 ? 'Medium' : 'High';
                       return (
-                        <tr key={exposure.bankId} className="hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
-                          <td className="py-4 px-2">
-                            <span className="font-medium text-gray-900 dark:text-gray-100">
+                        <tr key={exposure.bankId} className="hover:bg-accent transition-colors">
+                          <td className="py-4 px-4">
+                            <span className="font-medium text-foreground">
                               {exposure.bankName}
                             </span>
                           </td>
-                          <td className="py-4 px-2 text-right font-bold text-emerald-600 dark:text-emerald-400">
+                          <td className="py-4 px-4 text-right font-semibold text-foreground">
                             {formatCurrency(available)}
                           </td>
-                          <td className="py-4 px-2 text-right">
-                            <Badge className={`${
-                              availabilityStatus === 'Low' ? 'bg-red-100 text-red-800 hover:bg-red-200 dark:bg-red-900/20 dark:text-red-400' :
-                              availabilityStatus === 'Medium' ? 'bg-amber-100 text-amber-800 hover:bg-amber-200 dark:bg-amber-900/20 dark:text-amber-400' :
-                              'bg-emerald-100 text-emerald-800 hover:bg-emerald-200 dark:bg-emerald-900/20 dark:text-emerald-400'
-                            } font-semibold`}>
+                          <td className="py-4 px-4 text-right">
+                            <Badge variant="outline" className={`${
+                              availabilityStatus === 'Low' ? 'border-destructive text-destructive' :
+                              availabilityStatus === 'Medium' ? 'border-amber-500 text-amber-600 dark:text-amber-400' :
+                              'border-primary text-primary'
+                            }`}>
                               {availabilityStatus}
                             </Badge>
                           </td>
@@ -254,13 +254,13 @@ export default function Banks() {
                       );
                     })}
                     {/* Total Row */}
-                    <tr className="border-t-2 border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-800/30">
-                      <td className="py-4 px-2 font-bold text-gray-900 dark:text-gray-100">Total Available</td>
-                      <td className="py-4 px-2 text-right font-bold text-emerald-600 dark:text-emerald-400">
+                    <tr className="border-t border-border bg-secondary/50">
+                      <td className="py-4 px-4 font-bold text-foreground">Total Available</td>
+                      <td className="py-4 px-4 text-right font-bold text-foreground">
                         {formatCurrency(totalExposure.available)}
                       </td>
-                      <td className="py-4 px-2 text-right">
-                        <Badge className="bg-emerald-100 text-emerald-800 hover:bg-emerald-200 dark:bg-emerald-900/20 dark:text-emerald-400 font-bold">
+                      <td className="py-4 px-4 text-right">
+                        <Badge variant="secondary">
                           Available
                         </Badge>
                       </td>
@@ -275,52 +275,52 @@ export default function Banks() {
 
         {/* Summary Metrics */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <Card className="border-0 shadow-lg bg-gradient-to-br from-red-50 to-red-100 dark:from-red-900/20 dark:to-red-800/20">
+          <Card className="bg-card border border-border shadow-sm hover:shadow-md transition-shadow duration-200">
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-red-700 dark:text-red-300">Total Outstanding</p>
-                  <p className="text-2xl font-bold text-red-900 dark:text-red-100">
+                  <p className="text-sm font-medium text-muted-foreground">Total Outstanding</p>
+                  <p className="text-2xl font-bold text-foreground">
                     {formatCurrency(totalExposure.outstanding)}
                   </p>
-                  <p className="text-xs text-red-600 dark:text-red-400 mt-1">Across all banks</p>
+                  <p className="text-xs text-muted-foreground mt-1">Across all banks</p>
                 </div>
-                <div className="w-12 h-12 bg-red-500 rounded-2xl flex items-center justify-center">
-                  <AlertTriangle className="text-white text-xl" />
+                <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center">
+                  <AlertTriangle className="h-6 w-6 text-primary" />
                 </div>
               </div>
             </CardContent>
           </Card>
 
-          <Card className="border-0 shadow-lg bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-900/20 dark:to-blue-800/20">
+          <Card className="bg-card border border-border shadow-sm hover:shadow-md transition-shadow duration-200">
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-blue-700 dark:text-blue-300">Total Credit Lines</p>
-                  <p className="text-2xl font-bold text-blue-900 dark:text-blue-100">
+                  <p className="text-sm font-medium text-muted-foreground">Total Credit Lines</p>
+                  <p className="text-2xl font-bold text-foreground">
                     {formatCurrency(totalExposure.creditLimit)}
                   </p>
-                  <p className="text-xs text-blue-600 dark:text-blue-400 mt-1">Combined facilities</p>
+                  <p className="text-xs text-muted-foreground mt-1">Combined facilities</p>
                 </div>
-                <div className="w-12 h-12 bg-blue-500 rounded-2xl flex items-center justify-center">
-                  <Building className="text-white text-xl" />
+                <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center">
+                  <Building className="h-6 w-6 text-primary" />
                 </div>
               </div>
             </CardContent>
           </Card>
 
-          <Card className="border-0 shadow-lg bg-gradient-to-br from-emerald-50 to-emerald-100 dark:from-emerald-900/20 dark:to-emerald-800/20">
+          <Card className="bg-card border border-border shadow-sm hover:shadow-md transition-shadow duration-200">
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-emerald-700 dark:text-emerald-300">Available Credit</p>
-                  <p className="text-2xl font-bold text-emerald-900 dark:text-emerald-100">
+                  <p className="text-sm font-medium text-muted-foreground">Available Credit</p>
+                  <p className="text-2xl font-bold text-foreground">
                     {formatCurrency(totalExposure.available)}
                   </p>
-                  <p className="text-xs text-emerald-600 dark:text-emerald-400 mt-1">Ready for drawdown</p>
+                  <p className="text-xs text-muted-foreground mt-1">Ready for drawdown</p>
                 </div>
-                <div className="w-12 h-12 bg-emerald-500 rounded-2xl flex items-center justify-center">
-                  <Target className="text-white text-xl" />
+                <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center">
+                  <Target className="h-6 w-6 text-primary" />
                 </div>
               </div>
             </CardContent>
