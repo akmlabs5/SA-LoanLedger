@@ -68,6 +68,11 @@ export default function Dashboard() {
     enabled: isAuthenticated,
   });
 
+  const { data: allBanks } = useQuery({
+    queryKey: ["/api/banks"],
+    enabled: isAuthenticated,
+  });
+
   // Handle unauthorized errors at the endpoint level
   useEffect(() => {
     if (portfolioError && isUnauthorizedError(portfolioError as Error)) {
@@ -145,11 +150,16 @@ export default function Dashboard() {
             </p>
           </div>
           <div className="flex items-center space-x-3 mt-4 sm:mt-0">
-            {/* Quick Bank Switcher */}
-            {portfolioSummary?.bankExposures && portfolioSummary.bankExposures.length > 0 && (
+            {/* Quick Bank Access */}
+            {allBanks && allBanks.length > 0 && (
               <div className="flex items-center space-x-2">
                 <span className="text-sm text-gray-600 dark:text-gray-400">Quick Access:</span>
-                <Select onValueChange={handleBankSwitcherChange}>
+                <Select onValueChange={(bankId) => {
+                  const bank = allBanks.find((b: any) => b.id === bankId);
+                  if (bank) {
+                    handleBankRowClick(bankId, bank.name);
+                  }
+                }}>
                   <SelectTrigger 
                     className="w-48 bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 hover:border-blue-400 dark:hover:border-blue-500 transition-colors focus:ring-2 focus:ring-blue-500 focus:border-blue-500" 
                     data-testid="select-bank-switcher"
@@ -158,16 +168,16 @@ export default function Dashboard() {
                     <SelectValue placeholder="Select bank..." />
                   </SelectTrigger>
                   <SelectContent>
-                    {portfolioSummary.bankExposures.map((exposure) => (
+                    {allBanks.map((bank: any) => (
                       <SelectItem 
-                        key={exposure.bankId} 
-                        value={exposure.bankId}
+                        key={bank.id} 
+                        value={bank.id}
                         className="flex items-center"
-                        data-testid={`option-bank-${exposure.bankId}`}
+                        data-testid={`option-bank-${bank.id}`}
                       >
                         <div className="flex items-center space-x-2">
                           <Building className="h-4 w-4 text-indigo-500" />
-                          <span>{exposure.bankName}</span>
+                          <span>{bank.name}</span>
                         </div>
                       </SelectItem>
                     ))}
