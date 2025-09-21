@@ -94,7 +94,7 @@ export default function GeneralLoanCreatePage() {
       referenceNumber: "",
       amount: "",
       facilityId: "",
-      creditLineId: "",
+      creditLineId: "auto-assign",
       startDate: new Date().toISOString().split('T')[0],
       dueDate: "",
       chargesDueDate: "",
@@ -176,6 +176,7 @@ export default function GeneralLoanCreatePage() {
         amount: parseFloat(data.amount),
         siborRate: parseFloat(data.siborRate),
         bankRate: selectedFacility ? parseFloat(selectedFacility.costOfFunding) : 0,
+        creditLineId: data.creditLineId === "auto-assign" ? undefined : data.creditLineId,
       };
       return apiRequest('POST', '/api/loans', loanData);
     },
@@ -311,14 +312,14 @@ export default function GeneralLoanCreatePage() {
                           render={({ field }) => (
                             <FormItem>
                               <FormLabel>Credit Line (Optional)</FormLabel>
-                              <Select onValueChange={field.onChange} value={field.value || ""}>
+                              <Select onValueChange={field.onChange} value={field.value || "auto-assign"}>
                                 <FormControl>
                                   <SelectTrigger data-testid="select-credit-line">
                                     <SelectValue placeholder="Auto-assign or select specific line" />
                                   </SelectTrigger>
                                 </FormControl>
                                 <SelectContent>
-                                  <SelectItem value="">Auto-assign</SelectItem>
+                                  <SelectItem value="auto-assign">Auto-assign</SelectItem>
                                   {creditLines?.filter(cl => cl.facilityId === selectedFacilityId).map((creditLine) => (
                                     <SelectItem key={creditLine.id} value={creditLine.id}>
                                       <div className="flex flex-col">
