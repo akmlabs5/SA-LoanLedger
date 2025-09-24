@@ -615,6 +615,10 @@ export default function Loans() {
                                   Documents
                                 </DropdownMenuItem>
                                 <DropdownMenuSeparator />
+                                <DropdownMenuItem onClick={() => setLocation(`/loans/${loan.id}/payment`)}>
+                                  <DollarSign className="mr-2 h-4 w-4" />
+                                  Process Payment
+                                </DropdownMenuItem>
                                 <DropdownMenuItem 
                                   onClick={() => handleSettleLoan(loan.id, loan.amount)}
                                   disabled={settleLoanMutation.isPending}
@@ -694,6 +698,15 @@ export default function Loans() {
                             <Button variant="outline" size="sm" data-testid={`button-documents-${loan.id}`}>
                               <FileText className="mr-2 h-4 w-4" />
                               Documents
+                            </Button>
+                            <Button 
+                              variant="outline" 
+                              size="sm" 
+                              onClick={() => setLocation(`/loans/${loan.id}/payment`)}
+                              data-testid={`button-payment-${loan.id}`}
+                            >
+                              <DollarSign className="mr-2 h-4 w-4" />
+                              Payment
                             </Button>
                           </div>
                           <Button 

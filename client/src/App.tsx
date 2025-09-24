@@ -18,6 +18,7 @@ import GeneralLoanCreatePage from "@/pages/loan-create-general";
 import CollateralPage from "@/pages/collateral";
 import AIChatPage from "@/pages/ai-chat";
 import HistoryPage from "@/pages/history";
+import PaymentCreatePage from "@/pages/payment-create";
 import NotFound from "@/pages/not-found";
 
 function Router() {
@@ -53,6 +54,8 @@ function Router() {
           <Route path="/facilities/new" component={GeneralFacilityCreatePage} />
           <Route path="/collateral" component={CollateralPage} />
           <Route path="/collateral/new" component={CollateralCreatePage} />
+          <Route path="/loans/:loanId/payment" component={PaymentCreatePage} />
+          <Route path="/payment/new" component={PaymentCreatePage} />
           <Route path="/history" component={HistoryPage} />
           <Route path="/ai-chat" component={AIChatPage} />
         </AppLayout>

@@ -702,7 +702,13 @@ export const insertAuditLogSchema = createInsertSchema(auditLogs)
 export const paymentRequestSchema = z.object({
   amount: positiveDecimalString(15, 2),
   date: z.string().refine((val) => !isNaN(Date.parse(val)), "Must be a valid date"),
+  reference: z.string().optional(),
   memo: z.string().optional(),
+  allocation: z.object({
+    interest: z.number().min(0),
+    principal: z.number().min(0),
+    fees: z.number().min(0)
+  }).optional(),
   idempotencyKey: z.string().optional(),
 });
 
