@@ -319,7 +319,9 @@ export default function BankContactCreatePage() {
                                 data-testid="input-contact-notes"
                                 placeholder="Additional information about this contact..."
                                 className="min-h-[100px]"
-                                {...field} 
+                                value={field.value || ""}
+                                onChange={field.onChange}
+                                onBlur={field.onBlur}
                               />
                             </FormControl>
                             <FormMessage />
