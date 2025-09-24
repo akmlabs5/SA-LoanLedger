@@ -432,6 +432,15 @@ export default function BankDetail() {
                           <Button 
                             variant="outline" 
                             size="sm"
+                            onClick={() => setLocation(`/banks/${bankId}/facilities/${facility.id}/edit`)}
+                            data-testid={`button-edit-facility-${facility.id}`}
+                          >
+                            <Edit className="mr-1 h-4 w-4" />
+                            Edit
+                          </Button>
+                          <Button 
+                            variant="outline" 
+                            size="sm"
                             onClick={() => handleDeleteFacility(facility.id)}
                             disabled={deleteFacilityMutation.isPending}
                             data-testid={`button-delete-facility-${facility.id}`}
