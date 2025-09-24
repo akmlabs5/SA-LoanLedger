@@ -619,6 +619,10 @@ export default function Loans() {
                                   <DollarSign className="mr-2 h-4 w-4" />
                                   Process Payment
                                 </DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => setLocation(`/history?loanId=${loan.id}`)}>
+                                  <Clock className="mr-2 h-4 w-4" />
+                                  View History
+                                </DropdownMenuItem>
                                 <DropdownMenuItem 
                                   onClick={() => handleSettleLoan(loan.id, loan.amount)}
                                   disabled={settleLoanMutation.isPending}
@@ -707,6 +711,15 @@ export default function Loans() {
                             >
                               <DollarSign className="mr-2 h-4 w-4" />
                               Payment
+                            </Button>
+                            <Button 
+                              variant="outline" 
+                              size="sm" 
+                              onClick={() => setLocation(`/history?loanId=${loan.id}`)}
+                              data-testid={`button-history-${loan.id}`}
+                            >
+                              <Clock className="mr-2 h-4 w-4" />
+                              History
                             </Button>
                           </div>
                           <Button 
