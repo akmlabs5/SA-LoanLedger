@@ -10,6 +10,7 @@ import Loans from "@/pages/loans";
 import Banks from "@/pages/banks";
 import BankDetail from "@/pages/bank-detail";
 import LoanCreatePage from "@/pages/loan-create";
+import LoanEditPage from "@/pages/loan-edit";
 import FacilityCreatePage from "@/pages/facility-create";
 import FacilityEditPage from "@/pages/facility-edit";
 import CollateralCreatePage from "@/pages/collateral-create";
@@ -50,6 +51,7 @@ function Router() {
           <Route path="/banks/:bankId" component={BankDetail} />
           <Route path="/banks/:bankId/loans/new" component={LoanCreatePage} />
           <Route path="/loans/new" component={GeneralLoanCreatePage} />
+          <Route path="/loans/:loanId/edit" component={LoanEditPage} />
         <Route path="/banks/:bankId/facilities/new" component={FacilityCreatePage} />
           <Route path="/banks/:bankId/facilities/:facilityId/edit" component={FacilityEditPage} />
           <Route path="/banks/:bankId/contacts/new" component={BankContactCreatePage} />

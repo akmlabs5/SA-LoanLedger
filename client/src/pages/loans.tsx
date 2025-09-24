@@ -614,6 +614,10 @@ export default function Loans() {
                                   <FileText className="mr-2 h-4 w-4" />
                                   Documents
                                 </DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => setLocation(`/loans/${loan.id}/edit`)}>
+                                  <Edit className="mr-2 h-4 w-4" />
+                                  Edit Details
+                                </DropdownMenuItem>
                                 <DropdownMenuSeparator />
                                 <DropdownMenuItem onClick={() => setLocation(`/loans/${loan.id}/payment`)}>
                                   <DollarSign className="mr-2 h-4 w-4" />
