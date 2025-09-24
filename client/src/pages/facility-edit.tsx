@@ -280,7 +280,7 @@ export default function FacilityEditPage() {
                           <FormControl>
                             <Switch
                               data-testid="switch-is-active"
-                              checked={field.value}
+                              checked={field.value ?? false}
                               onCheckedChange={field.onChange}
                             />
                           </FormControl>
@@ -300,7 +300,9 @@ export default function FacilityEditPage() {
                               data-testid="input-terms"
                               placeholder="Enter facility terms, covenants, and conditions..."
                               className="min-h-[100px]"
-                              {...field} 
+                              value={field.value || ""}
+                              onChange={field.onChange}
+                              onBlur={field.onBlur}
                             />
                           </FormControl>
                           <FormMessage />
