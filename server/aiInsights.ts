@@ -1,4 +1,4 @@
-import { storage } from "./storage";
+import type { IStorage } from "./storage";
 
 // Deepseek API configuration
 const DEEPSEEK_API_URL = "https://api.deepseek.com/v1/chat/completions";
@@ -16,7 +16,7 @@ export interface AIInsight {
   recommendation?: string;
 }
 
-export async function generateAIInsights(userId: string): Promise<AIInsight[]> {
+export async function generateAIInsights(userId: string, storage: IStorage): Promise<AIInsight[]> {
   try {
     const portfolioSummary = await storage.getUserPortfolioSummary(userId);
     const activeLoans = await storage.getActiveLoansByUser(userId);

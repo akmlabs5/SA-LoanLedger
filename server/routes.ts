@@ -585,7 +585,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get('/api/ai-insights', isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
-      const insights = await generateAIInsights(userId);
+      const insights = await generateAIInsights(userId, storage);
       res.json(insights);
     } catch (error) {
       console.error("Error generating AI insights:", error);
