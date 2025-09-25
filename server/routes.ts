@@ -491,8 +491,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(403).json({ message: "Facility not found or access denied" });
       }
       
-      // If creditLineId is provided, validate it belongs to the same facility and user
+      // Handle credit line assignment (either provided or auto-assign)
+      let finalCreditLineId = loanData.creditLineId;
+      
       if (loanData.creditLineId) {
+        // Validate provided credit line
         const userCreditLines = await storage.getUserCreditLines(userId);
         const creditLine = userCreditLines.find((cl: any) => cl.id === loanData.creditLineId);
         
@@ -503,11 +506,40 @@ export async function registerRoutes(app: Express): Promise<Server> {
         if (creditLine.facility.id !== loanData.facilityId) {
           return res.status(400).json({ message: "Credit line does not belong to the specified facility" });
         }
+        
+        finalCreditLineId = loanData.creditLineId;
+      } else {
+        // Auto-assign: find or create a credit line for this facility
+        const userCreditLines = await storage.getUserCreditLines(userId);
+        const facilityCreditLines = userCreditLines.filter((cl: any) => cl.facilityId === loanData.facilityId);
+        
+        if (facilityCreditLines.length > 0) {
+          // Use the first available credit line for this facility
+          finalCreditLineId = facilityCreditLines[0].id;
+        } else {
+          // Create a new credit line for this facility
+          const newCreditLine = await storage.createCreditLine({
+            facilityId: loanData.facilityId,
+            lineNumber: "1", // Default line number
+            creditLimit: facility.creditLimit, // Use facility's credit limit
+            utilizationRate: "0", // Start with 0% utilization
+            availableCredit: facility.creditLimit,
+            lastReviewDate: new Date().toISOString().split('T')[0],
+            nextReviewDate: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], // 1 year from now
+            status: "active",
+            covenants: {},
+            notes: "Auto-created credit line for loan drawdown",
+            userId
+          });
+          finalCreditLineId = newCreditLine.id;
+        }
       }
       
       // TODO: Additional validation - check available credit limit vs loan amount
       
-      const loan = await storage.createLoan(loanData);
+      // Ensure creditLineId is set before creating the loan
+      const finalLoanData = { ...loanData, creditLineId: finalCreditLineId };
+      const loan = await storage.createLoan(finalLoanData);
       res.json(loan);
     } catch (error) {
       console.error("Error creating loan:", error);
