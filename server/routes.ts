@@ -80,6 +80,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Get single bank by ID
+  app.get('/api/banks/:bankId', isAuthenticated, async (req, res) => {
+    try {
+      const { bankId } = req.params;
+      const banks = await storage.getAllBanks();
+      const bank = banks.find(b => b.id === bankId);
+      
+      if (!bank) {
+        return res.status(404).json({ message: "Bank not found" });
+      }
+      
+      res.json(bank);
+    } catch (error) {
+      console.error("Error fetching bank:", error);
+      res.status(500).json({ message: "Failed to fetch bank" });
+    }
+  });
+
   // Bank Contact routes
   app.get('/api/banks/:bankId/contacts', isAuthenticated, async (req: any, res) => {
     try {
