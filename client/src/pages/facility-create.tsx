@@ -46,7 +46,7 @@ export default function FacilityCreatePage() {
 
   // Fetch bank details for context
   const { data: bank } = useQuery<{ id: string; name: string; code: string }>({
-    queryKey: [`/api/banks/${bankId}`],
+    queryKey: ["/api/banks", bankId],
     enabled: !!bankId,
   });
 

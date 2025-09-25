@@ -52,7 +52,7 @@ export default function BankContactCreatePage() {
 
   // Get bank details for context
   const { data: bank, isLoading: bankLoading, isError: bankError } = useQuery<{id: string; name: string; code: string; type?: string}>({
-    queryKey: [`/api/banks/${bankId}`],
+    queryKey: ["/api/banks", bankId],
     enabled: isAuthenticated && !!bankId,
   });
 
@@ -76,6 +76,7 @@ export default function BankContactCreatePage() {
       return apiRequest('POST', `/api/banks/${bankId}/contacts`, data);
     },
     onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/banks", bankId] });
       queryClient.invalidateQueries({ queryKey: ["/api/banks", bankId, "contacts"] });
       toast({ 
         title: "Contact created successfully",

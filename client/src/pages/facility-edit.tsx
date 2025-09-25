@@ -46,13 +46,13 @@ export default function FacilityEditPage() {
 
   // Fetch bank details for context
   const { data: bank, isLoading: bankLoading, isError: bankError } = useQuery<{ id: string; name: string; code: string }>({
-    queryKey: [`/api/banks/${bankId}`],
+    queryKey: ["/api/banks", bankId],
     enabled: !!bankId,
   });
 
   // Fetch facility details for editing
   const { data: facility, isLoading: facilityLoading, isError: facilityError } = useQuery({
-    queryKey: [`/api/facilities/${facilityId}`],
+    queryKey: ["/api/facilities", facilityId],
     enabled: !!facilityId,
   });
 
@@ -90,6 +90,7 @@ export default function FacilityEditPage() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/facilities"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/facilities", facilityId] });
       queryClient.invalidateQueries({ queryKey: ["/api/banks", bankId] });
       queryClient.invalidateQueries({ queryKey: ["/api/dashboard/portfolio"] });
       toast({ 
