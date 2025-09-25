@@ -518,7 +518,7 @@ export default function LoanCreatePage() {
                         </Tabs>
                         
                         <p className="text-xs text-blue-600 dark:text-blue-400 mt-3">
-                          Dates auto-adjust for Saudi weekends (Friday-Saturday)
+                          <strong>Weekend Adjustment:</strong> If a calculated due date falls on a Saudi weekend (Friday or Saturday), it automatically rolls forward to the next business day (Sunday). Dates are never moved backward.
                         </p>
                       </div>
                     )}
