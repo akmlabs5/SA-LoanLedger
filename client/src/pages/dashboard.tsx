@@ -353,6 +353,8 @@ export default function Dashboard() {
                               size="sm" 
                               variant={urgency.priority === 'critical' ? 'destructive' : 'outline'}
                               className="text-xs"
+                              onClick={() => setLocation(`/loans/${loan.id}`)}
+                              data-testid={`button-view-loan-${loan.id}`}
                             >
                               {urgency.priority === 'critical' ? 'Urgent' : 'View'}
                             </Button>
