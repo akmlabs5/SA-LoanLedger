@@ -541,37 +541,57 @@ export class DatabaseStorage implements IStorage {
   }
 
   async settleLoan(loanId: string, settlement: SettlementRequest, userId: string): Promise<{ loan: Loan; transactions: Transaction[] }> {
-    const [settledLoan] = await db
-      .update(loans)
-      .set({
-        status: 'settled',
-        settledDate: settlement.date,
-        settledAmount: (settlement.amount || 0).toString(),
-      })
-      .where(eq(loans.id, loanId))
-      .returning();
+    return await db.transaction(async (tx) => {
+      // Get facility to find bank ID first
+      const [facility] = await tx
+        .select()
+        .from(facilities)
+        .where(eq(facilities.id, (
+          await tx.select({ facilityId: loans.facilityId })
+            .from(loans)
+            .where(eq(loans.id, loanId))
+            .limit(1)
+        )[0].facilityId))
+        .limit(1);
 
-    // Create settlement transaction
-    const settlementTransaction: InsertTransaction = {
-      userId,
-      loanId,
-      facilityId: settledLoan.facilityId,
-      bankId: '', // Will be populated by the bank relationship
-      type: 'repayment',
-      amount: (settlement.amount || 0).toString(),
-      date: settlement.date,
-      notes: settlement.memo || 'Loan settlement',
-      reference: `SETTLE-${settledLoan.referenceNumber}`,
-      interestRate: settledLoan.bankRate,
-      createdBy: userId,
-    };
+      if (!facility) {
+        throw new Error('Facility not found for loan');
+      }
 
-    const [transaction] = await db
-      .insert(transactions)
-      .values(settlementTransaction)
-      .returning();
+      // Create settlement transaction first (with all required fields)
+      const settlementTransaction: InsertTransaction = {
+        userId,
+        loanId,
+        facilityId: facility.id,
+        bankId: facility.bankId,
+        type: 'repayment',
+        amount: (settlement.amount || 0).toString(),
+        date: settlement.date,
+        memo: settlement.memo || 'Loan settlement',
+        reference: `SETTLE-${loanId.substring(0, 8).toUpperCase()}`,
+        createdBy: userId,
+        idempotencyKey: `SETTLE:${loanId}:${settlement.date}`,
+        allocation: { settlement: parseFloat((settlement.amount || 0).toString()) },
+      };
 
-    return { loan: settledLoan, transactions: [transaction] };
+      const [transaction] = await tx
+        .insert(transactions)
+        .values(settlementTransaction)
+        .returning();
+
+      // Then update loan status
+      const [settledLoan] = await tx
+        .update(loans)
+        .set({
+          status: 'settled',
+          settledDate: settlement.date,
+          settledAmount: (settlement.amount || 0).toString(),
+        })
+        .where(eq(loans.id, loanId))
+        .returning();
+
+      return { loan: settledLoan, transactions: [transaction] };
+    });
   }
 
   async deleteLoan(loanId: string): Promise<void> {
@@ -1333,20 +1353,6 @@ export class MemoryStorage implements IStorage {
     return updated;
   }
 
-  async settleLoan(loanId: string, settledAmount: number): Promise<Loan> {
-    const existing = this.loans.get(loanId);
-    if (!existing) throw new Error('Loan not found');
-
-    const updated: Loan = {
-      ...existing,
-      status: 'settled',
-      settledAmount: settledAmount.toString(),
-      settledDate: new Date().toISOString(),
-      updatedAt: new Date(),
-    };
-    this.loans.set(loanId, updated);
-    return updated;
-  }
 
   async deleteLoan(loanId: string): Promise<void> {
     this.loans.delete(loanId);
