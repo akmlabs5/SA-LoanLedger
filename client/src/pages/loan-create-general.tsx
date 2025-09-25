@@ -34,23 +34,23 @@ import {
 
 import { Link } from "wouter";
 
-const loanFormSchema = insertLoanSchema
-  .omit({ userId: true, bankRate: true })
-  .extend({
-    facilityId: z.string().min(1, "Please select a facility"),
-    creditLineId: z.string().optional(),
-    referenceNumber: z.string().min(1, "Reference number is required"),
-    amount: z.string().min(1, "Amount is required").refine((val) => {
-      const amount = parseFloat(val);
-      return amount > 0;
-    }, "Amount must be greater than 0"),
-    startDate: z.string().min(1, "Start date is required"),
-    dueDate: z.string().min(1, "Due date is required"),
-    chargesDueDate: z.string().optional(),
-    siborRate: z.string().min(1, "SIBOR rate is required"),
-    siborTerm: z.string().optional(),
-    notes: z.string().optional(),
-  });
+const loanFormSchema = z.object({
+  facilityId: z.string().min(1, "Please select a facility"),
+  creditLineId: z.string().optional(),
+  referenceNumber: z.string().min(1, "Reference number is required"),
+  amount: z.string().min(1, "Amount is required").refine((val) => {
+    const amount = parseFloat(val);
+    return amount > 0;
+  }, "Amount must be greater than 0"),
+  startDate: z.string().min(1, "Start date is required"),
+  dueDate: z.string().min(1, "Due date is required"),
+  chargesDueDate: z.string().optional(),
+  siborRate: z.string().min(1, "SIBOR rate is required"),
+  siborTerm: z.string().optional(),
+  purpose: z.string().optional(),
+  status: z.enum(["active", "settled", "overdue"]).default("active"),
+  notes: z.string().optional(),
+});
 
 type LoanFormData = z.infer<typeof loanFormSchema>;
 

@@ -31,7 +31,17 @@ import {
 
 import { Link } from "wouter";
 
-const bankContactFormSchema = insertBankContactSchema.omit({ userId: true, bankId: true });
+const bankContactFormSchema = z.object({
+  name: z.string().min(1, "Name is required"),
+  title: z.string().optional(),
+  department: z.string().optional(),
+  email: z.string().email("Invalid email").optional().or(z.literal("")),
+  phone: z.string().optional(),
+  mobile: z.string().optional(),
+  extension: z.string().optional(),
+  isPrimary: z.boolean().default(false),
+  notes: z.string().optional(),
+});
 
 export default function BankContactCreatePage() {
   const { bankId } = useParams();

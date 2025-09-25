@@ -40,8 +40,15 @@ const collateralTypes = [
   },
 ];
 
-const collateralFormSchema = insertCollateralSchema.omit({ userId: true }).extend({
+const collateralFormSchema = z.object({
+  type: z.enum(["real_estate", "liquid_stocks", "other"]),
+  name: z.string().min(1, "Name is required"),
+  description: z.string().optional(),
   currentValue: z.string().min(1, "Current value is required").refine((val) => !isNaN(Number(val)) && Number(val) > 0, "Value must be greater than 0"),
+  valuationDate: z.string().min(1, "Valuation date is required"),
+  valuationSource: z.string().optional(),
+  notes: z.string().optional(),
+  isActive: z.boolean().default(true),
 });
 
 type CollateralFormData = z.infer<typeof collateralFormSchema>;

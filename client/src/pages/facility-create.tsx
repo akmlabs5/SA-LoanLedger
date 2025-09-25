@@ -27,7 +27,15 @@ const facilityTypes = [
   { value: "working_capital", label: "Working Capital Facility", description: "For operational cash flow needs" },
 ];
 
-const facilityFormSchema = insertFacilitySchema.omit({ userId: true, bankId: true });
+const facilityFormSchema = z.object({
+  facilityType: z.enum(["revolving", "term", "bullet", "bridge", "working_capital"]),
+  creditLimit: z.string().min(1, "Credit limit is required"),
+  costOfFunding: z.string().min(1, "Cost of funding is required"),
+  startDate: z.string().min(1, "Start date is required"),
+  expiryDate: z.string().min(1, "Expiry date is required"),
+  terms: z.string().optional(),
+  isActive: z.boolean().default(true),
+});
 
 type FacilityFormData = z.infer<typeof facilityFormSchema>;
 
