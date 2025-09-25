@@ -59,6 +59,8 @@ import {
 import { Link } from "wouter";
 import { PortfolioSummary } from "@shared/types";
 import BankContactsSection from "@/components/BankContactsSection";
+import DocumentUpload from "@/components/DocumentUpload";
+import DocumentList from "@/components/DocumentList";
 
 export default function BankDetail() {
   const { bankId } = useParams();
@@ -673,6 +675,37 @@ export default function BankDetail() {
                     ))}
                   </div>
                 )}
+              </CardContent>
+            </Card>
+
+            {/* Bank Documents */}
+            <Card className="border-0 shadow-lg bg-white/50 dark:bg-gray-800/50 backdrop-blur-sm">
+              <CardHeader>
+                <CardTitle className="text-xl font-semibold flex items-center space-x-2">
+                  <FileText className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+                  <span>Bank Documents</span>
+                </CardTitle>
+                <p className="text-sm text-gray-600 dark:text-gray-400">
+                  Banking agreements, licenses, and related documents
+                </p>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                {/* Document Upload */}
+                <DocumentUpload 
+                  entityType="bank"
+                  entityId={bankId!}
+                  onUploadComplete={() => {
+                    queryClient.invalidateQueries({ queryKey: ["/api/documents", "bank", bankId] });
+                  }}
+                  maxFiles={20}
+                />
+                
+                {/* Document List */}
+                <DocumentList 
+                  entityType="bank"
+                  entityId={bankId!}
+                  showUpload={false}
+                />
               </CardContent>
             </Card>
           </div>

@@ -16,6 +16,8 @@ import { Separator } from "@/components/ui/separator";
 import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
+import DocumentUpload from "@/components/DocumentUpload";
+import DocumentList from "@/components/DocumentList";
 
 // Collateral types with descriptions and examples
 const collateralTypes = [
@@ -405,6 +407,37 @@ export default function CollateralEditPage() {
                   </div>
                 </form>
               </Form>
+            </CardContent>
+          </Card>
+
+          {/* Collateral Documents */}
+          <Card className="mt-8">
+            <CardHeader>
+              <CardTitle className="flex items-center space-x-2">
+                <PiggyBank className="h-5 w-5" />
+                <span>Collateral Documents</span>
+              </CardTitle>
+              <p className="text-sm text-muted-foreground">
+                Valuation reports, insurance certificates, legal documents, and other supporting files
+              </p>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              {/* Document Upload */}
+              <DocumentUpload 
+                entityType="collateral"
+                entityId={collateralId!}
+                onUploadComplete={() => {
+                  queryClient.invalidateQueries({ queryKey: ["/api/documents", "collateral", collateralId] });
+                }}
+                maxFiles={20}
+              />
+              
+              {/* Document List */}
+              <DocumentList 
+                entityType="collateral"
+                entityId={collateralId!}
+                showUpload={false}
+              />
             </CardContent>
           </Card>
         </div>

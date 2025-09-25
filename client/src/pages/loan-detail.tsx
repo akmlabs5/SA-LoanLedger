@@ -12,6 +12,8 @@ import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { isUnauthorizedError } from "@/lib/authUtils";
+import DocumentUpload from "@/components/DocumentUpload";
+import DocumentList from "@/components/DocumentList";
 
 export default function LoanDetailPage() {
   const { loanId } = useParams<{ loanId: string }>();
@@ -297,16 +299,24 @@ export default function LoanDetailPage() {
                   </TabsContent>
                   
                   <TabsContent value="documents" className="p-6">
-                    <div className="space-y-4">
+                    <div className="space-y-6">
                       <h3 className="text-lg font-semibold">Related Documents</h3>
-                      <div className="text-center py-8">
-                        <FileText className="h-12 w-12 text-gray-300 mx-auto mb-4" />
-                        <p className="text-gray-600 mb-4">Document management feature coming soon</p>
-                        <Button variant="outline" disabled>
-                          <FileText className="mr-2 h-4 w-4" />
-                          Upload Documents
-                        </Button>
-                      </div>
+                      
+                      {/* Document Upload */}
+                      <DocumentUpload 
+                        entityType="loan"
+                        entityId={loan.id}
+                        onUploadComplete={() => {
+                          queryClient.invalidateQueries({ queryKey: ["/api/documents", "loan", loan.id] });
+                        }}
+                      />
+                      
+                      {/* Document List */}
+                      <DocumentList 
+                        entityType="loan"
+                        entityId={loan.id}
+                        showUpload={false}
+                      />
                     </div>
                   </TabsContent>
                   

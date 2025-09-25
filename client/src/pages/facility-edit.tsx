@@ -17,6 +17,8 @@ import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { insertFacilitySchema } from "@shared/schema";
+import DocumentUpload from "@/components/DocumentUpload";
+import DocumentList from "@/components/DocumentList";
 
 // Facility types with descriptions (matching schema enum)
 const facilityTypes = [
@@ -416,6 +418,34 @@ export default function FacilityEditPage() {
                   <p>• Use inactive status to suspend new drawdowns</p>
                   <p>• Update terms for covenant or condition changes</p>
                 </div>
+              </CardContent>
+            </Card>
+
+            {/* Facility Documents */}
+            <Card className="shadow-lg">
+              <CardHeader>
+                <CardTitle className="flex items-center space-x-2">
+                  <Building2 className="h-5 w-5 text-primary" />
+                  <span>Facility Documents</span>
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {/* Document Upload */}
+                <DocumentUpload 
+                  entityType="facility"
+                  entityId={facilityId!}
+                  onUploadComplete={() => {
+                    queryClient.invalidateQueries({ queryKey: ["/api/documents", "facility", facilityId] });
+                  }}
+                  maxFiles={15}
+                />
+                
+                {/* Document List */}
+                <DocumentList 
+                  entityType="facility"
+                  entityId={facilityId!}
+                  showUpload={false}
+                />
               </CardContent>
             </Card>
           </div>
