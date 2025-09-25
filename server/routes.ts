@@ -520,16 +520,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
           // Create a new credit line for this facility
           const newCreditLine = await storage.createCreditLine({
             facilityId: loanData.facilityId,
-            lineNumber: "1", // Default line number
+            userId,
+            creditLineType: "working_capital", // Default to working capital type
+            name: `Credit Line 1 - ${facility.bank?.name || 'Bank'}`,
+            description: "Auto-created credit line for loan drawdown",
             creditLimit: facility.creditLimit, // Use facility's credit limit
-            utilizationRate: "0", // Start with 0% utilization
-            availableCredit: facility.creditLimit,
-            lastReviewDate: new Date().toISOString().split('T')[0],
-            nextReviewDate: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], // 1 year from now
-            status: "active",
-            covenants: {},
-            notes: "Auto-created credit line for loan drawdown",
-            userId
+            interestRate: facility.costOfFunding
           });
           finalCreditLineId = newCreditLine.id;
         }
