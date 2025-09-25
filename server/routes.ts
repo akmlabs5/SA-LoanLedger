@@ -409,7 +409,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post('/api/loans', isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
-      const loanData = insertLoanSchema.parse({ ...req.body, userId });
+      
+      // Preprocess date fields - convert empty strings to null for optional dates
+      const processedBody = { ...req.body };
+      if (processedBody.chargesDueDate === "") {
+        processedBody.chargesDueDate = null;
+      }
+      if (processedBody.lastAccrualDate === "") {
+        processedBody.lastAccrualDate = null;
+      }
+      if (processedBody.settledDate === "") {
+        processedBody.settledDate = null;
+      }
+      
+      const loanData = insertLoanSchema.parse({ ...processedBody, userId });
       
       // Validate that facilityId is required
       if (!loanData.facilityId) {

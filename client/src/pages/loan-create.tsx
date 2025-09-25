@@ -94,7 +94,7 @@ export default function LoanCreatePage() {
       creditLineId: "",
       startDate: new Date().toISOString().split('T')[0],
       dueDate: "",
-      chargesDueDate: "",
+      chargesDueDate: undefined,
       siborRate: siborRate?.rate?.toString() || "",
       siborTerm: "3M",
       notes: "",
@@ -144,7 +144,12 @@ export default function LoanCreatePage() {
   });
 
   const onSubmit = (data: LoanFormData) => {
-    createLoanMutation.mutate(data);
+    // Clean up date fields - convert empty strings to undefined
+    const cleanedData = {
+      ...data,
+      chargesDueDate: data.chargesDueDate && data.chargesDueDate.trim() !== "" ? data.chargesDueDate : undefined,
+    };
+    createLoanMutation.mutate(cleanedData);
   };
 
   // Calculate used credit for selected facility
@@ -328,6 +333,29 @@ export default function LoanCreatePage() {
                         )}
                       />
                     </div>
+
+                    {/* Optional Charges Due Date */}
+                    <FormField
+                      control={form.control}
+                      name="chargesDueDate"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Charges Due Date (Optional)</FormLabel>
+                          <FormControl>
+                            <Input 
+                              type="date" 
+                              {...field} 
+                              value={field.value || ""} 
+                              data-testid="input-charges-due-date" 
+                            />
+                          </FormControl>
+                          <p className="text-sm text-muted-foreground">
+                            If different from loan due date, specify when interest/fees are due
+                          </p>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
 
                     {/* Quick Term Selection */}
                     {form.watch("startDate") && (
