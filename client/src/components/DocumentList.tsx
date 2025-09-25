@@ -94,17 +94,26 @@ export default function DocumentList({
 
   // Fetch documents (only when visible)
   const { data: documents = [], isLoading, refetch } = useQuery({
-    queryKey: ['/api/documents', entityType, entityId],
+    queryKey: ['/api/attachments', entityType, entityId],
+    queryFn: async () => {
+      const response = await fetch(`/api/attachments?ownerType=${entityType}&ownerId=${entityId}`, {
+        credentials: 'include',
+      });
+      if (!response.ok) {
+        throw new Error('Failed to fetch documents');
+      }
+      return response.json();
+    },
     enabled: !!entityId && isVisible,
   });
 
   // Delete document mutation
   const deleteDocumentMutation = useMutation({
     mutationFn: async (documentId: string) => {
-      return apiRequest('DELETE', `/api/documents/${documentId}`);
+      return apiRequest('DELETE', `/api/attachments/${documentId}`);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/documents', entityType, entityId] });
+      queryClient.invalidateQueries({ queryKey: ['/api/attachments', entityType, entityId] });
       toast({
         title: 'Document deleted',
         description: 'The document has been successfully deleted.',

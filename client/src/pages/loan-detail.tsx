@@ -48,7 +48,16 @@ export default function LoanDetailPage() {
 
   // Fetch documents for the Documents tab
   const { data: documents, isLoading: documentsLoading } = useQuery({
-    queryKey: ["/api/documents", "loan", loanId],
+    queryKey: ["/api/attachments", "loan", loanId],
+    queryFn: async () => {
+      const response = await fetch(`/api/attachments?ownerType=loan&ownerId=${loanId}`, {
+        credentials: 'include',
+      });
+      if (!response.ok) {
+        throw new Error('Failed to fetch documents');
+      }
+      return response.json();
+    },
     enabled: !!loanId && isAuthenticated,
     staleTime: 5 * 60 * 1000, // 5 minutes
     gcTime: 15 * 60 * 1000, // 15 minutes
@@ -366,7 +375,7 @@ export default function LoanDetailPage() {
                             entityType="loan"
                             entityId={loan.id}
                             onUploadComplete={() => {
-                              queryClient.invalidateQueries({ queryKey: ["/api/documents", "loan", loan.id] });
+                              queryClient.invalidateQueries({ queryKey: ["/api/attachments", "loan", loan.id] });
                             }}
                           />
                           
