@@ -39,7 +39,8 @@ import {
   MoreVertical,
   Download,
   RefreshCw,
-  Trash2
+  Trash2,
+  Edit
 } from "lucide-react";
 import { Link, useLocation } from "wouter";
 import { isUnauthorizedError } from "@/lib/authUtils";
