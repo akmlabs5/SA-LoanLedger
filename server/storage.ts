@@ -562,7 +562,6 @@ export class DatabaseStorage implements IStorage {
       date: settlement.date,
       notes: settlement.memo || 'Loan settlement',
       reference: `SETTLE-${settledLoan.referenceNumber}`,
-      balance: "0.00", // Final balance after settlement
       interestRate: settledLoan.bankRate,
       createdBy: userId,
     };
