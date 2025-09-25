@@ -540,17 +540,39 @@ export class DatabaseStorage implements IStorage {
     return updatedLoan;
   }
 
-  async settleLoan(loanId: string, settledAmount: number): Promise<Loan> {
+  async settleLoan(loanId: string, settlement: SettlementRequest, userId: string): Promise<{ loan: Loan; transactions: Transaction[] }> {
     const [settledLoan] = await db
       .update(loans)
       .set({
         status: 'settled',
-        settledDate: new Date().toISOString().split('T')[0],
-        settledAmount: settledAmount.toString(),
+        settledDate: settlement.date,
+        settledAmount: (settlement.amount || 0).toString(),
       })
       .where(eq(loans.id, loanId))
       .returning();
-    return settledLoan;
+
+    // Create settlement transaction
+    const settlementTransaction: InsertTransaction = {
+      userId,
+      loanId,
+      facilityId: settledLoan.facilityId,
+      bankId: '', // Will be populated by the bank relationship
+      type: 'repayment',
+      amount: (settlement.amount || 0).toString(),
+      date: settlement.date,
+      notes: settlement.memo || 'Loan settlement',
+      reference: `SETTLE-${settledLoan.referenceNumber}`,
+      balance: "0.00", // Final balance after settlement
+      interestRate: settledLoan.bankRate,
+      createdBy: userId,
+    };
+
+    const [transaction] = await db
+      .insert(transactions)
+      .values(settlementTransaction)
+      .returning();
+
+    return { loan: settledLoan, transactions: [transaction] };
   }
 
   async deleteLoan(loanId: string): Promise<void> {
