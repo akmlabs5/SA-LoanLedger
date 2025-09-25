@@ -67,6 +67,34 @@ export const pledgeTypeEnum = pgEnum('pledge_type', [
   'blanket'
 ]);
 
+export const attachmentOwnerTypeEnum = pgEnum('attachment_owner_type', [
+  'bank',
+  'facility',
+  'loan',
+  'collateral'
+]);
+
+export const attachmentCategoryEnum = pgEnum('attachment_category', [
+  'facility_agreement',
+  'bank_correspondence',
+  'facility_document',
+  'amendment',
+  'drawdown_request',
+  'loan_documentation',
+  'valuation_report',
+  'asset_documentation',
+  'compliance_document',
+  'other'
+]);
+
+export const auditActionEnum = pgEnum('audit_action', [
+  'upload',
+  'download',
+  'delete',
+  'update_meta',
+  'view'
+]);
+
 // Session storage table.
 // (IMPORTANT) This table is mandatory for Replit Auth, don't drop it.
 export const sessions = pgTable(
@@ -269,7 +297,49 @@ export const aiInsightConfig = pgTable("ai_insight_config", {
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
-// Document Attachments
+// Modern Attachment System
+export const attachments = pgTable("attachments", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  ownerType: attachmentOwnerTypeEnum("owner_type").notNull(),
+  ownerId: varchar("owner_id").notNull(),
+  bankId: varchar("bank_id").references(() => banks.id), // Denormalized for ACL, nullable for collateral
+  userId: varchar("user_id").references(() => users.id).notNull(),
+  fileName: varchar("file_name", { length: 255 }).notNull(),
+  contentType: varchar("content_type", { length: 100 }).notNull(),
+  fileSize: integer("file_size").notNull(),
+  storageKey: text("storage_key").notNull(),
+  category: attachmentCategoryEnum("category").notNull(),
+  tags: text("tags").array(),
+  description: text("description"),
+  checksum: varchar("checksum", { length: 64 }),
+  uploadedBy: varchar("uploaded_by").references(() => users.id).notNull(),
+  deletedAt: timestamp("deleted_at"),
+  createdAt: timestamp("created_at").defaultNow(),
+}, (table) => [
+  index("idx_attachments_owner").on(table.ownerType, table.ownerId),
+  index("idx_attachments_bank").on(table.bankId),
+  index("idx_attachments_user").on(table.userId),
+  index("idx_attachments_category").on(table.category),
+]);
+
+// Attachment Audit Trail for Saudi Banking Compliance
+export const attachmentAudit = pgTable("attachment_audit", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  attachmentId: varchar("attachment_id").references(() => attachments.id).notNull(),
+  userId: varchar("user_id").references(() => users.id).notNull(),
+  action: auditActionEnum("action").notNull(),
+  ipAddress: varchar("ip_address", { length: 45 }),
+  userAgent: text("user_agent"),
+  metadata: jsonb("metadata"),
+  createdAt: timestamp("created_at").defaultNow(),
+}, (table) => [
+  index("idx_attachment_audit_attachment").on(table.attachmentId),
+  index("idx_attachment_audit_user").on(table.userId),
+  index("idx_attachment_audit_action").on(table.action),
+  index("idx_attachment_audit_date").on(table.createdAt),
+]);
+
+// Legacy Document Attachments (keep for backward compatibility)
 export const documents = pgTable("documents", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   loanId: varchar("loan_id").references(() => loans.id),
@@ -361,6 +431,7 @@ export const usersRelations = relations(users, ({ many, one }) => ({
   loans: many(loans),
   collateral: many(collateral),
   documents: many(documents),
+  attachments: many(attachments),
   aiInsightConfig: one(aiInsightConfig),
   exposureSnapshots: many(exposureSnapshots),
   transactions: many(transactions),
@@ -372,6 +443,7 @@ export const banksRelations = relations(banks, ({ many }) => ({
   exposureSnapshots: many(exposureSnapshots),
   transactions: many(transactions),
   contacts: many(bankContacts),
+  attachments: many(attachments),
 }));
 
 export const bankContactsRelations = relations(bankContacts, ({ one }) => ({
@@ -396,6 +468,7 @@ export const facilitiesRelations = relations(facilities, ({ one, many }) => ({
   }),
   creditLines: many(creditLines),
   documents: many(documents),
+  attachments: many(attachments),
   exposureSnapshots: many(exposureSnapshots),
   transactions: many(transactions),
 }));
@@ -422,6 +495,7 @@ export const loansRelations = relations(loans, ({ one, many }) => ({
     references: [users.id],
   }),
   documents: many(documents),
+  attachments: many(attachments),
   transactions: many(transactions),
 }));
 
@@ -431,6 +505,7 @@ export const collateralRelations = relations(collateral, ({ one, many }) => ({
     references: [users.id],
   }),
   documents: many(documents),
+  attachments: many(attachments),
 }));
 
 export const documentsRelations = relations(documents, ({ one }) => ({
@@ -497,6 +572,33 @@ export const loanTemplatesRelations = relations(loanTemplates, ({ many }) => ({
   // No explicit foreign key relations as templates are standalone reference data
 }));
 
+// Attachment Relations
+export const attachmentsRelations = relations(attachments, ({ one }) => ({
+  user: one(users, {
+    fields: [attachments.userId],
+    references: [users.id],
+  }),
+  bank: one(banks, {
+    fields: [attachments.bankId],
+    references: [banks.id],
+  }),
+  uploadedByUser: one(users, {
+    fields: [attachments.uploadedBy],
+    references: [users.id],
+  }),
+}));
+
+export const attachmentAuditRelations = relations(attachmentAudit, ({ one }) => ({
+  attachment: one(attachments, {
+    fields: [attachmentAudit.attachmentId],
+    references: [attachments.id],
+  }),
+  user: one(users, {
+    fields: [attachmentAudit.userId],
+    references: [users.id],
+  }),
+}));
+
 // Zod Enums for validation
 export const transactionTypeZodEnum = z.enum(['draw', 'repayment', 'fee', 'interest', 'limit_change', 'other']);
 export const facilityTypeZodEnum = z.enum(['revolving', 'term', 'bullet', 'bridge', 'working_capital']);
@@ -507,6 +609,20 @@ export const loanTypeZodEnum = z.enum(['working_capital', 'term_loan', 'trade_fi
 export const repaymentStructureZodEnum = z.enum(['bullet', 'installments', 'revolving', 'quarterly', 'semi_annual', 'annual', 'on_demand']);
 export const collateralTypeZodEnum = z.enum(['real_estate', 'liquid_stocks', 'other']);
 export const loanStatusZodEnum = z.enum(['active', 'settled', 'overdue']);
+export const attachmentOwnerTypeZodEnum = z.enum(['bank', 'facility', 'loan', 'collateral']);
+export const attachmentCategoryZodEnum = z.enum([
+  'facility_agreement',
+  'bank_correspondence', 
+  'facility_document',
+  'amendment',
+  'drawdown_request',
+  'loan_documentation',
+  'valuation_report',
+  'asset_documentation',
+  'compliance_document',
+  'other'
+]);
+export const auditActionZodEnum = z.enum(['upload', 'download', 'delete', 'update_meta', 'view']);
 
 // Helper function to validate decimal strings
 const decimalString = (precision: number, scale: number) => 
@@ -698,6 +814,47 @@ export const insertAuditLogSchema = createInsertSchema(auditLogs)
     entityId: z.string().min(1, "Entity ID is required"),
   });
 
+// Attachment Insert Schemas
+export const insertAttachmentSchema = createInsertSchema(attachments)
+  .omit({ id: true, createdAt: true, deletedAt: true })
+  .extend({
+    fileName: z.string().min(1, "File name is required").max(255),
+    contentType: z.string().min(1, "Content type is required"),
+    fileSize: z.number().positive("File size must be positive").max(26214400, "File must be less than 25MB"),
+    storageKey: z.string().min(1, "Storage key is required"),
+    category: attachmentCategoryZodEnum,
+    tags: z.array(z.string()).optional(),
+    description: z.string().max(1000, "Description must be less than 1000 characters").optional(),
+    checksum: z.string().length(64, "Checksum must be 64 characters").optional(),
+  });
+
+export const insertAttachmentAuditSchema = createInsertSchema(attachmentAudit)
+  .omit({ id: true, createdAt: true })
+  .extend({
+    action: auditActionZodEnum,
+    ipAddress: z.string().max(45).optional(),
+    userAgent: z.string().optional(),
+  });
+
+// Attachment Upload Intent Schema
+export const attachmentUploadIntentSchema = z.object({
+  ownerType: attachmentOwnerTypeZodEnum,
+  ownerId: z.string().uuid("Owner ID must be a valid UUID"),
+  fileName: z.string().min(1, "File name is required").max(255),
+  contentType: z.string().min(1, "Content type is required"),
+  fileSize: z.number().positive("File size must be positive").max(26214400, "File must be less than 25MB"),
+  category: attachmentCategoryZodEnum,
+  tags: z.array(z.string()).optional(),
+  description: z.string().max(1000).optional(),
+});
+
+// Attachment Metadata Update Schema
+export const updateAttachmentMetaSchema = z.object({
+  category: attachmentCategoryZodEnum.optional(),
+  tags: z.array(z.string()).optional(),
+  description: z.string().max(1000).optional(),
+});
+
 // Payment request schemas
 export const paymentRequestSchema = z.object({
   amount: positiveDecimalString(15, 2),
@@ -770,3 +927,10 @@ export type LoanType = z.infer<typeof loanTypeZodEnum>;
 export type RepaymentStructure = z.infer<typeof repaymentStructureZodEnum>;
 export type CollateralType = z.infer<typeof collateralTypeZodEnum>;
 export type LoanStatus = z.infer<typeof loanStatusZodEnum>;
+export type Attachment = typeof attachments.$inferSelect;
+export type InsertAttachment = z.infer<typeof insertAttachmentSchema>;
+export type AttachmentAudit = typeof attachmentAudit.$inferSelect;
+export type InsertAttachmentAudit = z.infer<typeof insertAttachmentAuditSchema>;
+export type AttachmentOwnerType = z.infer<typeof attachmentOwnerTypeZodEnum>;
+export type AttachmentCategory = z.infer<typeof attachmentCategoryZodEnum>;
+export type AuditAction = z.infer<typeof auditActionZodEnum>;

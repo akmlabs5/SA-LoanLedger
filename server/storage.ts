@@ -8,6 +8,8 @@ import {
   collateralAssignments,
   loans,
   documents,
+  attachments,
+  attachmentAudit,
   aiInsightConfig,
   exposureSnapshots,
   transactions,
@@ -42,6 +44,12 @@ import {
   type PaymentRequest,
   type SettlementRequest,
   type RevolveRequest,
+  type Attachment,
+  type InsertAttachment,
+  type AttachmentAudit,
+  type InsertAttachmentAudit,
+  type AttachmentOwnerType,
+  type AttachmentCategory,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, desc, asc, sql, gte, lte, isNull, isNotNull } from "drizzle-orm";
@@ -166,6 +174,17 @@ export interface IStorage {
     type?: TransactionType;
   }): Promise<number>;
   addTransaction(transaction: InsertTransaction): Promise<Transaction>;
+  
+  // Attachment operations
+  getAttachmentsByOwner(ownerType: AttachmentOwnerType, ownerId: string, userId: string): Promise<Attachment[]>;
+  createAttachment(attachment: InsertAttachment): Promise<Attachment>;
+  updateAttachmentMetadata(attachmentId: string, metadata: Partial<Pick<InsertAttachment, 'category' | 'tags' | 'description'>>, userId: string): Promise<Attachment>;
+  deleteAttachment(attachmentId: string, userId: string): Promise<void>;
+  getAttachmentById(attachmentId: string, userId: string): Promise<Attachment | undefined>;
+  
+  // Attachment audit operations
+  createAttachmentAudit(audit: InsertAttachmentAudit): Promise<AttachmentAudit>;
+  getAttachmentAuditTrail(attachmentId: string): Promise<AttachmentAudit[]>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -815,6 +834,84 @@ export class DatabaseStorage implements IStorage {
     const [result] = await db.insert(transactions).values(transaction).returning();
     return result;
   }
+
+  // Attachment operations
+  async getAttachmentsByOwner(ownerType: AttachmentOwnerType, ownerId: string, userId: string): Promise<Attachment[]> {
+    return await db
+      .select()
+      .from(attachments)
+      .where(and(
+        eq(attachments.ownerType, ownerType),
+        eq(attachments.ownerId, ownerId),
+        eq(attachments.userId, userId),
+        isNull(attachments.deletedAt)
+      ))
+      .orderBy(desc(attachments.createdAt));
+  }
+
+  async createAttachment(attachment: InsertAttachment): Promise<Attachment> {
+    const [result] = await db.insert(attachments).values(attachment).returning();
+    return result;
+  }
+
+  async updateAttachmentMetadata(
+    attachmentId: string, 
+    metadata: Partial<Pick<InsertAttachment, 'category' | 'tags' | 'description'>>, 
+    userId: string
+  ): Promise<Attachment> {
+    const result = await db
+      .update(attachments)
+      .set(metadata)
+      .where(and(
+        eq(attachments.id, attachmentId),
+        eq(attachments.userId, userId),
+        isNull(attachments.deletedAt)
+      ))
+      .returning();
+    
+    if (result.length === 0) {
+      throw new Error('Attachment not found or access denied');
+    }
+    
+    return result[0];
+  }
+
+  async deleteAttachment(attachmentId: string, userId: string): Promise<void> {
+    await db
+      .update(attachments)
+      .set({ deletedAt: new Date() })
+      .where(and(
+        eq(attachments.id, attachmentId),
+        eq(attachments.userId, userId)
+      ));
+  }
+
+  async getAttachmentById(attachmentId: string, userId: string): Promise<Attachment | undefined> {
+    const [result] = await db
+      .select()
+      .from(attachments)
+      .where(and(
+        eq(attachments.id, attachmentId),
+        eq(attachments.userId, userId),
+        isNull(attachments.deletedAt)
+      ))
+      .limit(1);
+    return result;
+  }
+
+  // Attachment audit operations
+  async createAttachmentAudit(audit: InsertAttachmentAudit): Promise<AttachmentAudit> {
+    const [result] = await db.insert(attachmentAudit).values(audit).returning();
+    return result;
+  }
+
+  async getAttachmentAuditTrail(attachmentId: string): Promise<AttachmentAudit[]> {
+    return await db
+      .select()
+      .from(attachmentAudit)
+      .where(eq(attachmentAudit.attachmentId, attachmentId))
+      .orderBy(desc(attachmentAudit.createdAt));
+  }
 }
 
 // In-memory storage fallback implementation
@@ -831,6 +928,8 @@ export class MemoryStorage implements IStorage {
   private aiConfigs = new Map<string, AiInsightConfig>();
   private exposureSnapshots = new Map<string, ExposureSnapshot>();
   private transactions = new Map<string, Transaction>();
+  private attachments = new Map<string, Attachment>();
+  private attachmentAudits = new Map<string, AttachmentAudit>();
 
   constructor() {
     // Initialize with default Saudi banks
@@ -1541,6 +1640,79 @@ export class MemoryStorage implements IStorage {
   async accrueInterest(loanId: string, toDate: string, userId: string): Promise<Transaction[]> {
     // Simple interest accrual for memory storage
     return [];
+  }
+
+  // Attachment operations
+  async getAttachmentsByOwner(ownerType: AttachmentOwnerType, ownerId: string, userId: string): Promise<Attachment[]> {
+    return Array.from(this.attachments.values())
+      .filter(attachment => 
+        attachment.ownerType === ownerType &&
+        attachment.ownerId === ownerId &&
+        attachment.userId === userId &&
+        !attachment.deletedAt
+      )
+      .sort((a, b) => (b.createdAt?.getTime() || 0) - (a.createdAt?.getTime() || 0));
+  }
+
+  async createAttachment(attachment: InsertAttachment): Promise<Attachment> {
+    const newAttachment: Attachment = {
+      ...attachment,
+      id: this.generateId(),
+      createdAt: new Date(),
+      deletedAt: null,
+    };
+    this.attachments.set(newAttachment.id, newAttachment);
+    return newAttachment;
+  }
+
+  async updateAttachmentMetadata(
+    attachmentId: string, 
+    metadata: Partial<Pick<InsertAttachment, 'category' | 'tags' | 'description'>>, 
+    userId: string
+  ): Promise<Attachment> {
+    const attachment = this.attachments.get(attachmentId);
+    if (!attachment || attachment.userId !== userId || attachment.deletedAt) {
+      throw new Error('Attachment not found or access denied');
+    }
+    
+    const updatedAttachment = { ...attachment, ...metadata };
+    this.attachments.set(attachmentId, updatedAttachment);
+    return updatedAttachment;
+  }
+
+  async deleteAttachment(attachmentId: string, userId: string): Promise<void> {
+    const attachment = this.attachments.get(attachmentId);
+    if (!attachment || attachment.userId !== userId) {
+      return; // Silent fail for consistency with database behavior
+    }
+    
+    const deletedAttachment = { ...attachment, deletedAt: new Date() };
+    this.attachments.set(attachmentId, deletedAttachment);
+  }
+
+  async getAttachmentById(attachmentId: string, userId: string): Promise<Attachment | undefined> {
+    const attachment = this.attachments.get(attachmentId);
+    if (!attachment || attachment.userId !== userId || attachment.deletedAt) {
+      return undefined;
+    }
+    return attachment;
+  }
+
+  // Attachment audit operations
+  async createAttachmentAudit(audit: InsertAttachmentAudit): Promise<AttachmentAudit> {
+    const newAudit: AttachmentAudit = {
+      ...audit,
+      id: this.generateId(),
+      createdAt: new Date(),
+    };
+    this.attachmentAudits.set(newAudit.id, newAudit);
+    return newAudit;
+  }
+
+  async getAttachmentAuditTrail(attachmentId: string): Promise<AttachmentAudit[]> {
+    return Array.from(this.attachmentAudits.values())
+      .filter(audit => audit.attachmentId === attachmentId)
+      .sort((a, b) => (b.createdAt?.getTime() || 0) - (a.createdAt?.getTime() || 0));
   }
 }
 
