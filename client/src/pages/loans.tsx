@@ -107,6 +107,7 @@ export default function Loans() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/loans"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/loans", "settled"] });
       queryClient.invalidateQueries({ queryKey: ["/api/dashboard/portfolio"] });
       
       // Automatically switch to settled loans tab

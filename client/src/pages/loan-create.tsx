@@ -142,6 +142,7 @@ export default function LoanCreatePage() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/loans"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/loans", "settled"] });
       queryClient.invalidateQueries({ queryKey: ["/api/dashboard/portfolio"] });
       toast({
         title: "Success",
