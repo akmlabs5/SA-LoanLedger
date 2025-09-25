@@ -521,14 +521,29 @@ export class DatabaseStorage implements IStorage {
     return newLoan;
   }
 
-  async getLoanById(loanId: string): Promise<Loan | undefined> {
+  async getLoanById(loanId: string): Promise<(Loan & { creditLine: CreditLine & { facility: Facility & { bank: Bank } } }) | undefined> {
     const result = await db
       .select()
       .from(loans)
+      .innerJoin(creditLines, eq(loans.creditLineId, creditLines.id))
+      .innerJoin(facilities, eq(creditLines.facilityId, facilities.id))
+      .innerJoin(banks, eq(facilities.bankId, banks.id))
       .where(eq(loans.id, loanId))
       .limit(1);
     
-    return result.length > 0 ? result[0] : undefined;
+    if (result.length === 0) return undefined;
+    
+    const row = result[0];
+    return {
+      ...row.loans,
+      creditLine: {
+        ...row.credit_lines,
+        facility: {
+          ...row.facilities,
+          bank: row.banks,
+        },
+      },
+    };
   }
 
   async updateLoan(loanId: string, loan: Partial<InsertLoan>): Promise<Loan> {
