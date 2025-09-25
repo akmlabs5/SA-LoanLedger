@@ -433,7 +433,7 @@ export default function BankDetail() {
                         <div className="flex justify-end space-x-2 mt-4 pt-3 border-t border-gray-200 dark:border-gray-700">
                           <Button 
                             variant="outline" 
-                            size="default"
+                            size="sm"
                             onClick={() => setLocation(`/banks/${bankId}/facilities/${facility.id}/edit`)}
                             className="min-h-[44px] min-w-[100px] touch-manipulation"
                             data-testid={`button-edit-facility-${facility.id}`}
