@@ -38,7 +38,7 @@ export default function LoanEditPage() {
 
   // Fetch loan details for editing
   const { data: loan, isLoading: loanLoading } = useQuery({
-    queryKey: ["/api/loans", loanId],
+    queryKey: [`/api/loans/${loanId}`],
     enabled: !!loanId,
   });
 

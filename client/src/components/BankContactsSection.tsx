@@ -48,7 +48,7 @@ export default function BankContactsSection({ bankId, bankName, isAuthenticated 
 
   // Query for bank contacts
   const { data: bankContacts, isLoading: contactsLoading } = useQuery({
-    queryKey: ["/api/banks", bankId, "contacts"],
+    queryKey: [`/api/banks/${bankId}/contacts`],
     enabled: isAuthenticated && !!bankId,
   });
 

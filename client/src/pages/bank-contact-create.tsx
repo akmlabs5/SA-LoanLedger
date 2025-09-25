@@ -41,7 +41,7 @@ export default function BankContactCreatePage() {
 
   // Get bank details for context
   const { data: bank } = useQuery<{id: string; name: string; code: string; type?: string}>({
-    queryKey: ["/api/banks", bankId],
+    queryKey: [`/api/banks/${bankId}`],
     enabled: isAuthenticated && !!bankId,
   });
 
