@@ -18,15 +18,15 @@ import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { insertLoanSchema } from "@shared/schema";
 
-const loanFormSchema = insertLoanSchema.omit({ 
-  userId: true, 
-  facilityId: true, 
-  creditLineId: true,
-  siborRate: true, // Auto-calculated
-  dailyInterestAmount: true, // Auto-calculated
-  parentLoanId: true,
-  settledAmount: true,
-  settledDate: true
+const loanFormSchema = z.object({
+  referenceNumber: z.string().min(1, "Reference number is required"),
+  amount: z.string().min(1, "Amount is required"),
+  bankRate: z.string().min(1, "Bank rate is required"),
+  startDate: z.string().min(1, "Start date is required"),
+  dueDate: z.string().min(1, "Due date is required"),
+  purpose: z.string().optional(),
+  status: z.enum(["active", "settled", "overdue"]),
+  notes: z.string().optional(),
 });
 
 type LoanFormData = z.infer<typeof loanFormSchema>;
