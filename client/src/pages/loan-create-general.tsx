@@ -9,6 +9,7 @@ import { insertLoanSchema, Facility, Bank, Loan, CreditLine } from "@shared/sche
 import { SiborRate } from "@shared/types";
 import { z } from "zod";
 import { useEffect, useMemo, useState } from "react";
+import React from "react";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -47,6 +48,7 @@ const loanFormSchema = z.object({
   chargesDueDate: z.string().optional(),
   siborRate: z.string().min(1, "SIBOR rate is required"),
   siborTerm: z.string().optional(),
+  customSiborMonths: z.string().optional(),
   purpose: z.string().optional(),
   status: z.enum(["active", "settled", "overdue"]).default("active"),
   notes: z.string().optional(),
@@ -58,6 +60,7 @@ export default function GeneralLoanCreatePage() {
   const [, setLocation] = useLocation();
   const { isAuthenticated, isLoading } = useAuth();
   const { toast } = useToast();
+  const [siborInputMode, setSiborInputMode] = useState<"standard" | "custom">("standard");
 
   // Get facilities and banks for selection
   const { data: facilities, isLoading: facilitiesLoading } = useQuery<Array<Facility & { bank: Bank }>>({
@@ -100,13 +103,14 @@ export default function GeneralLoanCreatePage() {
       chargesDueDate: "",
       siborRate: siborData?.rate?.toString() || "",
       siborTerm: "3M",
+      customSiborMonths: "",
       notes: "",
     },
   });
 
   // Update SIBOR rate when data loads
-  useEffect(() => {
-    if (siborData?.rate) {
+  React.useEffect(() => {
+    if (siborData?.rate && !form.getValues('siborRate')) {
       form.setValue("siborRate", siborData.rate.toString());
     }
   }, [siborData, form]);
@@ -171,13 +175,25 @@ export default function GeneralLoanCreatePage() {
 
   const createLoanMutation = useMutation({
     mutationFn: async (data: LoanFormData) => {
+      const facilityMargin = selectedFacility?.costOfFunding || "0";
+      
+      // Ensure all numeric fields are converted to strings for API
       const loanData = {
         ...data,
-        amount: parseFloat(data.amount),
-        siborRate: parseFloat(data.siborRate),
-        bankRate: selectedFacility ? parseFloat(selectedFacility.costOfFunding) : 0,
+        amount: data.amount.toString(), // Convert to string
+        siborRate: data.siborRate.toString(), // Convert to string
+        margin: facilityMargin.toString(), // Ensure margin is set as string
+        bankRate: (parseFloat(data.siborRate) + parseFloat(facilityMargin)).toString(),
         creditLineId: data.creditLineId === "auto-assign" ? undefined : data.creditLineId,
+        // Convert custom months to siborTermMonths for backend
+        siborTermMonths: data.customSiborMonths ? parseInt(data.customSiborMonths) : 
+                        data.siborTerm === "1M" ? 1 :
+                        data.siborTerm === "2M" ? 2 :
+                        data.siborTerm === "3M" ? 3 :
+                        data.siborTerm === "6M" ? 6 :
+                        data.siborTerm === "12M" ? 12 : 3,
       };
+      
       return apiRequest('POST', '/api/loans', loanData);
     },
     onSuccess: () => {
