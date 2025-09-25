@@ -28,16 +28,31 @@ export default function LoanDetailPage() {
     enabled: !!loanId && isAuthenticated,
   });
 
-  // Fetch loan balance (only when Analysis tab is active)
-  const { data: balance } = useQuery({
+  // Fetch loan balance (prefetch and cache for better performance)
+  const { data: balance, isLoading: balanceLoading } = useQuery({
     queryKey: ["/api/loans", loanId, "balance"],
-    enabled: !!loanId && isAuthenticated && activeTab === "analysis",
+    enabled: !!loanId && isAuthenticated,
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    gcTime: 15 * 60 * 1000, // 15 minutes
+    refetchOnWindowFocus: false,
   });
 
-  // Fetch loan transaction history (only when Transactions tab is active)
-  const { data: transactions } = useQuery({
+  // Fetch loan transaction history (prefetch and cache for better performance)
+  const { data: transactions, isLoading: transactionsLoading } = useQuery({
     queryKey: ["/api/loans", loanId, "ledger"],
-    enabled: !!loanId && isAuthenticated && activeTab === "transactions",
+    enabled: !!loanId && isAuthenticated,
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    gcTime: 15 * 60 * 1000, // 15 minutes
+    refetchOnWindowFocus: false,
+  });
+
+  // Fetch documents for the Documents tab
+  const { data: documents, isLoading: documentsLoading } = useQuery({
+    queryKey: ["/api/documents", "loan", loanId],
+    enabled: !!loanId && isAuthenticated,
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    gcTime: 15 * 60 * 1000, // 15 minutes
+    refetchOnWindowFocus: false,
   });
 
   // Settlement mutation
@@ -260,15 +275,50 @@ export default function LoanDetailPage() {
               <CardContent className="p-0">
                 <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
                   <TabsList className="grid w-full grid-cols-3">
-                    <TabsTrigger value="transactions">Transaction History</TabsTrigger>
-                    <TabsTrigger value="documents">Documents</TabsTrigger>
-                    <TabsTrigger value="analysis">Analysis</TabsTrigger>
+                    <TabsTrigger 
+                      value="transactions"
+                      onMouseEnter={() => {
+                        // Prefetch transaction data on hover
+                        queryClient.prefetchQuery({
+                          queryKey: ["/api/loans", loanId, "ledger"],
+                        });
+                      }}
+                    >
+                      Transaction History
+                    </TabsTrigger>
+                    <TabsTrigger 
+                      value="documents"
+                      onMouseEnter={() => {
+                        // Prefetch documents data on hover
+                        queryClient.prefetchQuery({
+                          queryKey: ["/api/documents", "loan", loanId],
+                        });
+                      }}
+                    >
+                      Documents
+                    </TabsTrigger>
+                    <TabsTrigger 
+                      value="analysis"
+                      onMouseEnter={() => {
+                        // Prefetch balance data on hover
+                        queryClient.prefetchQuery({
+                          queryKey: ["/api/loans", loanId, "balance"],
+                        });
+                      }}
+                    >
+                      Analysis
+                    </TabsTrigger>
                   </TabsList>
                   
                   <TabsContent value="transactions" className="p-6">
                     <div className="space-y-4">
                       <h3 className="text-lg font-semibold">Transaction History</h3>
-                      {transactions && transactions.length > 0 ? (
+                      {transactionsLoading ? (
+                        <div className="text-center py-8">
+                          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600 mx-auto mb-4"></div>
+                          <p className="text-gray-600">Loading transactions...</p>
+                        </div>
+                      ) : transactions && transactions.length > 0 ? (
                         <div className="space-y-3">
                           {transactions.map((transaction: any) => (
                             <div key={transaction.id} className="flex items-center justify-between p-3 border rounded-lg">
@@ -304,45 +354,61 @@ export default function LoanDetailPage() {
                     <div className="space-y-6">
                       <h3 className="text-lg font-semibold">Related Documents</h3>
                       
-                      {/* Document Upload */}
-                      <DocumentUpload 
-                        entityType="loan"
-                        entityId={loan.id}
-                        onUploadComplete={() => {
-                          queryClient.invalidateQueries({ queryKey: ["/api/documents", "loan", loan.id] });
-                        }}
-                      />
-                      
-                      {/* Document List */}
-                      <DocumentList 
-                        entityType="loan"
-                        entityId={loan.id}
-                        showUpload={false}
-                      />
+                      {documentsLoading ? (
+                        <div className="text-center py-8">
+                          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600 mx-auto mb-4"></div>
+                          <p className="text-gray-600">Loading documents...</p>
+                        </div>
+                      ) : (
+                        <>
+                          {/* Document Upload */}
+                          <DocumentUpload 
+                            entityType="loan"
+                            entityId={loan.id}
+                            onUploadComplete={() => {
+                              queryClient.invalidateQueries({ queryKey: ["/api/documents", "loan", loan.id] });
+                            }}
+                          />
+                          
+                          {/* Document List */}
+                          <DocumentList 
+                            entityType="loan"
+                            entityId={loan.id}
+                            showUpload={false}
+                          />
+                        </>
+                      )}
                     </div>
                   </TabsContent>
                   
                   <TabsContent value="analysis" className="p-6">
                     <div className="space-y-4">
                       <h3 className="text-lg font-semibold">Loan Analysis</h3>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div className="p-4 border rounded-lg">
-                          <div className="flex items-center space-x-2 mb-2">
-                            <TrendingUp className="h-4 w-4 text-emerald-500" />
-                            <span className="font-medium">Days to Maturity</span>
-                          </div>
-                          <p className="text-2xl font-bold">{urgency.days}</p>
+                      {balanceLoading ? (
+                        <div className="text-center py-8">
+                          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600 mx-auto mb-4"></div>
+                          <p className="text-gray-600">Loading analysis...</p>
                         </div>
-                        <div className="p-4 border rounded-lg">
-                          <div className="flex items-center space-x-2 mb-2">
-                            <DollarSign className="h-4 w-4 text-blue-500" />
-                            <span className="font-medium">Current Balance</span>
+                      ) : (
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <div className="p-4 border rounded-lg">
+                            <div className="flex items-center space-x-2 mb-2">
+                              <TrendingUp className="h-4 w-4 text-emerald-500" />
+                              <span className="font-medium">Days to Maturity</span>
+                            </div>
+                            <p className="text-2xl font-bold">{urgency.days}</p>
                           </div>
-                          <p className="text-2xl font-bold">
-                            {balance ? formatCurrency(balance.total) : formatCurrency(parseFloat(loan.amount))}
-                          </p>
+                          <div className="p-4 border rounded-lg">
+                            <div className="flex items-center space-x-2 mb-2">
+                              <DollarSign className="h-4 w-4 text-blue-500" />
+                              <span className="font-medium">Current Balance</span>
+                            </div>
+                            <p className="text-2xl font-bold">
+                              {balance ? formatCurrency(balance.total) : formatCurrency(parseFloat(loan.amount))}
+                            </p>
+                          </div>
                         </div>
-                      </div>
+                      )}
                     </div>
                   </TabsContent>
                 </Tabs>
