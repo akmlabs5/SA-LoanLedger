@@ -103,7 +103,7 @@ export default function Loans() {
 
   const settleLoanMutation = useMutation({
     mutationFn: async ({ loanId, settledAmount }: { loanId: string; settledAmount: number }) => {
-      await apiRequest("PUT", `/api/loans/${loanId}/settle`, { 
+      await apiRequest("POST", `/api/loans/${loanId}/settle`, { 
         date: new Date().toISOString().split('T')[0], // Today's date in YYYY-MM-DD format
         amount: settledAmount.toString(), // Convert to string as required by schema
         memo: "Loan settlement via Settle Loan button"
