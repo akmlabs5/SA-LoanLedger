@@ -27,6 +27,7 @@ import {
   TrendingUp,
   CheckCircle
 } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Link } from "wouter";
 
 const loanFormSchema = z.object({
@@ -42,6 +43,7 @@ const loanFormSchema = z.object({
   chargesDueDate: z.string().optional(),
   siborRate: z.string().min(1, "SIBOR rate is required"),
   siborTerm: z.string().optional(),
+  customSiborMonths: z.string().optional(),
   purpose: z.string().optional(),
   status: z.enum(["active", "settled", "overdue"]).default("active"),
   notes: z.string().optional(),
@@ -53,6 +55,7 @@ export default function LoanCreatePage() {
   const { bankId } = useParams();
   const [, setLocation] = useLocation();
   const { toast } = useToast();
+  const [siborInputMode, setSiborInputMode] = useState<"standard" | "custom">("standard");
 
   const { data: banks } = useQuery<Array<Bank>>({
     queryKey: ["/api/banks"],
@@ -97,6 +100,7 @@ export default function LoanCreatePage() {
       chargesDueDate: undefined,
       siborRate: siborRate?.rate?.toString() || "",
       siborTerm: "3M",
+      customSiborMonths: "",
       notes: "",
     },
   });
@@ -114,6 +118,13 @@ export default function LoanCreatePage() {
         siborRate: data.siborRate,
         margin: facilityMargin,
         bankRate: (parseFloat(data.siborRate) + parseFloat(facilityMargin)).toString(),
+        // Convert custom months to siborTermMonths for backend
+        siborTermMonths: data.customSiborMonths ? parseInt(data.customSiborMonths) : 
+                        data.siborTerm === "1M" ? 1 :
+                        data.siborTerm === "2M" ? 2 :
+                        data.siborTerm === "3M" ? 3 :
+                        data.siborTerm === "6M" ? 6 :
+                        data.siborTerm === "12M" ? 12 : 3,
       };
       const response = await fetch('/api/loans', {
         method: 'POST',
@@ -357,59 +368,156 @@ export default function LoanCreatePage() {
                       )}
                     />
 
-                    {/* Quick Term Selection */}
+                    {/* SIBOR Terms Configuration */}
                     {form.watch("startDate") && (
                       <div className="p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
                         <div className="flex items-center gap-2 mb-3">
                           <Calendar className="h-4 w-4 text-blue-600" />
-                          <h4 className="font-medium text-blue-800 dark:text-blue-200">Quick Term Selection</h4>
+                          <h4 className="font-medium text-blue-800 dark:text-blue-200">SIBOR Terms & Due Date Calculator</h4>
                         </div>
-                        <p className="text-sm text-blue-700 dark:text-blue-300 mb-3">
-                          Select a standard term to auto-calculate due date, or set manually below:
-                        </p>
-                        <div className="flex flex-wrap gap-2">
-                          {[
-                            { days: 30, label: "30 Days", siborTerm: "1M", siborRate: "5.25" },
-                            { days: 60, label: "60 Days", siborTerm: "3M", siborRate: "5.35" }, 
-                            { days: 90, label: "90 Days", siborTerm: "3M", siborRate: "5.45" },
-                            { days: 180, label: "180 Days", siborTerm: "6M", siborRate: "5.65" },
-                            { days: 360, label: "360 Days", siborTerm: "12M", siborRate: "5.85" }
-                          ].map(({ days, label, siborTerm, siborRate }) => {
-                            const startDate = new Date(form.watch("startDate"));
-                            const dueDate = new Date(startDate);
-                            dueDate.setDate(startDate.getDate() + days);
-                            
-                            // Saudi business day adjustment (Friday=5, Saturday=6)
-                            while (dueDate.getDay() === 5 || dueDate.getDay() === 6) {
-                              dueDate.setDate(dueDate.getDate() + 1);
-                            }
-                            
-                            const dueDateString = dueDate.toISOString().split('T')[0];
-                            const isSelected = form.watch("dueDate") === dueDateString;
-                            
-                            return (
-                              <Button
-                                key={days}
-                                type="button"
-                                variant={isSelected ? "default" : "outline"}
-                                size="sm"
-                                className={`text-xs hover:bg-blue-100 dark:hover:bg-blue-900/30 flex-col h-auto py-2 px-3 ${isSelected ? "bg-blue-600 text-white" : ""}`}
-                                onClick={() => {
-                                  form.setValue("dueDate", dueDateString);
-                                  form.setValue("siborTerm", siborTerm);
-                                  form.setValue("siborRate", siborRate);
-                                }}
-                                data-testid={`button-${days}-days`}
-                              >
-                                <span>{label}</span>
-                                <span className="text-xs opacity-75 mt-1">
-                                  {dueDate.toLocaleDateString('en-SA')}
-                                </span>
-                              </Button>
-                            );
-                          })}
-                        </div>
-                        <p className="text-xs text-blue-600 dark:text-blue-400 mt-2">
+                        
+                        <Tabs value={siborInputMode} onValueChange={(value) => {
+                          setSiborInputMode(value as "standard" | "custom");
+                          // Clear conflicting fields when switching modes
+                          if (value === "standard") {
+                            form.setValue("customSiborMonths", "");
+                          } else {
+                            // Clear standard term selections by resetting to default
+                            form.setValue("siborTerm", "");
+                          }
+                        }} className="w-full">
+                          <TabsList className="grid w-full grid-cols-2">
+                            <TabsTrigger value="standard" data-testid="tab-standard-terms">Standard Terms</TabsTrigger>
+                            <TabsTrigger value="custom" data-testid="tab-custom-terms">Custom Terms</TabsTrigger>
+                          </TabsList>
+                          
+                          <TabsContent value="standard" className="mt-4">
+                            <p className="text-sm text-blue-700 dark:text-blue-300 mb-3">
+                              Select a standard SIBOR term to auto-calculate due date:
+                            </p>
+                            <div className="flex flex-wrap gap-2">
+                              {[
+                                { days: 30, label: "30 Days", siborTerm: "1M", siborRate: "5.25" },
+                                { days: 60, label: "60 Days", siborTerm: "2M", siborRate: "5.35" }, 
+                                { days: 90, label: "90 Days", siborTerm: "3M", siborRate: "5.45" },
+                                { days: 180, label: "180 Days", siborTerm: "6M", siborRate: "5.65" },
+                                { days: 360, label: "360 Days", siborTerm: "12M", siborRate: "5.85" }
+                              ].map(({ days, label, siborTerm, siborRate }) => {
+                                const startDate = new Date(form.watch("startDate"));
+                                const dueDate = new Date(startDate);
+                                dueDate.setDate(startDate.getDate() + days);
+                                
+                                // Saudi business day adjustment (Friday=5, Saturday=6)
+                                while (dueDate.getDay() === 5 || dueDate.getDay() === 6) {
+                                  dueDate.setDate(dueDate.getDate() + 1);
+                                }
+                                
+                                const dueDateString = dueDate.toISOString().split('T')[0];
+                                const isSelected = form.watch("dueDate") === dueDateString;
+                                
+                                return (
+                                  <Button
+                                    key={days}
+                                    type="button"
+                                    variant={isSelected ? "default" : "outline"}
+                                    size="sm"
+                                    className={`text-xs hover:bg-blue-100 dark:hover:bg-blue-900/30 flex-col h-auto py-2 px-3 ${isSelected ? "bg-blue-600 text-white" : ""}`}
+                                    onClick={() => {
+                                      form.setValue("dueDate", dueDateString);
+                                      form.setValue("siborTerm", siborTerm);
+                                      form.setValue("siborRate", siborRate);
+                                      form.setValue("customSiborMonths", "");
+                                    }}
+                                    data-testid={`button-${days}-days`}
+                                  >
+                                    <span>{label}</span>
+                                    <span className="text-xs opacity-75 mt-1">
+                                      {dueDate.toLocaleDateString('en-SA')}
+                                    </span>
+                                  </Button>
+                                );
+                              })}
+                            </div>
+                          </TabsContent>
+                          
+                          <TabsContent value="custom" className="mt-4">
+                            <p className="text-sm text-blue-700 dark:text-blue-300 mb-3">
+                              Enter custom SIBOR term for non-standard loan durations:
+                            </p>
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                              <FormField
+                                control={form.control}
+                                name="customSiborMonths"
+                                render={({ field }) => (
+                                  <FormItem>
+                                    <FormLabel>Custom Term (Months)</FormLabel>
+                                    <FormControl>
+                                      <Input 
+                                        type="number" 
+                                        min="1" 
+                                        max="60" 
+                                        placeholder="e.g., 2" 
+                                        {...field} 
+                                        data-testid="input-custom-months"
+                                        onChange={(e) => {
+                                          field.onChange(e);
+                                          const months = parseInt(e.target.value);
+                                          if (months && form.watch("startDate")) {
+                                            const startDate = new Date(form.watch("startDate"));
+                                            const dueDate = new Date(startDate);
+                                            dueDate.setMonth(startDate.getMonth() + months);
+                                            
+                                            // Saudi business day adjustment
+                                            while (dueDate.getDay() === 5 || dueDate.getDay() === 6) {
+                                              dueDate.setDate(dueDate.getDate() + 1);
+                                            }
+                                            
+                                            const dueDateString = dueDate.toISOString().split('T')[0];
+                                            form.setValue("dueDate", dueDateString);
+                                            form.setValue("siborTerm", `${months}M`);
+                                            
+                                            // Estimate SIBOR rate based on term length
+                                            let estimatedRate = "5.75";
+                                            if (months <= 1) estimatedRate = "5.25";
+                                            else if (months <= 3) estimatedRate = "5.45";
+                                            else if (months <= 6) estimatedRate = "5.65";
+                                            else if (months <= 12) estimatedRate = "5.85";
+                                            else estimatedRate = "6.05";
+                                            
+                                            form.setValue("siborRate", estimatedRate);
+                                          }
+                                        }}
+                                      />
+                                    </FormControl>
+                                    <FormMessage />
+                                  </FormItem>
+                                )}
+                              />
+                              <div className="text-sm text-blue-700 dark:text-blue-300 flex flex-col justify-center">
+                                {form.watch("customSiborMonths") && form.watch("dueDate") && (
+                                  <>
+                                    <p className="font-medium">Calculated Due Date:</p>
+                                    <p className="text-blue-800 dark:text-blue-200">
+                                      {new Date(form.watch("dueDate")).toLocaleDateString('en-SA')}
+                                    </p>
+                                  </>
+                                )}
+                              </div>
+                              <div className="text-sm text-blue-700 dark:text-blue-300 flex flex-col justify-center">
+                                {form.watch("customSiborMonths") && form.watch("siborRate") && (
+                                  <>
+                                    <p className="font-medium">Estimated SIBOR:</p>
+                                    <p className="text-blue-800 dark:text-blue-200">
+                                      {form.watch("siborRate")}%
+                                    </p>
+                                  </>
+                                )}
+                              </div>
+                            </div>
+                          </TabsContent>
+                        </Tabs>
+                        
+                        <p className="text-xs text-blue-600 dark:text-blue-400 mt-3">
                           Dates auto-adjust for Saudi weekends (Friday-Saturday)
                         </p>
                       </div>
@@ -451,9 +559,16 @@ export default function LoanCreatePage() {
                               </FormControl>
                               <SelectContent>
                                 <SelectItem value="1M">1 Month</SelectItem>
+                                <SelectItem value="2M">2 Months</SelectItem>
                                 <SelectItem value="3M">3 Months</SelectItem>
                                 <SelectItem value="6M">6 Months</SelectItem>
                                 <SelectItem value="12M">12 Months</SelectItem>
+                                {/* Show custom term if it doesn't match standard options */}
+                                {field.value && !["1M", "2M", "3M", "6M", "12M"].includes(field.value) && (
+                                  <SelectItem value={field.value}>
+                                    {field.value} (Custom)
+                                  </SelectItem>
+                                )}
                               </SelectContent>
                             </Select>
                             <FormMessage />
