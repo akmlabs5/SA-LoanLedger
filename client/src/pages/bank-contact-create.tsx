@@ -26,7 +26,8 @@ import {
   MapPin,
   Star,
   Save,
-  X
+  X,
+  AlertCircle
 } from "lucide-react";
 
 import { Link } from "wouter";
@@ -50,7 +51,7 @@ export default function BankContactCreatePage() {
   const { toast } = useToast();
 
   // Get bank details for context
-  const { data: bank } = useQuery<{id: string; name: string; code: string; type?: string}>({
+  const { data: bank, isLoading: bankLoading, isError: bankError } = useQuery<{id: string; name: string; code: string; type?: string}>({
     queryKey: [`/api/banks/${bankId}`],
     enabled: isAuthenticated && !!bankId,
   });
@@ -95,16 +96,45 @@ export default function BankContactCreatePage() {
     createContactMutation.mutate(data);
   };
 
-  if (isLoading || !bank) {
+  // Loading states
+  if (isLoading || bankLoading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary"></div>
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-primary mx-auto mb-4"></div>
+          <h2 className="text-2xl font-bold mb-2">Loading Bank Contact</h2>
+          <p className="text-muted-foreground">Please wait...</p>
+        </div>
       </div>
     );
   }
 
   if (!isAuthenticated) {
     return null;
+  }
+
+  // Error state
+  if (bankError || !bank) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-center">
+          <AlertCircle className="h-16 w-16 text-destructive mx-auto mb-4" />
+          <h2 className="text-2xl font-bold mb-2">Bank Not Found</h2>
+          <p className="text-muted-foreground mb-4">
+            {bankError ? "Failed to load bank details" : "The specified bank doesn't exist"}
+          </p>
+          <div className="flex gap-4 justify-center">
+            <Button onClick={() => setLocation("/banks")} variant="outline">
+              <ArrowLeft className="mr-2 h-4 w-4" />
+              Back to Banks
+            </Button>
+            <Button onClick={() => window.location.reload()}>
+              Try Again
+            </Button>
+          </div>
+        </div>
+      </div>
+    );
   }
 
   return (

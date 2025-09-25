@@ -45,13 +45,13 @@ export default function FacilityEditPage() {
   const { toast } = useToast();
 
   // Fetch bank details for context
-  const { data: bank } = useQuery<{ id: string; name: string; code: string }>({
+  const { data: bank, isLoading: bankLoading, isError: bankError } = useQuery<{ id: string; name: string; code: string }>({
     queryKey: [`/api/banks/${bankId}`],
     enabled: !!bankId,
   });
 
   // Fetch facility details for editing
-  const { data: facility, isLoading: facilityLoading } = useQuery({
+  const { data: facility, isLoading: facilityLoading, isError: facilityError } = useQuery({
     queryKey: [`/api/facilities/${facilityId}`],
     enabled: !!facilityId,
   });
@@ -111,13 +111,38 @@ export default function FacilityEditPage() {
     updateFacilityMutation.mutate(data);
   };
 
-  if (facilityLoading || !bank) {
+  // Loading state
+  if (facilityLoading || bankLoading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-50 to-gray-100 dark:from-gray-900 dark:to-slate-900 flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-indigo-600 mx-auto mb-4"></div>
           <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">Loading Facility</h2>
           <p className="text-gray-600 dark:text-gray-400">Please wait...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Error state
+  if (bankError || facilityError || !bank || !facility) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-gray-100 dark:from-gray-900 dark:to-slate-900 flex items-center justify-center">
+        <div className="text-center">
+          <AlertCircle className="h-16 w-16 text-destructive mx-auto mb-4" />
+          <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">Error Loading Facility</h2>
+          <p className="text-gray-600 dark:text-gray-400 mb-4">
+            {bankError ? "Bank not found" : facilityError ? "Facility not found" : "Data not available"}
+          </p>
+          <div className="flex gap-4 justify-center">
+            <Button onClick={() => setLocation("/banks")} variant="outline">
+              <ArrowLeft className="mr-2 h-4 w-4" />
+              Back to Banks
+            </Button>
+            <Button onClick={() => window.location.reload()}>
+              Try Again
+            </Button>
+          </div>
         </div>
       </div>
     );

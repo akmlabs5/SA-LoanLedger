@@ -107,11 +107,13 @@ export default function LoanCreatePage() {
 
   const createLoanMutation = useMutation({
     mutationFn: async (data: LoanFormData) => {
+      const facilityMargin = selectedFacility?.costOfFunding || "0";
       const loanData = {
         ...data,
-        amount: parseFloat(data.amount),
-        siborRate: parseFloat(data.siborRate),
-        bankRate: selectedFacility ? parseFloat(selectedFacility.costOfFunding) : 0,
+        amount: data.amount,
+        siborRate: data.siborRate,
+        margin: facilityMargin,
+        bankRate: (parseFloat(data.siborRate) + parseFloat(facilityMargin)).toString(),
       };
       const response = await fetch('/api/loans', {
         method: 'POST',

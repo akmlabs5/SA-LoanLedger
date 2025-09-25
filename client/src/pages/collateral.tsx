@@ -120,6 +120,10 @@ export default function CollateralPage() {
     }
   };
 
+  const handleEdit = (asset: any) => {
+    setLocation(`/collateral/${asset.id}/edit`);
+  };
+
   return (
     <div className="min-h-screen bg-background">
       {/* Navigation Header */}
