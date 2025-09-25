@@ -179,6 +179,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Get single facility by ID
+  app.get('/api/facilities/:facilityId', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const { facilityId } = req.params;
+      
+      // Get facility with bank information  
+      const facility = await storage.getFacilityWithBank(facilityId);
+      
+      if (!facility) {
+        return res.status(404).json({ message: "Facility not found" });
+      }
+
+      // Verify user has access to this facility
+      if (facility.userId !== userId) {
+        return res.status(403).json({ message: "Access denied" });
+      }
+      
+      res.json(facility);
+    } catch (error) {
+      console.error("Error fetching facility:", error);
+      res.status(500).json({ message: "Failed to fetch facility" });
+    }
+  });
+
   app.put('/api/facilities/:facilityId', isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
