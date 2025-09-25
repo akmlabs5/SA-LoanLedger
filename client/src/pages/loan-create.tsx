@@ -1,4 +1,5 @@
 import { useState } from "react";
+import React from "react";
 import { useParams, useLocation } from "wouter";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -108,15 +109,24 @@ export default function LoanCreatePage() {
   // Watch facility selection
   const selectedFacilityId = form.watch("facilityId");
   const selectedFacility = bankFacilities.find(f => f.id === selectedFacilityId);
+  
+  // Update SIBOR rate when form loads
+  React.useEffect(() => {
+    if (siborRate?.rate && !form.getValues('siborRate')) {
+      form.setValue('siborRate', siborRate.rate.toString());
+    }
+  }, [siborRate, form]);
 
   const createLoanMutation = useMutation({
     mutationFn: async (data: LoanFormData) => {
       const facilityMargin = selectedFacility?.costOfFunding || "0";
+      
+      // Ensure all numeric fields are converted to strings for API
       const loanData = {
         ...data,
-        amount: data.amount,
-        siborRate: data.siborRate,
-        margin: facilityMargin,
+        amount: data.amount.toString(), // Convert to string
+        siborRate: data.siborRate.toString(), // Convert to string
+        margin: facilityMargin.toString(), // Ensure margin is set as string
         bankRate: (parseFloat(data.siborRate) + parseFloat(facilityMargin)).toString(),
         // Convert custom months to siborTermMonths for backend
         siborTermMonths: data.customSiborMonths ? parseInt(data.customSiborMonths) : 
@@ -126,15 +136,9 @@ export default function LoanCreatePage() {
                         data.siborTerm === "6M" ? 6 :
                         data.siborTerm === "12M" ? 12 : 3,
       };
-      const response = await fetch('/api/loans', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(loanData),
-      });
-      if (!response.ok) throw new Error('Failed to create loan');
-      return response.json();
+      
+      // Use apiRequest helper for consistency
+      return apiRequest('POST', '/api/loans', loanData);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/loans"] });
