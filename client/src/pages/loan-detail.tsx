@@ -255,7 +255,7 @@ export default function LoanDetailPage() {
                   </div>
                   <div>
                     <label className="text-sm font-medium text-muted-foreground">Status</label>
-                    <Badge className={loan.status === 'active' ? 'bg-blue-100 text-blue-800' : 'bg-emerald-100 text-emerald-800'}>
+                    <Badge className={`mt-2 px-3 py-1 ${loan.status === 'active' ? 'bg-blue-100 text-blue-800' : 'bg-emerald-100 text-emerald-800'}`}>
                       {loan.status}
                     </Badge>
                   </div>
