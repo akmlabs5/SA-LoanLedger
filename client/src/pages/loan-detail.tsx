@@ -20,23 +20,24 @@ export default function LoanDetailPage() {
   const [, setLocation] = useLocation();
   const { toast } = useToast();
   const { isAuthenticated } = useAuth();
+  const [activeTab, setActiveTab] = useState("transactions");
 
-  // Fetch loan details
+  // Fetch loan details (always needed for overview)
   const { data: loan, isLoading: loanLoading, isError: loanError } = useQuery({
     queryKey: ["/api/loans", loanId],
     enabled: !!loanId && isAuthenticated,
   });
 
-  // Fetch loan balance
+  // Fetch loan balance (only when Analysis tab is active)
   const { data: balance } = useQuery({
     queryKey: ["/api/loans", loanId, "balance"],
-    enabled: !!loanId && isAuthenticated,
+    enabled: !!loanId && isAuthenticated && activeTab === "analysis",
   });
 
-  // Fetch loan transaction history
+  // Fetch loan transaction history (only when Transactions tab is active)
   const { data: transactions } = useQuery({
     queryKey: ["/api/loans", loanId, "ledger"],
-    enabled: !!loanId && isAuthenticated,
+    enabled: !!loanId && isAuthenticated && activeTab === "transactions",
   });
 
   // Settlement mutation
@@ -256,7 +257,7 @@ export default function LoanDetailPage() {
             {/* Detailed Information Tabs */}
             <Card className="shadow-lg">
               <CardContent className="p-0">
-                <Tabs defaultValue="transactions" className="w-full">
+                <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
                   <TabsList className="grid w-full grid-cols-3">
                     <TabsTrigger value="transactions">Transaction History</TabsTrigger>
                     <TabsTrigger value="documents">Documents</TabsTrigger>

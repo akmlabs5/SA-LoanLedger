@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { Search, Filter, Download, Eye, Trash2, Edit, FileText, Image, File, Grid, List, MoreVertical } from 'lucide-react';
 
@@ -70,12 +70,32 @@ export default function DocumentList({
   const [searchTerm, setSearchTerm] = useState('');
   const [categoryFilter, setCategoryFilter] = useState<string>('all');
   const [viewMode, setViewMode] = useState<keyof typeof VIEW_MODES>('GRID');
+  const [isVisible, setIsVisible] = useState(false);
   const { toast } = useToast();
 
-  // Fetch documents
+  // Use intersection observer to detect when component becomes visible
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting) {
+          setIsVisible(true);
+        }
+      },
+      { threshold: 0.1 }
+    );
+
+    const element = document.getElementById(`document-list-${entityType}-${entityId}`);
+    if (element) {
+      observer.observe(element);
+    }
+
+    return () => observer.disconnect();
+  }, [entityType, entityId]);
+
+  // Fetch documents (only when visible)
   const { data: documents = [], isLoading, refetch } = useQuery({
     queryKey: ['/api/documents', entityType, entityId],
-    enabled: !!entityId,
+    enabled: !!entityId && isVisible,
   });
 
   // Delete document mutation
@@ -195,7 +215,7 @@ export default function DocumentList({
   }
 
   return (
-    <Card className={className}>
+    <Card className={className} id={`document-list-${entityType}-${entityId}`}>
       <CardHeader>
         <div className="flex items-center justify-between">
           <CardTitle className="flex items-center space-x-2">
