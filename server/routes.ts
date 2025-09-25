@@ -230,12 +230,59 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post('/api/collateral', isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
-      const collateralData = insertCollateralSchema.parse({ ...req.body, userId });
+      
+      // Extract assignment fields from request
+      const { facilityId, pledgeType, ...collateralFields } = req.body;
+      
+      // Validate required assignment fields
+      if (!facilityId) {
+        return res.status(400).json({ message: "Facility selection is required for collateral creation" });
+      }
+      
+      if (!pledgeType) {
+        return res.status(400).json({ message: "Pledge type is required for collateral creation" });
+      }
+      
+      // Validate collateral data
+      const collateralData = insertCollateralSchema.parse({ ...collateralFields, userId });
+      
+      // Validate user owns the facility
+      const userFacilities = await storage.getUserFacilities(userId);
+      const facility = userFacilities.find((f: any) => f.id === facilityId);
+      if (!facility) {
+        return res.status(403).json({ message: "Facility not found or access denied" });
+      }
+      
+      // Create collateral first
       const collateral = await storage.createCollateral(collateralData);
-      res.json(collateral);
+      
+      // Then immediately create the assignment (atomically)
+      try {
+        const assignmentData = {
+          collateralId: collateral.id,
+          facilityId,
+          pledgeType,
+          effectiveDate: new Date().toISOString().split('T')[0],
+          isActive: true,
+          userId
+        };
+        
+        await storage.createCollateralAssignment(assignmentData);
+        
+        res.json(collateral);
+      } catch (assignmentError) {
+        // If assignment fails, rollback the collateral creation
+        try {
+          await storage.deleteCollateral(collateral.id);
+        } catch (rollbackError) {
+          console.error("Failed to rollback collateral after assignment failure:", rollbackError);
+        }
+        throw assignmentError;
+      }
+      
     } catch (error) {
       console.error("Error creating collateral:", error);
-      res.status(400).json({ message: "Failed to create collateral" });
+      res.status(400).json({ message: "Failed to create collateral and assignment" });
     }
   });
 

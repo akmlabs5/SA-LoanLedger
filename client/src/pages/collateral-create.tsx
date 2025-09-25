@@ -49,6 +49,8 @@ const collateralFormSchema = z.object({
   valuationSource: z.string().optional(),
   notes: z.string().optional(),
   isActive: z.boolean().default(true),
+  facilityId: z.string().min(1, "Facility selection is required"),
+  pledgeType: z.enum(["first_lien", "second_lien", "blanket"]).default("first_lien"),
 });
 
 type CollateralFormData = z.infer<typeof collateralFormSchema>;
@@ -56,6 +58,11 @@ type CollateralFormData = z.infer<typeof collateralFormSchema>;
 export default function CollateralCreatePage() {
   const [, setLocation] = useLocation();
   const { toast } = useToast();
+
+  // Fetch facilities for selection
+  const { data: facilities, isLoading: facilitiesLoading } = useQuery({
+    queryKey: ["/api/facilities"],
+  });
 
   const form = useForm<CollateralFormData>({
     resolver: zodResolver(collateralFormSchema),
@@ -68,29 +75,41 @@ export default function CollateralCreatePage() {
       valuationSource: "",
       notes: "",
       isActive: true,
+      facilityId: "",
+      pledgeType: "first_lien",
     },
   });
 
   const createCollateralMutation = useMutation({
     mutationFn: async (data: CollateralFormData) => {
+      // Single atomic call - backend handles both collateral creation and assignment
       return await apiRequest("POST", "/api/collateral", {
-        ...data,
+        type: data.type,
+        name: data.name,
+        description: data.description,
         currentValue: parseFloat(data.currentValue).toString(),
+        valuationDate: data.valuationDate,
+        valuationSource: data.valuationSource,
+        notes: data.notes,
+        isActive: data.isActive,
+        facilityId: data.facilityId,
+        pledgeType: data.pledgeType,
       });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/collateral"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/collateral-assignments"] });
       queryClient.invalidateQueries({ queryKey: ["/api/dashboard/portfolio"] });
       toast({
         title: "Success",
-        description: "Collateral asset created successfully",
+        description: "Collateral asset created and assigned to facility successfully",
       });
       setLocation("/collateral");
     },
     onError: (error: any) => {
       toast({
         title: "Error",
-        description: error.message || "Failed to create collateral asset",
+        description: error.message || "Failed to create collateral and assignment",
         variant: "destructive",
       });
     },
@@ -158,6 +177,79 @@ export default function CollateralCreatePage() {
               <CardContent className="p-6">
                 <Form {...form}>
                   <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+                    {/* Facility Selection */}
+                    <FormField
+                      control={form.control}
+                      name="facilityId"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Bank Facility *</FormLabel>
+                          <Select onValueChange={field.onChange} value={field.value} disabled={facilitiesLoading}>
+                            <FormControl>
+                              <SelectTrigger data-testid="select-facility">
+                                <SelectValue placeholder="Select facility to secure with this collateral" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              {facilities?.map((facility: any) => (
+                                <SelectItem key={facility.id} value={facility.id}>
+                                  <div className="flex flex-col">
+                                    <span>{facility.facilityType.replace('_', ' ').toUpperCase()}</span>
+                                    <span className="text-xs text-muted-foreground">
+                                      {facility.bank?.name} - {parseFloat(facility.creditLimit).toLocaleString()} SAR
+                                    </span>
+                                  </div>
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          <p className="text-sm text-muted-foreground">
+                            This collateral will be assigned to secure the selected facility
+                          </p>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    {/* Pledge Type Selection */}
+                    <FormField
+                      control={form.control}
+                      name="pledgeType"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Pledge Type *</FormLabel>
+                          <Select onValueChange={field.onChange} value={field.value}>
+                            <FormControl>
+                              <SelectTrigger data-testid="select-pledge-type">
+                                <SelectValue placeholder="Select pledge type" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              <SelectItem value="first_lien">
+                                <div className="flex flex-col">
+                                  <span>First Lien</span>
+                                  <span className="text-xs text-muted-foreground">Primary security interest</span>
+                                </div>
+                              </SelectItem>
+                              <SelectItem value="second_lien">
+                                <div className="flex flex-col">
+                                  <span>Second Lien</span>
+                                  <span className="text-xs text-muted-foreground">Secondary security interest</span>
+                                </div>
+                              </SelectItem>
+                              <SelectItem value="blanket">
+                                <div className="flex flex-col">
+                                  <span>Blanket Lien</span>
+                                  <span className="text-xs text-muted-foreground">General security over multiple assets</span>
+                                </div>
+                              </SelectItem>
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
                     {/* Asset Type */}
                     <FormField
                       control={form.control}
