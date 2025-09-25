@@ -826,12 +826,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "Reminder not found" });
       }
 
+      // Fetch the loan data separately
+      const loan = await storage.getLoanById(reminder.loanId);
+      if (!loan || loan.userId !== userId) {
+        return res.status(404).json({ message: "Loan not found" });
+      }
+
       const { CalendarService } = await import('./calendarService');
       const user = await storage.getUser(userId);
       const userEmail = user?.email || 'user@example.com';
       
-      const icsContent = CalendarService.generateICSFile(reminder, reminder.loan, userEmail);
-      const fileName = CalendarService.generateFileName(reminder, reminder.loan);
+      const icsContent = CalendarService.generateICSFile(reminder, loan, userEmail);
+      const fileName = CalendarService.generateFileName(reminder, loan);
       
       res.set({
         'Content-Type': 'text/calendar; charset=utf-8',
@@ -858,18 +864,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // Get all reminders for this loan
-      const userReminders = await storage.getUserReminders(userId);
-      const loanRemindersWithDetails = userReminders.filter(r => r.loanId === loanId);
+      const loanReminders = await storage.getLoanReminders(loanId);
       
-      if (loanRemindersWithDetails.length === 0) {
+      if (loanReminders.length === 0) {
         return res.status(404).json({ message: "No reminders found for this loan" });
       }
+
+      // Create reminders with loan data for bulk generation
+      const remindersWithLoan = loanReminders.map(reminder => ({
+        ...reminder,
+        loan: loan
+      }));
 
       const { CalendarService } = await import('./calendarService');
       const user = await storage.getUser(userId);
       const userEmail = user?.email || 'user@example.com';
       
-      const icsContent = CalendarService.generateBulkICSFile(loanRemindersWithDetails, userEmail);
+      const icsContent = CalendarService.generateBulkICSFile(remindersWithLoan, userEmail);
       const fileName = `loan-${loan.referenceNumber}-reminders-${new Date().toISOString().split('T')[0]}.ics`;
       
       res.set({
@@ -888,9 +899,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get('/api/user/reminders/calendar', isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
-      const reminders = await storage.getUserReminders(userId);
+      const remindersWithLoans = await storage.getUserReminders(userId);
       
-      if (reminders.length === 0) {
+      if (remindersWithLoans.length === 0) {
         return res.status(404).json({ message: "No reminders found" });
       }
 
@@ -898,7 +909,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const user = await storage.getUser(userId);
       const userEmail = user?.email || 'user@example.com';
       
-      const icsContent = CalendarService.generateBulkICSFile(reminders, userEmail);
+      const icsContent = CalendarService.generateBulkICSFile(remindersWithLoans, userEmail);
       const fileName = CalendarService.generateBulkFileName();
       
       res.set({
