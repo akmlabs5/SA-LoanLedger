@@ -1,7 +1,7 @@
 import { useParams, useLocation } from "wouter";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useState } from "react";
-import { ArrowLeft, Calendar, Building2, FileText, Clock, CheckCircle, AlertTriangle, TrendingUp, Edit, Trash2 } from "lucide-react";
+import { ArrowLeft, Calendar, Building2, FileText, Clock, CheckCircle, AlertTriangle, TrendingUp, Edit, Trash2, Bell } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -14,6 +14,7 @@ import { apiRequest, queryClient } from "@/lib/queryClient";
 import { isUnauthorizedError } from "@/lib/authUtils";
 import DocumentUpload from "@/components/DocumentUpload";
 import DocumentList from "@/components/DocumentList";
+import ReminderModal from "@/components/ReminderModal";
 
 export default function LoanDetailPage() {
   const { loanId } = useParams<{ loanId: string }>();
@@ -21,6 +22,7 @@ export default function LoanDetailPage() {
   const { toast } = useToast();
   const { isAuthenticated } = useAuth();
   const [activeTab, setActiveTab] = useState("transactions");
+  const [reminderModalOpen, setReminderModalOpen] = useState(false);
 
   // Fetch loan details (always needed for overview)
   const { data: loan, isLoading: loanLoading, isError: loanError } = useQuery({
@@ -458,6 +460,15 @@ export default function LoanDetailPage() {
                       <Edit className="mr-2 h-4 w-4" />
                       Edit Loan
                     </Button>
+                    <Button 
+                      variant="outline" 
+                      className="w-full"
+                      onClick={() => setReminderModalOpen(true)}
+                      data-testid="button-set-reminders"
+                    >
+                      <Bell className="mr-2 h-4 w-4" />
+                      Set Reminders
+                    </Button>
                     <Separator />
                     <Button 
                       variant="destructive" 
@@ -507,6 +518,18 @@ export default function LoanDetailPage() {
             )}
           </div>
         </div>
+        
+        {/* Reminder Modal */}
+        <ReminderModal
+          loanId={loanId}
+          isOpen={reminderModalOpen}
+          onClose={() => setReminderModalOpen(false)}
+          loanData={{
+            referenceNumber: loan.referenceNumber,
+            dueDate: loan.dueDate,
+            amount: formatCurrency(parseFloat(loan.amount)),
+          }}
+        />
       </div>
     </div>
   );

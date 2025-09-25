@@ -12,6 +12,8 @@ import {
   insertCollateralSchema,
   insertCollateralAssignmentSchema,
   insertLoanSchema,
+  insertLoanReminderSchema,
+  updateLoanReminderSchema,
   insertAiInsightConfigSchema,
   insertExposureSnapshotSchema,
   insertTransactionSchema,
@@ -704,6 +706,109 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error cancelling loan:", error);
       res.status(500).json({ message: "Failed to cancel loan" });
+    }
+  });
+
+  // Loan Reminder routes
+  app.get('/api/loans/:loanId/reminders', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const { loanId } = req.params;
+      
+      // Verify user owns the loan
+      const loan = await storage.getLoanById(loanId);
+      if (!loan || loan.userId !== userId) {
+        return res.status(404).json({ message: "Loan not found" });
+      }
+      
+      const reminders = await storage.getLoanReminders(loanId);
+      res.json(reminders);
+    } catch (error) {
+      console.error("Error fetching loan reminders:", error);
+      res.status(500).json({ message: "Failed to fetch reminders" });
+    }
+  });
+
+  app.post('/api/loans/:loanId/reminders', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const { loanId } = req.params;
+      
+      // Verify user owns the loan
+      const loan = await storage.getLoanById(loanId);
+      if (!loan || loan.userId !== userId) {
+        return res.status(404).json({ message: "Loan not found" });
+      }
+      
+      const reminderData = insertLoanReminderSchema.parse({
+        ...req.body,
+        loanId,
+        userId,
+      });
+      
+      const reminder = await storage.createLoanReminder(reminderData);
+      res.status(201).json(reminder);
+    } catch (error) {
+      console.error("Error creating reminder:", error);
+      res.status(500).json({ message: "Failed to create reminder" });
+    }
+  });
+
+  app.put('/api/reminders/:reminderId', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const { reminderId } = req.params;
+      
+      // First verify the reminder exists and user owns it
+      const existingReminders = await storage.getUserReminders(userId);
+      const existingReminder = existingReminders.find(r => r.id === reminderId);
+      
+      if (!existingReminder) {
+        return res.status(404).json({ message: "Reminder not found" });
+      }
+      
+      const reminderData = updateLoanReminderSchema.parse({
+        ...req.body,
+        id: reminderId,
+      });
+      
+      const reminder = await storage.updateLoanReminder(reminderId, reminderData);
+      res.json(reminder);
+    } catch (error) {
+      console.error("Error updating reminder:", error);
+      res.status(500).json({ message: "Failed to update reminder" });
+    }
+  });
+
+  app.delete('/api/reminders/:reminderId', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const { reminderId } = req.params;
+      
+      // First verify the reminder exists and user owns it
+      const existingReminders = await storage.getUserReminders(userId);
+      const existingReminder = existingReminders.find(r => r.id === reminderId);
+      
+      if (!existingReminder) {
+        return res.status(404).json({ message: "Reminder not found" });
+      }
+      
+      await storage.deleteLoanReminder(reminderId);
+      res.status(200).json({ message: "Reminder deleted successfully" });
+    } catch (error) {
+      console.error("Error deleting reminder:", error);
+      res.status(500).json({ message: "Failed to delete reminder" });
+    }
+  });
+
+  app.get('/api/user/reminders', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const reminders = await storage.getUserReminders(userId);
+      res.json(reminders);
+    } catch (error) {
+      console.error("Error fetching user reminders:", error);
+      res.status(500).json({ message: "Failed to fetch user reminders" });
     }
   });
 

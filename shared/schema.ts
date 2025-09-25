@@ -95,6 +95,19 @@ export const auditActionEnum = pgEnum('audit_action', [
   'view'
 ]);
 
+export const reminderTypeEnum = pgEnum('reminder_type', [
+  'due_date',
+  'payment',
+  'review',
+  'custom'
+]);
+
+export const reminderStatusEnum = pgEnum('reminder_status', [
+  'pending',
+  'sent',
+  'failed'
+]);
+
 // Session storage table.
 // (IMPORTANT) This table is mandatory for Replit Auth, don't drop it.
 export const sessions = pgTable(
@@ -424,6 +437,29 @@ export const auditLogs = pgTable("audit_logs", {
   index("idx_audit_logs_date").on(table.createdAt),
 ]);
 
+// Loan Reminders for due date and payment alerts
+export const loanReminders = pgTable("loan_reminders", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  loanId: varchar("loan_id").references(() => loans.id, { onDelete: "cascade" }).notNull(),
+  userId: varchar("user_id").references(() => users.id).notNull(),
+  type: reminderTypeEnum("type").notNull(),
+  title: varchar("title", { length: 200 }).notNull(),
+  message: text("message"),
+  reminderDate: timestamp("reminder_date").notNull(),
+  emailEnabled: boolean("email_enabled").default(true),
+  calendarEnabled: boolean("calendar_enabled").default(false),
+  status: reminderStatusEnum("status").default('pending'),
+  sentAt: timestamp("sent_at"),
+  isActive: boolean("is_active").default(true),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+}, (table) => [
+  index("idx_loan_reminders_loan").on(table.loanId),
+  index("idx_loan_reminders_user").on(table.userId),
+  index("idx_loan_reminders_date").on(table.reminderDate),
+  index("idx_loan_reminders_status").on(table.status),
+]);
+
 // Relations
 export const usersRelations = relations(users, ({ many, one }) => ({
   facilities: many(facilities),
@@ -436,6 +472,7 @@ export const usersRelations = relations(users, ({ many, one }) => ({
   exposureSnapshots: many(exposureSnapshots),
   transactions: many(transactions),
   bankContacts: many(bankContacts),
+  loanReminders: many(loanReminders),
 }));
 
 export const banksRelations = relations(banks, ({ many }) => ({
@@ -497,6 +534,7 @@ export const loansRelations = relations(loans, ({ one, many }) => ({
   documents: many(documents),
   attachments: many(attachments),
   transactions: many(transactions),
+  reminders: many(loanReminders),
 }));
 
 export const collateralRelations = relations(collateral, ({ one, many }) => ({
@@ -599,6 +637,17 @@ export const attachmentAuditRelations = relations(attachmentAudit, ({ one }) => 
   }),
 }));
 
+export const loanRemindersRelations = relations(loanReminders, ({ one }) => ({
+  loan: one(loans, {
+    fields: [loanReminders.loanId],
+    references: [loans.id],
+  }),
+  user: one(users, {
+    fields: [loanReminders.userId],
+    references: [users.id],
+  }),
+}));
+
 // Zod Enums for validation
 export const transactionTypeZodEnum = z.enum(['draw', 'repayment', 'fee', 'interest', 'limit_change', 'other']);
 export const facilityTypeZodEnum = z.enum(['revolving', 'term', 'bullet', 'bridge', 'working_capital']);
@@ -623,6 +672,8 @@ export const attachmentCategoryZodEnum = z.enum([
   'other'
 ]);
 export const auditActionZodEnum = z.enum(['upload', 'download', 'delete', 'update_meta', 'view']);
+export const reminderTypeZodEnum = z.enum(['due_date', 'payment', 'review', 'custom']);
+export const reminderStatusZodEnum = z.enum(['pending', 'sent', 'failed']);
 
 // Helper function to validate decimal strings
 const decimalString = (precision: number, scale: number) => 
@@ -934,3 +985,20 @@ export type InsertAttachmentAudit = z.infer<typeof insertAttachmentAuditSchema>;
 export type AttachmentOwnerType = z.infer<typeof attachmentOwnerTypeZodEnum>;
 export type AttachmentCategory = z.infer<typeof attachmentCategoryZodEnum>;
 export type AuditAction = z.infer<typeof auditActionZodEnum>;
+export type ReminderType = z.infer<typeof reminderTypeZodEnum>;
+export type ReminderStatus = z.infer<typeof reminderStatusZodEnum>;
+
+// Loan Reminder Schemas
+export const insertLoanReminderSchema = createInsertSchema(loanReminders).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const updateLoanReminderSchema = insertLoanReminderSchema.partial().extend({
+  id: z.string(),
+});
+
+export type InsertLoanReminder = z.infer<typeof insertLoanReminderSchema>;
+export type UpdateLoanReminder = z.infer<typeof updateLoanReminderSchema>;
+export type LoanReminder = typeof loanReminders.$inferSelect;

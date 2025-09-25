@@ -10,6 +10,7 @@ import {
   documents,
   attachments,
   attachmentAudit,
+  loanReminders,
   aiInsightConfig,
   exposureSnapshots,
   transactions,
@@ -30,6 +31,9 @@ import {
   type InsertLoan,
   type Document,
   type InsertDocument,
+  type LoanReminder,
+  type InsertLoanReminder,
+  type UpdateLoanReminder,
   type AiInsightConfig,
   type InsertAiInsightConfig,
   type ExposureSnapshot,
@@ -121,6 +125,13 @@ export interface IStorage {
   // Document operations
   createDocument(document: InsertDocument): Promise<Document>;
   getLoanDocuments(loanId: string): Promise<Document[]>;
+  
+  // Loan Reminder operations
+  getLoanReminders(loanId: string): Promise<LoanReminder[]>;
+  getUserReminders(userId: string): Promise<Array<LoanReminder & { loan: Loan }>>;
+  createLoanReminder(reminder: InsertLoanReminder): Promise<LoanReminder>;
+  updateLoanReminder(reminderId: string, reminder: Partial<UpdateLoanReminder>): Promise<LoanReminder>;
+  deleteLoanReminder(reminderId: string): Promise<void>;
   
   // AI Insight Config operations
   getUserAiConfig(userId: string): Promise<AiInsightConfig | undefined>;
@@ -733,6 +744,66 @@ export class DatabaseStorage implements IStorage {
       .orderBy(desc(documents.createdAt));
   }
 
+  // Loan Reminder operations
+  async getLoanReminders(loanId: string): Promise<LoanReminder[]> {
+    return await db
+      .select()
+      .from(loanReminders)
+      .where(and(eq(loanReminders.loanId, loanId), eq(loanReminders.isActive, true)))
+      .orderBy(asc(loanReminders.reminderDate));
+  }
+
+  async getUserReminders(userId: string): Promise<Array<LoanReminder & { loan: Loan }>> {
+    return await db
+      .select({
+        id: loanReminders.id,
+        loanId: loanReminders.loanId,
+        userId: loanReminders.userId,
+        type: loanReminders.type,
+        title: loanReminders.title,
+        message: loanReminders.message,
+        reminderDate: loanReminders.reminderDate,
+        emailEnabled: loanReminders.emailEnabled,
+        calendarEnabled: loanReminders.calendarEnabled,
+        status: loanReminders.status,
+        sentAt: loanReminders.sentAt,
+        isActive: loanReminders.isActive,
+        createdAt: loanReminders.createdAt,
+        updatedAt: loanReminders.updatedAt,
+        loan: loans,
+      })
+      .from(loanReminders)
+      .innerJoin(loans, eq(loanReminders.loanId, loans.id))
+      .where(and(eq(loanReminders.userId, userId), eq(loanReminders.isActive, true)))
+      .orderBy(asc(loanReminders.reminderDate));
+  }
+
+  async createLoanReminder(reminder: InsertLoanReminder): Promise<LoanReminder> {
+    const [result] = await db.insert(loanReminders).values(reminder).returning();
+    return result;
+  }
+
+  async updateLoanReminder(reminderId: string, reminder: Partial<UpdateLoanReminder>): Promise<LoanReminder> {
+    const [result] = await db
+      .update(loanReminders)
+      .set({ ...reminder, updatedAt: new Date() })
+      .where(eq(loanReminders.id, reminderId))
+      .returning();
+    
+    if (!result) {
+      throw new Error('Reminder not found');
+    }
+    
+    return result;
+  }
+
+  async deleteLoanReminder(reminderId: string): Promise<void> {
+    await db
+      .update(loanReminders)
+      .set({ isActive: false, updatedAt: new Date() })
+      .where(eq(loanReminders.id, reminderId));
+  }
+
   // AI Insight Config operations
   async getUserAiConfig(userId: string): Promise<AiInsightConfig | undefined> {
     const [config] = await db
@@ -1091,6 +1162,7 @@ export class MemoryStorage implements IStorage {
   private collateralAssignments = new Map<string, CollateralAssignment>();
   private loans = new Map<string, Loan>();
   private documents = new Map<string, Document>();
+  private loanReminders = new Map<string, LoanReminder>();
   private aiConfigs = new Map<string, AiInsightConfig>();
   private exposureSnapshots = new Map<string, ExposureSnapshot>();
   private transactions = new Map<string, Transaction>();
@@ -1460,6 +1532,56 @@ export class MemoryStorage implements IStorage {
 
   async getLoanDocuments(loanId: string): Promise<Document[]> {
     return Array.from(this.documents.values()).filter(doc => doc.loanId === loanId);
+  }
+
+  // Loan Reminder operations
+  async getLoanReminders(loanId: string): Promise<LoanReminder[]> {
+    return Array.from(this.loanReminders.values())
+      .filter(reminder => reminder.loanId === loanId && reminder.isActive)
+      .sort((a, b) => new Date(a.reminderDate).getTime() - new Date(b.reminderDate).getTime());
+  }
+
+  async getUserReminders(userId: string): Promise<Array<LoanReminder & { loan: Loan }>> {
+    const userReminders = Array.from(this.loanReminders.values())
+      .filter(reminder => reminder.userId === userId && reminder.isActive);
+    
+    return userReminders.map(reminder => {
+      const loan = this.loans.get(reminder.loanId);
+      if (!loan) throw new Error('Loan not found for reminder');
+      return { ...reminder, loan };
+    }).sort((a, b) => new Date(a.reminderDate).getTime() - new Date(b.reminderDate).getTime());
+  }
+
+  async createLoanReminder(reminder: InsertLoanReminder): Promise<LoanReminder> {
+    const newReminder: LoanReminder = {
+      ...reminder,
+      id: this.generateId(),
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
+    this.loanReminders.set(newReminder.id, newReminder);
+    return newReminder;
+  }
+
+  async updateLoanReminder(reminderId: string, reminder: Partial<UpdateLoanReminder>): Promise<LoanReminder> {
+    const existing = this.loanReminders.get(reminderId);
+    if (!existing) throw new Error('Reminder not found');
+
+    const updated: LoanReminder = {
+      ...existing,
+      ...reminder,
+      updatedAt: new Date(),
+    };
+    this.loanReminders.set(reminderId, updated);
+    return updated;
+  }
+
+  async deleteLoanReminder(reminderId: string): Promise<void> {
+    const existing = this.loanReminders.get(reminderId);
+    if (existing) {
+      existing.isActive = false;
+      existing.updatedAt = new Date();
+    }
   }
 
   async getUserAiConfig(userId: string): Promise<AiInsightConfig | undefined> {
