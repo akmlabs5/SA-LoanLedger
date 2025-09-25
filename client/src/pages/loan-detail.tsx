@@ -448,7 +448,6 @@ export default function LoanDetailPage() {
                       className="w-full"
                       onClick={() => setLocation(`/loans/${loan.id}/payment`)}
                     >
-                      <span className="mr-2 font-bold">﷼</span>
                       Process Payment
                     </Button>
                     <Button 

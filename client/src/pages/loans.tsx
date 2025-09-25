@@ -632,7 +632,6 @@ export default function Loans() {
                                 </DropdownMenuItem>
                                 <DropdownMenuSeparator />
                                 <DropdownMenuItem onClick={() => setLocation(`/loans/${loan.id}/payment`)}>
-                                  <span className="mr-2 font-bold">﷼</span>
                                   Process Payment
                                 </DropdownMenuItem>
                                 <DropdownMenuItem onClick={() => setLocation(`/history?loanId=${loan.id}`)}>
