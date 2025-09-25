@@ -62,6 +62,9 @@ export default function Loans() {
   const [sortOrder, setSortOrder] = useState<SortOrder>('asc');
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
   const [bankFilter, setBankFilter] = useState<string>('all');
+  
+  // Tab state management
+  const [activeTab, setActiveTab] = useState<"active" | "settled">("active");
 
   // Redirect to login if not authenticated
   useEffect(() => {
@@ -105,9 +108,13 @@ export default function Loans() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/loans"] });
       queryClient.invalidateQueries({ queryKey: ["/api/dashboard/portfolio"] });
+      
+      // Automatically switch to settled loans tab
+      setActiveTab("settled");
+      
       toast({
         title: "Success",
-        description: "Loan settled successfully",
+        description: "Loan settled successfully - switched to Settled Loans tab",
       });
     },
     onError: (error) => {
@@ -503,7 +510,7 @@ export default function Loans() {
         </Card>
 
         {/* Enhanced Tabs */}
-        <Tabs defaultValue="active" className="space-y-6">
+        <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as "active" | "settled")} className="space-y-6">
           <TabsList className="grid w-full grid-cols-2">
             <TabsTrigger value="active" className="data-[state=active]:bg-blue-600 data-[state=active]:text-white">
               Active Loans ({filteredAndSortedActiveLoans.length})
