@@ -539,9 +539,9 @@ export default function Loans() {
                 <CardContent className="text-center py-12">
                   <FileText className="h-12 w-12 text-gray-300 dark:text-gray-600 mx-auto mb-4" />
                   <p className="text-gray-600 dark:text-gray-400 mb-4">
-                    {activeLoans?.length === 0 ? "No active loans found" : "No loans match your current filters"}
+                    {(activeLoans as any[])?.length === 0 ? "No active loans found" : "No loans match your current filters"}
                   </p>
-                  {activeLoans?.length === 0 ? (
+                  {(activeLoans as any[])?.length === 0 ? (
                     <Button 
                       onClick={() => setLocation("/loans/new")}
                       className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white"
