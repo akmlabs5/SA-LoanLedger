@@ -3,7 +3,7 @@ import { useMutation, useQuery } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { Calendar, Mail, Bell, Plus, Trash2 } from "lucide-react";
+import { Calendar, Mail, Bell, Plus, Trash2, Download } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -44,7 +44,7 @@ export default function ReminderModal({ loanId, isOpen, onClose, loanData }: Rem
   const [activeTab, setActiveTab] = useState<"create" | "manage">("create");
 
   // Fetch existing reminders
-  const { data: reminders, isLoading: remindersLoading } = useQuery({
+  const { data: reminders = [], isLoading: remindersLoading } = useQuery({
     queryKey: ["/api/loans", loanId, "reminders"],
     enabled: isOpen && !!loanId,
   });
@@ -141,6 +141,16 @@ export default function ReminderModal({ loanId, isOpen, onClose, loanData }: Rem
     }
   };
 
+  const handleDownloadCalendarInvite = (reminderId: string) => {
+    const url = `/api/reminders/${reminderId}/calendar`;
+    window.open(url, '_blank');
+  };
+
+  const handleDownloadAllCalendarInvites = () => {
+    const url = `/api/loans/${loanId}/reminders/calendar`;
+    window.open(url, '_blank');
+  };
+
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
@@ -171,7 +181,7 @@ export default function ReminderModal({ loanId, isOpen, onClose, loanData }: Rem
             data-testid="tab-manage-reminders"
           >
             <Bell className="mr-2 h-4 w-4" />
-            Manage ({reminders?.length || 0})
+            Manage ({reminders.length || 0})
           </Button>
         </div>
 
@@ -382,46 +392,79 @@ export default function ReminderModal({ loanId, isOpen, onClose, loanData }: Rem
           <div className="space-y-4">
             {remindersLoading ? (
               <div className="text-center py-8">Loading reminders...</div>
-            ) : reminders && reminders.length > 0 ? (
-              <div className="space-y-3">
-                {reminders.map((reminder: any) => (
-                  <Card key={reminder.id} className="border border-border">
-                    <CardContent className="p-4">
-                      <div className="flex items-start justify-between">
-                        <div className="flex-1">
-                          <div className="flex items-center space-x-2 mb-2">
-                            <Badge className={getTypeColor(reminder.type)}>
-                              {reminder.type.replace('_', ' ').toUpperCase()}
-                            </Badge>
-                            <Badge variant={reminder.status === 'sent' ? 'secondary' : 'outline'}>
-                              {reminder.status.toUpperCase()}
-                            </Badge>
-                          </div>
-                          <h4 className="font-medium text-lg text-foreground">{reminder.title}</h4>
-                          {reminder.message && (
-                            <p className="text-sm text-muted-foreground mt-1">{reminder.message}</p>
-                          )}
-                          <div className="flex items-center space-x-4 mt-3 text-sm text-muted-foreground">
-                            <span>📅 {formatReminderDate(reminder.reminderDate)}</span>
-                            <div className="flex items-center space-x-2">
-                              {reminder.emailEnabled && <Mail className="h-4 w-4" />}
-                              {reminder.calendarEnabled && <Calendar className="h-4 w-4" />}
+            ) : reminders.length > 0 ? (
+              <div className="space-y-4">
+                {/* Bulk Actions */}
+                <div className="flex justify-between items-center">
+                  <h3 className="text-lg font-medium">Your Reminders</h3>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handleDownloadAllCalendarInvites}
+                    className="flex items-center space-x-2"
+                    data-testid="button-download-all-calendar"
+                  >
+                    <Download className="h-4 w-4" />
+                    <span>Download All Calendar Invites</span>
+                  </Button>
+                </div>
+
+                <div className="space-y-3">
+                  {reminders.map((reminder: any) => (
+                    <Card key={reminder.id} className="border border-border">
+                      <CardContent className="p-4">
+                        <div className="flex items-start justify-between">
+                          <div className="flex-1">
+                            <div className="flex items-center space-x-2 mb-2">
+                              <Badge className={getTypeColor(reminder.type)}>
+                                {reminder.type.replace('_', ' ').toUpperCase()}
+                              </Badge>
+                              <Badge variant={reminder.status === 'sent' ? 'secondary' : 'outline'}>
+                                {reminder.status.toUpperCase()}
+                              </Badge>
                             </div>
+                            <h4 className="font-medium text-lg text-foreground">{reminder.title}</h4>
+                            {reminder.message && (
+                              <p className="text-sm text-muted-foreground mt-1">{reminder.message}</p>
+                            )}
+                            <div className="flex items-center space-x-4 mt-3 text-sm text-muted-foreground">
+                              <span>📅 {formatReminderDate(reminder.reminderDate)}</span>
+                              <div className="flex items-center space-x-2">
+                                {reminder.emailEnabled && <Mail className="h-4 w-4" />}
+                                {reminder.calendarEnabled && <Calendar className="h-4 w-4" />}
+                              </div>
+                            </div>
+                            
+                            {/* Calendar Actions */}
+                            {reminder.calendarEnabled && (
+                              <div className="mt-3">
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => handleDownloadCalendarInvite(reminder.id)}
+                                  className="flex items-center space-x-2"
+                                  data-testid={`button-download-calendar-${reminder.id}`}
+                                >
+                                  <Download className="h-3 w-3" />
+                                  <span>Download Calendar Invite</span>
+                                </Button>
+                              </div>
+                            )}
                           </div>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => deleteReminderMutation.mutate(reminder.id)}
+                            disabled={deleteReminderMutation.isPending}
+                            data-testid={`button-delete-reminder-${reminder.id}`}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
                         </div>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => deleteReminderMutation.mutate(reminder.id)}
-                          disabled={deleteReminderMutation.isPending}
-                          data-testid={`button-delete-reminder-${reminder.id}`}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
               </div>
             ) : (
               <div className="text-center py-8">

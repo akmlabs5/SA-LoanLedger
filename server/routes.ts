@@ -812,6 +812,108 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Calendar invite endpoints
+  app.get('/api/reminders/:reminderId/calendar', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const { reminderId } = req.params;
+      
+      // Verify the reminder exists and user owns it
+      const existingReminders = await storage.getUserReminders(userId);
+      const reminder = existingReminders.find(r => r.id === reminderId);
+      
+      if (!reminder) {
+        return res.status(404).json({ message: "Reminder not found" });
+      }
+
+      const { CalendarService } = await import('./calendarService');
+      const user = await storage.getUser(userId);
+      const userEmail = user?.email || 'user@example.com';
+      
+      const icsContent = CalendarService.generateICSFile(reminder, reminder.loan, userEmail);
+      const fileName = CalendarService.generateFileName(reminder, reminder.loan);
+      
+      res.set({
+        'Content-Type': 'text/calendar; charset=utf-8',
+        'Content-Disposition': `attachment; filename="${fileName}"`,
+        'Cache-Control': 'no-cache'
+      });
+      
+      res.send(icsContent);
+    } catch (error) {
+      console.error("Error generating calendar invite:", error);
+      res.status(500).json({ message: "Failed to generate calendar invite" });
+    }
+  });
+
+  app.get('/api/loans/:loanId/reminders/calendar', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const { loanId } = req.params;
+      
+      // Verify loan ownership  
+      const loan = await storage.getLoanById(loanId);
+      if (!loan || loan.userId !== userId) {
+        return res.status(404).json({ message: "Loan not found" });
+      }
+
+      // Get all reminders for this loan
+      const userReminders = await storage.getUserReminders(userId);
+      const loanRemindersWithDetails = userReminders.filter(r => r.loanId === loanId);
+      
+      if (loanRemindersWithDetails.length === 0) {
+        return res.status(404).json({ message: "No reminders found for this loan" });
+      }
+
+      const { CalendarService } = await import('./calendarService');
+      const user = await storage.getUser(userId);
+      const userEmail = user?.email || 'user@example.com';
+      
+      const icsContent = CalendarService.generateBulkICSFile(loanRemindersWithDetails, userEmail);
+      const fileName = `loan-${loan.referenceNumber}-reminders-${new Date().toISOString().split('T')[0]}.ics`;
+      
+      res.set({
+        'Content-Type': 'text/calendar; charset=utf-8',
+        'Content-Disposition': `attachment; filename="${fileName}"`,
+        'Cache-Control': 'no-cache'
+      });
+      
+      res.send(icsContent);
+    } catch (error) {
+      console.error("Error generating bulk calendar invites:", error);
+      res.status(500).json({ message: "Failed to generate calendar invites" });
+    }
+  });
+
+  app.get('/api/user/reminders/calendar', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const reminders = await storage.getUserReminders(userId);
+      
+      if (reminders.length === 0) {
+        return res.status(404).json({ message: "No reminders found" });
+      }
+
+      const { CalendarService } = await import('./calendarService');
+      const user = await storage.getUser(userId);
+      const userEmail = user?.email || 'user@example.com';
+      
+      const icsContent = CalendarService.generateBulkICSFile(reminders, userEmail);
+      const fileName = CalendarService.generateBulkFileName();
+      
+      res.set({
+        'Content-Type': 'text/calendar; charset=utf-8',
+        'Content-Disposition': `attachment; filename="${fileName}"`,
+        'Cache-Control': 'no-cache'
+      });
+      
+      res.send(icsContent);
+    } catch (error) {
+      console.error("Error generating all calendar invites:", error);
+      res.status(500).json({ message: "Failed to generate calendar invites" });
+    }
+  });
+
   // Dashboard analytics
   app.get('/api/dashboard/portfolio', isAuthenticated, async (req: any, res) => {
     try {
