@@ -188,7 +188,7 @@ export default function LoanDetailPage() {
               </Button>
               <Separator orientation="vertical" className="h-6" />
               <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-blue-600 text-white rounded-lg flex items-center justify-center">
-                <span className="text-xl font-bold">﷼</span>
+                <FileText className="h-5 w-5" />
               </div>
               <div>
                 <h1 className="text-xl font-bold text-foreground">Loan Details</h1>
