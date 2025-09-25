@@ -721,7 +721,7 @@ export default function LoanCreatePage() {
               <Card className="border-0 shadow-lg">
                 <CardHeader>
                   <CardTitle className="text-lg flex items-center space-x-2">
-                    <span className="text-blue-600 font-bold text-xl">﷼</span>
+                    <span className="text-blue-600 font-bold text-xl">ريال</span>
                     <span>Current SIBOR</span>
                   </CardTitle>
                 </CardHeader>

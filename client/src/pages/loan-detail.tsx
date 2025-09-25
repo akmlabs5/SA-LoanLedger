@@ -188,7 +188,7 @@ export default function LoanDetailPage() {
               </Button>
               <Separator orientation="vertical" className="h-6" />
               <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-blue-600 text-white rounded-lg flex items-center justify-center">
-                <span className="text-xl font-bold">﷼</span>
+                <span className="text-xl font-bold">ريال</span>
               </div>
               <div>
                 <h1 className="text-xl font-bold text-foreground">Loan Details</h1>
@@ -409,7 +409,7 @@ export default function LoanDetailPage() {
                           </div>
                           <div className="p-4 border rounded-lg">
                             <div className="flex items-center space-x-2 mb-2">
-                              <span className="text-blue-500 font-bold">﷼</span>
+                              <span className="text-blue-500 font-bold">ريال</span>
                               <span className="font-medium">Current Balance</span>
                             </div>
                             <p className="text-2xl font-bold">
@@ -448,7 +448,7 @@ export default function LoanDetailPage() {
                       className="w-full"
                       onClick={() => setLocation(`/loans/${loan.id}/payment`)}
                     >
-                      <span className="mr-2 font-bold">﷼</span>
+                      <span className="mr-2 font-bold">ريال</span>
                       Process Payment
                     </Button>
                     <Button 

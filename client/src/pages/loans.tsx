@@ -458,7 +458,7 @@ export default function Loans() {
                     Due Date {sortField === 'dueDate' && (sortOrder === 'asc' ? '↑' : '↓')}
                   </DropdownMenuItem>
                   <DropdownMenuItem onClick={() => handleSort('amount')}>
-                    <span className="mr-2 font-bold">﷼</span>
+                    <span className="mr-2 font-bold">ريال</span>
                     Amount {sortField === 'amount' && (sortOrder === 'asc' ? '↑' : '↓')}
                   </DropdownMenuItem>
                   <DropdownMenuItem onClick={() => handleSort('bank')}>
@@ -632,7 +632,7 @@ export default function Loans() {
                                 </DropdownMenuItem>
                                 <DropdownMenuSeparator />
                                 <DropdownMenuItem onClick={() => setLocation(`/loans/${loan.id}/payment`)}>
-                                  <span className="mr-2 font-bold">﷼</span>
+                                  <span className="mr-2 font-bold">ريال</span>
                                   Process Payment
                                 </DropdownMenuItem>
                                 <DropdownMenuItem onClick={() => setLocation(`/history?loanId=${loan.id}`)}>
@@ -730,7 +730,7 @@ export default function Loans() {
                               onClick={() => setLocation(`/loans/${loan.id}/payment`)}
                               data-testid={`button-payment-${loan.id}`}
                             >
-                              <span className="mr-2 font-bold">﷼</span>
+                              <span className="mr-2 font-bold">ريال</span>
                               Payment
                             </Button>
                             <Button 

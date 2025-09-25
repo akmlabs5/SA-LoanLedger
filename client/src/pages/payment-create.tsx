@@ -209,7 +209,7 @@ export default function PaymentCreatePage() {
             <Card className="border-0 shadow-lg">
               <CardHeader>
                 <CardTitle className="text-2xl font-bold flex items-center space-x-2">
-                  <span className="text-emerald-600 font-bold text-2xl">﷼</span>
+                  <span className="text-emerald-600 font-bold text-2xl">ريال</span>
                   <span>Process Payment</span>
                 </CardTitle>
                 <p className="text-gray-600 dark:text-gray-400">
