@@ -614,7 +614,7 @@ export default function Loans() {
                                 </Button>
                               </DropdownMenuTrigger>
                               <DropdownMenuContent align="end">
-                                <DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => setLocation(`/loans/${loan.id}`)}>
                                   <Eye className="mr-2 h-4 w-4" />
                                   View Details
                                 </DropdownMenuItem>
@@ -707,7 +707,12 @@ export default function Loans() {
                         {/* Actions */}
                         <div className="flex items-center justify-between pt-4 border-t border-gray-200 dark:border-gray-700">
                           <div className="flex space-x-2">
-                            <Button variant="outline" size="sm" data-testid={`button-view-details-${loan.id}`}>
+                            <Button 
+                              variant="outline" 
+                              size="sm" 
+                              onClick={() => setLocation(`/loans/${loan.id}`)}
+                              data-testid={`button-view-details-${loan.id}`}
+                            >
                               <Eye className="mr-2 h-4 w-4" />
                               View Details
                             </Button>
