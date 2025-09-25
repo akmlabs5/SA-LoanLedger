@@ -521,6 +521,16 @@ export class DatabaseStorage implements IStorage {
     return newLoan;
   }
 
+  async getLoanById(loanId: string): Promise<Loan | undefined> {
+    const result = await db
+      .select()
+      .from(loans)
+      .where(eq(loans.id, loanId))
+      .limit(1);
+    
+    return result.length > 0 ? result[0] : undefined;
+  }
+
   async updateLoan(loanId: string, loan: Partial<InsertLoan>): Promise<Loan> {
     const [updatedLoan] = await db
       .update(loans)
@@ -551,6 +561,32 @@ export class DatabaseStorage implements IStorage {
         updatedAt: new Date()
       })
       .where(eq(loans.id, loanId));
+  }
+
+  async calculateLoanBalance(loanId: string): Promise<{ principal: number; interest: number; fees: number; total: number }> {
+    const loan = await db
+      .select()
+      .from(loans)
+      .where(eq(loans.id, loanId))
+      .limit(1);
+
+    if (loan.length === 0) {
+      throw new Error('Loan not found');
+    }
+
+    // For now, return simple balance calculation based on loan amount
+    // This can be enhanced later with transaction tracking
+    const principal = Number(loan[0].amount);
+    const interest = 0; // TODO: Calculate based on SIBOR + margin
+    const fees = 0; // TODO: Calculate any applicable fees
+    const total = principal + interest + fees;
+
+    return {
+      principal,
+      interest,
+      fees,
+      total
+    };
   }
 
   // Document operations

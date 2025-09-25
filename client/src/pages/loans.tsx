@@ -218,7 +218,7 @@ export default function Loans() {
       const searchLower = searchQuery.toLowerCase();
       const searchMatch = !searchQuery || 
         ((loan.referenceNumber || "").toLowerCase()).includes(searchLower) ||
-        ((loan.facility?.bank?.name || "").toLowerCase()).includes(searchLower) ||
+        ((loan.creditLine?.facility?.bank?.name || "").toLowerCase()).includes(searchLower) ||
         ((loan.notes || "").toLowerCase()).includes(searchLower);
       
       // Status filter
@@ -226,7 +226,7 @@ export default function Loans() {
       const statusMatch = statusFilter === 'all' || urgency.status === statusFilter;
       
       // Bank filter
-      const bankMatch = bankFilter === 'all' || loan.facility?.bank?.id === bankFilter;
+      const bankMatch = bankFilter === 'all' || loan.creditLine?.facility?.bank?.id === bankFilter;
       
       return searchMatch && statusMatch && bankMatch;
     });
@@ -243,7 +243,7 @@ export default function Loans() {
           comparison = parseFloat(a.amount) - parseFloat(b.amount);
           break;
         case 'bank':
-          comparison = (a.facility?.bank?.name || "").localeCompare(b.facility?.bank?.name || "");
+          comparison = (a.creditLine?.facility?.bank?.name || "").localeCompare(b.creditLine?.facility?.bank?.name || "");
           break;
         case 'startDate':
           comparison = new Date(a.startDate).getTime() - new Date(b.startDate).getTime();
@@ -281,9 +281,9 @@ export default function Loans() {
       const searchLower = searchQuery.toLowerCase();
       const searchMatch = !searchQuery || 
         ((loan.referenceNumber || "").toLowerCase()).includes(searchLower) ||
-        ((loan.facility?.bank?.name || "").toLowerCase()).includes(searchLower);
+        ((loan.creditLine?.facility?.bank?.name || "").toLowerCase()).includes(searchLower);
       
-      const bankMatch = bankFilter === 'all' || loan.facility?.bank?.id === bankFilter;
+      const bankMatch = bankFilter === 'all' || loan.creditLine?.facility?.bank?.id === bankFilter;
       
       return searchMatch && bankMatch;
     });
@@ -576,12 +576,12 @@ export default function Loans() {
                           <div className="flex items-center space-x-4">
                             <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center shadow-lg">
                               <span className="text-white font-bold text-sm">
-                                {loan.facility?.bank?.name?.substring(0, 3) || 'BNK'}
+                                {loan.creditLine?.facility?.bank?.name?.substring(0, 3) || 'BNK'}
                               </span>
                             </div>
                             <div>
                               <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100" data-testid={`text-loan-bank-${loan.id}`}>
-                                {loan.facility?.bank?.name || 'Unknown Bank'}
+                                {loan.creditLine?.facility?.bank?.name || 'Unknown Bank'}
                               </h3>
                               <p className="text-sm text-gray-600 dark:text-gray-400" data-testid={`text-loan-reference-${loan.id}`}>
                                 Reference: {loan.referenceNumber}
@@ -793,7 +793,7 @@ export default function Loans() {
                           </div>
                           <div>
                             <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100" data-testid={`text-settled-loan-bank-${loan.id}`}>
-                              {loan.facility?.bank?.name || 'Unknown Bank'}
+                              {loan.creditLine?.facility?.bank?.name || 'Unknown Bank'}
                             </h3>
                             <p className="text-sm text-gray-600 dark:text-gray-400" data-testid={`text-settled-loan-reference-${loan.id}`}>
                               Reference: {loan.referenceNumber}
