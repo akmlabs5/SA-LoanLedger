@@ -11,7 +11,6 @@ import {
   AlertCircle, 
   Lightbulb, 
   TrendingUp, 
-  DollarSign,
   Settings,
   Eye
 } from "lucide-react";
@@ -65,7 +64,7 @@ export default function AIInsightsPanel() {
       case 'alert':
         return <TrendingUp className="h-5 w-5" />;
       case 'savings':
-        return <DollarSign className="h-5 w-5" />;
+        return <span className="text-xl font-bold">﷼</span>;
       default:
         return <Bot className="h-5 w-5" />;
     }

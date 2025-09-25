@@ -20,7 +20,7 @@ import { z } from "zod";
 import { 
   ArrowLeft, 
   AlertCircle, 
-  DollarSign, 
+ 
   Calendar, 
   FileText, 
   Building,
@@ -721,7 +721,7 @@ export default function LoanCreatePage() {
               <Card className="border-0 shadow-lg">
                 <CardHeader>
                   <CardTitle className="text-lg flex items-center space-x-2">
-                    <DollarSign className="h-5 w-5 text-blue-600" />
+                    <span className="text-blue-600 font-bold text-xl">﷼</span>
                     <span>Current SIBOR</span>
                   </CardTitle>
                 </CardHeader>

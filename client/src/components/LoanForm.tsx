@@ -14,7 +14,7 @@ import { apiRequest, queryClient } from "@/lib/queryClient";
 import { insertLoanSchema, Facility, Bank, Loan, CreditLine } from "@shared/schema";
 import { SiborRate } from "@shared/types";
 import { z } from "zod";
-import { AlertCircle, DollarSign, Calendar } from "lucide-react";
+import { AlertCircle, Calendar } from "lucide-react";
 
 const loanFormSchema = insertLoanSchema
   .omit({ userId: true, bankRate: true }) // Exclude fields that aren't user inputs
@@ -252,7 +252,7 @@ export default function LoanForm({ onSuccess, onCancel }: LoanFormProps) {
             {creditInfo && (
               <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
                 <div className="flex items-center gap-2 mb-3">
-                  <DollarSign className="h-4 w-4 text-green-600" />
+                  <span className="text-green-600 font-bold">﷼</span>
                   <h4 className="font-medium text-green-800">Credit Facility Information</h4>
                 </div>
                 <div className="grid grid-cols-3 gap-4 text-sm">

@@ -26,7 +26,6 @@ import {
   Percent,
   Save,
   X,
-  DollarSign
 } from "lucide-react";
 
 import { Link } from "wouter";
@@ -260,7 +259,7 @@ export default function GeneralFacilityCreatePage() {
                     {/* Financial Details */}
                     <div className="space-y-4">
                       <h3 className="text-lg font-medium flex items-center space-x-2">
-                        <DollarSign className="h-4 w-4" />
+                        <span className="font-bold">﷼</span>
                         <span>Financial Terms</span>
                       </h3>
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

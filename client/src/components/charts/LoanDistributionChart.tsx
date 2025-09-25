@@ -1,7 +1,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ChartContainer } from "@/components/ui/chart";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, LineChart, Line } from "recharts";
-import { Calendar, TrendingUp, DollarSign, AlertTriangle, Loader2 } from "lucide-react";
+import { Calendar, TrendingUp, AlertTriangle, Loader2 } from "lucide-react";
 import { LoanWithDetails } from "@shared/types";
 
 interface LoanDistributionChartProps {
@@ -288,7 +288,7 @@ export default function LoanDistributionChart({ loans = [], showTimeDistribution
       <Card className="border-0 shadow-lg bg-white/50 dark:bg-gray-800/50 backdrop-blur-sm">
         <CardHeader>
           <CardTitle className="flex items-center space-x-2">
-            <DollarSign className="h-5 w-5 text-green-600 dark:text-green-400" />
+            <span className="text-green-600 dark:text-green-400 font-bold text-lg">﷼</span>
             <span>Loans by Bank</span>
           </CardTitle>
         </CardHeader>

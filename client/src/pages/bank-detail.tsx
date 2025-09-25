@@ -30,7 +30,6 @@ import {
   AlertTriangle,
   CheckCircle,
   Clock,
-  DollarSign,
   BarChart3,
   FileText,
   Settings,

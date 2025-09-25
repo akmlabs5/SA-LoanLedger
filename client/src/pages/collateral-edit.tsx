@@ -4,7 +4,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { z } from "zod";
-import { ArrowLeft, PiggyBank, TrendingUp, AlertCircle, DollarSign, Calendar, Save, X } from "lucide-react";
+import { ArrowLeft, PiggyBank, TrendingUp, AlertCircle, Calendar, Save, X } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -259,7 +259,7 @@ export default function CollateralEditPage() {
                           <FormLabel>Current Value (SAR) *</FormLabel>
                           <FormControl>
                             <div className="relative">
-                              <DollarSign className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                              <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground font-bold">﷼</span>
                               <Input 
                                 {...field} 
                                 type="number"

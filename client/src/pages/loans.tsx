@@ -29,7 +29,6 @@ import {
   SortAsc, 
   SortDesc, 
   Calendar,
-  DollarSign,
   Building,
   Clock,
   AlertTriangle,
@@ -459,7 +458,7 @@ export default function Loans() {
                     Due Date {sortField === 'dueDate' && (sortOrder === 'asc' ? '↑' : '↓')}
                   </DropdownMenuItem>
                   <DropdownMenuItem onClick={() => handleSort('amount')}>
-                    <DollarSign className="mr-2 h-4 w-4" />
+                    <span className="mr-2 font-bold">﷼</span>
                     Amount {sortField === 'amount' && (sortOrder === 'asc' ? '↑' : '↓')}
                   </DropdownMenuItem>
                   <DropdownMenuItem onClick={() => handleSort('bank')}>
@@ -633,7 +632,7 @@ export default function Loans() {
                                 </DropdownMenuItem>
                                 <DropdownMenuSeparator />
                                 <DropdownMenuItem onClick={() => setLocation(`/loans/${loan.id}/payment`)}>
-                                  <DollarSign className="mr-2 h-4 w-4" />
+                                  <span className="mr-2 font-bold">﷼</span>
                                   Process Payment
                                 </DropdownMenuItem>
                                 <DropdownMenuItem onClick={() => setLocation(`/history?loanId=${loan.id}`)}>
@@ -731,7 +730,7 @@ export default function Loans() {
                               onClick={() => setLocation(`/loans/${loan.id}/payment`)}
                               data-testid={`button-payment-${loan.id}`}
                             >
-                              <DollarSign className="mr-2 h-4 w-4" />
+                              <span className="mr-2 font-bold">﷼</span>
                               Payment
                             </Button>
                             <Button 

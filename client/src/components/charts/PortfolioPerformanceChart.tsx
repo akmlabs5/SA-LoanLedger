@@ -1,7 +1,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ChartContainer } from "@/components/ui/chart";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, AreaChart, Area, ComposedChart, Bar } from "recharts";
-import { TrendingUp, TrendingDown, DollarSign, Activity, BarChart3, AlertCircle } from "lucide-react";
+import { TrendingUp, TrendingDown, Activity, BarChart3, AlertCircle } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { PortfolioSummary, LoanWithDetails } from "@shared/types";
 
