@@ -38,13 +38,13 @@ export default function FacilityEditPage() {
 
   // Fetch bank details for context
   const { data: bank } = useQuery<{ id: string; name: string; code: string }>({
-    queryKey: ["/api/banks", bankId],
+    queryKey: [`/api/banks/${bankId}`],
     enabled: !!bankId,
   });
 
   // Fetch facility details for editing
   const { data: facility, isLoading: facilityLoading } = useQuery({
-    queryKey: ["/api/facilities", facilityId],
+    queryKey: [`/api/facilities/${facilityId}`],
     enabled: !!facilityId,
   });
 
