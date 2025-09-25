@@ -107,7 +107,7 @@ export async function generateAIInsights(userId: string, storage: IStorage): Pro
     // 5. Interest Rate Arbitrage Opportunity
     const rateDifferentialThreshold = aiConfig?.rateDifferentialThreshold ? parseFloat(aiConfig.rateDifferentialThreshold) : 0.5;
     const bankRates = portfolioSummary.bankExposures.map(exposure => {
-      const facilityLoans = activeLoans.filter(loan => loan.facility.bank.id === exposure.bankId);
+      const facilityLoans = activeLoans.filter(loan => loan.creditLine?.facility?.bank?.id === exposure.bankId);
       const avgRate = facilityLoans.length > 0 
         ? facilityLoans.reduce((sum, loan) => sum + parseFloat(loan.bankRate), 0) / facilityLoans.length 
         : 0;

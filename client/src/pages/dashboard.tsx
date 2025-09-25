@@ -324,13 +324,13 @@ export default function Dashboard() {
                                 <button
                                   onClick={(e) => {
                                     e.stopPropagation();
-                                    handleBankRowClick(loan.facility.bank.id, loan.facility.bank.name);
+                                    handleBankRowClick(loan.creditLine?.facility?.bank?.id, loan.creditLine?.facility?.bank?.name);
                                   }}
                                   className="font-medium text-foreground hover:text-primary hover:underline transition-colors duration-200 truncate"
                                   data-testid={`text-loan-reference-${loan.id}`}
-                                  title={`Click to view ${loan.facility.bank.name} details`}
+                                  title={`Click to view ${loan.creditLine?.facility?.bank?.name} details`}
                                 >
-                                  {loan.facility.bank.name}
+                                  {loan.creditLine?.facility?.bank?.name}
                                 </button>
                                 <span className="text-sm text-muted-foreground">•</span>
                                 <span className="text-sm text-muted-foreground truncate">{loan.referenceNumber}</span>
