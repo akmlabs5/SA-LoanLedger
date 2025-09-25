@@ -763,19 +763,36 @@ export default function BankDetail() {
               <CardContent className="space-y-3">
                 <Button 
                   className="w-full justify-start bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white"
+                  onClick={() => setLocation("/loans")}
+                  data-testid="button-view-all-loans"
                 >
                   <FileText className="mr-2 h-4 w-4" />
                   View All Loans
                 </Button>
-                <Button variant="outline" className="w-full justify-start">
+                <Button 
+                  variant="outline" 
+                  className="w-full justify-start"
+                  onClick={() => setLocation("/history/transactions")}
+                  data-testid="button-transaction-history"
+                >
                   <Calendar className="mr-2 h-4 w-4" />
                   Transaction History
                 </Button>
-                <Button variant="outline" className="w-full justify-start">
+                <Button 
+                  variant="outline" 
+                  className="w-full justify-start"
+                  onClick={() => setLocation("/dashboard")}
+                  data-testid="button-performance-analytics"
+                >
                   <BarChart3 className="mr-2 h-4 w-4" />
                   Performance Analytics
                 </Button>
-                <Button variant="outline" className="w-full justify-start">
+                <Button 
+                  variant="outline" 
+                  className="w-full justify-start"
+                  onClick={() => toast({ title: "Feature Coming Soon", description: "Bank connection management will be available soon." })}
+                  data-testid="button-manage-connection"
+                >
                   <Settings className="mr-2 h-4 w-4" />
                   Manage Connection
                 </Button>
