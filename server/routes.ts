@@ -14,6 +14,8 @@ import {
   insertLoanSchema,
   insertLoanReminderSchema,
   updateLoanReminderSchema,
+  insertGuaranteeSchema,
+  updateGuaranteeSchema,
   insertAiInsightConfigSchema,
   insertExposureSnapshotSchema,
   insertTransactionSchema,
@@ -922,6 +924,122 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error generating all calendar invites:", error);
       res.status(500).json({ message: "Failed to generate calendar invites" });
+    }
+  });
+
+  // Guarantee routes
+  app.get('/api/guarantees', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const guarantees = await storage.getUserGuarantees(userId);
+      res.json(guarantees);
+    } catch (error) {
+      console.error("Error fetching guarantees:", error);
+      res.status(500).json({ message: "Failed to fetch guarantees" });
+    }
+  });
+
+  app.get('/api/guarantees/:guaranteeId', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const { guaranteeId } = req.params;
+      
+      const guarantee = await storage.getGuaranteeById(guaranteeId);
+      if (!guarantee || guarantee.userId !== userId) {
+        return res.status(404).json({ message: "Guarantee not found" });
+      }
+      
+      res.json(guarantee);
+    } catch (error) {
+      console.error("Error fetching guarantee:", error);
+      res.status(500).json({ message: "Failed to fetch guarantee" });
+    }
+  });
+
+  app.post('/api/guarantees', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      
+      const guaranteeData = insertGuaranteeSchema.parse({
+        ...req.body,
+        userId,
+      });
+      
+      // Verify user owns the facility
+      const userFacilities = await storage.getUserFacilities(userId);
+      const facility = userFacilities.find(f => f.id === guaranteeData.facilityId);
+      if (!facility) {
+        return res.status(404).json({ message: "Facility not found" });
+      }
+      
+      const guarantee = await storage.createGuarantee(guaranteeData);
+      res.status(201).json(guarantee);
+    } catch (error) {
+      console.error("Error creating guarantee:", error);
+      res.status(500).json({ message: "Failed to create guarantee" });
+    }
+  });
+
+  app.put('/api/guarantees/:guaranteeId', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const { guaranteeId } = req.params;
+      
+      // Verify user owns the guarantee
+      const existingGuarantee = await storage.getGuaranteeById(guaranteeId);
+      if (!existingGuarantee || existingGuarantee.userId !== userId) {
+        return res.status(404).json({ message: "Guarantee not found" });
+      }
+      
+      const guaranteeData = updateGuaranteeSchema.parse({
+        ...req.body,
+        id: guaranteeId,
+      });
+      
+      const guarantee = await storage.updateGuarantee(guaranteeId, guaranteeData);
+      res.json(guarantee);
+    } catch (error) {
+      console.error("Error updating guarantee:", error);
+      res.status(500).json({ message: "Failed to update guarantee" });
+    }
+  });
+
+  app.delete('/api/guarantees/:guaranteeId', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const { guaranteeId } = req.params;
+      
+      // Verify user owns the guarantee
+      const existingGuarantee = await storage.getGuaranteeById(guaranteeId);
+      if (!existingGuarantee || existingGuarantee.userId !== userId) {
+        return res.status(404).json({ message: "Guarantee not found" });
+      }
+      
+      await storage.deleteGuarantee(guaranteeId);
+      res.status(200).json({ message: "Guarantee deleted successfully" });
+    } catch (error) {
+      console.error("Error deleting guarantee:", error);
+      res.status(500).json({ message: "Failed to delete guarantee" });
+    }
+  });
+
+  app.get('/api/facilities/:facilityId/guarantees', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const { facilityId } = req.params;
+      
+      // Verify user owns the facility
+      const userFacilities = await storage.getUserFacilities(userId);
+      const facility = userFacilities.find(f => f.id === facilityId);
+      if (!facility) {
+        return res.status(404).json({ message: "Facility not found" });
+      }
+      
+      const guarantees = await storage.getFacilityGuarantees(facilityId);
+      res.json(guarantees);
+    } catch (error) {
+      console.error("Error fetching facility guarantees:", error);
+      res.status(500).json({ message: "Failed to fetch facility guarantees" });
     }
   });
 
