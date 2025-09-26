@@ -1,25 +1,24 @@
 import { useQuery } from "@tanstack/react-query";
-import { useSupabaseAuth } from "@/contexts/SupabaseAuthContext";
 
-// Feature flag to switch between auth systems
-const USE_SUPABASE_AUTH = false; // Temporarily disabled until Supabase is configured
+// Feature flag to switch between auth systems - DISABLED until Supabase is configured
+const USE_SUPABASE_AUTH = false; 
 
 export function useAuth() {
-  // Supabase Auth
-  const supabaseAuth = useSupabaseAuth();
-  
-  // Replit Auth implementation
+  // Replit Auth implementation (default)
   const { data: replitUser, isLoading: replitLoading } = useQuery({
     queryKey: ["/api/auth/user"],
     retry: false,
     enabled: !USE_SUPABASE_AUTH,
   });
 
+  // Only import and use Supabase if enabled (currently disabled)
   if (USE_SUPABASE_AUTH) {
+    // This import would be dynamically loaded when Supabase is enabled
+    console.log("Supabase auth is disabled - using Replit auth");
     return {
-      user: supabaseAuth.user,
-      isLoading: supabaseAuth.isLoading,
-      isAuthenticated: !!supabaseAuth.user,
+      user: null,
+      isLoading: false,
+      isAuthenticated: false,
       authSystem: 'supabase' as const
     };
   }

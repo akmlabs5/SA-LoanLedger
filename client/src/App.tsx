@@ -32,7 +32,7 @@ import ForgotPasswordPage from "@/pages/auth/forgot-password";
 
 import AppLayout from "@/components/AppLayout";
 import { useAuth } from "@/hooks/useAuth";
-import { SupabaseAuthProvider } from "@/contexts/SupabaseAuthContext";
+// import { SupabaseAuthProvider } from "@/contexts/SupabaseAuthContext"; // Disabled until Supabase is implemented
 
 const queryClient = new QueryClient();
 
@@ -55,21 +55,21 @@ function Router() {
   return (
     <Switch>
       {!isAuthenticated ? (
-        <Route path="/" component={Landing} />
+        <Route path="/" component={LandingPage} />
       ) : (
         <AppLayout>
-          <Route path="/" component={Dashboard} />
-          <Route path="/loans" component={Loans} />
-          <Route path="/banks" component={Banks} />
-          <Route path="/banks/:bankId" component={BankDetail} />
+          <Route path="/" component={DashboardPage} />
+          <Route path="/loans" component={LoansPage} />
+          <Route path="/banks" component={BanksPage} />
+          <Route path="/banks/:bankId" component={BankDetailPage} />
           <Route path="/banks/:bankId/loans/new" component={LoanCreatePage} />
-          <Route path="/loans/new" component={GeneralLoanCreatePage} />
+          <Route path="/loans/new" component={LoanCreateGeneralPage} />
           <Route path="/loans/:loanId" component={LoanDetailPage} />
           <Route path="/loans/:loanId/edit" component={LoanEditPage} />
         <Route path="/banks/:bankId/facilities/new" component={FacilityCreatePage} />
           <Route path="/banks/:bankId/facilities/:facilityId/edit" component={FacilityEditPage} />
           <Route path="/banks/:bankId/contacts/new" component={BankContactCreatePage} />
-          <Route path="/facilities/new" component={GeneralFacilityCreatePage} />
+          <Route path="/facilities/new" component={FacilityCreateGeneralPage} />
           <Route path="/collateral" component={CollateralPage} />
           <Route path="/collateral/new" component={CollateralCreatePage} />
           <Route path="/collateral/:collateralId/edit" component={CollateralEditPage} />
@@ -81,14 +81,13 @@ function Router() {
           <Route path="/ai-chat" component={AIChatPage} />
         </AppLayout>
       )}
-      <Route component={NotFound} />
+      <Route component={NotFoundPage} />
     </Switch>
   );
 }
 
-// Feature flag to use Supabase Auth
-const USE_SUPABASE_AUTH = import.meta.env.VITE_SUPABASE_URL && 
-  import.meta.env.VITE_SUPABASE_ANON_KEY;
+// Feature flag to use Supabase Auth - DISABLED until API is implemented
+const USE_SUPABASE_AUTH = false;
 
 function App() {
   const { isAuthenticated, isLoading, authSystem } = useAuth();
