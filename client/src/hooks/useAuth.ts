@@ -2,8 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useSupabaseAuth } from "@/contexts/SupabaseAuthContext";
 
 // Feature flag to switch between auth systems
-const USE_SUPABASE_AUTH = import.meta.env.VITE_SUPABASE_URL && 
-  import.meta.env.VITE_SUPABASE_ANON_KEY;
+const USE_SUPABASE_AUTH = false; // Temporarily disabled until Supabase is configured
 
 export function useAuth() {
   // Supabase Auth
