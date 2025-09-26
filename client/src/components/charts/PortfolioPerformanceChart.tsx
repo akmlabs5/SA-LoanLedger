@@ -4,6 +4,7 @@ import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContai
 import { TrendingUp, TrendingDown, Activity, BarChart3, AlertCircle } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { PortfolioSummary, LoanWithDetails } from "@shared/types";
+import { SAUDI_CHART_COLORS, CHART_STYLING } from "@/lib/chart-colors";
 
 interface PortfolioPerformanceChartProps {
   timeframe?: 'week' | 'month' | 'quarter' | 'year';
@@ -249,8 +250,8 @@ export default function PortfolioPerformanceChart({
                 yAxisId="utilization"
                 type="monotone" 
                 dataKey="utilization" 
-                stroke="#3B82F6" 
-                fill="#3B82F6"
+                stroke={SAUDI_CHART_COLORS.saudiGreen} 
+                fill={SAUDI_CHART_COLORS.saudiGreen}
                 fillOpacity={0.2}
                 strokeWidth={2}
               />
@@ -258,9 +259,9 @@ export default function PortfolioPerformanceChart({
                 yAxisId="rate"
                 type="monotone" 
                 dataKey="avgRate" 
-                stroke="#DC2626" 
+                stroke={SAUDI_CHART_COLORS.saudiGold} 
                 strokeWidth={3}
-                dot={{ fill: '#DC2626', strokeWidth: 2, r: 4 }}
+                dot={{ fill: SAUDI_CHART_COLORS.saudiGold, strokeWidth: 2, r: 4 }}
               />
             </ComposedChart>
           </ChartContainer>
@@ -290,7 +291,7 @@ export default function PortfolioPerformanceChart({
         </div>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-4">
           <div className="text-center">
-            <p className="text-2xl font-bold text-blue-600 dark:text-blue-400" data-testid="text-chart-outstanding">
+            <p className="text-2xl font-bold" style={{ color: SAUDI_CHART_COLORS.saudiGreen }} data-testid="text-chart-outstanding">
               {latestData?.outstanding.toFixed(1)}M
             </p>
             <p className="text-sm text-gray-600 dark:text-gray-400">Outstanding</p>
@@ -302,13 +303,13 @@ export default function PortfolioPerformanceChart({
             <p className="text-sm text-gray-600 dark:text-gray-400">Interest Paid</p>
           </div>
           <div className="text-center">
-            <p className="text-2xl font-bold text-purple-600 dark:text-purple-400" data-testid="text-chart-rate">
+            <p className="text-2xl font-bold" style={{ color: SAUDI_CHART_COLORS.saudiGold }} data-testid="text-chart-rate">
               {latestData?.avgRate.toFixed(2)}%
             </p>
             <p className="text-sm text-gray-600 dark:text-gray-400">Avg Rate</p>
           </div>
           <div className="text-center">
-            <p className="text-2xl font-bold text-amber-600 dark:text-amber-400" data-testid="text-chart-utilization">
+            <p className="text-2xl font-bold" style={{ color: SAUDI_CHART_COLORS.status.warning }} data-testid="text-chart-utilization">
               {latestData?.utilization.toFixed(1)}%
             </p>
             <p className="text-sm text-gray-600 dark:text-gray-400">Utilization</p>
@@ -320,8 +321,8 @@ export default function PortfolioPerformanceChart({
           <ComposedChart data={performanceData}>
             <defs>
               <linearGradient id="colorOutstanding" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="5%" stopColor="#3B82F6" stopOpacity={0.3}/>
-                <stop offset="95%" stopColor="#3B82F6" stopOpacity={0.1}/>
+                <stop offset="5%" stopColor={SAUDI_CHART_COLORS.saudiGreen} stopOpacity={0.3}/>
+                <stop offset="95%" stopColor={SAUDI_CHART_COLORS.saudiGreen} stopOpacity={0.1}/>
               </linearGradient>
             </defs>
             <CartesianGrid strokeDasharray="3 3" className="stroke-gray-200 dark:stroke-gray-700" />

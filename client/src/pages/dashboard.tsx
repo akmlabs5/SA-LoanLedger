@@ -670,14 +670,16 @@ export default function Dashboard() {
                 <span>Portfolio Performance</span>
               </CardTitle>
             </CardHeader>
-            <CardContent className="pt-0">
-              <PortfolioPerformanceChart 
-                timeframe="month" 
-                showInterestTrend={true} 
-                portfolioSummary={portfolioSummary}
-                loans={activeLoans}
-                isLoading={portfolioLoading || loansLoading}
-              />
+            <CardContent className="pt-0 flex justify-center">
+              <div className="w-full">
+                <PortfolioPerformanceChart 
+                  timeframe="month" 
+                  showInterestTrend={true} 
+                  portfolioSummary={portfolioSummary}
+                  loans={activeLoans}
+                  isLoading={portfolioLoading || loansLoading}
+                />
+              </div>
             </CardContent>
           </Card>
         </div>
