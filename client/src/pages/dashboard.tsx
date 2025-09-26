@@ -32,6 +32,7 @@ import PortfolioPerformanceChart from "@/components/charts/PortfolioPerformanceC
 import LoanDistributionChart from "@/components/charts/LoanDistributionChart";
 import { isUnauthorizedError } from "@/lib/authUtils";
 import { PortfolioSummary, SiborRate, LoanWithDetails } from "@shared/types";
+import { SAUDI_CHART_COLORS } from "@/lib/chart-colors";
 
 export default function Dashboard() {
   const { user, isLoading, isAuthenticated } = useAuth();
@@ -631,28 +632,32 @@ export default function Dashboard() {
             <Card className="bg-card border border-border shadow-sm hover:shadow-md transition-all duration-200">
               <CardHeader className="pb-4">
                 <CardTitle className="text-lg font-semibold flex items-center space-x-2">
-                  <BarChart3 className="h-5 w-5 text-primary" />
+                  <BarChart3 className="h-5 w-5" style={{ color: SAUDI_CHART_COLORS.saudiGreen }} />
                   <span>Outstanding vs Credit Limits</span>
                 </CardTitle>
               </CardHeader>
-              <CardContent className="pt-0">
-                <PortfolioChart portfolioSummary={portfolioSummary} />
+              <CardContent className="pt-0 flex justify-center">
+                <div className="w-full">
+                  <PortfolioChart portfolioSummary={portfolioSummary} />
+                </div>
               </CardContent>
             </Card>
             
             <Card className="bg-card border border-border shadow-sm hover:shadow-md transition-all duration-200">
               <CardHeader className="pb-4">
                 <CardTitle className="text-lg font-semibold flex items-center space-x-2">
-                  <Target className="h-5 w-5 text-primary" />
+                  <Target className="h-5 w-5" style={{ color: SAUDI_CHART_COLORS.saudiGreen }} />
                   <span>Portfolio Distribution</span>
                 </CardTitle>
               </CardHeader>
-              <CardContent className="pt-0">
-                <LoanDistributionChart 
-                  loans={activeLoans} 
-                  showTimeDistribution={false} 
-                  isLoading={loansLoading}
-                />
+              <CardContent className="pt-0 flex justify-center">
+                <div className="w-full">
+                  <LoanDistributionChart 
+                    loans={activeLoans} 
+                    showTimeDistribution={false} 
+                    isLoading={loansLoading}
+                  />
+                </div>
               </CardContent>
             </Card>
           </div>
@@ -661,7 +666,7 @@ export default function Dashboard() {
           <Card className="bg-card border border-border shadow-sm hover:shadow-md transition-all duration-200">
             <CardHeader className="pb-4">
               <CardTitle className="text-lg font-semibold flex items-center space-x-2">
-                <Activity className="h-5 w-5 text-primary" />
+                <Activity className="h-5 w-5" style={{ color: SAUDI_CHART_COLORS.saudiGreen }} />
                 <span>Portfolio Performance</span>
               </CardTitle>
             </CardHeader>
