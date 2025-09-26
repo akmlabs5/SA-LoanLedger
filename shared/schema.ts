@@ -34,7 +34,8 @@ export const facilityTypeEnum = pgEnum('facility_type', [
   'term',
   'bullet', 
   'bridge',
-  'working_capital'
+  'working_capital',
+  'non_cash_guarantee'
 ]);
 
 export const collateralTypeEnum = pgEnum('collateral_type', [
@@ -106,6 +107,21 @@ export const reminderStatusEnum = pgEnum('reminder_status', [
   'pending',
   'sent',
   'failed'
+]);
+
+export const guaranteeStatusEnum = pgEnum('guarantee_status', [
+  'active',
+  'expired', 
+  'renewed',
+  'called',
+  'cancelled'
+]);
+
+export const securityTypeEnum = pgEnum('security_type', [
+  'cash_full',
+  'cash_partial', 
+  'cash_none',
+  'non_cash'
 ]);
 
 // Session storage table.
@@ -460,6 +476,40 @@ export const loanReminders = pgTable("loan_reminders", {
   index("idx_loan_reminders_status").on(table.status),
 ]);
 
+// Guarantees for non-cash facility types
+export const guarantees = pgTable("guarantees", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  facilityId: varchar("facility_id").references(() => facilities.id, { onDelete: "restrict" }).notNull(),
+  userId: varchar("user_id").references(() => users.id).notNull(),
+  referenceNumber: varchar("reference_number", { length: 50 }).notNull(),
+  beneficiaryName: varchar("beneficiary_name", { length: 200 }).notNull(),
+  beneficiaryDetails: text("beneficiary_details"),
+  guaranteeAmount: decimal("guarantee_amount", { precision: 15, scale: 2 }).notNull(),
+  securityType: securityTypeEnum("security_type").notNull(),
+  securityAmount: decimal("security_amount", { precision: 15, scale: 2 }).default('0.00'),
+  securityDetails: text("security_details"),
+  issueDate: date("issue_date").notNull(),
+  expiryDate: date("expiry_date").notNull(),
+  feeRate: decimal("fee_rate", { precision: 5, scale: 2 }).default('0.00'),
+  purpose: text("purpose"),
+  terms: text("terms"),
+  status: guaranteeStatusEnum("status").default('active'),
+  notes: text("notes"),
+  renewalCount: integer("renewal_count").default(0),
+  lastRenewalDate: date("last_renewal_date"),
+  calledDate: date("called_date"),
+  calledAmount: decimal("called_amount", { precision: 15, scale: 2 }),
+  isActive: boolean("is_active").default(true),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+}, (table) => [
+  index("idx_guarantees_facility").on(table.facilityId),
+  index("idx_guarantees_user").on(table.userId),
+  index("idx_guarantees_expiry_date").on(table.expiryDate),
+  index("idx_guarantees_status").on(table.status),
+  index("idx_guarantees_reference").on(table.referenceNumber),
+]);
+
 // Relations
 export const usersRelations = relations(users, ({ many, one }) => ({
   facilities: many(facilities),
@@ -473,6 +523,7 @@ export const usersRelations = relations(users, ({ many, one }) => ({
   transactions: many(transactions),
   bankContacts: many(bankContacts),
   loanReminders: many(loanReminders),
+  guarantees: many(guarantees),
 }));
 
 export const banksRelations = relations(banks, ({ many }) => ({
@@ -508,6 +559,7 @@ export const facilitiesRelations = relations(facilities, ({ one, many }) => ({
   attachments: many(attachments),
   exposureSnapshots: many(exposureSnapshots),
   transactions: many(transactions),
+  guarantees: many(guarantees),
 }));
 
 export const creditLinesRelations = relations(creditLines, ({ one, many }) => ({
@@ -648,9 +700,22 @@ export const loanRemindersRelations = relations(loanReminders, ({ one }) => ({
   }),
 }));
 
+export const guaranteesRelations = relations(guarantees, ({ one }) => ({
+  facility: one(facilities, {
+    fields: [guarantees.facilityId],
+    references: [facilities.id],
+  }),
+  user: one(users, {
+    fields: [guarantees.userId],
+    references: [users.id],
+  }),
+}));
+
 // Zod Enums for validation
 export const transactionTypeZodEnum = z.enum(['draw', 'repayment', 'fee', 'interest', 'limit_change', 'other']);
-export const facilityTypeZodEnum = z.enum(['revolving', 'term', 'bullet', 'bridge', 'working_capital']);
+export const facilityTypeZodEnum = z.enum(['revolving', 'term', 'bullet', 'bridge', 'working_capital', 'non_cash_guarantee']);
+export const guaranteeStatusZodEnum = z.enum(['active', 'expired', 'renewed', 'called', 'cancelled']);
+export const securityTypeZodEnum = z.enum(['cash_full', 'cash_partial', 'cash_none', 'non_cash']);
 export const creditLineTypeZodEnum = z.enum(['working_capital', 'term_loan', 'trade_finance', 'real_estate_finance', 'equipment_finance', 'overdraft', 'letter_of_credit', 'bank_guarantee', 'other']);
 
 export const pledgeTypeZodEnum = z.enum(['first_lien', 'second_lien', 'blanket']);
@@ -1002,3 +1067,20 @@ export const updateLoanReminderSchema = insertLoanReminderSchema.partial().exten
 export type InsertLoanReminder = z.infer<typeof insertLoanReminderSchema>;
 export type UpdateLoanReminder = z.infer<typeof updateLoanReminderSchema>;
 export type LoanReminder = typeof loanReminders.$inferSelect;
+
+// Guarantee Schemas
+export const insertGuaranteeSchema = createInsertSchema(guarantees).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const updateGuaranteeSchema = insertGuaranteeSchema.partial().extend({
+  id: z.string(),
+});
+
+export type InsertGuarantee = z.infer<typeof insertGuaranteeSchema>;
+export type UpdateGuarantee = z.infer<typeof updateGuaranteeSchema>;
+export type Guarantee = typeof guarantees.$inferSelect;
+export type GuaranteeStatus = z.infer<typeof guaranteeStatusZodEnum>;
+export type SecurityType = z.infer<typeof securityTypeZodEnum>;
