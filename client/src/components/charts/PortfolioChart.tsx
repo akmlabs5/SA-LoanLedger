@@ -1,6 +1,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
 import { TrendingUp } from "lucide-react";
+import { SAUDI_CHART_COLORS, getBankColor, CHART_STYLING } from "@/lib/chart-colors";
 
 interface PortfolioChartProps {
   portfolioSummary?: {
@@ -14,7 +15,7 @@ interface PortfolioChartProps {
   };
 }
 
-const COLORS = ['#3B82F6', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6', '#06B6D4'];
+// Using centralized Saudi-themed color palette
 
 export default function PortfolioChart({ portfolioSummary }: PortfolioChartProps) {
   if (!portfolioSummary?.bankExposures) {
@@ -24,7 +25,7 @@ export default function PortfolioChart({ portfolioSummary }: PortfolioChartProps
           <CardTitle>Outstanding Loans by Bank</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="h-[300px] bg-gradient-to-br from-blue-50 to-slate-100 rounded-lg flex items-center justify-center">
+          <div className="h-[300px] bg-gradient-to-br from-green-50 to-slate-100 dark:from-green-950 dark:to-slate-900 rounded-lg flex items-center justify-center">
             <div className="text-center">
               <TrendingUp className="h-12 w-12 text-primary mx-auto mb-4" />
               <p className="text-muted-foreground">No data available</p>
@@ -54,22 +55,22 @@ export default function PortfolioChart({ portfolioSummary }: PortfolioChartProps
       : exposure.bankName,
     value: exposure.outstanding / 1000000,
     percentage: ((exposure.outstanding / portfolioSummary.bankExposures.reduce((sum, exp) => sum + exp.outstanding, 0)) * 100).toFixed(1),
-    color: COLORS[index % COLORS.length],
+    color: getBankColor(index),
   }));
 
   const CustomTooltip = ({ active, payload, label }: any) => {
     if (active && payload && payload.length) {
       const data = payload[0].payload;
       return (
-        <div className="bg-white p-3 border border-border rounded-lg shadow-lg">
-          <p className="font-semibold">{data.fullName}</p>
-          <p className="text-sm text-blue-600">
+        <div className="bg-white dark:bg-gray-800 p-3 border border-border rounded-lg shadow-lg">
+          <p className="font-semibold text-foreground">{data.fullName}</p>
+          <p className="text-sm" style={{ color: SAUDI_CHART_COLORS.saudiGreen }}>
             Outstanding: {data.outstanding.toFixed(1)}M SAR
           </p>
-          <p className="text-sm text-gray-600">
+          <p className="text-sm text-muted-foreground">
             Credit Limit: {data.creditLimit.toFixed(1)}M SAR
           </p>
-          <p className="text-sm text-orange-600">
+          <p className="text-sm" style={{ color: SAUDI_CHART_COLORS.saudiGold }}>
             Utilization: {data.utilization.toFixed(1)}%
           </p>
         </div>
@@ -82,8 +83,8 @@ export default function PortfolioChart({ portfolioSummary }: PortfolioChartProps
     if (active && payload && payload.length) {
       const data = payload[0];
       return (
-        <div className="bg-white p-3 border border-border rounded-lg shadow-lg">
-          <p className="font-semibold">{data.name}</p>
+        <div className="bg-white dark:bg-gray-800 p-3 border border-border rounded-lg shadow-lg">
+          <p className="font-semibold text-foreground">{data.name}</p>
           <p className="text-sm" style={{ color: data.payload.color }}>
             {data.value.toFixed(1)}M SAR ({data.payload.percentage}%)
           </p>
@@ -103,7 +104,7 @@ export default function PortfolioChart({ portfolioSummary }: PortfolioChartProps
         <CardContent>
           <div className="h-[300px]" data-testid="chart-outstanding-loans">
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={barChartData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
+              <BarChart data={barChartData} margin={CHART_STYLING.margins.default}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
                 <XAxis 
                   dataKey="bank" 
@@ -119,13 +120,13 @@ export default function PortfolioChart({ portfolioSummary }: PortfolioChartProps
                 <Tooltip content={<CustomTooltip />} />
                 <Bar 
                   dataKey="outstanding" 
-                  fill="#3B82F6" 
+                  fill={SAUDI_CHART_COLORS.saudiGreen} 
                   name="Outstanding"
                   radius={[4, 4, 0, 0]}
                 />
                 <Bar 
                   dataKey="creditLimit" 
-                  fill="#E5E7EB" 
+                  fill={SAUDI_CHART_COLORS.status.neutral} 
                   name="Available"
                   radius={[4, 4, 0, 0]}
                 />

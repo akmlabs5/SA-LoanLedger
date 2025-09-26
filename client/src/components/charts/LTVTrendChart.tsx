@@ -4,6 +4,7 @@ import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContai
 import { Shield, AlertTriangle, TrendingUp, Target, Loader2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { PortfolioSummary, LoanWithDetails } from "@shared/types";
+import { SAUDI_CHART_COLORS, CHART_STYLING } from "@/lib/chart-colors";
 
 interface LTVTrendChartProps {
   timeframe?: 'week' | 'month' | 'quarter' | 'year';

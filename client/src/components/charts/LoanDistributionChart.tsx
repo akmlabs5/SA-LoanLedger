@@ -3,6 +3,7 @@ import { ChartContainer } from "@/components/ui/chart";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, LineChart, Line } from "recharts";
 import { Calendar, TrendingUp, AlertTriangle, Loader2 } from "lucide-react";
 import { LoanWithDetails } from "@shared/types";
+import { SAUDI_CHART_COLORS, getBankColor, CHART_STYLING } from "@/lib/chart-colors";
 
 interface LoanDistributionChartProps {
   loans?: LoanWithDetails[];
@@ -30,16 +31,17 @@ interface TimeData {
   count: number;
 }
 
+// Using centralized Saudi-themed color palette
 const URGENCY_COLORS = {
-  'critical': '#DC2626',
-  'warning': '#D97706', 
-  'normal': '#059669',
+  'critical': SAUDI_CHART_COLORS.status.error,
+  'warning': SAUDI_CHART_COLORS.status.warning, 
+  'normal': SAUDI_CHART_COLORS.saudiGreen,
 };
 
 const STATUS_COLORS = {
-  'active': '#2563EB',
-  'settled': '#059669',
-  'overdue': '#DC2626',
+  'active': SAUDI_CHART_COLORS.saudiGreen,
+  'settled': SAUDI_CHART_COLORS.status.success,
+  'overdue': SAUDI_CHART_COLORS.status.error,
 };
 
 export default function LoanDistributionChart({ loans = [], showTimeDistribution = false, isLoading = false }: LoanDistributionChartProps) {
@@ -49,7 +51,7 @@ export default function LoanDistributionChart({ loans = [], showTimeDistribution
       <Card className="border-0 shadow-lg bg-white/50 dark:bg-gray-800/50 backdrop-blur-sm">
         <CardHeader>
           <CardTitle className="flex items-center space-x-2">
-            <TrendingUp className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+            <TrendingUp className="h-5 w-5" style={{ color: SAUDI_CHART_COLORS.saudiGreen }} />
             <span>Loan Distribution</span>
           </CardTitle>
         </CardHeader>
@@ -70,7 +72,7 @@ export default function LoanDistributionChart({ loans = [], showTimeDistribution
       <Card className="border-0 shadow-lg bg-white/50 dark:bg-gray-800/50 backdrop-blur-sm">
         <CardHeader>
           <CardTitle className="flex items-center space-x-2">
-            <TrendingUp className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+            <TrendingUp className="h-5 w-5" style={{ color: SAUDI_CHART_COLORS.saudiGreen }} />
             <span>Loan Distribution</span>
           </CardTitle>
         </CardHeader>
