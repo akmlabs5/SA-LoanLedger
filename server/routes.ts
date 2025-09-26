@@ -1278,21 +1278,53 @@ export async function registerRoutes(app: Express): Promise<Server> {
           // Get loan transactions to calculate settlement progress
           const transactions = await storage.getLoanLedger(loan.id);
           
-          // Calculate totals
+          // Calculate totals with principal vs interest breakdown
           const totalDrawn = transactions
             .filter(t => t.type === 'draw')
             .reduce((sum, t) => sum + parseFloat(t.amount), 0);
           
-          const totalRepaid = transactions
-            .filter(t => t.type === 'repayment')
+          // Break down repayments into principal vs interest
+          const repaymentTransactions = transactions.filter(t => t.type === 'repayment');
+          let principalPaid = 0;
+          let interestPaidFromRepayments = 0;
+          let totalRepaid = 0;
+          
+          repaymentTransactions.forEach(t => {
+            const amount = parseFloat(t.amount);
+            totalRepaid += amount;
+            
+            // Check if allocation data exists
+            if (t.allocation && typeof t.allocation === 'object') {
+              const allocation = t.allocation as any;
+              principalPaid += parseFloat(allocation.principal || 0);
+              interestPaidFromRepayments += parseFloat(allocation.interest || 0);
+            } else {
+              // If no allocation data, treat as principal payment for now
+              principalPaid += amount;
+            }
+          });
+          
+          // Separate interest and fee transactions
+          const interestCharges = transactions
+            .filter(t => t.type === 'interest')
             .reduce((sum, t) => sum + parseFloat(t.amount), 0);
           
-          const fees = transactions
-            .filter(t => ['fee', 'interest'].includes(t.type))
+          const feeCharges = transactions
+            .filter(t => t.type === 'fee')
             .reduce((sum, t) => sum + parseFloat(t.amount), 0);
           
-          const outstandingBalance = totalDrawn + fees - totalRepaid;
-          const settlementProgress = totalDrawn > 0 ? (totalRepaid / (totalDrawn + fees)) * 100 : 0;
+          // Total interest paid (from repayment allocations + separate interest transactions)
+          const totalInterestPaid = interestPaidFromRepayments;
+          
+          // Total charges (interest + fees)
+          const totalCharges = interestCharges + feeCharges;
+          
+          const outstandingBalance = totalDrawn + totalCharges - totalRepaid;
+          const settlementProgress = totalDrawn > 0 ? (totalRepaid / (totalDrawn + totalCharges)) * 100 : 0;
+          
+          // Calculate principal and interest progress
+          const principalProgress = totalDrawn > 0 ? (principalPaid / totalDrawn) * 100 : 0;
+          const interestProgress = totalCharges > 0 ? (totalInterestPaid / totalCharges) * 100 : 0;
           
           // Determine settlement status
           let settlementStatus = loan.status;
@@ -1310,9 +1342,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
             amount: parseFloat(loan.amount),
             totalDrawn,
             totalRepaid,
-            fees,
+            principalPaid,
+            totalInterestPaid,
+            interestCharges,
+            feeCharges,
+            totalCharges,
             outstandingBalance: Math.max(0, outstandingBalance),
             settlementProgress: Math.min(100, Math.max(0, settlementProgress)),
+            principalProgress: Math.min(100, Math.max(0, principalProgress)),
+            interestProgress: Math.min(100, Math.max(0, interestProgress)),
             settlementStatus,
             dueDate: loan.dueDate,
             settledDate: loan.settledDate,
@@ -1320,7 +1358,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
             transactionCount: transactions.length,
             lastTransactionDate: transactions.length > 0 
               ? Math.max(...transactions.map(t => new Date(t.date).getTime()))
-              : null
+              : null,
+            breakdown: {
+              principalOwed: totalDrawn,
+              principalPaid,
+              principalRemaining: Math.max(0, totalDrawn - principalPaid),
+              interestOwed: interestCharges,
+              interestPaid: totalInterestPaid,
+              interestRemaining: Math.max(0, interestCharges - totalInterestPaid),
+              feesOwed: feeCharges,
+              feesRemaining: Math.max(0, feeCharges)
+            }
           };
         })
       );

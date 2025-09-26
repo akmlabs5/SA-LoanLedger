@@ -56,15 +56,31 @@ interface LoanSettlement {
   amount: number;
   totalDrawn: number;
   totalRepaid: number;
-  fees: number;
+  principalPaid: number;
+  totalInterestPaid: number;
+  interestCharges: number;
+  feeCharges: number;
+  totalCharges: number;
   outstandingBalance: number;
   settlementProgress: number;
+  principalProgress: number;
+  interestProgress: number;
   settlementStatus: 'active' | 'settled' | 'overdue';
   dueDate: string;
   settledDate?: string;
   startDate: string;
   transactionCount: number;
   lastTransactionDate?: number;
+  breakdown: {
+    principalOwed: number;
+    principalPaid: number;
+    principalRemaining: number;
+    interestOwed: number;
+    interestPaid: number;
+    interestRemaining: number;
+    feesOwed: number;
+    feesRemaining: number;
+  };
 }
 
 interface SettlementSummary {
@@ -558,29 +574,68 @@ export default function HistoryPage() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-              <div className="text-center">
-                <div className="text-2xl font-bold text-foreground">{settlementSummary.totalLoans}</div>
-                <div className="text-sm text-muted-foreground">Total Loans</div>
-              </div>
-              <div className="text-center">
-                <div className="text-2xl font-bold text-blue-600">{settlementSummary.activeLoans}</div>
-                <div className="text-sm text-muted-foreground">Active</div>
-              </div>
-              <div className="text-center">
-                <div className="text-2xl font-bold text-green-600">{settlementSummary.settledLoans}</div>
-                <div className="text-sm text-muted-foreground">Settled</div>
-              </div>
-              <div className="text-center">
-                <div className="text-2xl font-bold text-red-600">{settlementSummary.overdueLoans}</div>
-                <div className="text-sm text-muted-foreground">Overdue</div>
-              </div>
-              <div className="text-center">
-                <div className="text-2xl font-bold text-foreground">
-                  {formatCurrency(settlementSummary.totalOutstanding)}
+            <div className="space-y-6">
+              {/* Loan Status Overview */}
+              <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+                <div className="text-center">
+                  <div className="text-2xl font-bold text-foreground">{settlementSummary.totalLoans}</div>
+                  <div className="text-sm text-muted-foreground">Total Loans</div>
                 </div>
-                <div className="text-sm text-muted-foreground">Outstanding</div>
+                <div className="text-center">
+                  <div className="text-2xl font-bold text-blue-600">{settlementSummary.activeLoans}</div>
+                  <div className="text-sm text-muted-foreground">Active</div>
+                </div>
+                <div className="text-center">
+                  <div className="text-2xl font-bold text-green-600">{settlementSummary.settledLoans}</div>
+                  <div className="text-sm text-muted-foreground">Settled</div>
+                </div>
+                <div className="text-center">
+                  <div className="text-2xl font-bold text-red-600">{settlementSummary.overdueLoans}</div>
+                  <div className="text-sm text-muted-foreground">Overdue</div>
+                </div>
+                <div className="text-center">
+                  <div className="text-2xl font-bold text-foreground">
+                    {formatCurrency(settlementSummary.totalOutstanding)}
+                  </div>
+                  <div className="text-sm text-muted-foreground">Outstanding</div>
+                </div>
               </div>
+              
+              {/* Principal vs Interest Breakdown */}
+              {loanSettlements.length > 0 && (
+                <div className="border-t pt-4">
+                  <h4 className="font-medium text-foreground mb-3">Payment Allocation Analysis</h4>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div className="bg-blue-50 dark:bg-blue-950 rounded-lg p-4">
+                      <div className="text-lg font-bold text-blue-600">
+                        {formatCurrency(loanSettlements.reduce((sum, loan) => sum + loan.principalPaid, 0))}
+                      </div>
+                      <div className="text-sm text-muted-foreground">Principal Paid</div>
+                      <div className="text-xs text-muted-foreground mt-1">
+                        vs. {formatCurrency(loanSettlements.reduce((sum, loan) => sum + loan.breakdown.principalRemaining, 0))} remaining
+                      </div>
+                    </div>
+                    <div className="bg-orange-50 dark:bg-orange-950 rounded-lg p-4">
+                      <div className="text-lg font-bold text-orange-600">
+                        {formatCurrency(loanSettlements.reduce((sum, loan) => sum + loan.totalInterestPaid, 0))}
+                      </div>
+                      <div className="text-sm text-muted-foreground">Interest Paid</div>
+                      <div className="text-xs text-muted-foreground mt-1">
+                        vs. {formatCurrency(loanSettlements.reduce((sum, loan) => sum + loan.breakdown.interestRemaining, 0))} remaining
+                      </div>
+                    </div>
+                    <div className="bg-gray-50 dark:bg-gray-950 rounded-lg p-4">
+                      <div className="text-lg font-bold text-gray-600">
+                        {formatCurrency(loanSettlements.reduce((sum, loan) => sum + loan.feeCharges, 0))}
+                      </div>
+                      <div className="text-sm text-muted-foreground">Total Fees</div>
+                      <div className="text-xs text-muted-foreground mt-1">
+                        Administrative charges
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
           </CardContent>
         </Card>
@@ -629,9 +684,41 @@ export default function HistoryPage() {
                         data-testid={`progress-settlement-${loan.loanId}`}
                       />
                     </div>
-                    <div className="flex justify-between text-xs text-muted-foreground">
-                      <span>Repaid: {formatCurrency(loan.totalRepaid)}</span>
-                      <span>Total: {formatCurrency(loan.amount + loan.fees)}</span>
+                    <div className="grid grid-cols-2 gap-4 text-xs">
+                      <div>
+                        <div className="font-medium text-muted-foreground mb-1">Principal</div>
+                        <div className="flex justify-between">
+                          <span className="text-green-600">Paid:</span>
+                          <span>{formatCurrency(loan.principalPaid)}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-muted-foreground">Remaining:</span>
+                          <span>{formatCurrency(loan.breakdown.principalRemaining)}</span>
+                        </div>
+                        <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-1 mt-1">
+                          <div 
+                            className="bg-blue-500 h-1 rounded-full"
+                            style={{ width: `${loan.principalProgress}%` }}
+                          />
+                        </div>
+                      </div>
+                      <div>
+                        <div className="font-medium text-muted-foreground mb-1">Interest & Fees</div>
+                        <div className="flex justify-between">
+                          <span className="text-orange-600">Paid:</span>
+                          <span>{formatCurrency(loan.totalInterestPaid)}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-muted-foreground">Remaining:</span>
+                          <span>{formatCurrency(loan.breakdown.interestRemaining + loan.breakdown.feesRemaining)}</span>
+                        </div>
+                        <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-1 mt-1">
+                          <div 
+                            className="bg-orange-500 h-1 rounded-full"
+                            style={{ width: `${loan.interestProgress}%` }}
+                          />
+                        </div>
+                      </div>
                     </div>
                   </div>
                 </div>
