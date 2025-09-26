@@ -9,7 +9,8 @@ import {
   Building2,
   ArrowUpDown,
   ChevronLeft,
-  ChevronRight
+  ChevronRight,
+  Receipt
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -46,6 +47,35 @@ import {
 } from "recharts";
 import { ExposureSnapshot, Transaction, Bank } from "@shared/schema";
 
+// Settlement data interface
+interface LoanSettlement {
+  loanId: string;
+  referenceNumber: string;
+  bankName: string;
+  facilityId: string;
+  amount: number;
+  totalDrawn: number;
+  totalRepaid: number;
+  fees: number;
+  outstandingBalance: number;
+  settlementProgress: number;
+  settlementStatus: 'active' | 'settled' | 'overdue';
+  dueDate: string;
+  settledDate?: string;
+  startDate: string;
+  transactionCount: number;
+  lastTransactionDate?: number;
+}
+
+interface SettlementSummary {
+  totalLoans: number;
+  activeLoans: number;
+  settledLoans: number;
+  overdueLoans: number;
+  totalOutstanding: number;
+  averageSettlementProgress: number;
+}
+
 interface HistoryFilters {
   dateFrom: string;
   dateTo: string;
@@ -53,6 +83,7 @@ interface HistoryFilters {
   facilityId: string;
   loanId: string;
   transactionType: string;
+  settlementStatus: string;
 }
 
 interface TransactionResponse {
@@ -60,6 +91,11 @@ interface TransactionResponse {
   total: number;
   limit: number;
   offset: number;
+}
+
+interface SettlementResponse {
+  data: LoanSettlement[];
+  summary: SettlementSummary;
 }
 
 type TimeframeType = '30D' | '6M' | '1Y' | 'MAX';
@@ -75,6 +111,7 @@ export default function HistoryPage() {
     facilityId: '',
     loanId: '',
     transactionType: '',
+    settlementStatus: '',
   });
 
   // Calculate date ranges based on timeframe
@@ -170,6 +207,27 @@ export default function HistoryPage() {
   const transactions = transactionResponse?.data || [];
   const totalPages = Math.ceil((transactionResponse?.total || 0) / pageSize);
 
+  // Fetch settlement data for loan grouping
+  const settlementParams = new URLSearchParams({
+    ...(filters.bankId && { bankId: filters.bankId }),
+    ...(filters.facilityId && { facilityId: filters.facilityId }),
+    from: filters.dateFrom,
+    to: filters.dateTo,
+  }).toString();
+
+  const { 
+    data: settlementResponse,
+    isLoading: settlementLoading 
+  } = useQuery<SettlementResponse>({
+    queryKey: ['/api/history/loan-settlements', settlementParams],
+    queryFn: () => 
+      fetch(`/api/history/loan-settlements?${settlementParams}`)
+        .then(res => res.json()),
+  });
+
+  const loanSettlements = settlementResponse?.data || [];
+  const settlementSummary = settlementResponse?.summary;
+
   // Process exposure data for chart
   const processExposureData = () => {
     if (!exposureData.length) return [];
@@ -214,6 +272,25 @@ export default function HistoryPage() {
     '#06b6d4', // Cyan
     '#84cc16', // Lime
   ];
+
+  // Settlement status formatting
+  const getSettlementStatusColor = (status: string) => {
+    const colorMap = {
+      active: 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200',
+      settled: 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200',
+      overdue: 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200'
+    };
+    return colorMap[status as keyof typeof colorMap] || colorMap.active;
+  };
+
+  const formatSettlementStatus = (status: string) => {
+    const statusMap = {
+      active: 'Active',
+      settled: 'Settled',
+      overdue: 'Overdue'
+    };
+    return statusMap[status as keyof typeof statusMap] || status;
+  };
 
   // Transaction type formatting
   const formatTransactionType = (type: string) => {
@@ -387,7 +464,7 @@ export default function HistoryPage() {
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
             <div className="space-y-2">
               <Label htmlFor="date-from">From Date</Label>
               <Input
@@ -449,9 +526,120 @@ export default function HistoryPage() {
                 </SelectContent>
               </Select>
             </div>
+            <div className="space-y-2">
+              <Label>Settlement Status</Label>
+              <Select
+                value={filters.settlementStatus}
+                onValueChange={(value) => setFilters(prev => ({ ...prev, settlementStatus: value === 'all' ? '' : value }))}
+                data-testid="select-settlement-status-filter"
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="All statuses" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All statuses</SelectItem>
+                  <SelectItem value="active">Active</SelectItem>
+                  <SelectItem value="settled">Settled</SelectItem>
+                  <SelectItem value="overdue">Overdue</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
           </div>
         </CardContent>
       </Card>
+
+      {/* Settlement Summary */}
+      {settlementSummary && (
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="flex items-center gap-2">
+              <Receipt className="h-5 w-5 text-saudi" />
+              Loan Settlement Summary
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+              <div className="text-center">
+                <div className="text-2xl font-bold text-foreground">{settlementSummary.totalLoans}</div>
+                <div className="text-sm text-muted-foreground">Total Loans</div>
+              </div>
+              <div className="text-center">
+                <div className="text-2xl font-bold text-blue-600">{settlementSummary.activeLoans}</div>
+                <div className="text-sm text-muted-foreground">Active</div>
+              </div>
+              <div className="text-center">
+                <div className="text-2xl font-bold text-green-600">{settlementSummary.settledLoans}</div>
+                <div className="text-sm text-muted-foreground">Settled</div>
+              </div>
+              <div className="text-center">
+                <div className="text-2xl font-bold text-red-600">{settlementSummary.overdueLoans}</div>
+                <div className="text-sm text-muted-foreground">Overdue</div>
+              </div>
+              <div className="text-center">
+                <div className="text-2xl font-bold text-foreground">
+                  {formatCurrency(settlementSummary.totalOutstanding)}
+                </div>
+                <div className="text-sm text-muted-foreground">Outstanding</div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Loan Settlement Progress */}
+      {loanSettlements.length > 0 && (
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="flex items-center gap-2">
+              <TrendingUp className="h-5 w-5 text-saudi" />
+              Loan Settlement Progress
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              {loanSettlements.slice(0, 10).map((loan) => (
+                <div key={loan.loanId} className="border rounded-lg p-4">
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="flex items-center gap-3">
+                      <div>
+                        <div className="font-medium">{loan.referenceNumber}</div>
+                        <div className="text-sm text-muted-foreground">{loan.bankName}</div>
+                      </div>
+                      <Badge 
+                        className={getSettlementStatusColor(loan.settlementStatus)}
+                        data-testid={`badge-settlement-${loan.settlementStatus}`}
+                      >
+                        {formatSettlementStatus(loan.settlementStatus)}
+                      </Badge>
+                    </div>
+                    <div className="text-right">
+                      <div className="font-medium">{formatCurrency(loan.outstandingBalance)}</div>
+                      <div className="text-sm text-muted-foreground">Outstanding</div>
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between text-sm">
+                      <span>Settlement Progress</span>
+                      <span>{loan.settlementProgress.toFixed(1)}%</span>
+                    </div>
+                    <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+                      <div 
+                        className="bg-saudi h-2 rounded-full transition-all duration-300"
+                        style={{ width: `${loan.settlementProgress}%` }}
+                        data-testid={`progress-settlement-${loan.loanId}`}
+                      />
+                    </div>
+                    <div className="flex justify-between text-xs text-muted-foreground">
+                      <span>Repaid: {formatCurrency(loan.totalRepaid)}</span>
+                      <span>Total: {formatCurrency(loan.amount + loan.fees)}</span>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Transactions Table */}
       <Card>
