@@ -105,7 +105,7 @@ export default function PortfolioChart({ portfolioSummary }: PortfolioChartProps
           <div className="h-[250px] sm:h-[300px] lg:h-[350px]" data-testid="chart-outstanding-loans">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={barChartData} margin={CHART_STYLING.margins.default}>
-                <CartesianGrid strokeDasharray="3 3" stroke={CHART_STYLING.grid.stroke} />
+                <CartesianGrid strokeDasharray="3 3" stroke={SAUDI_CHART_COLORS.status.neutral} />
                 <XAxis 
                   dataKey="bank" 
                   tick={{ fontSize: 12 }}
