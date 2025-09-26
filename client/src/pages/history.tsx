@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { format, subDays, subMonths, subYears } from "date-fns";
 import { 
@@ -10,7 +10,9 @@ import {
   ArrowUpDown,
   ChevronLeft,
   ChevronRight,
-  Receipt
+  Receipt,
+  Eye,
+  EyeOff
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -35,8 +37,8 @@ import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { 
-  AreaChart,
-  Area,
+  LineChart,
+  Line,
   XAxis,
   YAxis,
   CartesianGrid,
@@ -46,6 +48,7 @@ import {
   ReferenceLine
 } from "recharts";
 import { ExposureSnapshot, Transaction, Bank } from "@shared/schema";
+import { SAUDI_CHART_COLORS, getBankColor, getTransactionTypeStyle } from "@/lib/chart-colors";
 
 // Settlement data interface
 interface LoanSettlement {
@@ -119,6 +122,10 @@ type TimeframeType = '30D' | '6M' | '1Y' | 'MAX';
 export default function HistoryPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize] = useState(25);
+  
+  // Bank visibility controls for interactive chart
+  const [visibleBanks, setVisibleBanks] = useState<Set<string>>(new Set());
+  const [showTop5Only, setShowTop5Only] = useState(true);
   const [selectedTimeframe, setSelectedTimeframe] = useState<TimeframeType>('1Y');
   const [filters, setFilters] = useState<HistoryFilters>({
     dateFrom: format(subYears(new Date(), 1), 'yyyy-MM-dd'),
@@ -276,18 +283,62 @@ export default function HistoryPage() {
 
   const chartData = processExposureData();
 
-  // Get unique bank names for chart colors
-  const bankNames = banks.map(bank => bank.name.replace(/[^a-zA-Z0-9]/g, '_'));
-  const bankColors = [
-    '#059669', // Saudi Green primary
-    '#10b981', // Emerald
-    '#3b82f6', // Blue  
-    '#8b5cf6', // Purple
-    '#f59e0b', // Amber
-    '#ef4444', // Red
-    '#06b6d4', // Cyan
-    '#84cc16', // Lime
-  ];
+  // Enhanced bank management for interactive chart
+  const processedBankData = () => {
+    if (!chartData.length) return { topBanks: [], otherBanks: [], allBanks: [] };
+    
+    // Calculate total exposure per bank across all time periods
+    const bankTotals = banks.map(bank => {
+      const bankKey = bank.name.replace(/[^a-zA-Z0-9]/g, '_');
+      const total = chartData.reduce((sum, dataPoint: any) => {
+        return sum + (dataPoint[bankKey] || 0);
+      }, 0);
+      return { bank, bankKey, total, name: bank.name };
+    }).filter(item => item.total > 0)
+      .sort((a, b) => b.total - a.total);
+
+    const topBanks = bankTotals.slice(0, 5);
+    const otherBanks = bankTotals.slice(5);
+    
+    return { topBanks, otherBanks, allBanks: bankTotals };
+  };
+
+  const { topBanks, otherBanks, allBanks } = processedBankData();
+  
+  // Initialize visible banks with top 5 on first load (moved to useEffect to avoid render issues)
+  useEffect(() => {
+    if (showTop5Only && visibleBanks.size === 0 && topBanks.length > 0) {
+      setVisibleBanks(new Set(topBanks.map(item => item.bankKey)));
+    }
+  }, [showTop5Only, topBanks.length, visibleBanks.size]);
+
+  // Enhanced chart data with "Others" aggregation
+  const enhancedChartData = chartData.map((dataPoint: any) => {
+    const enhanced = { ...dataPoint };
+    
+    // Calculate "Others" total if showing top 5 only
+    if (showTop5Only && otherBanks.length > 0) {
+      enhanced.Others = otherBanks.reduce((sum, item) => {
+        return sum + (dataPoint[item.bankKey] || 0);
+      }, 0);
+    }
+    
+    return enhanced;
+  });
+
+  // Get banks to display in chart
+  const getBanksToDisplay = () => {
+    if (showTop5Only) {
+      const result = topBanks.map(item => item.bankKey);
+      if (otherBanks.length > 0) result.push('Others');
+      return result;
+    }
+    return allBanks
+      .filter(item => visibleBanks.has(item.bankKey))
+      .map(item => item.bankKey);
+  };
+
+  const banksToDisplay = getBanksToDisplay();
 
   // Settlement status formatting
   const getSettlementStatusColor = (status: string) => {
@@ -321,17 +372,8 @@ export default function HistoryPage() {
     return typeMap[type as keyof typeof typeMap] || type;
   };
 
-  const getTransactionTypeColor = (type: string) => {
-    const colorMap = {
-      draw: 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200',
-      repayment: 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200',
-      fee: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200',
-      interest: 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200',
-      limit_change: 'bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200',
-      other: 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200'
-    };
-    return colorMap[type as keyof typeof colorMap] || colorMap.other;
-  };
+  // Use centralized Saudi-themed styling
+  const getTransactionTypeColor = getTransactionTypeStyle;
 
   // Format currency
   const formatCurrency = (amount: string | number) => {
@@ -390,25 +432,88 @@ export default function HistoryPage() {
       {/* Timeframe Selection */}
       <Card>
         <CardHeader className="pb-3">
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
             <CardTitle className="flex items-center gap-2">
-              <TrendingUp className="h-5 w-5 text-saudi" />
+              <TrendingUp className="h-5 w-5" style={{ color: SAUDI_CHART_COLORS.saudiGreen }} />
               Exposure Over Time
             </CardTitle>
-            <div className="flex items-center gap-2">
-              {(['30D', '6M', '1Y', 'MAX'] as TimeframeType[]).map((timeframe) => (
+            
+            {/* Controls Row */}
+            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
+              {/* View Toggle */}
+              <div className="flex items-center gap-2">
                 <Button
-                  key={timeframe}
-                  variant={selectedTimeframe === timeframe ? "default" : "outline"}
+                  variant={showTop5Only ? "default" : "outline"}
                   size="sm"
-                  onClick={() => handleTimeframeChange(timeframe)}
-                  data-testid={`button-timeframe-${timeframe.toLowerCase()}`}
+                  onClick={() => {
+                    setShowTop5Only(true);
+                    setVisibleBanks(new Set(topBanks.map(item => item.bankKey)));
+                  }}
+                  data-testid="button-top5-view"
                 >
-                  {timeframe}
+                  Top 5
                 </Button>
-              ))}
+                <Button
+                  variant={!showTop5Only ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => {
+                    setShowTop5Only(false);
+                    setVisibleBanks(new Set(allBanks.map(item => item.bankKey)));
+                  }}
+                  data-testid="button-all-banks-view"
+                >
+                  All Banks
+                </Button>
+              </div>
+              
+              {/* Timeframe Selection */}
+              <div className="flex items-center gap-2">
+                {(['30D', '6M', '1Y', 'MAX'] as TimeframeType[]).map((timeframe) => (
+                  <Button
+                    key={timeframe}
+                    variant={selectedTimeframe === timeframe ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => handleTimeframeChange(timeframe)}
+                    data-testid={`button-timeframe-${timeframe.toLowerCase()}`}
+                  >
+                    {timeframe}
+                  </Button>
+                ))}
+              </div>
             </div>
           </div>
+          
+          {/* Bank Toggle Controls - Only show when not in Top 5 mode */}
+          {!showTop5Only && allBanks.length > 0 && (
+            <div className="mt-4">
+              <div className="flex flex-wrap gap-2">
+                {allBanks.map((item, index) => {
+                  const isVisible = visibleBanks.has(item.bankKey);
+                  return (
+                    <Button
+                      key={item.bankKey}
+                      variant={isVisible ? "default" : "outline"}
+                      size="sm"
+                      onClick={() => {
+                        const newVisible = new Set(visibleBanks);
+                        if (isVisible) {
+                          newVisible.delete(item.bankKey);
+                        } else {
+                          newVisible.add(item.bankKey);
+                        }
+                        setVisibleBanks(newVisible);
+                      }}
+                      className="text-xs"
+                      data-testid={`button-toggle-${item.bankKey}`}
+                    >
+                      {isVisible ? <Eye className="h-3 w-3 mr-1" /> : <EyeOff className="h-3 w-3 mr-1" />}
+                      {item.name}
+                    </Button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
         </CardHeader>
         <CardContent>
           {exposureLoading ? (
@@ -419,10 +524,10 @@ export default function HistoryPage() {
                 <Skeleton className="h-64 w-full" />
               </div>
             </div>
-          ) : chartData.length > 0 ? (
+          ) : enhancedChartData.length > 0 ? (
             <div className="h-80 w-full" data-testid="chart-exposure-trends">
               <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={chartData} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
+                <LineChart data={enhancedChartData} margin={{ top: 20, right: 30, left: 20, bottom: 20 }}>
                   <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
                   <XAxis 
                     dataKey="date" 
@@ -435,10 +540,13 @@ export default function HistoryPage() {
                   />
                   <Tooltip 
                     labelFormatter={(value) => format(new Date(value as string), 'MMM dd, yyyy')}
-                    formatter={(value: number, name: string) => [
-                      formatCurrency(value),
-                      banks.find(b => b.name.replace(/[^a-zA-Z0-9]/g, '_') === name)?.name || name
-                    ]}
+                    formatter={(value: number, name: string) => {
+                      if (name === 'Others') {
+                        return [formatCurrency(value), 'Other Banks'];
+                      }
+                      const bank = banks.find(b => b.name.replace(/[^a-zA-Z0-9]/g, '_') === name);
+                      return [formatCurrency(value), bank?.name || name];
+                    }}
                     contentStyle={{
                       backgroundColor: 'hsl(var(--card))',
                       border: '1px solid hsl(var(--border))',
@@ -446,18 +554,25 @@ export default function HistoryPage() {
                     }}
                   />
                   <Legend />
-                  {bankNames.map((bankName, index) => (
-                    <Area
-                      key={bankName}
-                      type="monotone"
-                      dataKey={bankName}
-                      stackId="1"
-                      stroke={bankColors[index % bankColors.length]}
-                      fill={bankColors[index % bankColors.length]}
-                      fillOpacity={0.6}
-                    />
-                  ))}
-                </AreaChart>
+                  {banksToDisplay.map((bankKey, index) => {
+                    const color = bankKey === 'Others' 
+                      ? SAUDI_CHART_COLORS.status.neutral 
+                      : getBankColor(index);
+                    
+                    return (
+                      <Line
+                        key={bankKey}
+                        type="monotone"
+                        dataKey={bankKey}
+                        stroke={color}
+                        strokeWidth={2}
+                        dot={{ fill: color, strokeWidth: 2, r: 3 }}
+                        activeDot={{ r: 5, stroke: color, strokeWidth: 2 }}
+                        connectNulls={false}
+                      />
+                    );
+                  })}
+                </LineChart>
               </ResponsiveContainer>
             </div>
           ) : (
