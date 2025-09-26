@@ -1246,6 +1246,134 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Loan settlement data endpoint for Transaction History enhancements
+  app.get('/api/history/loan-settlements', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      
+      // Validate query parameters
+      const querySchema = z.object({
+        bankId: z.string().optional(),
+        facilityId: z.string().optional(),
+        from: z.string().optional(),
+        to: z.string().optional(),
+      });
+      
+      const queryResult = querySchema.safeParse(req.query);
+      if (!queryResult.success) {
+        return res.status(400).json({ 
+          message: "Invalid query parameters",
+          errors: queryResult.error.errors 
+        });
+      }
+
+      // Get all user loans with related data
+      const loans = await storage.getActiveLoansByUser(userId);
+      const settledLoans = await storage.getSettledLoansByUser(userId);
+      const allLoans = [...loans, ...settledLoans];
+
+      // Calculate settlement data for each loan
+      const settlementData = await Promise.all(
+        allLoans.map(async (loan) => {
+          // Get loan transactions to calculate settlement progress
+          const transactions = await storage.getLoanLedger(loan.id);
+          
+          // Calculate totals
+          const totalDrawn = transactions
+            .filter(t => t.type === 'draw')
+            .reduce((sum, t) => sum + parseFloat(t.amount), 0);
+          
+          const totalRepaid = transactions
+            .filter(t => t.type === 'repayment')
+            .reduce((sum, t) => sum + parseFloat(t.amount), 0);
+          
+          const fees = transactions
+            .filter(t => ['fee', 'interest'].includes(t.type))
+            .reduce((sum, t) => sum + parseFloat(t.amount), 0);
+          
+          const outstandingBalance = totalDrawn + fees - totalRepaid;
+          const settlementProgress = totalDrawn > 0 ? (totalRepaid / (totalDrawn + fees)) * 100 : 0;
+          
+          // Determine settlement status
+          let settlementStatus = loan.status;
+          if (outstandingBalance <= 0 && loan.status === 'active') {
+            settlementStatus = 'settled';
+          } else if (new Date(loan.dueDate) < new Date() && outstandingBalance > 0) {
+            settlementStatus = 'overdue';
+          }
+          
+          return {
+            loanId: loan.id,
+            referenceNumber: loan.referenceNumber,
+            bankName: loan.creditLine.facility.bank.name,
+            facilityId: loan.creditLine.facilityId,
+            amount: parseFloat(loan.amount),
+            totalDrawn,
+            totalRepaid,
+            fees,
+            outstandingBalance: Math.max(0, outstandingBalance),
+            settlementProgress: Math.min(100, Math.max(0, settlementProgress)),
+            settlementStatus,
+            dueDate: loan.dueDate,
+            settledDate: loan.settledDate,
+            startDate: loan.startDate,
+            transactionCount: transactions.length,
+            lastTransactionDate: transactions.length > 0 
+              ? Math.max(...transactions.map(t => new Date(t.date).getTime()))
+              : null
+          };
+        })
+      );
+
+      // Apply filters if provided
+      let filteredData = settlementData;
+      
+      if (queryResult.data.bankId) {
+        filteredData = filteredData.filter(loan => 
+          allLoans.find(l => l.id === loan.loanId)?.creditLine.facility.bank.id === queryResult.data.bankId
+        );
+      }
+      
+      if (queryResult.data.facilityId) {
+        filteredData = filteredData.filter(loan => loan.facilityId === queryResult.data.facilityId);
+      }
+      
+      if (queryResult.data.from) {
+        const fromDate = new Date(queryResult.data.from);
+        filteredData = filteredData.filter(loan => new Date(loan.startDate) >= fromDate);
+      }
+      
+      if (queryResult.data.to) {
+        const toDate = new Date(queryResult.data.to);
+        filteredData = filteredData.filter(loan => new Date(loan.startDate) <= toDate);
+      }
+
+      // Sort by most recent activity
+      filteredData.sort((a, b) => {
+        const aLastActivity = a.lastTransactionDate || new Date(a.startDate).getTime();
+        const bLastActivity = b.lastTransactionDate || new Date(b.startDate).getTime();
+        return bLastActivity - aLastActivity;
+      });
+
+      res.json({
+        data: filteredData,
+        summary: {
+          totalLoans: filteredData.length,
+          activeLoans: filteredData.filter(l => l.settlementStatus === 'active').length,
+          settledLoans: filteredData.filter(l => l.settlementStatus === 'settled').length,
+          overdueLoans: filteredData.filter(l => l.settlementStatus === 'overdue').length,
+          totalOutstanding: filteredData.reduce((sum, l) => sum + l.outstandingBalance, 0),
+          averageSettlementProgress: filteredData.length > 0 
+            ? filteredData.reduce((sum, l) => sum + l.settlementProgress, 0) / filteredData.length 
+            : 0
+        }
+      });
+    } catch (error) {
+      console.error("Error fetching loan settlement data:", error);
+      res.status(500).json({ message: "Failed to fetch loan settlement data" });
+    }
+  });
+
   // Attachment routes
   // Upload intent - generates signed URL for direct upload to object storage
   app.post('/api/attachments/upload-intent', isAuthenticated, async (req: any, res) => {
