@@ -11,7 +11,8 @@ import {
   User,
   Bell,
   Search,
-  History
+  History,
+  LogOut
 } from "lucide-react";
 import {
   Sidebar,
@@ -31,8 +32,10 @@ import {
 } from "@/components/ui/sidebar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { DropdownMenuItem } from "@/components/ui/dropdown-menu";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useAuth } from "@/hooks/useAuth";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { useSupabaseAuth } from "@/contexts/SupabaseAuthContext";
 import { User as UserType } from "@shared/schema";
 
 interface AppLayoutProps {
@@ -92,9 +95,23 @@ const navigation = [
   },
 ];
 
-export default function AppLayout({ children }: AppLayoutProps) {
+// Feature flag to use Supabase Auth
+const USE_SUPABASE_AUTH = import.meta.env.VITE_SUPABASE_URL && 
+  import.meta.env.VITE_SUPABASE_ANON_KEY;
+
+export default function AppLayout({ children }: { children: React.ReactNode }) {
   const [location] = useLocation();
-  const { user } = useAuth();
+  const { user, authSystem } = useAuth();
+  const { signOut: supabaseSignOut } = useSupabaseAuth();
+
+  const handleSignOut = async () => {
+    if (USE_SUPABASE_AUTH || authSystem === 'supabase') {
+      await supabaseSignOut();
+    } else {
+      // Replit Auth sign out
+      window.location.href = "/api/logout";
+    }
+  };
 
   return (
     <SidebarProvider>
@@ -207,15 +224,13 @@ export default function AppLayout({ children }: AppLayoutProps) {
               <Button variant="ghost" size="icon" data-testid="button-notifications">
                 <Bell className="h-4 w-4" />
               </Button>
-              <Button 
-                variant="ghost" 
-                size="sm"
-                onClick={() => window.location.href = "/api/logout"}
-                data-testid="button-logout"
+              <DropdownMenuItem 
+                onClick={handleSignOut}
+                className="text-red-600 focus:text-red-600"
               >
-                <User className="h-4 w-4 mr-2" />
-                Logout
-              </Button>
+                <LogOut className="mr-2 h-4 w-4" />
+                Sign Out
+              </DropdownMenuItem>
             </div>
           </div>
         </header>

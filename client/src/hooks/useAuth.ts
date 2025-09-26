@@ -1,26 +1,34 @@
 import { useQuery } from "@tanstack/react-query";
+import { useSupabaseAuth } from "@/contexts/SupabaseAuthContext";
 
 // Feature flag to switch between auth systems
-const USE_SUPABASE_AUTH = process.env.NODE_ENV === 'production' && 
-  import.meta.env.VITE_SUPABASE_URL && 
+const USE_SUPABASE_AUTH = import.meta.env.VITE_SUPABASE_URL && 
   import.meta.env.VITE_SUPABASE_ANON_KEY;
 
 export function useAuth() {
-  // Current Replit Auth implementation
-  const { data: user, isLoading } = useQuery({
+  // Supabase Auth
+  const supabaseAuth = useSupabaseAuth();
+  
+  // Replit Auth implementation
+  const { data: replitUser, isLoading: replitLoading } = useQuery({
     queryKey: ["/api/auth/user"],
     retry: false,
     enabled: !USE_SUPABASE_AUTH,
   });
 
-  // TODO: When ready to migrate, we'll use:
-  // const supabaseAuth = useSupabaseAuth();
-  // return USE_SUPABASE_AUTH ? supabaseAuth : { user, isLoading, isAuthenticated: !!user };
+  if (USE_SUPABASE_AUTH) {
+    return {
+      user: supabaseAuth.user,
+      isLoading: supabaseAuth.isLoading,
+      isAuthenticated: !!supabaseAuth.user,
+      authSystem: 'supabase' as const
+    };
+  }
 
   return {
-    user,
-    isLoading,
-    isAuthenticated: !!user,
-    authSystem: USE_SUPABASE_AUTH ? 'supabase' : 'replit'
+    user: replitUser,
+    isLoading: replitLoading,
+    isAuthenticated: !!replitUser,
+    authSystem: 'replit' as const
   };
 }

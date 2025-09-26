@@ -1,31 +1,40 @@
-import { Switch, Route } from "wouter";
-import { queryClient } from "./lib/queryClient";
-import { QueryClientProvider } from "@tanstack/react-query";
+import { Route, Switch } from "wouter";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
-import { useAuth } from "@/hooks/useAuth";
-import AppLayout from "@/components/AppLayout";
-import Landing from "@/pages/landing";
-import Dashboard from "@/pages/dashboard";
-import Loans from "@/pages/loans";
-import Banks from "@/pages/banks";
-import BankDetail from "@/pages/bank-detail";
-import LoanCreatePage from "@/pages/loan-create";
-import LoanEditPage from "@/pages/loan-edit";
-import LoanDetailPage from "@/pages/loan-detail";
+
+import LandingPage from "@/pages/landing";
+import DashboardPage from "@/pages/dashboard";
+import LoansPage from "@/pages/loans";
+import BanksPage from "@/pages/banks";
+import BankDetailPage from "@/pages/bank-detail";
+import BankContactCreatePage from "@/pages/bank-contact-create";
 import FacilityCreatePage from "@/pages/facility-create";
+import FacilityCreateGeneralPage from "@/pages/facility-create-general";
 import FacilityEditPage from "@/pages/facility-edit";
+import LoanCreatePage from "@/pages/loan-create";
+import LoanCreateGeneralPage from "@/pages/loan-create-general";
+import LoanDetailPage from "@/pages/loan-detail";
+import LoanEditPage from "@/pages/loan-edit";
+import PaymentCreatePage from "@/pages/payment-create";
+import CollateralPage from "@/pages/collateral";
 import CollateralCreatePage from "@/pages/collateral-create";
 import CollateralEditPage from "@/pages/collateral-edit";
-import BankContactCreatePage from "@/pages/bank-contact-create";
-import GeneralFacilityCreatePage from "@/pages/facility-create-general";
-import GeneralLoanCreatePage from "@/pages/loan-create-general";
-import CollateralPage from "@/pages/collateral";
-import AIChatPage from "@/pages/ai-chat";
-import HistoryPage from "@/pages/history";
-import PaymentCreatePage from "@/pages/payment-create";
 import GuaranteesPage from "@/pages/guarantees";
 import GuaranteeCreatePage from "@/pages/guarantee-create";
-import NotFound from "@/pages/not-found";
+import HistoryPage from "@/pages/history";
+import AIChatPage from "@/pages/ai-chat";
+import NotFoundPage from "@/pages/not-found";
+
+// Auth pages
+import LoginPage from "@/pages/auth/login";
+import SignupPage from "@/pages/auth/signup";
+import ForgotPasswordPage from "@/pages/auth/forgot-password";
+
+import AppLayout from "@/components/AppLayout";
+import { useAuth } from "@/hooks/useAuth";
+import { SupabaseAuthProvider } from "@/contexts/SupabaseAuthContext";
+
+const queryClient = new QueryClient();
 
 function Router() {
   const { isAuthenticated, isLoading } = useAuth();
@@ -77,13 +86,79 @@ function Router() {
   );
 }
 
+// Feature flag to use Supabase Auth
+const USE_SUPABASE_AUTH = import.meta.env.VITE_SUPABASE_URL && 
+  import.meta.env.VITE_SUPABASE_ANON_KEY;
+
 function App() {
+  const { isAuthenticated, isLoading, authSystem } = useAuth();
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-slate-100 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-saudi mx-auto"></div>
+          <p className="mt-2 text-muted-foreground">Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Handle auth routing
+  if (!isAuthenticated) {
+    if (USE_SUPABASE_AUTH) {
+      // Supabase Auth routing
+      return (
+        <Switch>
+          <Route path="/auth/login" component={LoginPage} />
+          <Route path="/auth/signup" component={SignupPage} />
+          <Route path="/auth/forgot-password" component={ForgotPasswordPage} />
+          <Route component={LoginPage} />
+        </Switch>
+      );
+    } else {
+      // Replit Auth landing page
+      return <LandingPage />;
+    }
+  }
+
+  // Authenticated user routes
   return (
-    <QueryClientProvider client={queryClient}>
-      <Toaster />
-      <Router />
-    </QueryClientProvider>
+    <AppLayout>
+      <Switch>
+        <Route path="/" component={DashboardPage} />
+        <Route path="/loans" component={LoansPage} />
+        <Route path="/loans/create" component={LoanCreatePage} />
+        <Route path="/loans/create-general" component={LoanCreateGeneralPage} />
+        <Route path="/loans/:id" component={LoanDetailPage} />
+        <Route path="/loans/:id/edit" component={LoanEditPage} />
+        <Route path="/loans/:id/payment/create" component={PaymentCreatePage} />
+        <Route path="/banks" component={BanksPage} />
+        <Route path="/banks/:id" component={BankDetailPage} />
+        <Route path="/banks/:id/contact/create" component={BankContactCreatePage} />
+        <Route path="/banks/:id/facility/create" component={FacilityCreatePage} />
+        <Route path="/facility/create-general" component={FacilityCreateGeneralPage} />
+        <Route path="/facility/:id/edit" component={FacilityEditPage} />
+        <Route path="/collateral" component={CollateralPage} />
+        <Route path="/collateral/create" component={CollateralCreatePage} />
+        <Route path="/collateral/:id/edit" component={CollateralEditPage} />
+        <Route path="/guarantees" component={GuaranteesPage} />
+        <Route path="/guarantees/create" component={GuaranteeCreatePage} />
+        <Route path="/history" component={HistoryPage} />
+        <Route path="/ai-chat" component={AIChatPage} />
+        <Route component={NotFoundPage} />
+      </Switch>
+    </AppLayout>
   );
 }
 
-export default App;
+export default function AppWrapper() {
+  return (
+    <QueryClientProvider client={queryClient}>
+      <SupabaseAuthProvider>
+        <App />
+        <Toaster />
+      </SupabaseAuthProvider>
+    </QueryClientProvider>
+  );
+}
