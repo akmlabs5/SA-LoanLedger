@@ -4,6 +4,7 @@ import {
   Building2, 
   Receipt, 
   Shield, 
+  ShieldCheck,
   MessageCircle, 
   Settings, 
   University,
@@ -61,6 +62,11 @@ const navigation = [
         title: "Loans",
         url: "/loans", 
         icon: Receipt,
+      },
+      {
+        title: "Guarantees",
+        url: "/guarantees",
+        icon: ShieldCheck,
       },
       {
         title: "Collateral",

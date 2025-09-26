@@ -106,9 +106,15 @@ export default function LoanCreatePage() {
     },
   });
 
-  // Watch facility selection
+  // Watch facility selection for non-cash guarantee routing
   const selectedFacilityId = form.watch("facilityId");
   const selectedFacility = bankFacilities.find(f => f.id === selectedFacilityId);
+  
+  // Redirect to guarantee form if non-cash guarantee facility is selected
+  if (selectedFacility?.facilityType === "non_cash_guarantee") {
+    setLocation("/guarantees/create");
+    return null; // Prevent rendering while redirecting
+  }
   
   // Update SIBOR rate when form loads
   React.useEffect(() => {
