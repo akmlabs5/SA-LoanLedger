@@ -11,6 +11,7 @@ import {
   attachments,
   attachmentAudit,
   loanReminders,
+  guarantees,
   aiInsightConfig,
   exposureSnapshots,
   transactions,
@@ -34,6 +35,9 @@ import {
   type LoanReminder,
   type InsertLoanReminder,
   type UpdateLoanReminder,
+  type Guarantee,
+  type InsertGuarantee,
+  type UpdateGuarantee,
   type AiInsightConfig,
   type InsertAiInsightConfig,
   type ExposureSnapshot,
@@ -132,6 +136,14 @@ export interface IStorage {
   createLoanReminder(reminder: InsertLoanReminder): Promise<LoanReminder>;
   updateLoanReminder(reminderId: string, reminder: Partial<UpdateLoanReminder>): Promise<LoanReminder>;
   deleteLoanReminder(reminderId: string): Promise<void>;
+  
+  // Guarantee operations
+  getUserGuarantees(userId: string): Promise<Array<Guarantee & { facility: Facility & { bank: Bank } }>>;
+  getFacilityGuarantees(facilityId: string): Promise<Guarantee[]>;
+  getGuaranteeById(guaranteeId: string): Promise<Guarantee | undefined>;
+  createGuarantee(guarantee: InsertGuarantee): Promise<Guarantee>;
+  updateGuarantee(guaranteeId: string, guarantee: Partial<UpdateGuarantee>): Promise<Guarantee>;
+  deleteGuarantee(guaranteeId: string): Promise<void>;
   
   // AI Insight Config operations
   getUserAiConfig(userId: string): Promise<AiInsightConfig | undefined>;
@@ -802,6 +814,99 @@ export class DatabaseStorage implements IStorage {
       .update(loanReminders)
       .set({ isActive: false, updatedAt: new Date() })
       .where(eq(loanReminders.id, reminderId));
+  }
+
+  // Guarantee operations
+  async getUserGuarantees(userId: string): Promise<Array<Guarantee & { facility: Facility & { bank: Bank } }>> {
+    return await db
+      .select({
+        id: guarantees.id,
+        facilityId: guarantees.facilityId,
+        userId: guarantees.userId,
+        referenceNumber: guarantees.referenceNumber,
+        beneficiaryName: guarantees.beneficiaryName,
+        beneficiaryDetails: guarantees.beneficiaryDetails,
+        guaranteeAmount: guarantees.guaranteeAmount,
+        securityType: guarantees.securityType,
+        securityAmount: guarantees.securityAmount,
+        securityDetails: guarantees.securityDetails,
+        issueDate: guarantees.issueDate,
+        expiryDate: guarantees.expiryDate,
+        feeRate: guarantees.feeRate,
+        purpose: guarantees.purpose,
+        terms: guarantees.terms,
+        status: guarantees.status,
+        notes: guarantees.notes,
+        renewalCount: guarantees.renewalCount,
+        lastRenewalDate: guarantees.lastRenewalDate,
+        calledDate: guarantees.calledDate,
+        calledAmount: guarantees.calledAmount,
+        isActive: guarantees.isActive,
+        createdAt: guarantees.createdAt,
+        updatedAt: guarantees.updatedAt,
+        facility: {
+          id: facilities.id,
+          bankId: facilities.bankId,
+          userId: facilities.userId,
+          facilityType: facilities.facilityType,
+          creditLimit: facilities.creditLimit,
+          costOfFunding: facilities.costOfFunding,
+          startDate: facilities.startDate,
+          expiryDate: facilities.expiryDate,
+          terms: facilities.terms,
+          isActive: facilities.isActive,
+          createdAt: facilities.createdAt,
+          bank: banks,
+        },
+      })
+      .from(guarantees)
+      .innerJoin(facilities, eq(guarantees.facilityId, facilities.id))
+      .innerJoin(banks, eq(facilities.bankId, banks.id))
+      .where(and(eq(guarantees.userId, userId), eq(guarantees.isActive, true)))
+      .orderBy(desc(guarantees.createdAt));
+  }
+
+  async getFacilityGuarantees(facilityId: string): Promise<Guarantee[]> {
+    return await db
+      .select()
+      .from(guarantees)
+      .where(and(eq(guarantees.facilityId, facilityId), eq(guarantees.isActive, true)))
+      .orderBy(desc(guarantees.createdAt));
+  }
+
+  async getGuaranteeById(guaranteeId: string): Promise<Guarantee | undefined> {
+    const [guarantee] = await db
+      .select()
+      .from(guarantees)
+      .where(and(eq(guarantees.id, guaranteeId), eq(guarantees.isActive, true)))
+      .limit(1);
+    return guarantee;
+  }
+
+  async createGuarantee(guarantee: InsertGuarantee): Promise<Guarantee> {
+    const [result] = await db.insert(guarantees).values(guarantee).returning();
+    return result;
+  }
+
+  async updateGuarantee(guaranteeId: string, guarantee: Partial<UpdateGuarantee>): Promise<Guarantee> {
+    const [result] = await db
+      .update(guarantees)
+      .set({ ...guarantee, updatedAt: new Date() })
+      .where(eq(guarantees.id, guaranteeId))
+      .returning();
+    
+    if (!result) {
+      throw new Error('Guarantee not found');
+    }
+    
+    return result;
+  }
+
+  async deleteGuarantee(guaranteeId: string): Promise<void> {
+    await db
+      .update(guarantees)
+      .set({ isActive: false, updatedAt: new Date() })
+      .where(eq(guarantees.id, guaranteeId));
   }
 
   // AI Insight Config operations
