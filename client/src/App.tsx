@@ -153,12 +153,22 @@ function App() {
 }
 
 export default function AppWrapper() {
+  const USE_SUPABASE_AUTH = import.meta.env.VITE_SUPABASE_URL && 
+    import.meta.env.VITE_SUPABASE_ANON_KEY;
+
   return (
     <QueryClientProvider client={queryClient}>
-      <SupabaseAuthProvider>
-        <App />
-        <Toaster />
-      </SupabaseAuthProvider>
+      {USE_SUPABASE_AUTH ? (
+        <SupabaseAuthProvider>
+          <App />
+          <Toaster />
+        </SupabaseAuthProvider>
+      ) : (
+        <>
+          <App />
+          <Toaster />
+        </>
+      )}
     </QueryClientProvider>
   );
 }
