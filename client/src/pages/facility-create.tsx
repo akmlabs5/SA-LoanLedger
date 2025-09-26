@@ -25,10 +25,11 @@ const facilityTypes = [
   { value: "bullet", label: "Bullet Loan", description: "Lump sum repayment at maturity" },
   { value: "bridge", label: "Bridge Financing", description: "Short-term financing solution" },
   { value: "working_capital", label: "Working Capital Facility", description: "For operational cash flow needs" },
+  { value: "non_cash_guarantee", label: "Non-Cash Guarantee", description: "Issue bank guarantees without underlying loans" },
 ];
 
 const facilityFormSchema = z.object({
-  facilityType: z.enum(["revolving", "term", "bullet", "bridge", "working_capital"]),
+  facilityType: z.enum(["revolving", "term", "bullet", "bridge", "working_capital", "non_cash_guarantee"]),
   creditLimit: z.string().min(1, "Credit limit is required"),
   costOfFunding: z.string().min(1, "Cost of funding is required"),
   startDate: z.string().min(1, "Start date is required"),
