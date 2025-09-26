@@ -21,7 +21,7 @@ import GeneralFacilityCreatePage from "@/pages/facility-create-general";
 import GeneralLoanCreatePage from "@/pages/loan-create-general";
 import CollateralPage from "@/pages/collateral";
 import AIChatPage from "@/pages/ai-chat";
-import HistoryPage from "@/pages/history-simple";
+import HistoryPage from "@/pages/history";
 import PaymentCreatePage from "@/pages/payment-create";
 import GuaranteesPage from "@/pages/guarantees";
 import GuaranteeCreatePage from "@/pages/guarantee-create";
