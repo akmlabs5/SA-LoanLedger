@@ -36,61 +36,8 @@ import { useAuth } from "@/hooks/useAuth";
 
 const queryClient = new QueryClient();
 
-function Router() {
-  const { isAuthenticated, isLoading } = useAuth();
-
-  // Show loading state while checking authentication
-  if (isLoading) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-gray-100 dark:from-gray-900 dark:to-slate-900 flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-indigo-600 mx-auto mb-4"></div>
-          <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">Loading</h2>
-          <p className="text-gray-600 dark:text-gray-400">Please wait...</p>
-        </div>
-      </div>
-    );
-  }
-
-  return (
-    <Switch>
-      {!isAuthenticated ? (
-        <Route path="/" component={LandingPage} />
-      ) : (
-        <AppLayout>
-          <Route path="/" component={DashboardPage} />
-          <Route path="/loans" component={LoansPage} />
-          <Route path="/banks" component={BanksPage} />
-          <Route path="/banks/:bankId" component={BankDetailPage} />
-          <Route path="/banks/:bankId/loans/new" component={LoanCreatePage} />
-          <Route path="/loans/new" component={LoanCreateGeneralPage} />
-          <Route path="/loans/:loanId" component={LoanDetailPage} />
-          <Route path="/loans/:loanId/edit" component={LoanEditPage} />
-        <Route path="/banks/:bankId/facilities/new" component={FacilityCreatePage} />
-          <Route path="/banks/:bankId/facilities/:facilityId/edit" component={FacilityEditPage} />
-          <Route path="/banks/:bankId/contacts/new" component={BankContactCreatePage} />
-          <Route path="/facilities/new" component={FacilityCreateGeneralPage} />
-          <Route path="/collateral" component={CollateralPage} />
-          <Route path="/collateral/new" component={CollateralCreatePage} />
-          <Route path="/collateral/:collateralId/edit" component={CollateralEditPage} />
-          <Route path="/loans/:loanId/payment" component={PaymentCreatePage} />
-          <Route path="/payment/new" component={PaymentCreatePage} />
-          <Route path="/guarantees" component={GuaranteesPage} />
-          <Route path="/guarantees/create" component={GuaranteeCreatePage} />
-          <Route path="/history" component={HistoryPage} />
-          <Route path="/ai-chat" component={AIChatPage} />
-        </AppLayout>
-      )}
-      <Route component={NotFoundPage} />
-    </Switch>
-  );
-}
-
-// Feature flag to use Supabase Auth - DISABLED until API is implemented
-const USE_SUPABASE_AUTH = false;
-
 function App() {
-  const { isAuthenticated, isLoading, authSystem } = useAuth();
+  const { isAuthenticated, isLoading } = useAuth();
 
   if (isLoading) {
     return (
@@ -105,20 +52,7 @@ function App() {
 
   // Handle auth routing
   if (!isAuthenticated) {
-    if (USE_SUPABASE_AUTH) {
-      // Supabase Auth routing
-      return (
-        <Switch>
-          <Route path="/auth/login" component={LoginPage} />
-          <Route path="/auth/signup" component={SignupPage} />
-          <Route path="/auth/forgot-password" component={ForgotPasswordPage} />
-          <Route component={LoginPage} />
-        </Switch>
-      );
-    } else {
-      // Replit Auth landing page
-      return <LandingPage />;
-    }
+    return <LandingPage />;
   }
 
   // Authenticated user routes
