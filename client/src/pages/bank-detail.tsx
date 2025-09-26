@@ -771,7 +771,7 @@ export default function BankDetail() {
                 <Button 
                   variant="outline" 
                   className="w-full justify-start"
-                  onClick={() => setLocation("/history/transactions")}
+                  onClick={() => setLocation("/history")}
                   data-testid="button-transaction-history"
                 >
                   <Calendar className="mr-2 h-4 w-4" />
