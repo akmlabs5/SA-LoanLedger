@@ -147,7 +147,7 @@ export default function Dashboard() {
           <div>
             <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Dashboard</h1>
             <p className="text-gray-600 dark:text-gray-300 mt-1">
-              Welcome back, {(user as any)?.displayName || (user as any)?.firstName || 'User'}. Here's your portfolio overview.
+              Welcome back, {String((user as any)?.displayName || (user as any)?.firstName || 'User')}. Here's your portfolio overview.
             </p>
           </div>
           <div className="flex items-center space-x-3 mt-4 sm:mt-0">
@@ -311,7 +311,6 @@ export default function Dashboard() {
                         <div className="flex items-center justify-between">
                           <div className="flex items-center space-x-3 min-w-0 flex-1">
                             <Badge 
-                              size="sm"
                               className={`${
                                 urgency.color === 'red' ? 'bg-destructive text-destructive-foreground' : 
                                 urgency.color === 'yellow' ? 'bg-amber-500 text-white' : 
@@ -325,13 +324,13 @@ export default function Dashboard() {
                                 <button
                                   onClick={(e) => {
                                     e.stopPropagation();
-                                    handleBankRowClick(loan.creditLine?.facility?.bank?.id, loan.creditLine?.facility?.bank?.name);
+                                    handleBankRowClick((loan as any).facility?.bank?.id, (loan as any).facility?.bank?.name);
                                   }}
                                   className="font-medium text-foreground hover:text-primary hover:underline transition-colors duration-200 truncate"
                                   data-testid={`text-loan-reference-${loan.id}`}
-                                  title={`Click to view ${loan.creditLine?.facility?.bank?.name} details`}
+                                  title={`Click to view ${(loan as any).facility?.bank?.name} details`}
                                 >
-                                  {loan.creditLine?.facility?.bank?.name}
+                                  {(loan as any).facility?.bank?.name}
                                 </button>
                                 <span className="text-sm text-muted-foreground">•</span>
                                 <span className="text-sm text-muted-foreground truncate">{loan.referenceNumber}</span>

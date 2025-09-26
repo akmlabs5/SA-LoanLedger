@@ -86,22 +86,13 @@ function App() {
 }
 
 export default function AppWrapper() {
-  const USE_SUPABASE_AUTH = import.meta.env.VITE_SUPABASE_URL && 
-    import.meta.env.VITE_SUPABASE_ANON_KEY;
+  // Supabase is disabled until API is implemented
+  const USE_SUPABASE_AUTH = false;
 
   return (
     <QueryClientProvider client={queryClient}>
-      {USE_SUPABASE_AUTH ? (
-        <SupabaseAuthProvider>
-          <App />
-          <Toaster />
-        </SupabaseAuthProvider>
-      ) : (
-        <>
-          <App />
-          <Toaster />
-        </>
-      )}
+      <App />
+      <Toaster />
     </QueryClientProvider>
   );
 }
