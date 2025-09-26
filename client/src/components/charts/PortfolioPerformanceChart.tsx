@@ -113,12 +113,12 @@ export default function PortfolioPerformanceChart({
       <Card className="border-0 shadow-lg bg-white/50 dark:bg-gray-800/50 backdrop-blur-sm">
         <CardHeader>
           <CardTitle className="flex items-center space-x-2">
-            <Activity className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+            <Activity className="h-5 w-5" style={{ color: SAUDI_CHART_COLORS.saudiGreen }} />
             <span>{showInterestTrend ? 'Interest Rate Trends' : 'Portfolio Performance'}</span>
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="h-[300px] bg-gradient-to-br from-blue-50 to-slate-100 dark:from-gray-800 dark:to-gray-900 rounded-lg flex items-center justify-center animate-pulse">
+          <div className="h-[250px] sm:h-[300px] lg:h-[350px] bg-gradient-to-br from-green-50 to-yellow-50 dark:from-gray-800 dark:to-gray-900 rounded-lg flex items-center justify-center animate-pulse">
             <div className="text-center">
               <div className="h-8 w-32 bg-gray-300 dark:bg-gray-600 rounded mb-2 mx-auto"></div>
               <p className="text-gray-600 dark:text-gray-400">Loading performance data...</p>
@@ -137,12 +137,12 @@ export default function PortfolioPerformanceChart({
       <Card className="border-0 shadow-lg bg-white/50 dark:bg-gray-800/50 backdrop-blur-sm">
         <CardHeader>
           <CardTitle className="flex items-center space-x-2">
-            <Activity className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+            <Activity className="h-5 w-5" style={{ color: SAUDI_CHART_COLORS.saudiGreen }} />
             <span>{showInterestTrend ? 'Interest Rate Trends' : 'Portfolio Performance'}</span>
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="h-[300px] bg-gradient-to-br from-blue-50 to-slate-100 dark:from-gray-800 dark:to-gray-900 rounded-lg flex items-center justify-center">
+          <div className="h-[250px] sm:h-[300px] lg:h-[350px] bg-gradient-to-br from-green-50 to-yellow-50 dark:from-gray-800 dark:to-gray-900 rounded-lg flex items-center justify-center">
             <div className="text-center">
               <AlertCircle className="h-12 w-12 text-gray-300 dark:text-gray-600 mx-auto mb-4" />
               <p className="text-gray-600 dark:text-gray-400">No portfolio data available</p>
@@ -275,7 +275,7 @@ export default function PortfolioPerformanceChart({
       <CardHeader>
         <div className="flex items-center justify-between">
           <CardTitle className="flex items-center space-x-2">
-            <Activity className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+            <Activity className="h-5 w-5" style={{ color: SAUDI_CHART_COLORS.saudiGreen }} />
             <span>Portfolio Performance</span>
           </CardTitle>
           <div className="flex items-center space-x-2">
@@ -297,7 +297,7 @@ export default function PortfolioPerformanceChart({
             <p className="text-sm text-gray-600 dark:text-gray-400">Outstanding</p>
           </div>
           <div className="text-center">
-            <p className="text-2xl font-bold text-green-600 dark:text-green-400" data-testid="text-chart-interest">
+            <p className="text-2xl font-bold" style={{ color: SAUDI_CHART_COLORS.status.success }} data-testid="text-chart-interest">
               {latestData?.interestPaid.toFixed(0)}K
             </p>
             <p className="text-sm text-gray-600 dark:text-gray-400">Interest Paid</p>
@@ -348,14 +348,14 @@ export default function PortfolioPerformanceChart({
               yAxisId="amount"
               type="monotone"
               dataKey="outstanding"
-              stroke="#3B82F6"
+              stroke={SAUDI_CHART_COLORS.saudiGreen}
               fill="url(#colorOutstanding)"
               strokeWidth={3}
             />
             <Bar 
               yAxisId="loans"
               dataKey="newLoans" 
-              fill="#10B981"
+              fill={SAUDI_CHART_COLORS.status.success}
               radius={[2, 2, 0, 0]}
               opacity={0.7}
             />
@@ -363,9 +363,9 @@ export default function PortfolioPerformanceChart({
               yAxisId="amount"
               type="monotone"
               dataKey="interestPaid"
-              stroke="#DC2626"
+              stroke={SAUDI_CHART_COLORS.status.error}
               strokeWidth={2}
-              dot={{ fill: '#DC2626', strokeWidth: 2, r: 3 }}
+              dot={{ fill: SAUDI_CHART_COLORS.status.error, strokeWidth: 2, r: 3 }}
               strokeDasharray="5 5"
             />
           </ComposedChart>

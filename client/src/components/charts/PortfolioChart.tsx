@@ -25,7 +25,7 @@ export default function PortfolioChart({ portfolioSummary }: PortfolioChartProps
           <CardTitle>Outstanding Loans by Bank</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="h-[300px] bg-gradient-to-br from-green-50 to-slate-100 dark:from-green-950 dark:to-slate-900 rounded-lg flex items-center justify-center">
+          <div className="h-[250px] sm:h-[300px] lg:h-[350px] bg-gradient-to-br from-green-50 to-slate-100 dark:from-green-950 dark:to-slate-900 rounded-lg flex items-center justify-center">
             <div className="text-center">
               <TrendingUp className="h-12 w-12 text-primary mx-auto mb-4" />
               <p className="text-muted-foreground">No data available</p>
@@ -102,10 +102,10 @@ export default function PortfolioChart({ portfolioSummary }: PortfolioChartProps
           <CardTitle>Outstanding vs Credit Limits</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="h-[300px]" data-testid="chart-outstanding-loans">
+          <div className="h-[250px] sm:h-[300px] lg:h-[350px]" data-testid="chart-outstanding-loans">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={barChartData} margin={CHART_STYLING.margins.default}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+                <CartesianGrid strokeDasharray="3 3" stroke={CHART_STYLING.grid.stroke} />
                 <XAxis 
                   dataKey="bank" 
                   tick={{ fontSize: 12 }}
@@ -142,7 +142,7 @@ export default function PortfolioChart({ portfolioSummary }: PortfolioChartProps
           <CardTitle>Portfolio Distribution</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="h-[300px]" data-testid="chart-portfolio-distribution">
+          <div className="h-[250px] sm:h-[300px] lg:h-[350px]" data-testid="chart-portfolio-distribution">
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
                 <Pie
@@ -152,7 +152,7 @@ export default function PortfolioChart({ portfolioSummary }: PortfolioChartProps
                   labelLine={false}
                   label={({ name, percentage }) => `${percentage}%`}
                   outerRadius={100}
-                  fill="#8884d8"
+                  fill={SAUDI_CHART_COLORS.saudiGreen}
                   dataKey="value"
                 >
                   {pieChartData.map((entry, index) => (

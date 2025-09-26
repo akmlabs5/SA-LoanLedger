@@ -56,7 +56,7 @@ export default function LoanDistributionChart({ loans = [], showTimeDistribution
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="h-[300px] bg-gradient-to-br from-blue-50 to-slate-100 dark:from-gray-800 dark:to-gray-900 rounded-lg flex items-center justify-center animate-pulse">
+          <div className="h-[250px] sm:h-[300px] lg:h-[350px] bg-gradient-to-br from-green-50 to-yellow-50 dark:from-gray-800 dark:to-gray-900 rounded-lg flex items-center justify-center animate-pulse">
             <div className="text-center">
               <Loader2 className="h-8 w-8 text-gray-400 dark:text-gray-500 animate-spin mx-auto mb-4" />
               <p className="text-gray-600 dark:text-gray-400">Loading loan distribution...</p>
@@ -77,7 +77,7 @@ export default function LoanDistributionChart({ loans = [], showTimeDistribution
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="h-[300px] bg-gradient-to-br from-blue-50 to-slate-100 dark:from-gray-800 dark:to-gray-900 rounded-lg flex items-center justify-center">
+          <div className="h-[250px] sm:h-[300px] lg:h-[350px] bg-gradient-to-br from-green-50 to-yellow-50 dark:from-gray-800 dark:to-gray-900 rounded-lg flex items-center justify-center">
             <div className="text-center">
               <TrendingUp className="h-12 w-12 text-gray-300 dark:text-gray-600 mx-auto mb-4" />
               <p className="text-gray-600 dark:text-gray-400">No loan data available</p>
@@ -177,10 +177,10 @@ export default function LoanDistributionChart({ loans = [], showTimeDistribution
           <p className="font-semibold text-gray-900 dark:text-gray-100">
             {data.fullName || data.bank || data.urgency || data.month}
           </p>
-          <p className="text-blue-600 dark:text-blue-400">
+          <p style={{ color: SAUDI_CHART_COLORS.saudiGreen }}>
             Amount: {(data.amount || 0).toFixed(1)}M SAR
           </p>
-          <p className="text-emerald-600 dark:text-emerald-400">
+          <p style={{ color: SAUDI_CHART_COLORS.saudiGold }}>
             Loans: {data.count}
           </p>
         </div>
@@ -194,7 +194,7 @@ export default function LoanDistributionChart({ loans = [], showTimeDistribution
       <Card className="border-0 shadow-lg bg-white/50 dark:bg-gray-800/50 backdrop-blur-sm">
         <CardHeader>
           <CardTitle className="flex items-center space-x-2">
-            <Calendar className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+            <Calendar className="h-5 w-5" style={{ color: SAUDI_CHART_COLORS.saudiGreen }} />
             <span>Loan Timeline Distribution</span>
           </CardTitle>
         </CardHeader>
@@ -220,14 +220,14 @@ export default function LoanDistributionChart({ loans = [], showTimeDistribution
                 fontSize={12}
               />
               <Tooltip content={<CustomTooltip />} />
-              <Bar yAxisId="amount" dataKey="amount" fill="#3B82F6" radius={[4, 4, 0, 0]} />
+              <Bar yAxisId="amount" dataKey="amount" fill={SAUDI_CHART_COLORS.saudiGreen} radius={[4, 4, 0, 0]} />
               <Line 
                 yAxisId="count" 
                 type="monotone" 
                 dataKey="count" 
-                stroke="#10B981" 
+                stroke={SAUDI_CHART_COLORS.saudiGold} 
                 strokeWidth={3}
-                dot={{ fill: '#10B981', strokeWidth: 2 }}
+                dot={{ fill: SAUDI_CHART_COLORS.saudiGold, strokeWidth: 2 }}
               />
             </LineChart>
           </ChartContainer>
@@ -313,7 +313,7 @@ export default function LoanDistributionChart({ loans = [], showTimeDistribution
               <Tooltip content={<CustomTooltip />} />
               <Bar 
                 dataKey="amount" 
-                fill="#3B82F6" 
+                fill={SAUDI_CHART_COLORS.saudiGreen} 
                 radius={[0, 4, 4, 0]}
               />
             </BarChart>

@@ -27,12 +27,12 @@ export default function LTVTrendChart({
       <Card className="border-0 shadow-lg bg-white/50 dark:bg-gray-800/50 backdrop-blur-sm">
         <CardHeader>
           <CardTitle className="flex items-center space-x-2">
-            <Shield className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+            <Shield className="h-5 w-5" style={{ color: SAUDI_CHART_COLORS.saudiGreen }} />
             <span>LTV Risk Analysis</span>
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="h-[300px] bg-gradient-to-br from-blue-50 to-slate-100 dark:from-gray-800 dark:to-gray-900 rounded-lg flex items-center justify-center animate-pulse">
+          <div className="h-[250px] sm:h-[300px] lg:h-[350px] bg-gradient-to-br from-green-50 to-yellow-50 dark:from-gray-800 dark:to-gray-900 rounded-lg flex items-center justify-center animate-pulse">
             <div className="text-center">
               <Loader2 className="h-8 w-8 text-gray-400 dark:text-gray-500 animate-spin mx-auto mb-4" />
               <p className="text-gray-600 dark:text-gray-400">Loading LTV analysis...</p>
@@ -154,12 +154,12 @@ export default function LTVTrendChart({
       <Card className="border-0 shadow-lg bg-white/50 dark:bg-gray-800/50 backdrop-blur-sm">
         <CardHeader>
           <CardTitle className="flex items-center space-x-2">
-            <Shield className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+            <Shield className="h-5 w-5" style={{ color: SAUDI_CHART_COLORS.saudiGreen }} />
             <span>LTV Risk Analysis</span>
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="h-[300px] bg-gradient-to-br from-blue-50 to-slate-100 dark:from-gray-800 dark:to-gray-900 rounded-lg flex items-center justify-center">
+          <div className="h-[250px] sm:h-[300px] lg:h-[350px] bg-gradient-to-br from-green-50 to-yellow-50 dark:from-gray-800 dark:to-gray-900 rounded-lg flex items-center justify-center">
             <div className="text-center">
               <Shield className="h-12 w-12 text-gray-300 dark:text-gray-600 mx-auto mb-4" />
               <p className="text-gray-600 dark:text-gray-400">No portfolio data for LTV analysis</p>
@@ -206,10 +206,10 @@ export default function LTVTrendChart({
             {data.fullDate}
           </p>
           <div className="space-y-1">
-            <p className="text-blue-600 dark:text-blue-400 text-sm">
+            <p style={{ color: SAUDI_CHART_COLORS.saudiGreen }} className="text-sm">
               Average LTV: {data.avgLTV.toFixed(1)}%
             </p>
-            <p className="text-red-500 dark:text-red-400 text-sm">
+            <p style={{ color: SAUDI_CHART_COLORS.status.error }} className="text-sm">
               Maximum LTV: {data.maxLTV.toFixed(1)}%
             </p>
             <p className="text-green-600 dark:text-green-400 text-sm">
@@ -238,7 +238,7 @@ export default function LTVTrendChart({
       <CardHeader>
         <div className="flex items-center justify-between">
           <CardTitle className="flex items-center space-x-2">
-            <Shield className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+            <Shield className="h-5 w-5" style={{ color: SAUDI_CHART_COLORS.saudiGreen }} />
             <span>LTV Risk Analysis</span>
           </CardTitle>
           <div className="flex items-center space-x-2">
@@ -257,13 +257,13 @@ export default function LTVTrendChart({
         {/* Risk Summary */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-4">
           <div className="text-center">
-            <p className="text-2xl font-bold text-blue-600 dark:text-blue-400" data-testid="text-ltv-avg">
+            <p className="text-2xl font-bold" style={{ color: SAUDI_CHART_COLORS.saudiGreen }} data-testid="text-ltv-avg">
               {(portfolioSummary?.portfolioLtv || 0).toFixed(1)}%
             </p>
             <p className="text-sm text-gray-600 dark:text-gray-400">Average LTV</p>
           </div>
           <div className="text-center">
-            <p className="text-2xl font-bold text-red-500 dark:text-red-400" data-testid="text-ltv-max">
+            <p className="text-2xl font-bold" style={{ color: SAUDI_CHART_COLORS.status.error }} data-testid="text-ltv-max">
               {latestData?.maxLTV.toFixed(1)}%
             </p>
             <p className="text-sm text-gray-600 dark:text-gray-400">Maximum LTV</p>
@@ -311,8 +311,8 @@ export default function LTVTrendChart({
             {/* Risk Bands */}
             {showRiskBands && (
               <>
-                <ReferenceLine y={80} stroke="#DC2626" strokeDasharray="5 5" label={{ value: "High Risk (80%)", position: "right" }} />
-                <ReferenceLine y={60} stroke="#D97706" strokeDasharray="5 5" label={{ value: "Medium Risk (60%)", position: "right" }} />
+                <ReferenceLine y={80} stroke={SAUDI_CHART_COLORS.status.error} strokeDasharray="5 5" label={{ value: "High Risk (80%)", position: "right" }} />
+                <ReferenceLine y={60} stroke={SAUDI_CHART_COLORS.status.warning} strokeDasharray="5 5" label={{ value: "Medium Risk (60%)", position: "right" }} />
               </>
             )}
             
@@ -321,7 +321,7 @@ export default function LTVTrendChart({
               type="monotone"
               dataKey="maxLTV"
               stackId="1"
-              stroke="#DC2626"
+              stroke={SAUDI_CHART_COLORS.status.error}
               fill="url(#colorMaxLTV)"
               strokeWidth={1}
               fillOpacity={0.3}
@@ -332,8 +332,8 @@ export default function LTVTrendChart({
               type="monotone"
               dataKey="minLTV"
               stackId="2"
-              stroke="#10B981"
-              fill="#10B981"
+              stroke={SAUDI_CHART_COLORS.status.success}
+              fill={SAUDI_CHART_COLORS.status.success}
               fillOpacity={0.1}
               strokeWidth={1}
             />
@@ -342,7 +342,7 @@ export default function LTVTrendChart({
             <Line
               type="monotone"
               dataKey="avgLTV"
-              stroke="#3B82F6"
+              stroke={SAUDI_CHART_COLORS.saudiGreen}
               strokeWidth={3}
               dot={{ fill: '#3B82F6', strokeWidth: 2, r: 4 }}
             />
@@ -353,13 +353,13 @@ export default function LTVTrendChart({
         <div className="mt-6 grid grid-cols-3 gap-4">
           <div className="text-center p-3 bg-red-50 dark:bg-red-900/20 rounded-lg">
             <div className="flex items-center justify-center space-x-2">
-              <AlertTriangle className="h-4 w-4 text-red-600 dark:text-red-400" />
-              <span className="font-semibold text-red-800 dark:text-red-300">High Risk</span>
+              <AlertTriangle className="h-4 w-4" style={{ color: SAUDI_CHART_COLORS.status.error }} />
+              <span className="font-semibold" style={{ color: SAUDI_CHART_COLORS.status.error }}>High Risk</span>
             </div>
-            <p className="text-2xl font-bold text-red-600 dark:text-red-400 mt-2">
+            <p className="text-2xl font-bold mt-2" style={{ color: SAUDI_CHART_COLORS.status.error }}>
               {latestData?.highRiskCount}
             </p>
-            <p className="text-xs text-red-700 dark:text-red-300">LTV {'>'}= 80%</p>
+            <p className="text-xs" style={{ color: SAUDI_CHART_COLORS.status.error }}>LTV {'>'}= 80%</p>
           </div>
           
           <div className="text-center p-3 bg-amber-50 dark:bg-amber-900/20 rounded-lg">
