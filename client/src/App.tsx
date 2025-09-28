@@ -40,7 +40,7 @@ import AdminUsersPage from "@/pages/admin-portal/users";
 import AppLayout from "@/components/AppLayout";
 import { useAuth } from "@/hooks/useAuth";
 import { queryClient } from "@/lib/queryClient";
-// import { SupabaseAuthProvider } from "@/contexts/SupabaseAuthContext"; // Disabled until Supabase is implemented
+import { SupabaseAuthProvider } from "@/contexts/SupabaseAuthContext";
 
 function App() {
   const { isAuthenticated, isLoading } = useAuth();
@@ -134,13 +134,12 @@ function App() {
 }
 
 export default function AppWrapper() {
-  // Supabase is disabled until API is implemented
-  const USE_SUPABASE_AUTH = false;
-
   return (
     <QueryClientProvider client={queryClient}>
-      <App />
-      <Toaster />
+      <SupabaseAuthProvider>
+        <App />
+        <Toaster />
+      </SupabaseAuthProvider>
     </QueryClientProvider>
   );
 }

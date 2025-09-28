@@ -1,16 +1,30 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useSupabaseAuth } from "@/contexts/SupabaseAuthContext";
 
-// Feature flag to switch between auth systems - DISABLED until Supabase is configured
-const USE_SUPABASE_AUTH = false; 
+// Feature flag to switch between auth systems - AUTO-ENABLED when Supabase is configured  
+const USE_SUPABASE_AUTH = !!(import.meta.env.VITE_SUPABASE_URL && import.meta.env.VITE_SUPABASE_ANON_KEY);
 
 export function useAuth() {
   const queryClient = useQueryClient();
+  
+  // Conditional hook usage based on feature flag
+  const supabaseAuth = USE_SUPABASE_AUTH ? useSupabaseAuth() : null;
+  
+  if (USE_SUPABASE_AUTH && supabaseAuth) {
+    // Use Supabase auth when configured
+    return {
+      user: supabaseAuth.user,
+      isLoading: supabaseAuth.isLoading,
+      isAuthenticated: !!supabaseAuth.user,
+      authSystem: 'supabase' as const,
+      clearAuthCache: () => {} // Not needed for Supabase
+    };
+  }
   
   // Replit Auth implementation (default)  
   const { data: replitUser, isLoading: replitLoading, error: replitError } = useQuery({
     queryKey: ["/api/auth/user"],
     retry: false,
-    enabled: !USE_SUPABASE_AUTH,
     staleTime: 1000 * 60 * 5, // 5 minutes
     refetchOnWindowFocus: false,
     refetchOnMount: true,
