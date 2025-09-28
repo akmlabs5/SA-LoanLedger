@@ -1,8 +1,8 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useSupabaseAuth } from "@/contexts/SupabaseAuthContext";
 
-// Feature flag to switch between auth systems - AUTO-ENABLED when Supabase is configured  
-const USE_SUPABASE_AUTH = !!(import.meta.env.VITE_SUPABASE_URL && import.meta.env.VITE_SUPABASE_ANON_KEY);
+// Feature flag to switch between auth systems - DISABLED for development, enable for production
+const USE_SUPABASE_AUTH = false; // Change to true when ready for production
 
 export function useAuth() {
   const queryClient = useQueryClient();

@@ -94,9 +94,8 @@ const navigation = [
   },
 ];
 
-// Feature flag to use Supabase Auth
-const USE_SUPABASE_AUTH = import.meta.env.VITE_SUPABASE_URL && 
-  import.meta.env.VITE_SUPABASE_ANON_KEY;
+// Feature flag to use Supabase Auth - DISABLED for development  
+const USE_SUPABASE_AUTH = false; // Change to true when ready for production
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   const [location] = useLocation();
