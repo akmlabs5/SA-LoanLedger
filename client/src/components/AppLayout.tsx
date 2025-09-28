@@ -248,7 +248,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   const MobileBottomNav = () => (
     <div className={cn(
       "lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-background border-t border-border shadow-lg pb-[env(safe-area-inset-bottom,0px)] transition-all duration-200",
-      mobileMenuOpen && "pointer-events-none opacity-50"
+      mobileMenuOpen && "opacity-70"
     )}>
       <div className="grid grid-cols-4 gap-0">
         {coreNavItems.map((item) => {
@@ -258,6 +258,12 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
               key={item.url}
               href={item.url}
               data-testid={`mobile-nav-${item.title.toLowerCase()}`}
+              onClick={() => {
+                // Close mobile drawer when navigating via bottom nav
+                if (mobileMenuOpen) {
+                  setMobileMenuOpen(false);
+                }
+              }}
               className={cn(
                 "flex flex-col items-center justify-center p-3 min-h-[64px] transition-all duration-200 active:scale-95",
                 "hover:bg-accent/50 active:bg-accent",
