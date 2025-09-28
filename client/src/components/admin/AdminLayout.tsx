@@ -104,7 +104,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
     localStorage.removeItem('admin_user');
     
     // Redirect to admin login
-    window.location.href = "/admin-portal/login";
+    window.location.href = "/";
   };
 
   // Get admin user from localStorage
