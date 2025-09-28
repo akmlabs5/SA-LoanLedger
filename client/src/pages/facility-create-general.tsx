@@ -46,6 +46,7 @@ const facilityTypes = [
   { value: "bullet", label: "Bullet Loan" },
   { value: "bridge", label: "Bridge Financing" },
   { value: "working_capital", label: "Working Capital Facility" },
+  { value: "non_cash_guarantee", label: "Non-Cash Guarantee" },
 ];
 
 export default function GeneralFacilityCreatePage() {
@@ -121,6 +122,9 @@ export default function GeneralFacilityCreatePage() {
         break;
       case "working_capital":
         expiryDate.setFullYear(start.getFullYear() + 1); // 1 year for working capital
+        break;
+      case "non_cash_guarantee":
+        expiryDate.setFullYear(start.getFullYear() + 1); // 1 year for non-cash guarantee
         break;
       default:
         expiryDate.setFullYear(start.getFullYear() + 1);

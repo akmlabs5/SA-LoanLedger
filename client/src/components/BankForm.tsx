@@ -37,6 +37,7 @@ const facilityTypes = [
   { value: "bullet", label: "Bullet Loan" },
   { value: "bridge", label: "Bridge Financing" },
   { value: "working_capital", label: "Working Capital Facility" },
+  { value: "non_cash_guarantee", label: "Non-Cash Guarantee" },
 ];
 
 export default function BankForm({ banks, onSuccess, onCancel }: BankFormProps) {
