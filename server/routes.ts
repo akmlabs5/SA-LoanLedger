@@ -5,9 +5,9 @@ import { setupAuth, isAuthenticated } from "./replitAuth";
 import { generateAIInsights } from "./aiInsights";
 import { sendLoanDueNotification } from "./emailService";
 import { initializeDatabase } from "./db";
-// import jsPDF from "jspdf";
-// import autoTable from "jspdf-autotable";
-// import * as XLSX from "xlsx";
+import jsPDF from "jspdf";
+import autoTable from "jspdf-autotable";
+import * as XLSX from "xlsx";
 import {
   insertBankSchema,
   insertBankContactSchema,
@@ -39,7 +39,7 @@ import crypto from "crypto";
 // Global storage instance
 let storage: IStorage;
 
-export async function registerRoutes(app: Express): Promise<Server> { {
+export async function registerRoutes(app: Express): Promise<Server> {
   // Initialize database connection with health check
   const databaseAvailable = await initializeDatabase();
   
@@ -2219,6 +2219,254 @@ async function ensureSampleTransactionHistory(userId: string) {
     console.error("Error ensuring sample transaction history:", error);
   }
 }
+
+  // Export API Routes
+  app.get('/api/reports/facility-summary', isAuthenticated, async (req: any, res) => {
+    try {
+      const { startDate, endDate, format } = req.query;
+      
+      // Get user facilities with bank and loan data
+      const facilities = await storage.getFacilities(req.user.id);
+      const loans = await storage.getLoans(req.user.id);
+      const collateral = await storage.getCollateral(req.user.id);
+      
+      // Aggregate data by bank
+      const bankSummary = facilities.reduce((acc: any, facility: any) => {
+        const bankName = facility.bank?.name || 'Unknown Bank';
+        if (!acc[bankName]) {
+          acc[bankName] = {
+            bankName,
+            facilityCount: 0,
+            totalCommitted: 0,
+            totalOutstanding: 0,
+            availableLimit: 0,
+            utilizationRate: 0,
+            facilities: []
+          };
+        }
+        
+        const facilityLoans = loans.filter((loan: any) => loan.facilityId === facility.id);
+        const totalOutstanding = facilityLoans.reduce((sum: number, loan: any) => sum + parseFloat(loan.outstanding || '0'), 0);
+        const committed = parseFloat(facility.limit || '0');
+        
+        acc[bankName].facilityCount += 1;
+        acc[bankName].totalCommitted += committed;
+        acc[bankName].totalOutstanding += totalOutstanding;
+        acc[bankName].availableLimit += (committed - totalOutstanding);
+        acc[bankName].facilities.push({
+          ...facility,
+          outstanding: totalOutstanding,
+          utilization: committed > 0 ? (totalOutstanding / committed) * 100 : 0
+        });
+        
+        return acc;
+      }, {});
+      
+      // Calculate utilization rates
+      Object.values(bankSummary).forEach((bank: any) => {
+        bank.utilizationRate = bank.totalCommitted > 0 ? 
+          (bank.totalOutstanding / bank.totalCommitted) * 100 : 0;
+      });
+      
+      if (format === 'pdf') {
+        // Generate PDF
+        const doc = new jsPDF();
+        
+        // Header
+        doc.setFontSize(16);
+        doc.text('Facility Summary Report', 20, 20);
+        doc.setFontSize(12);
+        doc.text(`Generated on: ${new Date().toLocaleDateString('en-GB')}`, 20, 30);
+        if (startDate && endDate) {
+          doc.text(`Period: ${startDate} to ${endDate}`, 20, 40);
+        }
+        
+        // Summary table
+        const summaryData = Object.values(bankSummary).map((bank: any) => [
+          bank.bankName,
+          bank.facilityCount.toString(),
+          `SAR ${bank.totalCommitted.toLocaleString()}`,
+          `SAR ${bank.totalOutstanding.toLocaleString()}`,
+          `${bank.utilizationRate.toFixed(1)}%`
+        ]);
+        
+        autoTable(doc, {
+          head: [['Bank', 'Facilities', 'Committed', 'Outstanding', 'Utilization']],
+          body: summaryData,
+          startY: 50,
+          styles: { fontSize: 10 },
+          headStyles: { fillColor: [220, 53, 69] }
+        });
+        
+        res.setHeader('Content-Type', 'application/pdf');
+        res.setHeader('Content-Disposition', `attachment; filename="facility-summary-${new Date().toISOString().split('T')[0]}.pdf"`);
+        res.send(Buffer.from(doc.output('arraybuffer')));
+        
+      } else if (format === 'excel') {
+        // Generate Excel
+        const workbook = XLSX.utils.book_new();
+        
+        // Summary sheet
+        const summaryData = [
+          ['Bank', 'Facilities', 'Committed (SAR)', 'Outstanding (SAR)', 'Utilization %'],
+          ...Object.values(bankSummary).map((bank: any) => [
+            bank.bankName,
+            bank.facilityCount,
+            bank.totalCommitted,
+            bank.totalOutstanding,
+            bank.utilizationRate.toFixed(1)
+          ])
+        ];
+        
+        const summarySheet = XLSX.utils.aoa_to_sheet(summaryData);
+        XLSX.utils.book_append_sheet(workbook, summarySheet, 'Summary');
+        
+        // Detailed facilities sheet
+        const detailData = [
+          ['Bank', 'Facility Type', 'Limit (SAR)', 'Outstanding (SAR)', 'Utilization %', 'Rate', 'Maturity'],
+          ...facilities.map((facility: any) => {
+            const facilityLoans = loans.filter((loan: any) => loan.facilityId === facility.id);
+            const outstanding = facilityLoans.reduce((sum: number, loan: any) => sum + parseFloat(loan.outstanding || '0'), 0);
+            const limit = parseFloat(facility.limit || '0');
+            
+            return [
+              facility.bank?.name || 'Unknown',
+              facility.type,
+              limit,
+              outstanding,
+              limit > 0 ? ((outstanding / limit) * 100).toFixed(1) : '0',
+              facility.rate || 'N/A',
+              facility.maturityDate || 'N/A'
+            ];
+          })
+        ];
+        
+        const detailSheet = XLSX.utils.aoa_to_sheet(detailData);
+        XLSX.utils.book_append_sheet(workbook, detailSheet, 'Details');
+        
+        const buffer = XLSX.write(workbook, { type: 'buffer', bookType: 'xlsx' });
+        
+        res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+        res.setHeader('Content-Disposition', `attachment; filename="facility-summary-${new Date().toISOString().split('T')[0]}.xlsx"`);
+        res.send(buffer);
+        
+      } else {
+        // Return JSON data
+        res.json({
+          summary: Object.values(bankSummary),
+          totalCommitted: Object.values(bankSummary).reduce((sum: number, bank: any) => sum + bank.totalCommitted, 0),
+          totalOutstanding: Object.values(bankSummary).reduce((sum: number, bank: any) => sum + bank.totalOutstanding, 0),
+          generatedAt: new Date().toISOString()
+        });
+      }
+      
+    } catch (error) {
+      console.error('Error generating facility summary:', error);
+      res.status(500).json({ error: 'Failed to generate report' });
+    }
+  });
+
+  app.get('/api/reports/bank-exposures', isAuthenticated, async (req: any, res) => {
+    try {
+      const { startDate, endDate, format } = req.query;
+      
+      // Get all data
+      const facilities = await storage.getFacilities(req.user.id);
+      const loans = await storage.getLoans(req.user.id);
+      const collateral = await storage.getCollateral(req.user.id);
+      
+      // Calculate bank exposures with detailed breakdown
+      const exposures = facilities.map((facility: any) => {
+        const facilityLoans = loans.filter((loan: any) => loan.facilityId === facility.id);
+        const outstanding = facilityLoans.reduce((sum: number, loan: any) => sum + parseFloat(loan.outstanding || '0'), 0);
+        const limit = parseFloat(facility.limit || '0');
+        
+        return {
+          bankName: facility.bank?.name || 'Unknown Bank',
+          facilityType: facility.type,
+          facilityReference: facility.reference,
+          committed: limit,
+          outstanding,
+          available: limit - outstanding,
+          utilization: limit > 0 ? (outstanding / limit) * 100 : 0,
+          rate: facility.rate,
+          maturityDate: facility.maturityDate,
+          loanCount: facilityLoans.length
+        };
+      });
+      
+      if (format === 'pdf') {
+        const doc = new jsPDF();
+        
+        // Header
+        doc.setFontSize(16);
+        doc.text('Bank Exposure Report', 20, 20);
+        doc.setFontSize(12);
+        doc.text(`Generated on: ${new Date().toLocaleDateString('en-GB')}`, 20, 30);
+        
+        // Exposure table
+        const exposureData = exposures.map(exp => [
+          exp.bankName,
+          exp.facilityType,
+          `SAR ${exp.committed.toLocaleString()}`,
+          `SAR ${exp.outstanding.toLocaleString()}`,
+          `${exp.utilization.toFixed(1)}%`
+        ]);
+        
+        autoTable(doc, {
+          head: [['Bank', 'Type', 'Committed', 'Outstanding', 'Utilization']],
+          body: exposureData,
+          startY: 40,
+          styles: { fontSize: 9 },
+          headStyles: { fillColor: [220, 53, 69] }
+        });
+        
+        res.setHeader('Content-Type', 'application/pdf');
+        res.setHeader('Content-Disposition', `attachment; filename="bank-exposures-${new Date().toISOString().split('T')[0]}.pdf"`);
+        res.send(Buffer.from(doc.output('arraybuffer')));
+        
+      } else if (format === 'excel') {
+        const workbook = XLSX.utils.book_new();
+        
+        const exposureData = [
+          ['Bank', 'Facility Type', 'Reference', 'Committed (SAR)', 'Outstanding (SAR)', 'Available (SAR)', 'Utilization %', 'Rate', 'Maturity', 'Loan Count'],
+          ...exposures.map(exp => [
+            exp.bankName,
+            exp.facilityType,
+            exp.facilityReference,
+            exp.committed,
+            exp.outstanding,
+            exp.available,
+            exp.utilization.toFixed(1),
+            exp.rate || 'N/A',
+            exp.maturityDate || 'N/A',
+            exp.loanCount
+          ])
+        ];
+        
+        const sheet = XLSX.utils.aoa_to_sheet(exposureData);
+        XLSX.utils.book_append_sheet(workbook, sheet, 'Bank Exposures');
+        
+        const buffer = XLSX.write(workbook, { type: 'buffer', bookType: 'xlsx' });
+        
+        res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+        res.setHeader('Content-Disposition', `attachment; filename="bank-exposures-${new Date().toISOString().split('T')[0]}.xlsx"`);
+        res.send(buffer);
+        
+      } else {
+        res.json({
+          exposures,
+          totalCommitted: exposures.reduce((sum: number, exp: any) => sum + exp.committed, 0),
+          totalOutstanding: exposures.reduce((sum: number, exp: any) => sum + exp.outstanding, 0),
+          generatedAt: new Date().toISOString()
+        });
+      }
+      
+    } catch (error) {
+      console.error('Error generating bank exposure report:', error);
+      res.status(500).json({ error: 'Failed to generate report' });
+    }
+  });
 
   // Create and return HTTP server
   const server = createServer(app);
