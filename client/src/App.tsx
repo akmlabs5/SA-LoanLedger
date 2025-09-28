@@ -4,6 +4,7 @@ import { Route, Switch, useLocation } from "wouter";
 import { Toaster } from "@/components/ui/toaster";
 
 import LandingPage from "@/pages/landing";
+import LoginHub from "@/pages/LoginHub";
 import DashboardPage from "@/pages/dashboard";
 import LoansPage from "@/pages/loans";
 import BanksPage from "@/pages/banks";
@@ -71,10 +72,10 @@ function App() {
     );
   }
 
-  // If loading timed out, show error and redirect to landing
+  // If loading timed out, show error and redirect to login hub
   if (loadingTimeout) {
     console.error("Authentication loading timed out");
-    return <LandingPage />;
+    return <LoginHub />;
   }
 
   // Handle admin portal routing (separate from user auth)
@@ -96,7 +97,8 @@ function App() {
         <Route path="/auth/login" component={LoginPage} />
         <Route path="/auth/signup" component={SignupPage} />
         <Route path="/auth/forgot-password" component={ForgotPasswordPage} />
-        <Route component={LandingPage} />
+        <Route path="/landing" component={LandingPage} />
+        <Route component={LoginHub} />
       </Switch>
     );
   }
