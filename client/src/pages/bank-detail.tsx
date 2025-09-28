@@ -472,7 +472,8 @@ export default function BankDetail() {
                   </div>
                   <Link href={`/banks/${bankId}/loans/new`}>
                     <Button 
-                      className="bg-gradient-to-r from-emerald-600 to-blue-600 hover:from-emerald-700 hover:to-blue-700 text-white shadow-lg"
+                      size="sm"
+                      className="bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white shadow-lg"
                       data-testid="button-add-loan-header"
                     >
                       <Plus className="h-4 w-4 mr-2" />
@@ -598,7 +599,8 @@ export default function BankDetail() {
                     <p className="text-gray-600 dark:text-gray-400 mb-4">No collateral assigned to this bank's facilities</p>
                     <Button 
                       onClick={() => setLocation("/collateral/new")}
-                      className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white shadow-lg"
+                      size="sm"
+                    className="bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white shadow-lg"
                       data-testid="button-add-collateral"
                     >
                       <Plus className="h-4 w-4 mr-2" />
