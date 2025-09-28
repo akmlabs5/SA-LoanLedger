@@ -293,13 +293,15 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
             "border-r border-border transition-all duration-300",
             isMobile ? (
               mobileMenuOpen 
-                ? "fixed inset-y-0 left-0 z-40 w-80 bg-background shadow-2xl block animate-in slide-in-from-left duration-300" 
+                ? "fixed inset-y-0 left-0 z-[60] w-80 bg-background shadow-2xl block animate-in slide-in-from-left duration-300" 
                 : "hidden"
             ) : ""
           )}
           onTouchStart={handleTouchStart}
           onTouchMove={handleTouchMove}
           onTouchEnd={handleTouchEnd}
+          role={isMobile && mobileMenuOpen ? "dialog" : undefined}
+          aria-modal={isMobile && mobileMenuOpen ? "true" : undefined}
         >
           <SidebarHeader className="border-b border-border">
             <div className="flex items-center justify-between px-4 py-4">
