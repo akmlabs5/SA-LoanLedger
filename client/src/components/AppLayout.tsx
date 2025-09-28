@@ -1,4 +1,5 @@
-import { useLocation } from "wouter";
+import { useLocation, Link } from "wouter";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { 
   LayoutDashboard, 
   Building2, 
@@ -13,8 +14,12 @@ import {
   Search,
   History,
   LogOut,
-  FileText
+  FileText,
+  Menu,
+  X,
+  Home
 } from "lucide-react";
+import { useIsMobile } from "@/hooks/use-mobile";
 import {
   Sidebar,
   SidebarContent,
@@ -34,9 +39,11 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/hooks/useAuth";
 import { useSupabaseAuth } from "@/contexts/SupabaseAuthContext";
 import { User as UserType } from "@shared/schema";
+import { cn } from "@/lib/utils";
 
 interface AppLayoutProps {
   children: React.ReactNode;
@@ -103,12 +110,128 @@ const navigation = [
 // Feature flag to use Supabase Auth - DISABLED for development  
 const USE_SUPABASE_AUTH = false; // Change to true when ready for production
 
+// Core navigation items for mobile bottom nav
+const coreNavItems = [
+  { title: "Dashboard", url: "/", icon: LayoutDashboard },
+  { title: "Loans", url: "/loans", icon: Receipt },
+  { title: "Banks", url: "/banks", icon: Building2 },
+  { title: "Reports", url: "/reports", icon: FileText },
+];
+
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   const [location] = useLocation();
   const { user, authSystem, clearAuthCache } = useAuth();
+  const isMobile = useIsMobile();
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [touchStart, setTouchStart] = useState<{ x: number; y: number } | null>(null);
+  const [touchEnd, setTouchEnd] = useState<{ x: number; y: number } | null>(null);
+  const sidebarRef = useRef<HTMLDivElement>(null);
   
   // Only use Supabase auth if enabled
   const supabaseAuth = USE_SUPABASE_AUTH ? useSupabaseAuth() : null;
+  
+  // Close mobile menu when location changes
+  useEffect(() => {
+    setMobileMenuOpen(false);
+  }, [location]);
+  
+  // Handle mobile menu toggle
+  const toggleMobileMenu = () => {
+    setMobileMenuOpen(!mobileMenuOpen);
+  };
+  
+  // Swipe gesture handlers
+  const handleTouchStart = useCallback((e: React.TouchEvent) => {
+    if (!isMobile) return;
+    
+    const touch = e.targetTouches[0];
+    setTouchStart({ x: touch.clientX, y: touch.clientY });
+    setTouchEnd(null);
+  }, [isMobile]);
+  
+  const handleTouchMove = useCallback((e: React.TouchEvent) => {
+    if (!isMobile || !touchStart) return;
+    
+    const touch = e.targetTouches[0];
+    setTouchEnd({ x: touch.clientX, y: touch.clientY });
+  }, [isMobile, touchStart]);
+  
+  const handleTouchEnd = useCallback(() => {
+    if (!isMobile || !touchStart || !touchEnd) return;
+    
+    const deltaX = touchEnd.x - touchStart.x;
+    const deltaY = Math.abs(touchEnd.y - touchStart.y);
+    const minSwipeDistance = 100;
+    
+    // Only trigger swipe if horizontal movement is greater than vertical
+    if (Math.abs(deltaX) > minSwipeDistance && deltaY < 100) {
+      if (deltaX > 0 && touchStart.x < 50) {
+        // Swipe right from left edge - open menu
+        setMobileMenuOpen(true);
+      } else if (deltaX < 0 && mobileMenuOpen) {
+        // Swipe left when menu is open - close menu
+        setMobileMenuOpen(false);
+      }
+    }
+    
+    setTouchStart(null);
+    setTouchEnd(null);
+  }, [isMobile, touchStart, touchEnd, mobileMenuOpen]);
+  
+  // Add global touch listeners for swipe gestures and scroll locking
+  useEffect(() => {
+    if (!isMobile) return;
+    
+    const handleGlobalTouchStart = (e: TouchEvent) => {
+      const touch = e.touches[0];
+      setTouchStart({ x: touch.clientX, y: touch.clientY });
+    };
+    
+    const handleGlobalTouchEnd = (e: TouchEvent) => {
+      if (!touchStart) return;
+      
+      const touch = e.changedTouches[0];
+      const deltaX = touch.clientX - touchStart.x;
+      const deltaY = Math.abs(touch.clientY - touchStart.y);
+      
+      // Swipe from left edge to open
+      if (deltaX > 100 && deltaY < 100 && touchStart.x < 30 && !mobileMenuOpen) {
+        setMobileMenuOpen(true);
+      }
+      // Swipe left to close when menu is open
+      else if (deltaX < -50 && deltaY < 100 && mobileMenuOpen) {
+        setMobileMenuOpen(false);
+      }
+      
+      setTouchStart(null);
+    };
+    
+    document.addEventListener('touchstart', handleGlobalTouchStart, { passive: true });
+    document.addEventListener('touchend', handleGlobalTouchEnd, { passive: true });
+    
+    return () => {
+      document.removeEventListener('touchstart', handleGlobalTouchStart);
+      document.removeEventListener('touchend', handleGlobalTouchEnd);
+    };
+  }, [isMobile, touchStart, mobileMenuOpen]);
+  
+  // Handle scroll locking when mobile menu is open
+  useEffect(() => {
+    if (!isMobile) return;
+    
+    if (mobileMenuOpen) {
+      // Lock scroll when drawer is open
+      document.body.classList.add('overflow-hidden', 'touch-none');
+    } else {
+      // Restore scroll when drawer is closed
+      document.body.classList.remove('overflow-hidden', 'touch-none');
+    }
+    
+    // Cleanup on unmount
+    return () => {
+      document.body.classList.remove('overflow-hidden', 'touch-none');
+    };
+  }, [isMobile, mobileMenuOpen]);
 
   const handleSignOut = async () => {
     if (USE_SUPABASE_AUTH && supabaseAuth?.signOut) {
@@ -121,32 +244,107 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
     }
   };
 
-  return (
-    <SidebarProvider>
-      <Sidebar variant="inset" className="border-r border-border">
-        <SidebarHeader className="border-b border-border">
-          <div className="flex items-center gap-3 px-4 py-4">
-            <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-saudi text-white">
-              <University className="h-4 w-4" />
-            </div>
-            <div className="flex flex-col">
-              <h1 className="text-sm font-semibold tracking-tight">Saudi Loan Manager</h1>
-              <p className="text-xs text-muted-foreground font-normal">Portfolio Management</p>
-            </div>
-          </div>
-        </SidebarHeader>
+  // Mobile Bottom Navigation Component
+  const MobileBottomNav = () => (
+    <div className={cn(
+      "lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-background border-t border-border shadow-lg pb-[env(safe-area-inset-bottom,0px)] transition-all duration-200",
+      mobileMenuOpen && "pointer-events-none opacity-50"
+    )}>
+      <div className="grid grid-cols-4 gap-0">
+        {coreNavItems.map((item) => {
+          const isActive = location === item.url;
+          return (
+            <Link
+              key={item.url}
+              href={item.url}
+              data-testid={`mobile-nav-${item.title.toLowerCase()}`}
+              className={cn(
+                "flex flex-col items-center justify-center p-3 min-h-[64px] transition-all duration-200 active:scale-95",
+                "hover:bg-accent/50 active:bg-accent",
+                isActive
+                  ? "text-saudi bg-saudi/5 border-t-2 border-saudi"
+                  : "text-muted-foreground hover:text-foreground"
+              )}
+            >
+              <item.icon className={cn("h-5 w-5 mb-1", isActive && "text-saudi")} />
+              <span className={cn(
+                "text-xs font-medium truncate max-w-full",
+                isActive && "text-saudi"
+              )}>
+                {item.title}
+              </span>
+              {isActive && (
+                <div className="absolute top-0 left-0 right-0 h-0.5 bg-saudi" />
+              )}
+            </Link>
+          );
+        })}
+      </div>
+    </div>
+  );
 
-        <SidebarContent className="px-3">
-          <div className="mb-6 mt-4">
-            <div className="relative">
-              <Search className="absolute left-3 h-4 w-4 text-muted-foreground top-1/2 -translate-y-1/2" />
-              <Input 
-                placeholder="Search..." 
-                className="pl-10 h-10 bg-background/50 border-border text-sm font-normal rounded-lg"
-                data-testid="input-search"
-              />
+  return (
+    <div className="relative">
+      <SidebarProvider>
+        <Sidebar 
+          ref={sidebarRef}
+          variant="inset" 
+          className={cn(
+            "border-r border-border transition-all duration-300",
+            isMobile ? (
+              mobileMenuOpen 
+                ? "fixed inset-y-0 left-0 z-40 w-80 bg-background shadow-2xl block animate-in slide-in-from-left duration-300" 
+                : "hidden"
+            ) : ""
+          )}
+          onTouchStart={handleTouchStart}
+          onTouchMove={handleTouchMove}
+          onTouchEnd={handleTouchEnd}
+        >
+          <SidebarHeader className="border-b border-border">
+            <div className="flex items-center justify-between px-4 py-4">
+              <div className="flex items-center gap-3">
+                <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-saudi text-white">
+                  <University className="h-4 w-4" />
+                </div>
+                <div className="flex flex-col">
+                  <h1 className="text-sm font-semibold tracking-tight">Saudi Loan Manager</h1>
+                  <p className="text-xs text-muted-foreground font-normal">Portfolio Management</p>
+                </div>
+              </div>
+              {isMobile && (
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="h-8 w-8 lg:hidden"
+                  data-testid="button-close-mobile-menu"
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+              )}
             </div>
-          </div>
+          </SidebarHeader>
+
+          <SidebarContent className="px-3">
+            <div className={cn("mb-6 mt-4", isMobile && "mb-4 mt-2")}>
+              <div className="relative">
+                <Search className={cn(
+                  "absolute left-3 text-muted-foreground top-1/2 -translate-y-1/2",
+                  isMobile ? "h-5 w-5" : "h-4 w-4"
+                )} />
+                <Input 
+                  placeholder={isMobile ? "Search..." : "Search portfolios, loans..."} 
+                  className={cn(
+                    "bg-background/50 border-border font-normal rounded-lg transition-all duration-200 focus:bg-background focus:ring-2 focus:ring-saudi/20",
+                    isMobile ? "pl-12 h-12 text-base" : "pl-10 h-10 text-sm"
+                  )}
+                  data-testid="input-search"
+                  autoComplete="off"
+                  inputMode={isMobile ? "search" : "text"}
+                />
+              </div>
+            </div>
 
           {navigation.map((group) => (
             <SidebarGroup key={group.title} className="mb-6">
@@ -157,17 +355,20 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                 <SidebarMenu className="space-y-1">
                   {group.items.map((item) => (
                     <SidebarMenuItem key={item.title}>
-                      <SidebarMenuButton 
-                        asChild 
-                        isActive={location === item.url}
-                        data-testid={`nav-${item.title.toLowerCase().replace(' ', '-')}`}
-                        className="h-10 px-3 font-medium text-sm hover:bg-accent/50 data-[state=open]:bg-accent/50 rounded-lg transition-all duration-200"
-                      >
-                        <a href={item.url} className="flex items-center gap-3">
-                          <item.icon className="h-4 w-4" />
-                          <span className="font-medium tracking-tight">{item.title}</span>
-                        </a>
-                      </SidebarMenuButton>
+                        <SidebarMenuButton 
+                          asChild 
+                          isActive={location === item.url}
+                          data-testid={`nav-${item.title.toLowerCase().replace(' ', '-')}`}
+                          className={cn(
+                            "font-medium text-sm hover:bg-accent/50 data-[state=open]:bg-accent/50 rounded-lg transition-all duration-200 active:scale-[0.98]",
+                            isMobile ? "h-12 px-4 text-base" : "h-10 px-3"
+                          )}
+                        >
+                          <Link href={item.url} className="flex items-center gap-3">
+                            <item.icon className={cn(isMobile ? "h-5 w-5" : "h-4 w-4")} />
+                            <span className="font-medium tracking-tight">{item.title}</span>
+                          </Link>
+                        </SidebarMenuButton>
                     </SidebarMenuItem>
                   ))}
                 </SidebarMenu>
@@ -185,71 +386,174 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                   <SidebarMenuButton 
                     asChild 
                     data-testid="nav-settings"
-                    className="h-10 px-3 font-medium text-sm hover:bg-accent/50 rounded-lg transition-all duration-200"
+                    className={cn(
+                      "font-medium text-sm hover:bg-accent/50 rounded-lg transition-all duration-200 active:scale-[0.98]",
+                      isMobile ? "h-12 px-4 text-base" : "h-10 px-3"
+                    )}
                   >
-                    <a href="/settings" className="flex items-center gap-3">
-                      <Settings className="h-4 w-4" />
+                    <Link href="/settings" className="flex items-center gap-3">
+                      <Settings className={cn(isMobile ? "h-5 w-5" : "h-4 w-4")} />
                       <span className="font-medium tracking-tight">Settings</span>
-                    </a>
+                    </Link>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
               </SidebarMenu>
             </SidebarGroupContent>
           </SidebarGroup>
-        </SidebarContent>
+          </SidebarContent>
 
-        <SidebarFooter className="border-t border-border">
-          <div className="flex items-center gap-3 p-4 rounded-xl hover:bg-accent/50 hover:text-accent-foreground cursor-pointer transition-all duration-200">
-            <Avatar className="h-9 w-9">
-              <AvatarFallback className="bg-saudi text-white text-sm font-semibold">
-                {(user as any)?.firstName?.charAt(0) || (user as any)?.email?.charAt(0) || 'U'}
-              </AvatarFallback>
-            </Avatar>
-            <div className="flex flex-col min-w-0">
-              <p className="text-sm font-semibold truncate tracking-tight">
-                {(user as any)?.firstName} {(user as any)?.lastName}
-              </p>
-              <p className="text-xs text-muted-foreground truncate font-normal">
-                {(user as any)?.email}
-              </p>
+          <SidebarFooter className="border-t border-border">
+            <div className={cn(
+              "flex items-center gap-3 p-4 rounded-xl hover:bg-accent/50 hover:text-accent-foreground cursor-pointer transition-all duration-200",
+              isMobile && "p-3"
+            )}>
+              <Avatar className={cn(isMobile ? "h-10 w-10" : "h-9 w-9")}>
+                <AvatarFallback className="bg-saudi text-white text-sm font-semibold">
+                  {(user as any)?.firstName?.charAt(0) || (user as any)?.email?.charAt(0) || 'U'}
+                </AvatarFallback>
+              </Avatar>
+              <div className="flex flex-col min-w-0">
+                <p className={cn(
+                  "font-semibold truncate tracking-tight",
+                  isMobile ? "text-base" : "text-sm"
+                )}>
+                  {(user as any)?.firstName} {(user as any)?.lastName}
+                </p>
+                <p className={cn(
+                  "text-muted-foreground truncate font-normal",
+                  isMobile ? "text-sm" : "text-xs"
+                )}>
+                  {(user as any)?.email}
+                </p>
+              </div>
             </div>
-          </div>
-        </SidebarFooter>
-        <SidebarRail />
-      </Sidebar>
+          </SidebarFooter>
+          <SidebarRail />
+        </Sidebar>
 
-      <SidebarInset>
-        <header className="flex h-16 shrink-0 items-center gap-2 border-b px-4">
-          <SidebarTrigger className="-ml-1" />
-          <div className="h-4 w-px bg-border mx-2" />
-          <div className="flex items-center justify-between flex-1">
-            <div className="flex items-center gap-2">
-              <h2 className="text-lg font-semibold">
-                {navigation.flatMap(g => g.items).find(item => item.url === location)?.title || 'Dashboard'}
-              </h2>
-            </div>
-            <div className="flex items-center gap-2">
-              <Button variant="ghost" size="icon" data-testid="button-notifications">
-                <Bell className="h-4 w-4" />
-              </Button>
-              <Button 
-                variant="ghost" 
-                size="sm"
-                onClick={handleSignOut}
-                className="text-red-600 hover:text-red-600 hover:bg-red-50"
-                data-testid="button-signout"
+        <SidebarInset className={cn(isMobile && "w-full")}>
+          {/* Mobile Header with Menu Toggle */}
+          <header className={cn(
+            "flex shrink-0 items-center gap-2 border-b px-4 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60",
+            isMobile ? "h-14" : "h-16"
+          )}>
+            {/* Mobile Menu Toggle */}
+            {isMobile && (
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => {
+                  toggleMobileMenu();
+                  // Haptic feedback simulation
+                  if ('vibrate' in navigator) {
+                    navigator.vibrate(10);
+                  }
+                }}
+                className="h-9 w-9 lg:hidden mr-2 active:scale-95 transition-transform duration-100"
+                data-testid="button-mobile-menu"
               >
-                <LogOut className="mr-2 h-4 w-4" />
-                Sign Out
+                <Menu className="h-5 w-5" />
               </Button>
+            )}
+            
+            {/* Desktop Sidebar Trigger */}
+            {!isMobile && <SidebarTrigger className="-ml-1" />}
+            {!isMobile && <div className="h-4 w-px bg-border mx-2" />}
+            
+            <div className="flex items-center justify-between flex-1">
+              <div className="flex items-center gap-2">
+                {isMobile && (
+                  <div className="flex h-6 w-6 items-center justify-center rounded-md bg-saudi text-white mr-2">
+                    <University className="h-3 w-3" />
+                  </div>
+                )}
+                <div className="flex flex-col">
+                  <h2 className={cn(
+                    "font-semibold truncate",
+                    isMobile ? "text-base" : "text-lg"
+                  )}>
+                    {navigation.flatMap(g => g.items).find(item => item.url === location)?.title || 'Dashboard'}
+                  </h2>
+                  {isMobile && location !== '/' && (
+                    <div className="flex items-center text-xs text-muted-foreground">
+                      <Link href="/" className="hover:text-foreground transition-colors">
+                        Dashboard
+                      </Link>
+                      <span className="mx-1">›</span>
+                      <span className="text-foreground">
+                        {navigation.flatMap(g => g.items).find(item => item.url === location)?.title}
+                      </span>
+                    </div>
+                  )}
+                </div>
+              </div>
+              <div className="flex items-center gap-1">
+                <Button 
+                  variant="ghost" 
+                  size={isMobile ? "sm" : "icon"} 
+                  data-testid="button-notifications"
+                  className={cn(
+                    "active:scale-95 transition-transform duration-100",
+                    isMobile && "h-9 w-9"
+                  )}
+                >
+                  <Bell className={cn(isMobile ? "h-4 w-4" : "h-4 w-4")} />
+                  {isMobile && <span className="sr-only">Notifications</span>}
+                </Button>
+                {!isMobile && (
+                  <Button 
+                    variant="ghost" 
+                    size="sm"
+                    onClick={handleSignOut}
+                    className="text-red-600 hover:text-red-600 hover:bg-red-50"
+                    data-testid="button-signout"
+                  >
+                    <LogOut className="mr-2 h-4 w-4" />
+                    Sign Out
+                  </Button>
+                )}
+                {isMobile && (
+                  <Button 
+                    variant="ghost" 
+                    size="sm"
+                    onClick={handleSignOut}
+                    className="text-red-600 hover:text-red-600 hover:bg-red-50 h-9 px-2 active:scale-95 transition-all duration-100"
+                    data-testid="button-signout-mobile"
+                  >
+                    <LogOut className="h-4 w-4" />
+                    <span className="sr-only">Sign Out</span>
+                  </Button>
+                )}
+              </div>
             </div>
-          </div>
-        </header>
+          </header>
 
-        <main className="flex-1 overflow-auto">
-          {children}
-        </main>
-      </SidebarInset>
-    </SidebarProvider>
+          <main className={cn(
+            "flex-1 overflow-auto",
+            isMobile && "pb-[calc(64px+env(safe-area-inset-bottom,0px))]" // Add bottom padding for mobile nav + iOS safe areas
+          )}>
+            {children}
+          </main>
+        </SidebarInset>
+        
+        {/* Mobile Menu Overlay */}
+        {isMobile && mobileMenuOpen && (
+          <div 
+            className="fixed inset-0 z-50 bg-black/20 backdrop-blur-sm lg:hidden animate-in fade-in duration-200"
+            onClick={() => {
+              setMobileMenuOpen(false);
+              // Haptic feedback
+              if ('vibrate' in navigator) {
+                navigator.vibrate(5);
+              }
+            }}
+            data-testid="mobile-menu-overlay"
+          />
+        )}
+      </SidebarProvider>
+      
+      {/* Mobile Bottom Navigation */}
+      <MobileBottomNav />
+    </div>
   );
 }
