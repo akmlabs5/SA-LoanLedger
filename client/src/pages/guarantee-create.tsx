@@ -141,56 +141,76 @@ export default function GuaranteeCreatePage() {
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
-                <FormField
-                  control={form.control}
-                  name="facilityId"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Non-Cash Guarantee Facility *</FormLabel>
-                      <Select onValueChange={field.onChange} defaultValue={field.value}>
-                        <FormControl>
-                          <SelectTrigger data-testid="select-facility">
-                            <SelectValue placeholder="Select a non-cash guarantee facility" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          {guaranteeFacilities.map((facility) => (
-                            <SelectItem key={facility.id} value={facility.id}>
-                              <div className="flex items-center gap-2">
-                                <span className="font-medium">{facility.bank.name}</span>
-                                <Badge variant="outline">Non-Cash Guarantee</Badge>
-                                <span className="text-sm text-gray-500">
-                                  Limit: {facility.creditLimit.toLocaleString()} SAR
-                                </span>
-                              </div>
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                {selectedFacility && (
-                  <div className="bg-green-50 dark:bg-green-900/20 p-4 rounded-lg border border-green-200 dark:border-green-800">
-                    <div className="flex items-center gap-2 mb-2">
-                      <CheckCircle className="h-4 w-4 text-green-600" />
-                      <span className="font-medium text-green-800 dark:text-green-200">
-                        Selected Facility Details
-                      </span>
-                    </div>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm">
-                      <div>
-                        <span className="text-gray-600 dark:text-gray-400">Bank:</span>
-                        <span className="ml-2 font-medium">{selectedFacility.bank.name}</span>
-                      </div>
-                      <div>
-                        <span className="text-gray-600 dark:text-gray-400">Credit Limit:</span>
-                        <span className="ml-2 font-medium">{selectedFacility.creditLimit.toLocaleString()} SAR</span>
-                      </div>
-                    </div>
+                {guaranteeFacilities.length === 0 ? (
+                  <div className="text-center py-8">
+                    <Building className="h-12 w-12 text-gray-300 dark:text-gray-600 mx-auto mb-4" />
+                    <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-2">
+                      No Non-Cash Guarantee Facilities Available
+                    </h3>
+                    <p className="text-gray-600 dark:text-gray-400 mb-4">
+                      You need to create a non-cash guarantee facility with a bank before issuing guarantees.
+                    </p>
+                    <Link href="/facility/create-general">
+                      <Button className="bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white">
+                        <Plus className="h-4 w-4 mr-2" />
+                        Create Non-Cash Guarantee Facility
+                      </Button>
+                    </Link>
                   </div>
+                ) : (
+                  <>
+                    <FormField
+                      control={form.control}
+                      name="facilityId"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Non-Cash Guarantee Facility *</FormLabel>
+                          <Select onValueChange={field.onChange} defaultValue={field.value}>
+                            <FormControl>
+                              <SelectTrigger data-testid="select-facility">
+                                <SelectValue placeholder="Select a non-cash guarantee facility" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              {guaranteeFacilities.map((facility) => (
+                                <SelectItem key={facility.id} value={facility.id}>
+                                  <div className="flex items-center gap-2">
+                                    <span className="font-medium">{facility.bank.name}</span>
+                                    <Badge variant="outline">Non-Cash Guarantee</Badge>
+                                    <span className="text-sm text-gray-500">
+                                      Limit: {facility.creditLimit.toLocaleString()} SAR
+                                    </span>
+                                  </div>
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    {selectedFacility && (
+                      <div className="bg-green-50 dark:bg-green-900/20 p-4 rounded-lg border border-green-200 dark:border-green-800">
+                        <div className="flex items-center gap-2 mb-2">
+                          <CheckCircle className="h-4 w-4 text-green-600" />
+                          <span className="font-medium text-green-800 dark:text-green-200">
+                            Selected Facility Details
+                          </span>
+                        </div>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm">
+                          <div>
+                            <span className="text-gray-600 dark:text-gray-400">Bank:</span>
+                            <span className="ml-2 font-medium">{selectedFacility.bank.name}</span>
+                          </div>
+                          <div>
+                            <span className="text-gray-600 dark:text-gray-400">Credit Limit:</span>
+                            <span className="ml-2 font-medium">{selectedFacility.creditLimit.toLocaleString()} SAR</span>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </>
                 )}
               </CardContent>
             </Card>
