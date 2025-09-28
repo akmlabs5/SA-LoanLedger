@@ -26,7 +26,7 @@ const loanFormSchema = z.object({
   startDate: z.string().min(1, "Start date is required"),
   dueDate: z.string().min(1, "Due date is required"),
   purpose: z.string().optional(),
-  status: z.enum(["active", "settled", "overdue"]),
+  status: z.enum(["active", "settled", "overdue", "cancelled"]),
   notes: z.string().optional(),
 });
 
