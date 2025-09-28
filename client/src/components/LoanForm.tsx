@@ -15,6 +15,7 @@ import { insertLoanSchema, Facility, Bank, Loan, CreditLine } from "@shared/sche
 import { SiborRate } from "@shared/types";
 import { z } from "zod";
 import { AlertCircle, Calendar } from "lucide-react";
+import { formatFacilityType } from "@/lib/formatters";
 
 const loanFormSchema = insertLoanSchema
   .omit({ userId: true, bankRate: true }) // Exclude fields that aren't user inputs
@@ -234,7 +235,7 @@ export default function LoanForm({ onSuccess, onCancel }: LoanFormProps) {
                       {facilities?.map((facility) => (
                         <SelectItem key={facility.id} value={facility.id}>
                           <div className="flex flex-col">
-                            <span>{facility.bank?.name || 'Unknown Bank'} - {facility.facilityType.replace('_', ' ')}</span>
+                            <span>{facility.bank?.name || 'Unknown Bank'} - {formatFacilityType(facility.facilityType)}</span>
                             <span className="text-xs text-muted-foreground">
                               Credit Limit: {parseFloat(facility.creditLimit).toLocaleString()} SAR | SIBOR + {facility.costOfFunding}%
                             </span>

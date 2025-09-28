@@ -35,6 +35,7 @@ import {
 } from "lucide-react";
 
 import { Link } from "wouter";
+import { formatFacilityType } from "@/lib/formatters";
 
 const loanFormSchema = z.object({
   facilityId: z.string().min(1, "Please select a facility"),
@@ -309,7 +310,7 @@ export default function GeneralLoanCreatePage() {
                                   {facilities?.map((facility) => (
                                     <SelectItem key={facility.id} value={facility.id}>
                                       <div className="flex flex-col">
-                                        <span>{facility.bank?.name || 'Unknown Bank'} - {facility.facilityType.replace('_', ' ')}</span>
+                                        <span>{facility.bank?.name || 'Unknown Bank'} - {formatFacilityType(facility.facilityType)}</span>
                                         <span className="text-xs text-muted-foreground">
                                           Credit Limit: {parseFloat(facility.creditLimit).toLocaleString()} SAR | SIBOR + {facility.costOfFunding}%
                                         </span>

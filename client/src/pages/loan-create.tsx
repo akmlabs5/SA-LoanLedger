@@ -30,6 +30,7 @@ import {
 } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Link } from "wouter";
+import { formatFacilityType } from "@/lib/formatters";
 
 const loanFormSchema = z.object({
   facilityId: z.string().min(1, "Please select a facility"),
@@ -275,7 +276,7 @@ export default function LoanCreatePage() {
                               {bankFacilities?.map((facility) => (
                                 <SelectItem key={facility.id} value={facility.id}>
                                   <div className="flex flex-col">
-                                    <span>{facility.facilityType.replace('_', ' ').toUpperCase()}</span>
+                                    <span>{formatFacilityType(facility.facilityType).toUpperCase()}</span>
                                     <span className="text-xs text-muted-foreground">
                                       Credit Limit: {parseFloat(facility.creditLimit).toLocaleString()} SAR | SIBOR + {facility.costOfFunding}%
                                     </span>

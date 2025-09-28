@@ -15,6 +15,7 @@ import { apiRequest, queryClient } from "@/lib/queryClient";
 import { insertCollateralSchema, Facility, Bank, CreditLine } from "@shared/schema";
 import { z } from "zod";
 import { Building, CreditCard, AlertCircle } from "lucide-react";
+import { formatFacilityType } from "@/lib/formatters";
 
 const collateralFormSchema = insertCollateralSchema.extend({
   type: z.string().min(1, "Please select a collateral type"),
@@ -410,7 +411,7 @@ export default function CollateralForm({ collateral, onSuccess, onCancel }: Coll
                           <SelectItem value="no-assignment">No Assignment</SelectItem>
                           {facilities?.map((facility) => (
                             <SelectItem key={facility.id} value={facility.id}>
-                              {facility.bank.name} - {facility.facilityType} ({parseFloat(facility.creditLimit).toLocaleString()} SAR)
+                              {facility.bank.name} - {formatFacilityType(facility.facilityType)} ({parseFloat(facility.creditLimit).toLocaleString()} SAR)
                             </SelectItem>
                           ))}
                         </SelectContent>

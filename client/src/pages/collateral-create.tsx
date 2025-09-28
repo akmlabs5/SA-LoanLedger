@@ -17,6 +17,7 @@ import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { insertCollateralSchema } from "@shared/schema";
+import { formatFacilityType } from "@/lib/formatters";
 
 // Collateral types with descriptions and examples
 const collateralTypes = [
@@ -194,7 +195,7 @@ export default function CollateralCreatePage() {
                               {facilities?.map((facility: any) => (
                                 <SelectItem key={facility.id} value={facility.id}>
                                   <div className="flex flex-col">
-                                    <span>{facility.facilityType.replace('_', ' ').toUpperCase()}</span>
+                                    <span>{formatFacilityType(facility.facilityType).toUpperCase()}</span>
                                     <span className="text-xs text-muted-foreground">
                                       {facility.bank?.name} - {parseFloat(facility.creditLimit).toLocaleString()} SAR
                                     </span>

@@ -42,3 +42,7 @@ export const formatDate = (date: string | Date, format: 'short' | 'long' = 'shor
     year: 'numeric'
   });
 };
+
+export const formatFacilityType = (facilityType: string): string => {
+  return facilityType.replace(/_/g, ' ');
+};

@@ -60,6 +60,7 @@ import { PortfolioSummary } from "@shared/types";
 import BankContactsSection from "@/components/BankContactsSection";
 import DocumentUpload from "@/components/DocumentUpload";
 import DocumentList from "@/components/DocumentList";
+import { formatFacilityType } from "@/lib/formatters";
 
 export default function BankDetail() {
   const { id: bankId } = useParams();
@@ -379,7 +380,7 @@ export default function BankDetail() {
                         <div className="flex items-center justify-between mb-3">
                           <div>
                             <h4 className="font-semibold text-gray-900 dark:text-gray-100 capitalize">
-                              {facility.facilityType.replace('_', ' ')} Facility
+                              {formatFacilityType(facility.facilityType)} Facility
                             </h4>
                             <p className="text-sm text-gray-600 dark:text-gray-400">
                               Active since {new Date(facility.startDate).toLocaleDateString()}
@@ -639,7 +640,7 @@ export default function BankDetail() {
                           <div>
                             <p className="text-xs text-gray-500 dark:text-gray-400">Assigned to Facility</p>
                             <p className="font-semibold text-gray-900 dark:text-gray-100 capitalize">
-                              {asset.facility?.facilityType?.replace('_', ' ')} Facility
+                              {formatFacilityType(asset.facility?.facilityType || '')} Facility
                             </p>
                           </div>
                           <div>
