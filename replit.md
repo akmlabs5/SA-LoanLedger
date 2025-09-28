@@ -2,6 +2,18 @@
 
 This is a comprehensive loan management platform specifically designed for the Saudi Arabian market. The system is a full-stack web application that enables users to manage loan portfolios with SIBOR (Saudi Interbank Offered Rate) based calculations. It features intelligent Rules-Based AI insights for portfolio risk management, concentration alerts, and LTV (Loan-to-Value) monitoring. The platform is mobile-responsive and designed to handle complex financial data including bank facilities, collateral tracking, and loan lifecycle management.
 
+## Recent Updates - September 28, 2025
+
+### Complete Admin Portal System
+- **Separate Admin Portal**: Implemented completely isolated admin portal with its own authentication system at `/admin-portal/login`
+- **3D Animated Authentication**: Beautiful red/orange themed 3D authentication interface with glassmorphism effects, light beams, and mouse tracking animations
+- **Admin Security Architecture**: Comprehensive security system with session-based authentication, route guards, and proper authorization middleware
+- **Admin Dashboard**: Full-featured dashboard with system stats, user management, and maintenance controls
+- **Admin User Management**: Interface for viewing and managing regular users with loan portfolio summaries
+- **Authentication Isolation**: Admin authentication completely separated from regular user auth system using dedicated credentials (username: 'admin', password: 'admin123')
+- **Session Management**: 24-hour session expiry with proper token validation and automatic cleanup
+- **API Security**: Protected admin endpoints with Bearer token authentication and proper middleware validation
+
 # User Preferences
 
 Preferred communication style: Simple, everyday language.
