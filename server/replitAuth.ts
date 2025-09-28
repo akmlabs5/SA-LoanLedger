@@ -154,24 +154,26 @@ export async function setupAuth(app: Express, databaseAvailable = true) {
 
 export const isAuthenticated: RequestHandler = async (req, res, next) => {
   // Development mode bypass when database is unavailable
-  if (process.env.NODE_ENV === 'development' && !req.isAuthenticated()) {
+  if (process.env.NODE_ENV === 'development') {
     // Check if user has explicitly logged out
     if (req.session && (req.session as any).userLoggedOut) {
       console.log("🔧 Development mode: user has logged out, not bypassing authentication");
       return res.status(401).json({ message: "Unauthorized" });
     }
     
-    console.log("🔧 Development mode: bypassing authentication for Abdulrahman");
-    // Create a mock user for development testing using Abdulrahman's account
-    (req as any).user = {
-      claims: {
-        sub: 'abdulrahman-user-main',
-        email: 'abdulrahman@example.com',
-        first_name: 'Abdulrahman',
-        last_name: ''
-      }
-    };
-    return next();
+    if (!req.isAuthenticated()) {
+      console.log("🔧 Development mode: bypassing authentication for Abdulrahman");
+      // Create a mock user for development testing using Abdulrahman's account
+      (req as any).user = {
+        claims: {
+          sub: 'abdulrahman-user-main',
+          email: 'abdulrahman@example.com',
+          first_name: 'Abdulrahman',
+          last_name: ''
+        }
+      };
+      return next();
+    }
   }
 
   const user = req.user as any;

@@ -100,7 +100,7 @@ const USE_SUPABASE_AUTH = import.meta.env.VITE_SUPABASE_URL &&
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   const [location] = useLocation();
-  const { user, authSystem } = useAuth();
+  const { user, authSystem, clearAuthCache } = useAuth();
   
   // Only use Supabase auth if enabled
   const supabaseAuth = USE_SUPABASE_AUTH ? useSupabaseAuth() : null;
@@ -109,6 +109,8 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
     if (USE_SUPABASE_AUTH && supabaseAuth?.signOut) {
       await supabaseAuth.signOut();
     } else {
+      // Clear authentication cache before logout
+      clearAuthCache();
       // Replit Auth sign out - force logout by redirecting directly
       window.location.href = "/api/logout";
     }
