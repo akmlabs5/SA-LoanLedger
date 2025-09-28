@@ -74,7 +74,14 @@ function App() {
 
   // Handle auth routing
   if (!isAuthenticated) {
-    return <LandingPage />;
+    return (
+      <Switch>
+        <Route path="/auth/login" component={LoginPage} />
+        <Route path="/auth/signup" component={SignupPage} />
+        <Route path="/auth/forgot-password" component={ForgotPasswordPage} />
+        <Route component={LandingPage} />
+      </Switch>
+    );
   }
 
   // Authenticated user routes

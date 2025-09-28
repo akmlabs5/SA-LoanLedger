@@ -1615,6 +1615,52 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Admin routes
+  app.get('/api/admin/stats', isAuthenticated, async (req: any, res) => {
+    try {
+      // Get aggregate stats for admin dashboard
+      const loans = await storage.getAllLoans(req.user.claims.sub);
+      const banks = await storage.getAllBanks();
+      
+      const stats = {
+        totalUsers: 1, // For demo purposes, as we only have the current user
+        activeUsers: 1,
+        totalLoans: loans.length,
+        totalBanks: banks.length,
+        systemHealth: "healthy" as const,
+        lastBackup: new Date().toISOString(),
+        errorRate: 0
+      };
+
+      res.json(stats);
+    } catch (error) {
+      console.error("Error fetching admin stats:", error);
+      res.status(500).json({ message: "Failed to fetch admin stats" });
+    }
+  });
+
+  app.get('/api/admin/users', isAuthenticated, async (req: any, res) => {
+    try {
+      // For demo purposes, return the current user
+      const currentUser = req.user.claims;
+      
+      const users = [{
+        id: currentUser.sub,
+        email: currentUser.email || 'admin@example.com',
+        firstName: currentUser.first_name || 'Admin',
+        lastName: currentUser.last_name || 'User',
+        lastLogin: new Date().toISOString(),
+        isActive: true,
+        role: "admin" as const
+      }];
+
+      res.json(users);
+    } catch (error) {
+      console.error("Error fetching admin users:", error);
+      res.status(500).json({ message: "Failed to fetch admin users" });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }
