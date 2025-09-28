@@ -31,6 +31,7 @@ import { Link } from "wouter";
 
 const guaranteeFormSchema = z.object({
   facilityId: z.string().min(1, "Please select a facility"),
+  guaranteeType: z.enum(["bid_bond", "performance_bond", "advance_payment_guarantee", "general_bank_guarantee", "retention_money_guarantee", "other"]),
   referenceNumber: z.string().min(1, "Reference number is required"),
   beneficiaryName: z.string().min(1, "Beneficiary name is required"),
   beneficiaryDetails: z.string().optional(),
@@ -203,6 +204,32 @@ export default function GuaranteeCreatePage() {
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
+                <FormField
+                  control={form.control}
+                  name="guaranteeType"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Guarantee Type *</FormLabel>
+                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormControl>
+                          <SelectTrigger data-testid="select-guarantee-type">
+                            <SelectValue placeholder="Select guarantee type" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="bid_bond">Bid Bond</SelectItem>
+                          <SelectItem value="performance_bond">Performance Bond</SelectItem>
+                          <SelectItem value="advance_payment_guarantee">Advance Payment Guarantee</SelectItem>
+                          <SelectItem value="general_bank_guarantee">General Bank Guarantee</SelectItem>
+                          <SelectItem value="retention_money_guarantee">Retention Money Guarantee</SelectItem>
+                          <SelectItem value="other">Other</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <FormField
                     control={form.control}

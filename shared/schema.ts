@@ -124,6 +124,15 @@ export const securityTypeEnum = pgEnum('security_type', [
   'non_cash'
 ]);
 
+export const guaranteeTypeEnum = pgEnum('guarantee_type', [
+  'bid_bond',
+  'performance_bond',
+  'advance_payment_guarantee',
+  'general_bank_guarantee',
+  'retention_money_guarantee',
+  'other'
+]);
+
 // Session storage table.
 // (IMPORTANT) This table is mandatory for Replit Auth, don't drop it.
 export const sessions = pgTable(
@@ -481,6 +490,7 @@ export const guarantees = pgTable("guarantees", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   facilityId: varchar("facility_id").references(() => facilities.id, { onDelete: "restrict" }).notNull(),
   userId: varchar("user_id").references(() => users.id).notNull(),
+  guaranteeType: guaranteeTypeEnum("guarantee_type").notNull(),
   referenceNumber: varchar("reference_number", { length: 50 }).notNull(),
   beneficiaryName: varchar("beneficiary_name", { length: 200 }).notNull(),
   beneficiaryDetails: text("beneficiary_details"),
@@ -715,6 +725,7 @@ export const guaranteesRelations = relations(guarantees, ({ one }) => ({
 export const transactionTypeZodEnum = z.enum(['draw', 'repayment', 'fee', 'interest', 'limit_change', 'other']);
 export const facilityTypeZodEnum = z.enum(['revolving', 'term', 'bullet', 'bridge', 'working_capital', 'non_cash_guarantee']);
 export const guaranteeStatusZodEnum = z.enum(['active', 'expired', 'renewed', 'called', 'cancelled']);
+export const guaranteeTypeZodEnum = z.enum(['bid_bond', 'performance_bond', 'advance_payment_guarantee', 'general_bank_guarantee', 'retention_money_guarantee', 'other']);
 export const securityTypeZodEnum = z.enum(['cash_full', 'cash_partial', 'cash_none', 'non_cash']);
 export const creditLineTypeZodEnum = z.enum(['working_capital', 'term_loan', 'trade_finance', 'real_estate_finance', 'equipment_finance', 'overdraft', 'letter_of_credit', 'bank_guarantee', 'other']);
 
@@ -1073,6 +1084,8 @@ export const insertGuaranteeSchema = createInsertSchema(guarantees).omit({
   id: true,
   createdAt: true,
   updatedAt: true,
+}).extend({
+  guaranteeType: guaranteeTypeZodEnum,
 });
 
 export const updateGuaranteeSchema = insertGuaranteeSchema.partial().extend({
@@ -1083,4 +1096,5 @@ export type InsertGuarantee = z.infer<typeof insertGuaranteeSchema>;
 export type UpdateGuarantee = z.infer<typeof updateGuaranteeSchema>;
 export type Guarantee = typeof guarantees.$inferSelect;
 export type GuaranteeStatus = z.infer<typeof guaranteeStatusZodEnum>;
+export type GuaranteeType = z.infer<typeof guaranteeTypeZodEnum>;
 export type SecurityType = z.infer<typeof securityTypeZodEnum>;
