@@ -592,7 +592,7 @@ export default function BankDetail() {
                   <Button 
                     onClick={() => setLocation("/collateral/new")}
                     size="sm"
-                    className="bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white shadow-lg"
+                    className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white shadow-lg"
                     data-testid="button-add-collateral"
                   >
                     <Plus className="h-4 w-4 mr-2" />
