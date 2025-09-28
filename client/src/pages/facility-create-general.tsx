@@ -29,6 +29,8 @@ import {
 } from "lucide-react";
 
 import { Link } from "wouter";
+import { formatFacilityType } from "@/lib/formatters";
+import { ModernDatePicker } from "@/components/ui/date-picker";
 
 const facilityFormSchema = insertFacilitySchema.extend({
   bankId: z.string().min(1, "Please select a bank"),
@@ -338,10 +340,10 @@ export default function GeneralFacilityCreatePage() {
                             <FormItem>
                               <FormLabel>Start Date *</FormLabel>
                               <FormControl>
-                                <Input 
-                                  data-testid="input-start-date" 
-                                  type="date" 
-                                  {...field} 
+                                <ModernDatePicker 
+                                  value={field.value} 
+                                  onChange={field.onChange}
+                                  placeholder="Select start date"
                                 />
                               </FormControl>
                               <FormMessage />
@@ -356,10 +358,10 @@ export default function GeneralFacilityCreatePage() {
                             <FormItem>
                               <FormLabel>Expiry Date *</FormLabel>
                               <FormControl>
-                                <Input 
-                                  data-testid="input-expiry-date" 
-                                  type="date" 
-                                  {...field} 
+                                <ModernDatePicker 
+                                  value={field.value} 
+                                  onChange={field.onChange}
+                                  placeholder="Select expiry date"
                                 />
                               </FormControl>
                               <FormMessage />

@@ -31,6 +31,7 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Link } from "wouter";
 import { formatFacilityType } from "@/lib/formatters";
+import { ModernDatePicker } from "@/components/ui/date-picker";
 
 const loanFormSchema = z.object({
   facilityId: z.string().min(1, "Please select a facility"),
@@ -335,7 +336,11 @@ export default function LoanCreatePage() {
                           <FormItem>
                             <FormLabel>Start Date *</FormLabel>
                             <FormControl>
-                              <Input type="date" {...field} data-testid="input-start-date" />
+                              <ModernDatePicker 
+                                value={field.value} 
+                                onChange={field.onChange}
+                                placeholder="Select start date"
+                              />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
@@ -349,7 +354,11 @@ export default function LoanCreatePage() {
                           <FormItem>
                             <FormLabel>Due Date *</FormLabel>
                             <FormControl>
-                              <Input type="date" {...field} data-testid="input-due-date" />
+                              <ModernDatePicker 
+                                value={field.value} 
+                                onChange={field.onChange}
+                                placeholder="Select due date"
+                              />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
@@ -365,11 +374,10 @@ export default function LoanCreatePage() {
                         <FormItem>
                           <FormLabel>Charges Due Date (Optional)</FormLabel>
                           <FormControl>
-                            <Input 
-                              type="date" 
-                              {...field} 
+                            <ModernDatePicker 
                               value={field.value || ""} 
-                              data-testid="input-charges-due-date" 
+                              onChange={field.onChange}
+                              placeholder="Select charges due date"
                             />
                           </FormControl>
                           <p className="text-sm text-muted-foreground">

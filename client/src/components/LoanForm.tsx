@@ -16,6 +16,7 @@ import { SiborRate } from "@shared/types";
 import { z } from "zod";
 import { AlertCircle, Calendar } from "lucide-react";
 import { formatFacilityType } from "@/lib/formatters";
+import { ModernDatePicker } from "@/components/ui/date-picker";
 
 const loanFormSchema = insertLoanSchema
   .omit({ userId: true, bankRate: true }) // Exclude fields that aren't user inputs
@@ -386,7 +387,11 @@ export default function LoanForm({ onSuccess, onCancel }: LoanFormProps) {
                   <FormItem>
                     <FormLabel>Start Date *</FormLabel>
                     <FormControl>
-                      <Input {...field} type="date" data-testid="input-start-date" />
+                      <ModernDatePicker 
+                        value={field.value} 
+                        onChange={field.onChange}
+                        placeholder="Select start date"
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -473,7 +478,11 @@ export default function LoanForm({ onSuccess, onCancel }: LoanFormProps) {
                     <FormItem>
                       <FormLabel>Due Date * <span className="text-sm font-normal text-muted-foreground">(or use quick select above)</span></FormLabel>
                       <FormControl>
-                        <Input {...field} type="date" data-testid="input-due-date" />
+                        <ModernDatePicker 
+                          value={field.value} 
+                          onChange={field.onChange}
+                          placeholder="Select due date"
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -487,7 +496,11 @@ export default function LoanForm({ onSuccess, onCancel }: LoanFormProps) {
                     <FormItem>
                       <FormLabel>Charges Due Date</FormLabel>
                       <FormControl>
-                        <Input {...field} type="date" data-testid="input-charges-due-date" />
+                        <ModernDatePicker 
+                          value={field.value || ""} 
+                          onChange={field.onChange}
+                          placeholder="Select charges due date"
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>

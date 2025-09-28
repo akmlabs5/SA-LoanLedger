@@ -16,6 +16,7 @@ import { insertCollateralSchema, Facility, Bank, CreditLine } from "@shared/sche
 import { z } from "zod";
 import { Building, CreditCard, AlertCircle } from "lucide-react";
 import { formatFacilityType } from "@/lib/formatters";
+import { ModernDatePicker } from "@/components/ui/date-picker";
 
 const collateralFormSchema = insertCollateralSchema.extend({
   type: z.string().min(1, "Please select a collateral type"),
@@ -283,7 +284,11 @@ export default function CollateralForm({ collateral, onSuccess, onCancel }: Coll
                   <FormItem>
                     <FormLabel>Valuation Date *</FormLabel>
                     <FormControl>
-                      <Input {...field} type="date" data-testid="input-valuation-date" />
+                      <ModernDatePicker 
+                        value={field.value} 
+                        onChange={field.onChange}
+                        placeholder="Select valuation date"
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
