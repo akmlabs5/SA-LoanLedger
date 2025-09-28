@@ -21,6 +21,7 @@ import {
 } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import AdminLayout from "@/components/admin/AdminLayout";
+import { RequireAdminAuth } from "@/components/admin/RequireAdminAuth";
 
 interface AdminSystemStats {
   totalUsers: number;
@@ -84,7 +85,8 @@ export default function AdminDashboardPage() {
   };
 
   return (
-    <AdminLayout>
+    <RequireAdminAuth>
+      <AdminLayout>
       <div className="container mx-auto space-y-6" data-testid="page-admin-dashboard">
         {/* Header */}
         <div className="flex items-center justify-between">
@@ -376,6 +378,7 @@ export default function AdminDashboardPage() {
           </CardContent>
         </Card>
       </div>
-    </AdminLayout>
+      </AdminLayout>
+    </RequireAdminAuth>
   );
 }

@@ -1615,6 +1615,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Admin session storage (in production, use proper session store)
+  const adminSessions = new Map<string, { username: string; role: string; loginTime: string }>();
+
   // Admin authentication routes
   app.post('/api/admin/auth/login', async (req, res) => {
     try {
@@ -1631,12 +1634,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const token = crypto.randomBytes(32).toString('hex');
         
         // Store admin session (in production, use proper session storage)
-        const adminSession = {
-          token,
+        adminSessions.set(token, {
           username,
           role: 'admin',
           loginTime: new Date().toISOString()
-        };
+        });
         
         res.json({
           token,
@@ -1655,6 +1657,38 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Admin auth validation endpoint
+  app.get('/api/admin/auth/me', (req: any, res) => {
+    const token = req.headers.authorization?.replace('Bearer ', '');
+    
+    if (!token) {
+      return res.status(401).json({ message: "Admin token required" });
+    }
+    
+    const session = adminSessions.get(token);
+    if (!session) {
+      return res.status(401).json({ message: "Invalid admin token" });
+    }
+    
+    // Check if session is still valid (24 hours)
+    const loginTime = new Date(session.loginTime);
+    const now = new Date();
+    const hoursDiff = (now.getTime() - loginTime.getTime()) / (1000 * 60 * 60);
+    
+    if (hoursDiff > 24) {
+      adminSessions.delete(token);
+      return res.status(401).json({ message: "Admin session expired" });
+    }
+    
+    res.json({
+      user: {
+        name: 'System Administrator',
+        username: session.username,
+        role: session.role
+      }
+    });
+  });
+
   // Admin middleware for protecting admin routes
   const isAdminAuthenticated = (req: any, res: any, next: any) => {
     const token = req.headers.authorization?.replace('Bearer ', '');
@@ -1663,14 +1697,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
       return res.status(401).json({ message: "Admin token required" });
     }
     
-    // In production, validate token properly
-    // For demo purposes, accept any token that looks like our format
-    if (token.length === 64) {
-      req.adminUser = { username: 'admin', role: 'admin' };
-      return next();
+    // Check if token exists in our session store
+    const session = adminSessions.get(token);
+    if (!session) {
+      return res.status(401).json({ message: "Invalid admin token" });
     }
     
-    return res.status(401).json({ message: "Invalid admin token" });
+    // Check if session is still valid (24 hours)
+    const loginTime = new Date(session.loginTime);
+    const now = new Date();
+    const hoursDiff = (now.getTime() - loginTime.getTime()) / (1000 * 60 * 60);
+    
+    if (hoursDiff > 24) {
+      adminSessions.delete(token);
+      return res.status(401).json({ message: "Admin session expired" });
+    }
+    
+    req.adminUser = { username: session.username, role: session.role };
+    return next();
   };
 
   // Admin system stats

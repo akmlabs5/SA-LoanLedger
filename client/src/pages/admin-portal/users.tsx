@@ -18,6 +18,7 @@ import {
 } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import AdminLayout from "@/components/admin/AdminLayout";
+import { RequireAdminAuth } from "@/components/admin/RequireAdminAuth";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -90,7 +91,8 @@ export default function AdminUsersPage() {
   };
 
   return (
-    <AdminLayout>
+    <RequireAdminAuth>
+      <AdminLayout>
       <div className="container mx-auto space-y-6" data-testid="page-admin-users">
         {/* Header */}
         <div className="flex items-center justify-between">
@@ -282,6 +284,7 @@ export default function AdminUsersPage() {
           </CardContent>
         </Card>
       </div>
-    </AdminLayout>
+      </AdminLayout>
+    </RequireAdminAuth>
   );
 }
