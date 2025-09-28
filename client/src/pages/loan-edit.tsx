@@ -33,14 +33,26 @@ const loanFormSchema = z.object({
 type LoanFormData = z.infer<typeof loanFormSchema>;
 
 export default function LoanEditPage() {
-  const { loanId } = useParams<{ loanId: string }>();
+  const { id: loanId } = useParams<{ id: string }>();
   const [, setLocation] = useLocation();
   const { toast } = useToast();
 
   // Fetch loan details for editing
   const { data: loan, isLoading: loanLoading, error: loanError } = useQuery({
-    queryKey: [`/api/loans/${loanId}`],
+    queryKey: ['/api/loans', loanId],
+    queryFn: async () => {
+      const response = await fetch(`/api/loans/${loanId}`, {
+        credentials: "include",
+        cache: "no-cache"
+      });
+      if (!response.ok) {
+        throw new Error(`Failed to fetch loan: ${response.status}`);
+      }
+      return response.json();
+    },
     enabled: !!loanId,
+    staleTime: 0,
+    gcTime: 0,
   });
 
   const form = useForm<LoanFormData>({
