@@ -92,6 +92,16 @@ const navigation = [
       },
     ],
   },
+  {
+    title: "Administration",
+    items: [
+      {
+        title: "Admin Portal",
+        url: "/admin",
+        icon: Settings,
+      },
+    ],
+  },
 ];
 
 // Feature flag to use Supabase Auth

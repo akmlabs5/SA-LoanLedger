@@ -1,5 +1,4 @@
-'use client'
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { Link } from 'wouter';
 import { motion, AnimatePresence, useMotionValue, useTransform } from 'framer-motion';
 import { Mail, Lock, Eye, EyeClosed, ArrowRight, University, User } from 'lucide-react';

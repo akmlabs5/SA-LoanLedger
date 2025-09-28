@@ -24,6 +24,7 @@ import GuaranteesPage from "@/pages/guarantees";
 import GuaranteeCreatePage from "@/pages/guarantee-create";
 import HistoryPage from "@/pages/history";
 import AIChatPage from "@/pages/ai-chat";
+import AdminPage from "@/pages/admin";
 import NotFoundPage from "@/pages/not-found";
 
 // Auth pages
@@ -100,6 +101,7 @@ function App() {
         <Route path="/guarantees/create" component={GuaranteeCreatePage} />
         <Route path="/history" component={HistoryPage} />
         <Route path="/ai-chat" component={AIChatPage} />
+        <Route path="/admin" component={AdminPage} />
         <Route component={NotFoundPage} />
       </Switch>
     </AppLayout>
