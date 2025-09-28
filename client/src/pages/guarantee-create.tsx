@@ -25,7 +25,8 @@ import {
   Shield,
   TrendingUp,
   CheckCircle,
-  Users
+  Users,
+  Plus
 } from "lucide-react";
 import { Link } from "wouter";
 
