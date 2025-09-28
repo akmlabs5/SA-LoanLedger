@@ -2,6 +2,7 @@ import { useParams, useLocation } from "wouter";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useState } from "react";
 import { ArrowLeft, Calendar, Building2, FileText, Clock, CheckCircle, AlertTriangle, TrendingUp, Edit, Trash2, Bell } from "lucide-react";
+import { LoanWithDetails } from "@shared/types";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -17,7 +18,7 @@ import DocumentList from "@/components/DocumentList";
 import ReminderModal from "@/components/ReminderModal";
 
 export default function LoanDetailPage() {
-  const { loanId } = useParams<{ loanId: string }>();
+  const { id: loanId } = useParams<{ id: string }>();
   const [, setLocation] = useLocation();
   const { toast } = useToast();
   const { isAuthenticated } = useAuth();
@@ -25,7 +26,7 @@ export default function LoanDetailPage() {
   const [reminderModalOpen, setReminderModalOpen] = useState(false);
 
   // Fetch loan details (always needed for overview)
-  const { data: loan, isLoading: loanLoading, isError: loanError } = useQuery({
+  const { data: loan, isLoading: loanLoading, isError: loanError } = useQuery<LoanWithDetails>({
     queryKey: ["/api/loans", loanId],
     enabled: !!loanId && isAuthenticated,
   });
