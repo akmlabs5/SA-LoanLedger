@@ -256,7 +256,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
           return (
             <Link
               key={item.url}
-              href={item.url}
+              to={item.url}
               data-testid={`mobile-nav-${item.title.toLowerCase()}`}
               onClick={() => {
                 // Close mobile drawer when navigating via bottom nav
@@ -372,7 +372,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                             isMobile ? "h-12 px-4 text-base" : "h-10 px-3"
                           )}
                         >
-                          <Link href={item.url} className="flex items-center gap-3">
+                          <Link to={item.url} className="flex items-center gap-3">
                             <item.icon className={cn(isMobile ? "h-5 w-5" : "h-4 w-4")} />
                             <span className="font-medium tracking-tight">{item.title}</span>
                           </Link>
@@ -399,7 +399,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                       isMobile ? "h-12 px-4 text-base" : "h-10 px-3"
                     )}
                   >
-                    <Link href="/settings" className="flex items-center gap-3">
+                    <Link to="/settings" className="flex items-center gap-3">
                       <Settings className={cn(isMobile ? "h-5 w-5" : "h-4 w-4")} />
                       <span className="font-medium tracking-tight">Settings</span>
                     </Link>
@@ -484,7 +484,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                   </h2>
                   {isMobile && location !== '/' && (
                     <div className="flex items-center text-xs text-muted-foreground">
-                      <Link href="/" className="hover:text-foreground transition-colors">
+                      <Link to="/" className="hover:text-foreground transition-colors">
                         Dashboard
                       </Link>
                       <span className="mx-1">›</span>
