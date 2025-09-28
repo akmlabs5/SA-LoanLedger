@@ -2223,66 +2223,66 @@ async function ensureSampleTransactionHistory(userId: string) {
   // Report Generation Routes
   app.get('/api/reports/facility-summary', isAuthenticated, async (req: any, res) => {
     try {
-    const userId = req.user.claims.sub;
-    const { format = 'pdf', startDate, endDate } = req.query;
-    
-    // Get user's facilities with related data
-    const facilities = await storage.getUserFacilities(userId);
-    const loans = await storage.getActiveLoansByUser(userId);
-    const banks = await storage.getAllBanks();
-    
-    // Calculate aggregated data for report
-    const reportData = await generateFacilityReportData(userId, facilities, loans, banks, startDate, endDate);
-    
-    if (format === 'excel') {
-      // Generate Excel report
-      const excelBuffer = await generateExcelReport(reportData);
-      res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
-      res.setHeader('Content-Disposition', `attachment; filename="facility-report-${new Date().toISOString().split('T')[0]}.xlsx"`);
-      res.send(excelBuffer);
-    } else {
-      // Generate PDF report
-      const pdfBuffer = await generatePDFReport(reportData);
-      res.setHeader('Content-Type', 'application/pdf');
-      res.setHeader('Content-Disposition', `attachment; filename="facility-report-${new Date().toISOString().split('T')[0]}.pdf"`);
-      res.send(pdfBuffer);
+      const userId = req.user.claims.sub;
+      const { format = 'pdf', startDate, endDate } = req.query;
+      
+      // Get user's facilities with related data
+      const facilities = await storage.getUserFacilities(userId);
+      const loans = await storage.getActiveLoansByUser(userId);
+      const banks = await storage.getAllBanks();
+      
+      // Calculate aggregated data for report
+      const reportData = await generateFacilityReportData(userId, facilities, loans, banks, startDate, endDate);
+      
+      if (format === 'excel') {
+        // Generate Excel report
+        const excelBuffer = await generateExcelReport(reportData);
+        res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+        res.setHeader('Content-Disposition', `attachment; filename="facility-report-${new Date().toISOString().split('T')[0]}.xlsx"`);
+        res.send(excelBuffer);
+      } else {
+        // Generate PDF report
+        const pdfBuffer = await generatePDFReport(reportData);
+        res.setHeader('Content-Type', 'application/pdf');
+        res.setHeader('Content-Disposition', `attachment; filename="facility-report-${new Date().toISOString().split('T')[0]}.pdf"`);
+        res.send(pdfBuffer);
+      }
+    } catch (error) {
+      console.error("Error generating facility report:", error);
+      res.status(500).json({ message: "Failed to generate facility report" });
     }
-  } catch (error) {
-    console.error("Error generating facility report:", error);
-    res.status(500).json({ message: "Failed to generate facility report" });
-  }
-});
+  });
 
   app.get('/api/reports/bank-exposures', isAuthenticated, async (req: any, res) => {
     try {
-    const userId = req.user.claims.sub;
-    const { format = 'pdf', startDate, endDate } = req.query;
-    
-    // Get exposure snapshots for the date range
-    const exposures = await storage.listExposureSnapshots({
-      userId,
-      from: startDate || '2024-01-01',
-      to: endDate || new Date().toISOString().split('T')[0]
-    });
-    
-    const reportData = await generateBankExposureReportData(userId, exposures, startDate, endDate);
-    
-    if (format === 'excel') {
-      const excelBuffer = await generateBankExposureExcelReport(reportData);
-      res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
-      res.setHeader('Content-Disposition', `attachment; filename="bank-exposures-${new Date().toISOString().split('T')[0]}.xlsx"`);
-      res.send(excelBuffer);
-    } else {
-      const pdfBuffer = await generateBankExposurePDFReport(reportData);
-      res.setHeader('Content-Type', 'application/pdf');
-      res.setHeader('Content-Disposition', `attachment; filename="bank-exposures-${new Date().toISOString().split('T')[0]}.pdf"`);
-      res.send(pdfBuffer);
+      const userId = req.user.claims.sub;
+      const { format = 'pdf', startDate, endDate } = req.query;
+      
+      // Get exposure snapshots for the date range
+      const exposures = await storage.listExposureSnapshots({
+        userId,
+        from: startDate || '2024-01-01',
+        to: endDate || new Date().toISOString().split('T')[0]
+      });
+      
+      const reportData = await generateBankExposureReportData(userId, exposures, startDate, endDate);
+      
+      if (format === 'excel') {
+        const excelBuffer = await generateBankExposureExcelReport(reportData);
+        res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+        res.setHeader('Content-Disposition', `attachment; filename="bank-exposures-${new Date().toISOString().split('T')[0]}.xlsx"`);
+        res.send(excelBuffer);
+      } else {
+        const pdfBuffer = await generateBankExposurePDFReport(reportData);
+        res.setHeader('Content-Type', 'application/pdf');
+        res.setHeader('Content-Disposition', `attachment; filename="bank-exposures-${new Date().toISOString().split('T')[0]}.pdf"`);
+        res.send(pdfBuffer);
+      }
+    } catch (error) {
+      console.error("Error generating bank exposure report:", error);
+      res.status(500).json({ message: "Failed to generate bank exposure report" });
     }
-  } catch (error) {
-    console.error("Error generating bank exposure report:", error);
-    res.status(500).json({ message: "Failed to generate bank exposure report" });
-  }
-});
+  });
 
   // Create and return HTTP server
   const server = createServer(app);
