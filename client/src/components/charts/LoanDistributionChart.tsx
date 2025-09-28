@@ -122,7 +122,7 @@ export default function LoanDistributionChart({ loans = [], showTimeDistribution
 
   // Loan distribution by bank
   const bankData = loans.reduce((acc: BankData[], loan: LoanWithDetails) => {
-    const bankName = loan.facility?.bank?.name || 'Unknown Bank';
+    const bankName = loan.creditLine?.facility?.bank?.name || 'Unknown Bank';
     const amount = Number(loan.amount) || 0;
     
     const existing = acc.find((item: BankData) => item.bank === bankName);
@@ -172,17 +172,45 @@ export default function LoanDistributionChart({ loans = [], showTimeDistribution
   const CustomTooltip = ({ active, payload, label }: any) => {
     if (active && payload && payload.length) {
       const data = payload[0].payload;
+      const formatAmount = (amount: number) => {
+        if (amount >= 1000000) {
+          return `${(amount / 1000000).toFixed(1)}M`;
+        } else if (amount >= 1000) {
+          return `${(amount / 1000).toFixed(0)}K`;
+        }
+        return amount.toString();
+      };
+      
       return (
-        <div className="bg-white dark:bg-gray-800 p-3 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg">
-          <p className="font-semibold text-gray-900 dark:text-gray-100">
-            {data.fullName || data.bank || data.urgency || data.month}
-          </p>
-          <p style={{ color: SAUDI_CHART_COLORS.saudiGreen }}>
-            Amount: {(data.amount || 0).toFixed(1)}M SAR
-          </p>
-          <p style={{ color: SAUDI_CHART_COLORS.saudiGold }}>
-            Loans: {data.count}
-          </p>
+        <div className="bg-background/95 backdrop-blur-sm border border-border rounded-lg shadow-lg p-4 max-w-xs">
+          <div className="flex items-center space-x-2 mb-2">
+            {data.urgency && (
+              <div 
+                className="w-3 h-3 rounded-full" 
+                style={{ backgroundColor: data.color }}
+              />
+            )}
+            <p className="font-semibold text-foreground capitalize">
+              {data.fullName || data.bank || (data.urgency ? `${data.urgency} Priority` : '') || data.month}
+            </p>
+          </div>
+          <div className="space-y-1 text-sm">
+            <p className="flex items-center justify-between">
+              <span className="text-muted-foreground">Amount:</span>
+              <span className="font-medium text-saudi">﷼{formatAmount(data.amount || 0)} SAR</span>
+            </p>
+            <p className="flex items-center justify-between">
+              <span className="text-muted-foreground">Loans:</span>
+              <span className="font-medium">{data.count}</span>
+            </p>
+            {data.urgency && (
+              <p className="text-xs text-muted-foreground mt-2 border-t border-border pt-2">
+                {data.urgency === 'critical' ? '⚠️ Requires immediate attention' : 
+                 data.urgency === 'warning' ? '⚡ Due soon' : 
+                 '✅ On track'}
+              </p>
+            )}
+          </div>
         </div>
       );
     }
@@ -239,49 +267,114 @@ export default function LoanDistributionChart({ loans = [], showTimeDistribution
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
       {/* Loan Distribution by Urgency */}
-      <Card className="border-0 shadow-lg bg-white/50 dark:bg-gray-800/50 backdrop-blur-sm">
-        <CardHeader>
-          <CardTitle className="flex items-center space-x-2">
-            <AlertTriangle className="h-5 w-5 text-amber-600 dark:text-amber-400" />
-            <span>Loans by Priority</span>
+      <Card className="border-0 shadow-lg bg-white/50 dark:bg-gray-800/50 backdrop-blur-sm hover:shadow-xl transition-all duration-300">
+        <CardHeader className="pb-3">
+          <CardTitle className="flex items-center justify-between">
+            <div className="flex items-center space-x-2">
+              <AlertTriangle className="h-5 w-5 text-amber-600 dark:text-amber-400" />
+              <span className="font-semibold">Loans by Priority</span>
+            </div>
+            <div className="flex items-center space-x-1 text-xs text-muted-foreground">
+              <span>{urgencyData.reduce((total, item) => total + item.count, 0)} total</span>
+            </div>
           </CardTitle>
         </CardHeader>
-        <CardContent>
-          <ChartContainer config={chartConfig}>
-            <PieChart>
-              <Pie
-                data={urgencyData}
-                cx="50%"
-                cy="50%"
-                innerRadius={60}
-                outerRadius={100}
-                paddingAngle={5}
-                dataKey="amount"
-              >
-                {urgencyData.map((entry: any, index: number) => (
-                  <Cell key={`cell-${index}`} fill={entry.color} />
-                ))}
-              </Pie>
-              <Tooltip content={<CustomTooltip />} />
-            </PieChart>
-          </ChartContainer>
-          <div className="mt-4 grid grid-cols-3 gap-2">
-            {urgencyData.map((item: any) => (
-              <div key={item.urgency} className="flex items-center space-x-2">
-                <div 
-                  className="w-3 h-3 rounded-full" 
-                  style={{ backgroundColor: item.color }}
-                />
-                <div className="text-xs">
-                  <p className="font-semibold capitalize text-gray-900 dark:text-gray-100">
-                    {item.urgency}
-                  </p>
-                  <p className="text-gray-600 dark:text-gray-400">
-                    {item.count} loans
-                  </p>
-                </div>
+        <CardContent className="pt-2">
+          {urgencyData.length === 0 ? (
+            <div className="h-[200px] flex items-center justify-center">
+              <div className="text-center">
+                <AlertTriangle className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
+                <p className="text-sm text-muted-foreground">No priority data available</p>
               </div>
-            ))}
+            </div>
+          ) : (
+            <div className="space-y-4">
+              <ChartContainer config={chartConfig}>
+                <div className="h-[200px] w-full flex items-center justify-center">
+                  <PieChart width={300} height={200}>
+                    <Pie
+                      data={urgencyData}
+                      cx="50%"
+                      cy="50%"
+                      innerRadius={50}
+                      outerRadius={90}
+                      paddingAngle={2}
+                      dataKey="amount"
+                      stroke="#ffffff"
+                      strokeWidth={2}
+                    >
+                      {urgencyData.map((entry: any, index: number) => (
+                        <Cell key={`cell-${index}`} fill={entry.color} />
+                      ))}
+                    </Pie>
+                    <Tooltip content={<CustomTooltip />} />
+                  </PieChart>
+                </div>
+              </ChartContainer>
+            </div>
+          )}
+          {/* Enhanced Priority Legend */}
+          <div className="mt-6 space-y-3">
+            {urgencyData
+              .sort((a, b) => {
+                const priority = { 'critical': 0, 'warning': 1, 'normal': 2 };
+                return priority[a.urgency as keyof typeof priority] - priority[b.urgency as keyof typeof priority];
+              })
+              .map((item: any) => {
+                const getUrgencyIcon = (urgency: string) => {
+                  switch (urgency) {
+                    case 'critical': return '🔴';
+                    case 'warning': return '🟡';
+                    case 'normal': return '🟢';
+                    default: return '⚪';
+                  }
+                };
+                
+                const formatAmount = (amount: number) => {
+                  if (amount >= 1000000) {
+                    return `${(amount / 1000000).toFixed(1)}M`;
+                  } else if (amount >= 1000) {
+                    return `${(amount / 1000).toFixed(0)}K`;
+                  }
+                  return amount.toString();
+                };
+                
+                return (
+                  <div 
+                    key={item.urgency} 
+                    className="flex items-center justify-between p-3 rounded-lg bg-background/60 border border-border hover:bg-accent/50 transition-colors duration-200"
+                  >
+                    <div className="flex items-center space-x-3">
+                      <div className="flex items-center space-x-2">
+                        <span className="text-base">{getUrgencyIcon(item.urgency)}</span>
+                        <div 
+                          className="w-4 h-4 rounded-full border-2 border-white shadow-sm" 
+                          style={{ backgroundColor: item.color }}
+                        />
+                      </div>
+                      <div>
+                        <p className="font-semibold capitalize text-sm text-foreground">
+                          {item.urgency} Priority
+                        </p>
+                        <p className="text-xs text-muted-foreground">
+                          {item.urgency === 'critical' ? 'Due within 7 days' : 
+                           item.urgency === 'warning' ? 'Due within 15 days' : 
+                           'Due after 15 days'}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <p className="font-semibold text-sm text-foreground">
+                        {item.count} loan{item.count !== 1 ? 's' : ''}
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        ﷼{formatAmount(item.amount)} SAR
+                      </p>
+                    </div>
+                  </div>
+                );
+              })
+            }
           </div>
         </CardContent>
       </Card>
