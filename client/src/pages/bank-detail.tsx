@@ -357,7 +357,7 @@ export default function BankDetail() {
                   <Button 
                     size="sm" 
                     data-testid="button-add-facility"
-                    onClick={() => setLocation(`/banks/${bankId}/facilities/new`)}
+                    onClick={() => setLocation(`/banks/${bankId}/facility/create`)}
                     className="bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white shadow-lg"
                   >
                     <Plus className="mr-2 h-4 w-4" />
@@ -433,22 +433,23 @@ export default function BankDetail() {
                           <Button 
                             variant="outline" 
                             size="sm"
-                            onClick={() => setLocation(`/banks/${bankId}/facilities/${facility.id}/edit`)}
-                            className="min-h-[44px] min-w-[100px] touch-manipulation"
+                            onClick={() => setLocation(`/banks/${bankId}/facility/${facility.id}/edit`)}
+                            className="min-h-[44px] w-24 touch-manipulation"
                             data-testid={`button-edit-facility-${facility.id}`}
                           >
                             <Edit className="mr-1 h-4 w-4" />
                             Edit
                           </Button>
                           <Button 
-                            variant="outline" 
+                            variant="destructive" 
                             size="sm"
                             onClick={() => handleDeleteFacility(facility.id)}
                             disabled={deleteFacilityMutation.isPending}
+                            className="min-h-[44px] w-24 touch-manipulation"
                             data-testid={`button-delete-facility-${facility.id}`}
                           >
                             <Trash2 className="mr-1 h-4 w-4" />
-                            {deleteFacilityMutation.isPending ? "Deleting..." : "Delete"}
+                            Delete
                           </Button>
                         </div>
                       </div>

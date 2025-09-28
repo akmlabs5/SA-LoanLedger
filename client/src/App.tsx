@@ -90,9 +90,9 @@ function App() {
         <Route path="/banks" component={BanksPage} />
         <Route path="/banks/:id" component={BankDetailPage} />
         <Route path="/banks/:id/contact/create" component={BankContactCreatePage} />
-        <Route path="/banks/:id/facility/create" component={FacilityCreatePage} />
+        <Route path="/banks/:bankId/facility/create" component={FacilityCreatePage} />
         <Route path="/facility/create-general" component={FacilityCreateGeneralPage} />
-        <Route path="/facility/:id/edit" component={FacilityEditPage} />
+        <Route path="/banks/:bankId/facility/:facilityId/edit" component={FacilityEditPage} />
         <Route path="/collateral" component={CollateralPage} />
         <Route path="/collateral/create" component={CollateralCreatePage} />
         <Route path="/collateral/:id/edit" component={CollateralEditPage} />
