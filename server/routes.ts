@@ -1982,6 +1982,11 @@ async function initializeSampleFacilities(userId: string) {
   }
 }
 
+  // Create and return HTTP server
+  const server = createServer(app);
+  return server;
+}
+
 // Per-user seeding status cache to prevent unnecessary re-seeding
 const userSeedingStatus = new Map<string, { exposuresDone: boolean; transactionsDone: boolean }>();
 
@@ -2218,11 +2223,4 @@ async function ensureSampleTransactionHistory(userId: string) {
   } catch (error) {
     console.error("Error ensuring sample transaction history:", error);
   }
-}
-
-  // Export functionality to be added later
-
-  // Create and return HTTP server
-  const server = createServer(app);
-  return server;
 }
