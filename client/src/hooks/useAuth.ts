@@ -5,7 +5,7 @@ const USE_SUPABASE_AUTH = false;
 
 export function useAuth() {
   // Replit Auth implementation (default)  
-  const authQuery = useQuery({
+  const { data: replitUser, isLoading: replitLoading, error: replitError } = useQuery({
     queryKey: ["/api/auth/user"],
     retry: false,
     enabled: !USE_SUPABASE_AUTH,
@@ -14,8 +14,6 @@ export function useAuth() {
     refetchOnMount: true,
     refetchOnReconnect: false,
   });
-
-  const { data: replitUser, isLoading: replitLoading, error: replitError } = authQuery;
 
   // Simple return logic - no complex error handling that could cause loops
   return {

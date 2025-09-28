@@ -32,7 +32,6 @@ import {
 } from "@/components/ui/sidebar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { DropdownMenuItem } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useAuth } from "@/hooks/useAuth";
 import { useSupabaseAuth } from "@/contexts/SupabaseAuthContext";
@@ -102,11 +101,13 @@ const USE_SUPABASE_AUTH = import.meta.env.VITE_SUPABASE_URL &&
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   const [location] = useLocation();
   const { user, authSystem } = useAuth();
-  const { signOut: supabaseSignOut } = useSupabaseAuth();
+  
+  // Only use Supabase auth if enabled
+  const supabaseAuth = USE_SUPABASE_AUTH ? useSupabaseAuth() : null;
 
   const handleSignOut = async () => {
-    if (USE_SUPABASE_AUTH || authSystem === 'supabase') {
-      await supabaseSignOut();
+    if (USE_SUPABASE_AUTH && supabaseAuth?.signOut) {
+      await supabaseAuth.signOut();
     } else {
       // Replit Auth sign out
       window.location.href = "/api/logout";
@@ -224,13 +225,16 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
               <Button variant="ghost" size="icon" data-testid="button-notifications">
                 <Bell className="h-4 w-4" />
               </Button>
-              <DropdownMenuItem 
+              <Button 
+                variant="ghost" 
+                size="sm"
                 onClick={handleSignOut}
-                className="text-red-600 focus:text-red-600"
+                className="text-red-600 hover:text-red-600 hover:bg-red-50"
+                data-testid="button-signout"
               >
                 <LogOut className="mr-2 h-4 w-4" />
                 Sign Out
-              </DropdownMenuItem>
+              </Button>
             </div>
           </div>
         </header>

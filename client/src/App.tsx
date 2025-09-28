@@ -33,9 +33,8 @@ import ForgotPasswordPage from "@/pages/auth/forgot-password";
 
 import AppLayout from "@/components/AppLayout";
 import { useAuth } from "@/hooks/useAuth";
+import { queryClient } from "@/lib/queryClient";
 // import { SupabaseAuthProvider } from "@/contexts/SupabaseAuthContext"; // Disabled until Supabase is implemented
-
-const queryClient = new QueryClient();
 
 function App() {
   const { isAuthenticated, isLoading } = useAuth();
