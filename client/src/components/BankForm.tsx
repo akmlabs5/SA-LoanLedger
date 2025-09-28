@@ -21,6 +21,15 @@ const facilityFormSchema = insertFacilitySchema.extend({
   startDate: z.string().min(1, "Start date is required"),
   expiryDate: z.string().min(1, "Expiry date is required"),
   terms: z.string().optional(),
+}).superRefine((data, ctx) => {
+  // Allow 0 cost of funding for non-cash guarantee facilities
+  if (data.facilityType !== "non_cash_guarantee" && parseFloat(data.costOfFunding) <= 0) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ["costOfFunding"],
+      message: "Cost of funding must be greater than 0 for cash facilities"
+    });
+  }
 });
 
 type FacilityFormData = z.infer<typeof facilityFormSchema>;
@@ -134,6 +143,11 @@ export default function BankForm({ banks, onSuccess, onCancel }: BankFormProps) 
       if (newExpiryDate) {
         form.setValue("expiryDate", newExpiryDate);
       }
+    }
+    
+    // Auto-set cost of funding to 0 for non-cash guarantee facilities
+    if (facilityType === "non_cash_guarantee") {
+      form.setValue("costOfFunding", "0");
     }
   }, [startDate, facilityType, form]);
 
