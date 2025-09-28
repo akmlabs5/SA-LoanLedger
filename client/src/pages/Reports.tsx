@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Link, useLocation } from "wouter";
+import { useLocation } from "wouter";
 import { Calendar, Download, FileText, FileSpreadsheet, TrendingUp } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
