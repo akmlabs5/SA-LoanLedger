@@ -109,19 +109,8 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
     if (USE_SUPABASE_AUTH && supabaseAuth?.signOut) {
       await supabaseAuth.signOut();
     } else {
-      // Replit Auth sign out - redirect to login hub after logout
-      try {
-        const response = await fetch("/api/logout", {
-          method: "GET",
-          credentials: "include"
-        });
-        // Redirect to login hub regardless of response
-        window.location.href = "/";
-      } catch (error) {
-        console.error("Logout error:", error);
-        // Even if logout fails, redirect to login hub
-        window.location.href = "/";
-      }
+      // Replit Auth sign out - force logout by redirecting directly
+      window.location.href = "/api/logout";
     }
   };
 

@@ -124,6 +124,11 @@ export async function setupAuth(app: Express, databaseAvailable = true) {
   });
 
   app.get("/api/callback", (req, res, next) => {
+    // Clear logout flag when user successfully logs in
+    if (req.session) {
+      delete (req.session as any).userLoggedOut;
+    }
+    
     passport.authenticate(`replitauth:${req.hostname}`, {
       successReturnToOrRedirect: "/",
       failureRedirect: "/api/login",
@@ -131,6 +136,11 @@ export async function setupAuth(app: Express, databaseAvailable = true) {
   });
 
   app.get("/api/logout", (req, res) => {
+    // Set logout flag in session for development mode
+    if (req.session) {
+      (req.session as any).userLoggedOut = true;
+    }
+    
     req.logout(() => {
       res.redirect(
         client.buildEndSessionUrl(config, {
@@ -145,6 +155,12 @@ export async function setupAuth(app: Express, databaseAvailable = true) {
 export const isAuthenticated: RequestHandler = async (req, res, next) => {
   // Development mode bypass when database is unavailable
   if (process.env.NODE_ENV === 'development' && !req.isAuthenticated()) {
+    // Check if user has explicitly logged out
+    if (req.session && (req.session as any).userLoggedOut) {
+      console.log("🔧 Development mode: user has logged out, not bypassing authentication");
+      return res.status(401).json({ message: "Unauthorized" });
+    }
+    
     console.log("🔧 Development mode: bypassing authentication for Abdulrahman");
     // Create a mock user for development testing using Abdulrahman's account
     (req as any).user = {
