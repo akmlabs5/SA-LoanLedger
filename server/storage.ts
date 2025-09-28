@@ -2108,3 +2108,7 @@ export function createStorage(databaseAvailable: boolean): IStorage {
 
 // Will be initialized in routes after database check
 export let storage: IStorage;
+
+export function initializeStorage(databaseAvailable: boolean): void {
+  storage = createStorage(databaseAvailable);
+}

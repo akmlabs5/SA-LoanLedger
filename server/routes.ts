@@ -1,6 +1,6 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
-import { createStorage, type IStorage } from "./storage";
+import { createStorage, type IStorage, initializeStorage } from "./storage";
 import { setupAuth, isAuthenticated } from "./replitAuth";
 import { generateAIInsights } from "./aiInsights";
 import { sendLoanDueNotification } from "./emailService";
@@ -42,6 +42,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   // Create storage based on database availability
   storage = createStorage(databaseAvailable);
+  
+  // Initialize the global storage instance for auth system
+  initializeStorage(databaseAvailable);
   
   // Setup auth with database availability flag
   await setupAuth(app, databaseAvailable);
