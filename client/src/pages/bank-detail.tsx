@@ -6,7 +6,7 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { apiRequest, queryClient } from "@/lib/queryClient";
-import { insertFacilitySchema } from "@shared/schema";
+import { insertFacilitySchema, Bank } from "@shared/schema";
 import { z } from "zod";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -67,9 +67,9 @@ export default function BankDetail() {
   const { isAuthenticated } = useAuth();
   const { toast } = useToast();
 
-  const { data: banks, isLoading: banksLoading } = useQuery({
-    queryKey: ["/api/banks"],
-    enabled: isAuthenticated,
+  const { data: bank, isLoading: bankLoading, error: bankError } = useQuery<Bank>({
+    queryKey: ["/api/banks", bankId],
+    enabled: isAuthenticated && !!bankId,
   });
 
   const { data: facilities, isLoading: facilitiesLoading } = useQuery({
@@ -109,8 +109,7 @@ export default function BankDetail() {
     enabled: isAuthenticated,
   });
 
-  // Find the specific bank
-  const bank = (banks as any[])?.find((b: any) => b.id === bankId);
+  // Bank is now fetched directly from the API
   const bankFacilities = (facilities as any[])?.filter((f: any) => f.bankId === bankId) || [];
   const bankExposure = (portfolioSummary as PortfolioSummary)?.bankExposures?.find(exp => exp.bankId === bankId);
   
@@ -184,7 +183,7 @@ export default function BankDetail() {
   };
 
   // Show loading state while data is being fetched
-  if (banksLoading || facilitiesLoading || portfolioLoading || loansLoading) {
+  if (bankLoading || facilitiesLoading || portfolioLoading || loansLoading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-50 to-gray-100 dark:from-gray-900 dark:to-slate-900 flex items-center justify-center">
         <div className="text-center">
@@ -197,7 +196,7 @@ export default function BankDetail() {
   }
 
   // Only show "not found" after data has loaded
-  if (!banksLoading && !bank) {
+  if (!bankLoading && !bank) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-50 to-gray-100 dark:from-gray-900 dark:to-slate-900 flex items-center justify-center">
         <div className="text-center">
@@ -241,12 +240,12 @@ export default function BankDetail() {
             <div className="flex items-center space-x-4">
               <div className="w-16 h-16 bg-gradient-to-br from-indigo-500 to-indigo-600 rounded-2xl flex items-center justify-center shadow-lg">
                 <span className="text-white font-bold text-xl">
-                  {bank.code.substring(0, 3)}
+                  {bank!.code.substring(0, 3)}
                 </span>
               </div>
               <div>
-                <h1 className="text-3xl font-bold text-gray-900 dark:text-white">{bank.name}</h1>
-                <p className="text-gray-600 dark:text-gray-300">Code: {bank.code}</p>
+                <h1 className="text-3xl font-bold text-gray-900 dark:text-white">{bank!.name}</h1>
+                <p className="text-gray-600 dark:text-gray-300">Code: {bank!.code}</p>
               </div>
             </div>
           </div>
@@ -714,7 +713,7 @@ export default function BankDetail() {
             {/* Bank Contacts */}
             <BankContactsSection 
               bankId={bankId!} 
-              bankName={bank.name} 
+              bankName={bank!.name} 
               isAuthenticated={isAuthenticated} 
             />
             <Card className="border-0 shadow-lg bg-white/50 dark:bg-gray-800/50 backdrop-blur-sm">
@@ -727,11 +726,11 @@ export default function BankDetail() {
               <CardContent className="space-y-4">
                 <div>
                   <p className="text-sm text-gray-600 dark:text-gray-400">Bank Code</p>
-                  <p className="font-semibold text-gray-900 dark:text-gray-100">{bank.code}</p>
+                  <p className="font-semibold text-gray-900 dark:text-gray-100">{bank!.code}</p>
                 </div>
                 <div>
                   <p className="text-sm text-gray-600 dark:text-gray-400">Full Name</p>
-                  <p className="font-semibold text-gray-900 dark:text-gray-100">{bank.name}</p>
+                  <p className="font-semibold text-gray-900 dark:text-gray-100">{bank!.name}</p>
                 </div>
                 <Separator />
                 <div className="space-y-3">
@@ -741,7 +740,7 @@ export default function BankDetail() {
                   </div>
                   <div className="flex items-center space-x-2">
                     <Mail className="h-4 w-4 text-gray-500" />
-                    <span className="text-sm text-gray-600 dark:text-gray-400">corporate@{bank.code.toLowerCase()}.com.sa</span>
+                    <span className="text-sm text-gray-600 dark:text-gray-400">corporate@{bank!.code.toLowerCase()}.com.sa</span>
                   </div>
                   <div className="flex items-center space-x-2">
                     <MapPin className="h-4 w-4 text-gray-500" />
