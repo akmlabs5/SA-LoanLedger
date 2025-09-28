@@ -62,7 +62,7 @@ import DocumentUpload from "@/components/DocumentUpload";
 import DocumentList from "@/components/DocumentList";
 
 export default function BankDetail() {
-  const { bankId } = useParams();
+  const { id: bankId } = useParams();
   const [, setLocation] = useLocation();
   const { isAuthenticated } = useAuth();
   const { toast } = useToast();
@@ -71,6 +71,7 @@ export default function BankDetail() {
     queryKey: ["/api/banks", bankId],
     enabled: isAuthenticated && !!bankId,
   });
+
 
   const { data: facilities, isLoading: facilitiesLoading } = useQuery({
     queryKey: ["/api/facilities"],
