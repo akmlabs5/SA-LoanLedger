@@ -1980,7 +1980,6 @@ async function initializeSampleFacilities(userId: string) {
   } catch (error) {
     console.error("Error initializing sample facilities:", error);
   }
-}
 
   // Create and return HTTP server
   const server = createServer(app);
