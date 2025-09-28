@@ -1140,7 +1140,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
 
       if (dueLoans.length > 0) {
-        await sendLoanDueNotification(user.email, dueLoans);
+        // Transform loans to match LoanDueNotification interface
+        const dueLoanNotifications = dueLoans.map(loan => ({
+          id: loan.id,
+          referenceNumber: loan.referenceNumber,
+          amount: loan.amount,
+          dueDate: loan.dueDate,
+          facility: {
+            bank: {
+              name: loan.facility?.bank?.name || 'Unknown Bank'
+            }
+          }
+        }));
+        
+        await sendLoanDueNotification(user.email, dueLoanNotifications);
       }
 
       res.json({ message: "Notifications sent", count: dueLoans.length });
@@ -1727,7 +1740,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get('/api/admin/system/stats', isAdminAuthenticated, async (req: any, res) => {
     try {
       // Get real system stats
-      const loans = await storage.getAllLoans(req.user?.claims?.sub || 'demo-user');
+      const loans = await storage.getActiveLoansByUser(req.user?.claims?.sub || 'demo-user');
       const banks = await storage.getAllBanks();
       
       const stats = {
@@ -1848,7 +1861,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get('/api/admin/stats', isAuthenticated, async (req: any, res) => {
     try {
       // Get aggregate stats for admin dashboard
-      const loans = await storage.getAllLoans(req.user.claims.sub);
+      const loans = await storage.getActiveLoansByUser(req.user.claims.sub);
       const banks = await storage.getAllBanks();
       
       const stats = {
@@ -1980,10 +1993,6 @@ async function initializeSampleFacilities(userId: string) {
   } catch (error) {
     console.error("Error initializing sample facilities:", error);
   }
-
-  // Create and return HTTP server
-  const server = createServer(app);
-  return server;
 }
 
 // Per-user seeding status cache to prevent unnecessary re-seeding
@@ -2185,7 +2194,10 @@ async function ensureSampleTransactionHistory(userId: string) {
           let successCount = 0;
           for (const transaction of transactions) {
             try {
-              await storage.addTransaction(transaction);
+              await storage.addTransaction({
+                ...transaction,
+                createdBy: userId
+              });
               successCount++;
             } catch (error: any) {
               // Skip transaction on conflict but continue with others

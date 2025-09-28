@@ -117,7 +117,7 @@ function App() {
         <Route path="/loans/:id/payment/create" component={PaymentCreatePage} />
         <Route path="/banks" component={BanksPage} />
         <Route path="/banks/:id" component={BankDetailPage} />
-        <Route path="/banks/:id/contact/create" component={BankContactCreatePage} />
+        <Route path="/banks/:bankId/contacts/new" component={BankContactCreatePage} />
         <Route path="/banks/:bankId/facility/create" component={FacilityCreatePage} />
         <Route path="/facility/create-general" component={FacilityCreateGeneralPage} />
         <Route path="/banks/:bankId/facility/:facilityId/edit" component={FacilityEditPage} />
