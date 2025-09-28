@@ -25,26 +25,63 @@ export interface SiborRate {
 export interface LoanWithDetails {
   id: string;
   facilityId: string;
+  creditLineId: string;
   userId: string;
+  parentLoanId?: string;
+  cycleNumber: number;
   referenceNumber: string;
   amount: string;
   startDate: string;
   dueDate: string;
   chargesDueDate?: string;
   siborRate: string;
+  siborTerm: string;
+  siborTermMonths: number;
+  margin: string;
   bankRate: string;
+  lastAccrualDate?: string;
+  interestBasis: string;
   notes?: string;
   status: string;
   settledDate?: string;
   settledAmount?: string;
+  isDeleted: boolean;
+  updatedAt: string;
   createdAt: string;
-  facility: {
+  creditLine: {
     id: string;
-    facilityType: string;
-    bank: {
+    facilityId: string;
+    userId: string;
+    creditLineType: string;
+    name: string;
+    description: string;
+    creditLimit: string;
+    availableLimit: string;
+    interestRate: string;
+    terms?: string;
+    startDate?: string;
+    expiryDate?: string;
+    isActive: boolean;
+    createdAt: string;
+    facility: {
       id: string;
-      name: string;
-      code: string;
+      bankId: string;
+      userId: string;
+      facilityType: string;
+      creditLimit: string;
+      costOfFunding: string;
+      startDate: string;
+      expiryDate: string;
+      terms: string;
+      isActive: boolean;
+      createdAt: string;
+      bank: {
+        id: string;
+        name: string;
+        code: string;
+        isActive: boolean;
+        createdAt: string;
+      };
     };
   };
 }
