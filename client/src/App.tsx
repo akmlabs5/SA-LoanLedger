@@ -1,6 +1,6 @@
 import React from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { Route, Switch } from "wouter";
+import { Route, Switch, useLocation } from "wouter";
 import { Toaster } from "@/components/ui/toaster";
 
 import LandingPage from "@/pages/landing";
@@ -24,13 +24,17 @@ import GuaranteesPage from "@/pages/guarantees";
 import GuaranteeCreatePage from "@/pages/guarantee-create";
 import HistoryPage from "@/pages/history";
 import AIChatPage from "@/pages/ai-chat";
-import AdminPage from "@/pages/admin";
 import NotFoundPage from "@/pages/not-found";
 
 // Auth pages
 import LoginPage from "@/pages/auth/login";
 import SignupPage from "@/pages/auth/signup";
 import ForgotPasswordPage from "@/pages/auth/forgot-password";
+
+// Admin portal pages
+import AdminLoginPage from "@/pages/admin-portal/login";
+import AdminDashboardPage from "@/pages/admin-portal/dashboard";
+import AdminUsersPage from "@/pages/admin-portal/users";
 
 import AppLayout from "@/components/AppLayout";
 import { useAuth } from "@/hooks/useAuth";
@@ -39,6 +43,7 @@ import { queryClient } from "@/lib/queryClient";
 
 function App() {
   const { isAuthenticated, isLoading } = useAuth();
+  const [location] = useLocation();
 
   // Add timeout to prevent infinite loading
   const [loadingTimeout, setLoadingTimeout] = React.useState(false);
@@ -70,6 +75,18 @@ function App() {
   if (loadingTimeout) {
     console.error("Authentication loading timed out");
     return <LandingPage />;
+  }
+
+  // Handle admin portal routing (separate from user auth)
+  if (location && typeof location === 'string' && location.startsWith("/admin-portal")) {
+    return (
+      <Switch>
+        <Route path="/admin-portal/login" component={AdminLoginPage} />
+        <Route path="/admin-portal/dashboard" component={AdminDashboardPage} />
+        <Route path="/admin-portal/users" component={AdminUsersPage} />
+        <Route path="/admin-portal/*" component={AdminDashboardPage} />
+      </Switch>
+    );
   }
 
   // Handle auth routing
@@ -108,7 +125,6 @@ function App() {
         <Route path="/guarantees/create" component={GuaranteeCreatePage} />
         <Route path="/history" component={HistoryPage} />
         <Route path="/ai-chat" component={AIChatPage} />
-        <Route path="/admin" component={AdminPage} />
         <Route component={NotFoundPage} />
       </Switch>
     </AppLayout>
