@@ -7,10 +7,10 @@ const USE_SUPABASE_AUTH = !!(import.meta.env.VITE_SUPABASE_URL && import.meta.en
 export function useAuth() {
   const queryClient = useQueryClient();
   
-  // Conditional hook usage based on feature flag
-  const supabaseAuth = USE_SUPABASE_AUTH ? useSupabaseAuth() : null;
+  // Always call hooks - React requires consistent hook order
+  const supabaseAuth = useSupabaseAuth();
   
-  if (USE_SUPABASE_AUTH && supabaseAuth) {
+  if (USE_SUPABASE_AUTH) {
     // Use Supabase auth when configured
     return {
       user: supabaseAuth.user,
