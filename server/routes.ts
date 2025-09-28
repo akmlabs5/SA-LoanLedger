@@ -2220,9 +2220,9 @@ async function ensureSampleTransactionHistory(userId: string) {
   }
 }
 
-// Report Generation Routes
-app.get('/api/reports/facility-summary', isAuthenticated, async (req: any, res) => {
-  try {
+  // Report Generation Routes
+  app.get('/api/reports/facility-summary', isAuthenticated, async (req: any, res) => {
+    try {
     const userId = req.user.claims.sub;
     const { format = 'pdf', startDate, endDate } = req.query;
     
@@ -2253,8 +2253,8 @@ app.get('/api/reports/facility-summary', isAuthenticated, async (req: any, res) 
   }
 });
 
-app.get('/api/reports/bank-exposures', isAuthenticated, async (req: any, res) => {
-  try {
+  app.get('/api/reports/bank-exposures', isAuthenticated, async (req: any, res) => {
+    try {
     const userId = req.user.claims.sub;
     const { format = 'pdf', startDate, endDate } = req.query;
     
@@ -2283,6 +2283,11 @@ app.get('/api/reports/bank-exposures', isAuthenticated, async (req: any, res) =>
     res.status(500).json({ message: "Failed to generate bank exposure report" });
   }
 });
+
+  // Create and return HTTP server
+  const server = createServer(app);
+  return server;
+}
 
 // Report generation helper functions
 async function generateFacilityReportData(userId: string, facilities: any[], loans: any[], banks: any[], startDate?: string, endDate?: string) {
