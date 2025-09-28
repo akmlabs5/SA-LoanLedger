@@ -12,7 +12,8 @@ import {
   Bell,
   Search,
   History,
-  LogOut
+  LogOut,
+  FileText
 } from "lucide-react";
 import {
   Sidebar,
@@ -74,6 +75,11 @@ const navigation = [
         title: "Collateral",
         url: "/collateral",
         icon: Shield,
+      },
+      {
+        title: "Reports",
+        url: "/reports",
+        icon: FileText,
       },
       {
         title: "History",
