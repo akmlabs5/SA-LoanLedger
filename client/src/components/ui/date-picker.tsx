@@ -10,16 +10,21 @@ interface DatePickerProps {
   placeholder?: string
   className?: string
   disabled?: boolean
+  dataTestId?: string
 }
 
 export const ModernDatePicker = forwardRef<HTMLInputElement, DatePickerProps>(
-  ({ value, onChange, placeholder = "Pick a date", className = "", disabled = false }, ref) => {
+  ({ value, onChange, placeholder = "Pick a date", className = "", disabled = false, dataTestId }, ref) => {
     return (
       <div className={`w-full ${className}`}>
         <DatePicker.Root 
           onValueChange={(details) => {
-            if (onChange && details.valueAsString.length > 0) {
-              onChange(details.valueAsString[0]);
+            if (onChange) {
+              if (details.valueAsString.length > 0) {
+                onChange(details.valueAsString[0]);
+              } else {
+                onChange(""); // Handle clear action
+              }
             }
           }}
           disabled={disabled}
@@ -31,11 +36,18 @@ export const ModernDatePicker = forwardRef<HTMLInputElement, DatePickerProps>(
               value={value || ""}
               className="flex-1 bg-transparent outline-none text-sm text-gray-900 dark:text-gray-100 placeholder:text-gray-500 dark:placeholder:text-gray-400"
               placeholder={placeholder}
+              data-testid={dataTestId}
             />
-            <DatePicker.Trigger className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-200">
+            <DatePicker.Trigger 
+              className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-200"
+              data-testid={dataTestId ? `${dataTestId}-trigger` : undefined}
+            >
               <Calendar size={16} className="text-gray-600 dark:text-gray-300" />
             </DatePicker.Trigger>
-            <DatePicker.ClearTrigger className="p-1.5 rounded-lg text-red-500 hover:bg-red-100 dark:hover:bg-red-900/40 transition-colors duration-200">
+            <DatePicker.ClearTrigger 
+              className="p-1.5 rounded-lg text-red-500 hover:bg-red-100 dark:hover:bg-red-900/40 transition-colors duration-200"
+              data-testid={dataTestId ? `${dataTestId}-clear` : undefined}
+            >
               <X size={14} />
             </DatePicker.ClearTrigger>
           </DatePicker.Control>

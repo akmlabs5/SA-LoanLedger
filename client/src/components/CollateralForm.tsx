@@ -288,6 +288,7 @@ export default function CollateralForm({ collateral, onSuccess, onCancel }: Coll
                         value={field.value} 
                         onChange={field.onChange}
                         placeholder="Select valuation date"
+                        dataTestId="input-valuation-date"
                       />
                     </FormControl>
                     <FormMessage />

@@ -391,6 +391,7 @@ export default function LoanForm({ onSuccess, onCancel }: LoanFormProps) {
                         value={field.value} 
                         onChange={field.onChange}
                         placeholder="Select start date"
+                        dataTestId="input-start-date"
                       />
                     </FormControl>
                     <FormMessage />
@@ -482,6 +483,7 @@ export default function LoanForm({ onSuccess, onCancel }: LoanFormProps) {
                           value={field.value} 
                           onChange={field.onChange}
                           placeholder="Select due date"
+                          dataTestId="input-due-date"
                         />
                       </FormControl>
                       <FormMessage />
@@ -500,6 +502,7 @@ export default function LoanForm({ onSuccess, onCancel }: LoanFormProps) {
                           value={field.value || ""} 
                           onChange={field.onChange}
                           placeholder="Select charges due date"
+                          dataTestId="input-charges-due-date"
                         />
                       </FormControl>
                       <FormMessage />

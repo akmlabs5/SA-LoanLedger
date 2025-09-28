@@ -344,6 +344,7 @@ export default function GeneralFacilityCreatePage() {
                                   value={field.value} 
                                   onChange={field.onChange}
                                   placeholder="Select start date"
+                                  dataTestId="input-start-date"
                                 />
                               </FormControl>
                               <FormMessage />
@@ -362,6 +363,7 @@ export default function GeneralFacilityCreatePage() {
                                   value={field.value} 
                                   onChange={field.onChange}
                                   placeholder="Select expiry date"
+                                  dataTestId="input-expiry-date"
                                 />
                               </FormControl>
                               <FormMessage />

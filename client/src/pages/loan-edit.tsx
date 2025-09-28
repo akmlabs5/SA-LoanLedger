@@ -17,6 +17,7 @@ import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { insertLoanSchema } from "@shared/schema";
+import { ModernDatePicker } from "@/components/ui/date-picker";
 
 const loanFormSchema = z.object({
   referenceNumber: z.string().min(1, "Reference number is required"),
@@ -37,7 +38,7 @@ export default function LoanEditPage() {
   const { toast } = useToast();
 
   // Fetch loan details for editing
-  const { data: loan, isLoading: loanLoading } = useQuery({
+  const { data: loan, isLoading: loanLoading, error: loanError } = useQuery({
     queryKey: [`/api/loans/${loanId}`],
     enabled: !!loanId,
   });
@@ -102,13 +103,32 @@ export default function LoanEditPage() {
     updateLoanMutation.mutate(data);
   };
 
-  if (loanLoading || !loan) {
+  if (loanLoading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-50 to-gray-100 dark:from-gray-900 dark:to-slate-900 flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-indigo-600 mx-auto mb-4"></div>
           <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">Loading Loan</h2>
           <p className="text-gray-600 dark:text-gray-400">Please wait...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (loanError || !loan) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-gray-100 dark:from-gray-900 dark:to-slate-900 flex items-center justify-center">
+        <div className="text-center">
+          <AlertCircle className="h-16 w-16 text-red-500 mx-auto mb-4" />
+          <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">Loan Not Found</h2>
+          <p className="text-gray-600 dark:text-gray-400 mb-4">The loan you're trying to edit could not be found.</p>
+          <Button 
+            onClick={() => setLocation('/loans')}
+            className="bg-indigo-600 hover:bg-indigo-700 text-white"
+          >
+            <ArrowLeft className="h-4 w-4 mr-2" />
+            Back to Loans
+          </Button>
         </div>
       </div>
     );
@@ -267,10 +287,11 @@ export default function LoanEditPage() {
                             <FormItem>
                               <FormLabel>Start Date *</FormLabel>
                               <FormControl>
-                                <Input 
-                                  data-testid="input-start-date" 
-                                  type="date" 
-                                  {...field} 
+                                <ModernDatePicker 
+                                  value={field.value} 
+                                  onChange={field.onChange}
+                                  placeholder="Select start date"
+                                  dataTestId="input-start-date"
                                 />
                               </FormControl>
                               <FormMessage />
@@ -285,10 +306,11 @@ export default function LoanEditPage() {
                             <FormItem>
                               <FormLabel>Due Date *</FormLabel>
                               <FormControl>
-                                <Input 
-                                  data-testid="input-due-date" 
-                                  type="date" 
-                                  {...field} 
+                                <ModernDatePicker 
+                                  value={field.value} 
+                                  onChange={field.onChange}
+                                  placeholder="Select due date"
+                                  dataTestId="input-due-date"
                                 />
                               </FormControl>
                               <FormMessage />
