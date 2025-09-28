@@ -1148,7 +1148,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           dueDate: loan.dueDate,
           facility: {
             bank: {
-              name: loan.facility?.bank?.name || 'Unknown Bank'
+              name: 'Bank' // Simplified for notification - could be enhanced with actual bank lookup
             }
           }
         }));
