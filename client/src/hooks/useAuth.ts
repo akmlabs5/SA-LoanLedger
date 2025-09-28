@@ -4,27 +4,22 @@ import { useQuery } from "@tanstack/react-query";
 const USE_SUPABASE_AUTH = false; 
 
 export function useAuth() {
-  // Replit Auth implementation (default)
-  const { data: replitUser, isLoading: replitLoading } = useQuery({
+  // Replit Auth implementation (default)  
+  const authQuery = useQuery({
     queryKey: ["/api/auth/user"],
     retry: false,
     enabled: !USE_SUPABASE_AUTH,
+    staleTime: 1000 * 60 * 5, // 5 minutes
+    refetchOnWindowFocus: false,
+    refetchOnMount: true,
+    refetchOnReconnect: false,
   });
 
-  // Only import and use Supabase if enabled (currently disabled)
-  if (USE_SUPABASE_AUTH) {
-    // This import would be dynamically loaded when Supabase is enabled
-    console.log("Supabase auth is disabled - using Replit auth");
-    return {
-      user: null,
-      isLoading: false,
-      isAuthenticated: false,
-      authSystem: 'supabase' as const
-    };
-  }
+  const { data: replitUser, isLoading: replitLoading, error: replitError } = authQuery;
 
+  // Simple return logic - no complex error handling that could cause loops
   return {
-    user: replitUser,
+    user: replitUser || null,
     isLoading: replitLoading,
     isAuthenticated: !!replitUser,
     authSystem: 'replit' as const
