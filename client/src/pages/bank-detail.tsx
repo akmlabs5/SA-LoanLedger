@@ -584,9 +584,20 @@ export default function BankDetail() {
             {/* Collateral Assignments */}
             <Card className="border-0 shadow-lg bg-white/50 dark:bg-gray-800/50 backdrop-blur-sm">
               <CardHeader>
-                <CardTitle className="text-xl font-semibold flex items-center space-x-2">
-                  <Gem className="h-5 w-5 text-purple-600 dark:text-purple-400" />
-                  <span>Assigned Collateral</span>
+                <CardTitle className="text-xl font-semibold flex items-center justify-between">
+                  <div className="flex items-center space-x-2">
+                    <Gem className="h-5 w-5 text-purple-600 dark:text-purple-400" />
+                    <span>Assigned Collateral</span>
+                  </div>
+                  <Button 
+                    onClick={() => setLocation("/collateral/new")}
+                    size="sm"
+                    className="bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white shadow-lg"
+                    data-testid="button-add-collateral"
+                  >
+                    <Plus className="h-4 w-4 mr-2" />
+                    Add Collateral
+                  </Button>
                 </CardTitle>
                 <p className="text-sm text-gray-600 dark:text-gray-400">
                   Assets securing facilities with this bank
@@ -597,15 +608,9 @@ export default function BankDetail() {
                   <div className="text-center py-12">
                     <Gem className="h-12 w-12 text-gray-300 dark:text-gray-600 mx-auto mb-4" />
                     <p className="text-gray-600 dark:text-gray-400 mb-4">No collateral assigned to this bank's facilities</p>
-                    <Button 
-                      onClick={() => setLocation("/collateral/new")}
-                      size="sm"
-                    className="bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white shadow-lg"
-                      data-testid="button-add-collateral"
-                    >
-                      <Plus className="h-4 w-4 mr-2" />
-                      Add Collateral
-                    </Button>
+                    <p className="text-sm text-gray-500 dark:text-gray-400">
+                      Click "Add Collateral" above to assign collateral to this bank's facilities.
+                    </p>
                   </div>
                 ) : (
                   <div className="space-y-4">
