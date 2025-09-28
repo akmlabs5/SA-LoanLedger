@@ -1,3 +1,4 @@
+import React from "react";
 import { Route, Switch } from "wouter";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
@@ -39,15 +40,36 @@ const queryClient = new QueryClient();
 function App() {
   const { isAuthenticated, isLoading } = useAuth();
 
-  if (isLoading) {
+  // Add timeout to prevent infinite loading
+  const [loadingTimeout, setLoadingTimeout] = React.useState(false);
+
+  React.useEffect(() => {
+    if (isLoading) {
+      const timer = setTimeout(() => {
+        setLoadingTimeout(true);
+      }, 10000); // 10 second timeout
+
+      return () => clearTimeout(timer);
+    } else {
+      setLoadingTimeout(false);
+    }
+  }, [isLoading]);
+
+  if (isLoading && !loadingTimeout) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-50 to-slate-100 flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-saudi mx-auto"></div>
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
           <p className="mt-2 text-muted-foreground">Loading...</p>
         </div>
       </div>
     );
+  }
+
+  // If loading timed out, show error and redirect to landing
+  if (loadingTimeout) {
+    console.error("Authentication loading timed out");
+    return <LandingPage />;
   }
 
   // Handle auth routing
