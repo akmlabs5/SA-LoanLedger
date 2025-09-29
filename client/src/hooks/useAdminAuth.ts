@@ -23,7 +23,7 @@ export function useAdminAuth() {
   }, []);
 
   // Query to validate admin session
-  const { data: sessionValid, isLoading } = useQuery({
+  const { data: sessionValid, isLoading, error } = useQuery({
     queryKey: ['/api/admin/auth/me'],
     queryFn: async () => {
       const token = localStorage.getItem('admin_token');
@@ -36,13 +36,31 @@ export function useAdminAuth() {
         },
       });
       
-      if (!response.ok) throw new Error('Admin session invalid');
+      if (!response.ok) {
+        // Clear invalid tokens and redirect to login
+        localStorage.removeItem('admin_token');
+        localStorage.removeItem('admin_user');
+        setIsAdminAuthenticated(false);
+        setAdminUser(null);
+        throw new Error('Admin session invalid');
+      }
       return response.json();
     },
     enabled: isAdminAuthenticated,
     retry: false,
     staleTime: 5 * 60 * 1000, // 5 minutes
   });
+
+  // Handle session validation errors
+  useEffect(() => {
+    if (error && isAdminAuthenticated) {
+      // Session validation failed, clear auth state
+      localStorage.removeItem('admin_token');
+      localStorage.removeItem('admin_user');
+      setIsAdminAuthenticated(false);
+      setAdminUser(null);
+    }
+  }, [error, isAdminAuthenticated]);
 
   const signOut = () => {
     localStorage.removeItem('admin_token');
