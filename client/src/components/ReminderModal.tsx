@@ -24,6 +24,7 @@ const reminderSchema = z.object({
   reminderDate: z.string().min(1, "Reminder date is required"),
   emailEnabled: z.boolean().default(true),
   calendarEnabled: z.boolean().default(false),
+  templateId: z.string().optional(),
 });
 
 type ReminderFormData = z.infer<typeof reminderSchema>;
@@ -42,11 +43,19 @@ interface ReminderModalProps {
 export default function ReminderModal({ loanId, isOpen, onClose, loanData }: ReminderModalProps) {
   const { toast } = useToast();
   const [activeTab, setActiveTab] = useState<"create" | "manage">("create");
+  const [selectedTemplate, setSelectedTemplate] = useState<any>(null);
+  const [templatePreview, setTemplatePreview] = useState<{ title: string; message: string } | null>(null);
 
   // Fetch existing reminders
   const { data: reminders = [], isLoading: remindersLoading } = useQuery({
     queryKey: ["/api/loans", loanId, "reminders"],
     enabled: isOpen && !!loanId,
+  });
+
+  // Fetch available templates
+  const { data: templates = [], isLoading: templatesLoading } = useQuery({
+    queryKey: ["/api/reminder-templates"],
+    enabled: isOpen,
   });
 
   // Create reminder mutation
@@ -101,6 +110,7 @@ export default function ReminderModal({ loanId, isOpen, onClose, loanData }: Rem
       reminderDate: "",
       emailEnabled: true,
       calendarEnabled: false,
+      templateId: "",
     },
   });
 
@@ -126,6 +136,41 @@ export default function ReminderModal({ loanId, isOpen, onClose, loanData }: Rem
     form.setValue("title", title);
     form.setValue("message", message);
     form.setValue("reminderDate", reminderDate.toISOString().slice(0, 16));
+  };
+
+  const handleTemplateSelection = (templateId: string) => {
+    const template = (templates as any[]).find((t: any) => t.id === templateId);
+    if (!template) {
+      setSelectedTemplate(null);
+      setTemplatePreview(null);
+      return;
+    }
+
+    setSelectedTemplate(template);
+    
+    // Generate preview with loan data
+    if (loanData) {
+      // Mock template rendering - in a real implementation, this would call the template service
+      const mockPreview = {
+        title: template.subject?.replace('{referenceNumber}', loanData.referenceNumber) || template.name,
+        message: template.emailTemplate
+          ?.replace('{referenceNumber}', loanData.referenceNumber)
+          ?.replace('{loanAmount}', loanData.amount + ' SAR')
+          ?.replace('{dueDate}', new Date(loanData.dueDate).toLocaleDateString())
+          || 'Template preview unavailable'
+      };
+      setTemplatePreview(mockPreview);
+      
+      // Auto-fill form with template content
+      form.setValue("title", mockPreview.title);
+      form.setValue("message", mockPreview.message);
+    }
+  };
+
+  const clearTemplate = () => {
+    setSelectedTemplate(null);
+    setTemplatePreview(null);
+    form.setValue("templateId", "");
   };
 
   const formatReminderDate = (dateString: string) => {
@@ -181,7 +226,7 @@ export default function ReminderModal({ loanId, isOpen, onClose, loanData }: Rem
             data-testid="tab-manage-reminders"
           >
             <Bell className="mr-2 h-4 w-4" />
-            Manage ({reminders.length || 0})
+            Manage ({(reminders as any[]).length || 0})
           </Button>
         </div>
 
@@ -236,6 +281,71 @@ export default function ReminderModal({ loanId, isOpen, onClose, loanData }: Rem
               <CardContent>
                 <Form {...form}>
                   <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+                    {/* Template Selection */}
+                    <FormField
+                      control={form.control}
+                      name="templateId"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Template (Optional)</FormLabel>
+                          <div className="flex gap-2">
+                            <Select onValueChange={(value) => {
+                              field.onChange(value);
+                              handleTemplateSelection(value);
+                            }} value={field.value}>
+                              <FormControl>
+                                <SelectTrigger data-testid="select-template">
+                                  <SelectValue placeholder="Choose a template or create custom reminder" />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                <SelectItem value="">None (Custom Reminder)</SelectItem>
+                                {(templates as any[]).map((template) => (
+                                  <SelectItem key={template.id} value={template.id}>
+                                    {template.name}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                            {selectedTemplate && (
+                              <Button
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                onClick={clearTemplate}
+                                data-testid="button-clear-template"
+                              >
+                                Clear
+                              </Button>
+                            )}
+                          </div>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    {/* Template Preview */}
+                    {templatePreview && (
+                      <Card className="bg-muted/50">
+                        <CardHeader>
+                          <CardTitle className="text-sm">Template Preview</CardTitle>
+                        </CardHeader>
+                        <CardContent className="space-y-2">
+                          <div>
+                            <span className="text-sm font-medium">Title:</span>
+                            <p className="text-sm text-muted-foreground">{templatePreview.title}</p>
+                          </div>
+                          <div>
+                            <span className="text-sm font-medium">Message:</span>
+                            <p className="text-sm text-muted-foreground whitespace-pre-wrap">{templatePreview.message}</p>
+                          </div>
+                          <p className="text-xs text-muted-foreground">
+                            Note: You can still edit the title and message below to customize this reminder.
+                          </p>
+                        </CardContent>
+                      </Card>
+                    )}
+
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <FormField
                         control={form.control}
@@ -392,7 +502,7 @@ export default function ReminderModal({ loanId, isOpen, onClose, loanData }: Rem
           <div className="space-y-4">
             {remindersLoading ? (
               <div className="text-center py-8">Loading reminders...</div>
-            ) : reminders.length > 0 ? (
+            ) : (reminders as any[]).length > 0 ? (
               <div className="space-y-4">
                 {/* Bulk Actions */}
                 <div className="flex justify-between items-center">
@@ -410,7 +520,7 @@ export default function ReminderModal({ loanId, isOpen, onClose, loanData }: Rem
                 </div>
 
                 <div className="space-y-3">
-                  {reminders.map((reminder: any) => (
+                  {(reminders as any[]).map((reminder: any) => (
                     <Card key={reminder.id} className="border border-border">
                       <CardContent className="p-4">
                         <div className="flex items-start justify-between">
