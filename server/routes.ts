@@ -3,7 +3,7 @@ import { createServer, type Server } from "http";
 import { createStorage, type IStorage, initializeStorage } from "./storage";
 import { setupAuth, isAuthenticated } from "./replitAuth";
 import { generateAIInsights } from "./aiInsights";
-import { sendLoanDueNotification } from "./emailService";
+import { sendLoanDueNotification, sendTemplateReminderEmail } from "./emailService";
 import { CalendarService } from "./calendarService";
 import { initializeDatabase } from "./db";
 import jsPDF from "jspdf";
@@ -647,6 +647,55 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
                 try {
                   const createdReminder = await storage.createLoanReminder(reminderData);
+                  
+                  // Send email notification if email is enabled for auto-generated reminder
+                  if (createdReminder.emailEnabled) {
+                    try {
+                      // Get user data for email
+                      const user = await storage.getUser(userId);
+                      if (!user) {
+                        console.error(`User not found for auto-reminder email: ${userId}`);
+                      } else {
+                        // Get bank and facility data for template context
+                        const facility = await storage.getFacilityById(loan.facilityId);
+                        let bank = null;
+                        if (facility?.bankId) {
+                          bank = await storage.getBankById(facility.bankId);
+                        }
+                        
+                        // Get template if specified
+                        let template = null;
+                        if (createdReminder.templateId) {
+                          try {
+                            const templates = await storage.getReminderTemplates();
+                            template = templates.find(t => t.id === createdReminder.templateId) || null;
+                          } catch (error) {
+                            console.log('Template not found for auto-reminder, using default:', error);
+                          }
+                        }
+                        
+                        // Send template-based email
+                        const emailSent = await sendTemplateReminderEmail(
+                          user, 
+                          loan, 
+                          createdReminder, 
+                          template, 
+                          bank, 
+                          facility
+                        );
+                        
+                        if (emailSent) {
+                          console.log(`Email sent for auto-generated reminder ${createdReminder.id}`);
+                        } else {
+                          console.error(`Failed to send email for auto-generated reminder ${createdReminder.id}`);
+                        }
+                      }
+                    } catch (emailError) {
+                      console.error('Error sending auto-reminder email:', emailError);
+                      // Don't fail the reminder creation if email sending fails
+                    }
+                  }
+                  
                   return { success: true, reminder: createdReminder, interval };
                 } catch (error) {
                   console.warn(`Failed to create reminder for interval ${interval} days:`, error);
@@ -838,8 +887,54 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       const reminder = await storage.createLoanReminder(reminderData);
       
-      // If calendar is enabled, we could send email with ICS attachment here
-      // For now, just return success - calendar files are downloaded separately
+      // Send email notification if email is enabled for the reminder
+      if (reminder.emailEnabled) {
+        try {
+          // Get user data for email
+          const user = await storage.getUser(userId);
+          if (!user) {
+            console.error(`User not found for reminder email: ${userId}`);
+            return;
+          }
+          
+          // Get bank and facility data for template context
+          const facility = await storage.getFacilityById(loan.facilityId);
+          let bank = null;
+          if (facility?.bankId) {
+            bank = await storage.getBankById(facility.bankId);
+          }
+          
+          // Get template if specified
+          let template = null;
+          if (reminderData.templateId) {
+            try {
+              const templates = await storage.getReminderTemplates();
+              template = templates.find(t => t.id === reminderData.templateId) || null;
+            } catch (error) {
+              console.log('Template not found, using default:', error);
+            }
+          }
+          
+          // Send template-based email
+          const emailSent = await sendTemplateReminderEmail(
+            user, 
+            loan, 
+            reminder, 
+            template, 
+            bank, 
+            facility
+          );
+          
+          if (emailSent) {
+            console.log(`Email notification sent for reminder ${reminder.id}`);
+          } else {
+            console.error(`Failed to send email notification for reminder ${reminder.id}`);
+          }
+        } catch (emailError) {
+          console.error('Error sending reminder email:', emailError);
+          // Don't fail the reminder creation if email sending fails
+        }
+      }
       
       res.status(201).json(reminder);
     } catch (error) {

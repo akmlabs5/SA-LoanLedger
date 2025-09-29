@@ -1,4 +1,6 @@
 import { MailService } from '@sendgrid/mail';
+import { TemplateService } from './templateService';
+import { Loan, LoanReminder, ReminderTemplate, User, Bank, Facility } from '@shared/schema';
 
 if (!process.env.SENDGRID_API_KEY) {
   console.warn("SENDGRID_API_KEY environment variable not set - email notifications disabled");
@@ -124,6 +126,156 @@ export async function sendAIAlertNotification(
     return true;
   } catch (error) {
     console.error('SendGrid AI alert email error:', error);
+    return false;
+  }
+}
+
+/**
+ * Send template-based reminder email using the template rendering system
+ */
+export async function sendTemplateReminderEmail(
+  user: User,
+  loan: Loan,
+  reminder: LoanReminder,
+  template?: ReminderTemplate,
+  bank?: Bank,
+  facility?: Facility
+): Promise<boolean> {
+  if (!process.env.SENDGRID_API_KEY || process.env.SENDGRID_API_KEY === "default_key") {
+    console.log('Template reminder email would be sent to:', user.email);
+    console.log('Loan:', loan.referenceNumber);
+    console.log('Template:', template?.name || 'Default');
+    return true; // Simulate success when API key not available
+  }
+
+  try {
+    // Check if user has a valid email address
+    if (!user.email) {
+      console.error('Cannot send email: User has no email address');
+      return false;
+    }
+
+    // If no template provided, use a default email template
+    const emailTemplate = template || {
+      id: 'default',
+      name: 'Default Reminder',
+      type: 'custom' as const,
+      subject: 'Payment Reminder: {referenceNumber} - Due {dueDate}',
+      emailTemplate: `Dear {userName},
+
+This is a friendly reminder that your loan payment is due soon.
+
+Loan Details:
+- Reference Number: {referenceNumber}
+- Amount: {loanAmount}
+- Due Date: {dueDate}
+- Bank: {bankName}
+
+{reminderMessage}
+
+Please ensure sufficient funds are available in your account for automatic deduction, or contact us if you need to arrange alternative payment methods.
+
+Best regards,
+{platformName}
+
+Note: This is an automated reminder generated on {currentDate}`,
+      calendarTemplate: '',
+      variables: null,
+      isActive: true,
+      createdAt: null,
+      updatedAt: null
+    };
+
+    // Build template context
+    const context = {
+      loan,
+      reminder,
+      user,
+      bank,
+      facility,
+      currentDate: new Date()
+    };
+
+    // Render the email content using template service
+    const renderedEmail = TemplateService.renderEmailTemplate(emailTemplate, context);
+
+    // Convert plain text to HTML with basic formatting
+    const emailBody = renderedEmail.body || 'No content available';
+    const htmlBody = emailBody
+      .replace(/\n\n/g, '</p><p>')
+      .replace(/\n/g, '<br>')
+      .replace(/^/, '<div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; line-height: 1.6;"><p>')
+      .replace(/$/, '</p></div>');
+
+    const emailData = {
+      to: user.email,
+      from: 'reminders@saudiloanmanager.com', // This should be a verified sender in SendGrid
+      subject: renderedEmail.subject || 'Loan Payment Reminder',
+      html: htmlBody as string,
+    };
+
+    await mailService.send(emailData);
+
+    console.log('Template reminder email sent successfully to:', user.email);
+    console.log('Subject:', renderedEmail.subject);
+    
+    return true;
+  } catch (error) {
+    console.error('SendGrid template reminder email error:', error);
+    return false;
+  }
+}
+
+/**
+ * Send a simple reminder email without template (fallback)
+ */
+export async function sendSimpleReminderEmail(
+  userEmail: string,
+  reminderTitle: string,
+  reminderMessage: string,
+  loanReference?: string
+): Promise<boolean> {
+  if (!process.env.SENDGRID_API_KEY || process.env.SENDGRID_API_KEY === "default_key") {
+    console.log('Simple reminder email would be sent to:', userEmail);
+    console.log('Title:', reminderTitle);
+    return true;
+  }
+
+  try {
+    const emailHtml = `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; line-height: 1.6;">
+        <h2 style="color: #006600;">Saudi Loan Manager - Reminder</h2>
+        
+        <p>Dear Valued Client,</p>
+        
+        <div style="background-color: #f8f9fa; padding: 15px; border-radius: 5px; margin: 20px 0;">
+          <h3 style="margin-top: 0; color: #333;">${reminderTitle}</h3>
+          <p style="margin-bottom: 0; white-space: pre-wrap;">${reminderMessage}</p>
+        </div>
+        
+        ${loanReference ? `<p><strong>Loan Reference:</strong> ${loanReference}</p>` : ''}
+        
+        <p>Please take appropriate action as needed. Contact your relationship manager if you have any questions.</p>
+        
+        <p>Best regards,<br>
+        Saudi Loan Management Team</p>
+        
+        <hr>
+        <p style="font-size: 12px; color: #666;">This is an automated reminder from your Saudi Loan Management Platform.</p>
+      </div>
+    `;
+
+    await mailService.send({
+      to: userEmail,
+      from: 'reminders@saudiloanmanager.com',
+      subject: reminderTitle,
+      html: emailHtml,
+    });
+
+    console.log('Simple reminder email sent successfully to:', userEmail);
+    return true;
+  } catch (error) {
+    console.error('SendGrid simple reminder email error:', error);
     return false;
   }
 }
