@@ -37,6 +37,7 @@ import ForgotPasswordPage from "@/pages/auth/forgot-password";
 import AdminLoginPage from "@/pages/admin-portal/login";
 import AdminDashboardPage from "@/pages/admin-portal/dashboard";
 import AdminUsersPage from "@/pages/admin-portal/users";
+import AdminTemplatesPage from "@/pages/admin-portal/templates";
 
 import AppLayout from "@/components/AppLayout";
 import { useAuth } from "@/hooks/useAuth";
@@ -86,6 +87,7 @@ function App() {
         <Route path="/admin-portal/login" component={AdminLoginPage} />
         <Route path="/admin-portal/dashboard" component={AdminDashboardPage} />
         <Route path="/admin-portal/users" component={AdminUsersPage} />
+        <Route path="/admin-portal/templates" component={AdminTemplatesPage} />
         <Route path="/admin-portal/*" component={AdminDashboardPage} />
       </Switch>
     );

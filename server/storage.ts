@@ -11,6 +11,8 @@ import {
   attachments,
   attachmentAudit,
   loanReminders,
+  reminderTemplates,
+  userReminderSettings,
   guarantees,
   aiInsightConfig,
   exposureSnapshots,
@@ -58,6 +60,12 @@ import {
   type InsertAttachmentAudit,
   type AttachmentOwnerType,
   type AttachmentCategory,
+  type ReminderTemplate,
+  type InsertReminderTemplate,
+  type UpdateReminderTemplate,
+  type UserReminderSettings,
+  type InsertUserReminderSettings,
+  type UpdateUserReminderSettings,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, desc, asc, sql, gte, lte, isNull, isNotNull } from "drizzle-orm";
@@ -136,6 +144,18 @@ export interface IStorage {
   createLoanReminder(reminder: InsertLoanReminder): Promise<LoanReminder>;
   updateLoanReminder(reminderId: string, reminder: Partial<UpdateLoanReminder>): Promise<LoanReminder>;
   deleteLoanReminder(reminderId: string): Promise<void>;
+  
+  // Reminder Template operations
+  getAllReminderTemplates(): Promise<ReminderTemplate[]>;
+  getReminderTemplate(id: string): Promise<ReminderTemplate | undefined>;
+  createReminderTemplate(template: InsertReminderTemplate): Promise<ReminderTemplate>;
+  updateReminderTemplate(id: string, template: Partial<UpdateReminderTemplate>): Promise<ReminderTemplate>;
+  deleteReminderTemplate(id: string): Promise<void>;
+  
+  // User Reminder Settings operations
+  getUserReminderSettings(userId: string): Promise<UserReminderSettings | undefined>;
+  createUserReminderSettings(settings: InsertUserReminderSettings): Promise<UserReminderSettings>;
+  updateUserReminderSettings(userId: string, settings: Partial<UpdateUserReminderSettings>): Promise<UserReminderSettings>;
   
   // Guarantee operations
   getUserGuarantees(userId: string): Promise<Array<Guarantee & { facility: Facility & { bank: Bank } }>>;
@@ -814,6 +834,76 @@ export class DatabaseStorage implements IStorage {
       .update(loanReminders)
       .set({ isActive: false, updatedAt: new Date() })
       .where(eq(loanReminders.id, reminderId));
+  }
+
+  // Reminder Template operations
+  async getAllReminderTemplates(): Promise<ReminderTemplate[]> {
+    return await db
+      .select()
+      .from(reminderTemplates)
+      .orderBy(asc(reminderTemplates.type), asc(reminderTemplates.name));
+  }
+
+  async getReminderTemplate(id: string): Promise<ReminderTemplate | undefined> {
+    const [result] = await db
+      .select()
+      .from(reminderTemplates)
+      .where(eq(reminderTemplates.id, id));
+    return result;
+  }
+
+  async createReminderTemplate(template: InsertReminderTemplate): Promise<ReminderTemplate> {
+    const [result] = await db.insert(reminderTemplates).values(template).returning();
+    return result;
+  }
+
+  async updateReminderTemplate(id: string, template: Partial<UpdateReminderTemplate>): Promise<ReminderTemplate> {
+    const [result] = await db
+      .update(reminderTemplates)
+      .set({ ...template, updatedAt: new Date() })
+      .where(eq(reminderTemplates.id, id))
+      .returning();
+    
+    if (!result) {
+      throw new Error('Template not found');
+    }
+    
+    return result;
+  }
+
+  async deleteReminderTemplate(id: string): Promise<void> {
+    await db
+      .update(reminderTemplates)
+      .set({ isActive: false, updatedAt: new Date() })
+      .where(eq(reminderTemplates.id, id));
+  }
+
+  // User Reminder Settings operations
+  async getUserReminderSettings(userId: string): Promise<UserReminderSettings | undefined> {
+    const [result] = await db
+      .select()
+      .from(userReminderSettings)
+      .where(eq(userReminderSettings.userId, userId));
+    return result;
+  }
+
+  async createUserReminderSettings(settings: InsertUserReminderSettings): Promise<UserReminderSettings> {
+    const [result] = await db.insert(userReminderSettings).values(settings).returning();
+    return result;
+  }
+
+  async updateUserReminderSettings(userId: string, settings: Partial<UpdateUserReminderSettings>): Promise<UserReminderSettings> {
+    const [result] = await db
+      .update(userReminderSettings)
+      .set({ ...settings, updatedAt: new Date() })
+      .where(eq(userReminderSettings.userId, userId))
+      .returning();
+    
+    if (!result) {
+      throw new Error('User reminder settings not found');
+    }
+    
+    return result;
   }
 
   // Guarantee operations

@@ -10,7 +10,8 @@ import {
   LogOut,
   Search,
   Bell,
-  BarChart3
+  BarChart3,
+  FileText
 } from "lucide-react";
 import {
   Sidebar,
@@ -90,6 +91,11 @@ const adminNavigation = [
         title: "Alerts",
         url: "/admin-portal/alerts",
         icon: AlertTriangle,
+      },
+      {
+        title: "Templates",
+        url: "/admin-portal/templates",
+        icon: FileText,
       },
     ],
   },

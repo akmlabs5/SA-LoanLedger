@@ -18,6 +18,8 @@ import {
   insertLoanSchema,
   insertLoanReminderSchema,
   updateLoanReminderSchema,
+  insertReminderTemplateSchema,
+  updateReminderTemplateSchema,
   insertGuaranteeSchema,
   updateGuaranteeSchema,
   insertAiInsightConfigSchema,
@@ -825,6 +827,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ message: "Failed to fetch user reminders" });
     }
   });
+
+  // NOTE: Admin template routes moved to after isAdminAuthenticated middleware definition
 
   // Calendar invite endpoints
   app.get('/api/reminders/:reminderId/calendar', isAuthenticated, async (req: any, res) => {
@@ -1741,6 +1745,76 @@ export async function registerRoutes(app: Express): Promise<Server> {
     req.adminUser = { username: session.username, role: session.role };
     return next();
   };
+
+  // Admin Template Management Routes (Protected)
+  app.get('/api/admin/templates', isAdminAuthenticated, async (req: any, res) => {
+    try {
+      const templates = await storage.getAllReminderTemplates();
+      res.json(templates);
+    } catch (error) {
+      console.error("Error fetching templates:", error);
+      res.status(500).json({ message: "Failed to fetch templates" });
+    }
+  });
+
+  app.get('/api/admin/templates/:templateId', isAdminAuthenticated, async (req: any, res) => {
+    try {
+      const { templateId } = req.params;
+      const template = await storage.getReminderTemplate(templateId);
+      
+      if (!template) {
+        return res.status(404).json({ message: "Template not found" });
+      }
+      
+      res.json(template);
+    } catch (error) {
+      console.error("Error fetching template:", error);
+      res.status(500).json({ message: "Failed to fetch template" });
+    }
+  });
+
+  app.post('/api/admin/templates', isAdminAuthenticated, async (req: any, res) => {
+    try {
+      const templateData = insertReminderTemplateSchema.parse(req.body);
+      const template = await storage.createReminderTemplate(templateData);
+      res.status(201).json(template);
+    } catch (error) {
+      console.error("Error creating template:", error);
+      res.status(500).json({ message: "Failed to create template" });
+    }
+  });
+
+  app.put('/api/admin/templates/:templateId', isAdminAuthenticated, async (req: any, res) => {
+    try {
+      const { templateId } = req.params;
+      const templateData = updateReminderTemplateSchema.parse({
+        ...req.body,
+        id: templateId,
+      });
+      
+      const template = await storage.updateReminderTemplate(templateId, templateData);
+      
+      if (!template) {
+        return res.status(404).json({ message: "Template not found" });
+      }
+      
+      res.json(template);
+    } catch (error) {
+      console.error("Error updating template:", error);
+      res.status(500).json({ message: "Failed to update template" });
+    }
+  });
+
+  app.delete('/api/admin/templates/:templateId', isAdminAuthenticated, async (req: any, res) => {
+    try {
+      const { templateId } = req.params;
+      await storage.deleteReminderTemplate(templateId);
+      res.json({ message: "Template deleted successfully" });
+    } catch (error) {
+      console.error("Error deleting template:", error);
+      res.status(500).json({ message: "Failed to delete template" });
+    }
+  });
 
   // Admin system stats
   app.get('/api/admin/system/stats', isAdminAuthenticated, async (req: any, res) => {
