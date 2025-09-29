@@ -124,9 +124,13 @@ export async function setupAuth(app: Express, databaseAvailable = true) {
   });
 
   app.get("/api/callback", (req, res, next) => {
-    // Clear logout flag when user successfully logs in
-    if (req.session) {
-      delete (req.session as any).userLoggedOut;
+    // Clear logout cookie when user successfully logs in
+    if (process.env.NODE_ENV === 'development') {
+      res.clearCookie('dev_logged_out', {
+        httpOnly: true,
+        secure: true,
+        sameSite: 'lax'
+      });
     }
     
     passport.authenticate(`replitauth:${req.hostname}`, {
@@ -136,16 +140,37 @@ export async function setupAuth(app: Express, databaseAvailable = true) {
   });
 
   app.get("/api/logout", (req, res) => {
-    // Set logout flag in session for development mode
-    if (req.session) {
-      (req.session as any).userLoggedOut = true;
+    // Set logout flag as httpOnly cookie for development mode (survives session destruction)
+    if (process.env.NODE_ENV === 'development') {
+      res.cookie('dev_logged_out', '1', {
+        httpOnly: true,
+        secure: true,
+        sameSite: 'lax',
+        maxAge: 60 * 60 * 1000 // 1 hour
+      });
     }
     
     req.logout(() => {
+      // Destroy the session completely to ensure clean logout
+      if (req.session) {
+        req.session.destroy((err) => {
+          if (err) {
+            console.error('Error destroying session:', err);
+          }
+        });
+      }
+      
+      // Clear session cookie explicitly
+      res.clearCookie('connect.sid', { 
+        httpOnly: true, 
+        secure: true, 
+        sameSite: 'lax' 
+      });
+      
       res.redirect(
         client.buildEndSessionUrl(config, {
           client_id: process.env.REPL_ID!,
-          post_logout_redirect_uri: `${req.protocol}://${req.hostname}/`,
+          post_logout_redirect_uri: `${req.protocol}://${req.hostname}/auth/login`,
         }).href
       );
     });
@@ -155,8 +180,8 @@ export async function setupAuth(app: Express, databaseAvailable = true) {
 export const isAuthenticated: RequestHandler = async (req, res, next) => {
   // Development mode bypass when database is unavailable
   if (process.env.NODE_ENV === 'development') {
-    // Check if user has explicitly logged out
-    if (req.session && (req.session as any).userLoggedOut) {
+    // Check if user has explicitly logged out using httpOnly cookie
+    if (req.cookies && req.cookies['dev_logged_out']) {
       console.log("🔧 Development mode: user has logged out, not bypassing authentication");
       return res.status(401).json({ message: "Unauthorized" });
     }
