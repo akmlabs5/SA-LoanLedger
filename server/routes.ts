@@ -753,6 +753,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         ...req.body,
         loanId,
         userId,
+        reminderDate: new Date(req.body.reminderDate),
       });
       
       const reminder = await storage.createLoanReminder(reminderData);
