@@ -4,6 +4,7 @@ import { createStorage, type IStorage, initializeStorage } from "./storage";
 import { setupAuth, isAuthenticated } from "./replitAuth";
 import { generateAIInsights } from "./aiInsights";
 import { sendLoanDueNotification } from "./emailService";
+import { CalendarService } from "./calendarService";
 import { initializeDatabase } from "./db";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
@@ -755,6 +756,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
       
       const reminder = await storage.createLoanReminder(reminderData);
+      
+      // If calendar is enabled, we could send email with ICS attachment here
+      // For now, just return success - calendar files are downloaded separately
+      
       res.status(201).json(reminder);
     } catch (error) {
       console.error("Error creating reminder:", error);
