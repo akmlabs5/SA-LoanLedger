@@ -158,6 +158,10 @@ export interface IStorage {
   updateUserReminderSettings(userId: string, settings: Partial<UpdateUserReminderSettings>): Promise<UserReminderSettings>;
   upsertUserReminderSettings(settings: InsertUserReminderSettings): Promise<UserReminderSettings>;
   
+  // User Preferences operations
+  getUserPreferences(userId: string): Promise<UserPreferences | undefined>;
+  upsertUserPreferences(preferences: InsertUserPreferences): Promise<UserPreferences>;
+  
   // Guarantee operations
   getUserGuarantees(userId: string): Promise<Array<Guarantee & { facility: Facility & { bank: Bank } }>>;
   getFacilityGuarantees(facilityId: string): Promise<Guarantee[]>;
@@ -920,6 +924,30 @@ export class DatabaseStorage implements IStorage {
     }
   }
 
+  // User Preferences operations
+  async getUserPreferences(userId: string): Promise<UserPreferences | undefined> {
+    const [result] = await db
+      .select()
+      .from(userPreferences)
+      .where(eq(userPreferences.userId, userId));
+    return result;
+  }
+
+  async upsertUserPreferences(preferences: InsertUserPreferences): Promise<UserPreferences> {
+    const [result] = await db
+      .insert(userPreferences)
+      .values(preferences)
+      .onConflictDoUpdate({
+        target: userPreferences.userId,
+        set: {
+          ...preferences,
+          updatedAt: new Date(),
+        },
+      })
+      .returning();
+    return result;
+  }
+
   // Guarantee operations
   async getUserGuarantees(userId: string): Promise<Array<Guarantee & { facility: Facility & { bank: Bank } }>> {
     return await db
@@ -1374,6 +1402,7 @@ export class MemoryStorage implements IStorage {
   private loanReminders = new Map<string, LoanReminder>();
   private reminderTemplates = new Map<string, ReminderTemplate>();
   private userReminderSettings = new Map<string, UserReminderSettings>();
+  private userPreferences = new Map<string, UserPreferences>();
   private guarantees = new Map<string, Guarantee>();
   private aiConfigs = new Map<string, AiInsightConfig>();
   private exposureSnapshots = new Map<string, ExposureSnapshot>();
@@ -2281,6 +2310,23 @@ export class MemoryStorage implements IStorage {
     } else {
       return this.createUserReminderSettings(settings);
     }
+  }
+
+  // User Preferences operations
+  async getUserPreferences(userId: string): Promise<UserPreferences | undefined> {
+    return Array.from(this.userPreferences.values()).find(preferences => preferences.userId === userId);
+  }
+
+  async upsertUserPreferences(preferences: InsertUserPreferences): Promise<UserPreferences> {
+    const existing = Array.from(this.userPreferences.values()).find(p => p.userId === preferences.userId);
+    const newPreferences: UserPreferences = {
+      ...preferences,
+      id: existing?.id || this.generateId(),
+      createdAt: existing?.createdAt || new Date(),
+      updatedAt: new Date(),
+    };
+    this.userPreferences.set(newPreferences.id, newPreferences);
+    return newPreferences;
   }
 
   // Guarantee operations

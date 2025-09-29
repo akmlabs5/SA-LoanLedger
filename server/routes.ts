@@ -1040,6 +1040,107 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // User preferences endpoints
+  app.get('/api/user/preferences', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const preferences = await storage.getUserPreferences(userId);
+      res.json(preferences);
+    } catch (error) {
+      console.error("Error fetching user preferences:", error);
+      res.status(500).json({ message: "Failed to fetch user preferences" });
+    }
+  });
+
+  app.post('/api/user/preferences', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      
+      const preferencesData = insertUserPreferencesSchema.parse({
+        ...req.body,
+        userId,
+      });
+      
+      const preferences = await storage.upsertUserPreferences(preferencesData);
+      res.json(preferences);
+    } catch (error) {
+      console.error("Error saving user preferences:", error);
+      
+      // Return 400 for validation errors
+      if (error instanceof Error && error.message.includes('ZodError')) {
+        return res.status(400).json({ message: "Invalid preferences data", details: error.message });
+      }
+      
+      res.status(500).json({ message: "Failed to save user preferences" });
+    }
+  });
+
+  // AI insights configuration endpoints
+  app.get('/api/user/ai-insights', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const config = await storage.getUserAiConfig(userId);
+      res.json(config);
+    } catch (error) {
+      console.error("Error fetching AI insights config:", error);
+      res.status(500).json({ message: "Failed to fetch AI insights configuration" });
+    }
+  });
+
+  app.post('/api/user/ai-insights', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      
+      const configData = insertAiInsightConfigSchema.parse({
+        ...req.body,
+        userId,
+      });
+      
+      const config = await storage.upsertAiConfig(configData);
+      res.json(config);
+    } catch (error) {
+      console.error("Error saving AI insights config:", error);
+      
+      // Return 400 for validation errors
+      if (error instanceof Error && error.message.includes('ZodError')) {
+        return res.status(400).json({ message: "Invalid AI insights data", details: error.message });
+      }
+      
+      res.status(500).json({ message: "Failed to save AI insights configuration" });
+    }
+  });
+
+  // Update user profile endpoint
+  app.patch('/api/auth/user', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      
+      // Only allow updating certain fields
+      const allowedFields = ['firstName', 'lastName', 'email', 'profileImageUrl'];
+      const updateData: any = {};
+      
+      for (const field of allowedFields) {
+        if (req.body[field] !== undefined) {
+          updateData[field] = req.body[field];
+        }
+      }
+      
+      if (Object.keys(updateData).length === 0) {
+        return res.status(400).json({ message: "No valid fields provided for update" });
+      }
+      
+      const updatedUser = await storage.upsertUser({
+        id: userId,
+        ...updateData,
+      });
+      
+      res.json(updatedUser);
+    } catch (error) {
+      console.error("Error updating user profile:", error);
+      res.status(500).json({ message: "Failed to update user profile" });
+    }
+  });
+
   // NOTE: Admin template routes moved to after isAdminAuthenticated middleware definition
 
   // Calendar invite endpoints

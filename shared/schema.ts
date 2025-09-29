@@ -335,6 +335,25 @@ export const aiInsightConfig = pgTable("ai_insight_config", {
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
+// User Preferences
+export const userPreferences = pgTable("user_preferences", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").references(() => users.id).notNull().unique(),
+  timezone: varchar("timezone", { length: 50 }).default('Asia/Riyadh'),
+  language: varchar("language", { length: 10 }).default('en'),
+  currency: varchar("currency", { length: 10 }).default('SAR'),
+  dateFormat: varchar("date_format", { length: 20 }).default('DD/MM/YYYY'),
+  numberFormat: varchar("number_format", { length: 20 }).default('en-SA'),
+  theme: varchar("theme", { length: 20 }).default('light'),
+  dashboardLayout: varchar("dashboard_layout", { length: 20 }).default('grid'),
+  itemsPerPage: integer("items_per_page").default(10),
+  enableNotifications: boolean("enable_notifications").default(true),
+  enableSounds: boolean("enable_sounds").default(false),
+  compactView: boolean("compact_view").default(false),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
 // Modern Attachment System
 export const attachments = pgTable("attachments", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
@@ -1161,3 +1180,27 @@ export type Guarantee = typeof guarantees.$inferSelect;
 export type GuaranteeStatus = z.infer<typeof guaranteeStatusZodEnum>;
 export type GuaranteeType = z.infer<typeof guaranteeTypeZodEnum>;
 export type SecurityType = z.infer<typeof securityTypeZodEnum>;
+
+// User Preferences Schemas
+export const insertUserPreferencesSchema = createInsertSchema(userPreferences).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+}).extend({
+  timezone: z.string().min(1, "Timezone is required"),
+  language: z.string().min(1, "Language is required"),
+  currency: z.string().min(1, "Currency is required"),
+  dateFormat: z.string().min(1, "Date format is required"),
+  numberFormat: z.string().min(1, "Number format is required"),
+  theme: z.enum(['light', 'dark', 'system']),
+  dashboardLayout: z.enum(['grid', 'list', 'compact']),
+  itemsPerPage: z.number().min(5).max(100),
+});
+
+export const updateUserPreferencesSchema = insertUserPreferencesSchema.partial().extend({
+  id: z.string(),
+});
+
+export type InsertUserPreferences = z.infer<typeof insertUserPreferencesSchema>;
+export type UpdateUserPreferences = z.infer<typeof updateUserPreferencesSchema>;
+export type UserPreferences = typeof userPreferences.$inferSelect;
