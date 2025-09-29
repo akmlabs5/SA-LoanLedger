@@ -109,8 +109,8 @@ const navigation = [
     title: "Preferences",
     items: [
       {
-        title: "Settings",
-        url: "/settings",
+        title: "User Settings",
+        url: "/user-settings",
         icon: Settings,
       },
     ],
@@ -409,7 +409,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                       isMobile ? "h-12 px-4 text-base" : "h-10 px-3"
                     )}
                   >
-                    <Link href="/settings" className="flex items-center gap-3">
+                    <Link href="/user-settings" className="flex items-center gap-3">
                       <Settings className={cn(isMobile ? "h-5 w-5" : "h-4 w-4")} />
                       <span className="font-medium tracking-tight">Settings</span>
                     </Link>

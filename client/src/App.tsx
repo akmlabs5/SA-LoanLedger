@@ -132,7 +132,7 @@ function App() {
         <Route path="/history" component={HistoryPage} />
         <Route path="/reports" component={ReportsPage} />
         <Route path="/ai-chat" component={AIChatPage} />
-        <Route path="/settings" component={UserSettingsPage} />
+        <Route path="/user-settings" component={UserSettingsPage} />
         <Route component={NotFoundPage} />
       </Switch>
     </AppLayout>
