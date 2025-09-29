@@ -485,6 +485,39 @@ export const loanReminders = pgTable("loan_reminders", {
   index("idx_loan_reminders_status").on(table.status),
 ]);
 
+// Reminder Templates - Admin managed message templates
+export const reminderTemplates = pgTable("reminder_templates", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  type: reminderTypeEnum("type").notNull(),
+  name: varchar("name", { length: 100 }).notNull(),
+  subject: varchar("subject", { length: 200 }).notNull(),
+  emailTemplate: text("email_template").notNull(),
+  calendarTemplate: text("calendar_template").notNull(),
+  variables: text("variables").array(), // Available variables like {loanReference}, {amount}, etc.
+  isActive: boolean("is_active").default(true),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+}, (table) => [
+  index("idx_reminder_templates_type").on(table.type),
+  index("idx_reminder_templates_active").on(table.isActive),
+]);
+
+// User Reminder Settings - Default preferences per user
+export const userReminderSettings = pgTable("user_reminder_settings", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").references(() => users.id).notNull(),
+  autoApplyEnabled: boolean("auto_apply_enabled").default(false),
+  defaultEmailEnabled: boolean("default_email_enabled").default(true),
+  defaultCalendarEnabled: boolean("default_calendar_enabled").default(false),
+  defaultIntervals: integer("default_intervals").array().default([30, 15, 7, 1]), // Days before due date
+  quickSetupPresets: jsonb("quick_setup_presets").default('[{"days": 7, "type": "due_date"}, {"days": 3, "type": "due_date"}, {"days": 1, "type": "payment"}]'),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+}, (table) => [
+  index("idx_user_reminder_settings_user").on(table.userId),
+  unique("unique_user_reminder_settings").on(table.userId), // One settings record per user
+]);
+
 // Guarantees for non-cash facility types
 export const guarantees = pgTable("guarantees", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
@@ -1078,6 +1111,36 @@ export const updateLoanReminderSchema = insertLoanReminderSchema.partial().exten
 export type InsertLoanReminder = z.infer<typeof insertLoanReminderSchema>;
 export type UpdateLoanReminder = z.infer<typeof updateLoanReminderSchema>;
 export type LoanReminder = typeof loanReminders.$inferSelect;
+
+// Reminder Template Schemas
+export const insertReminderTemplateSchema = createInsertSchema(reminderTemplates).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const updateReminderTemplateSchema = insertReminderTemplateSchema.partial().extend({
+  id: z.string(),
+});
+
+export type InsertReminderTemplate = z.infer<typeof insertReminderTemplateSchema>;
+export type UpdateReminderTemplate = z.infer<typeof updateReminderTemplateSchema>;
+export type ReminderTemplate = typeof reminderTemplates.$inferSelect;
+
+// User Reminder Settings Schemas
+export const insertUserReminderSettingsSchema = createInsertSchema(userReminderSettings).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const updateUserReminderSettingsSchema = insertUserReminderSettingsSchema.partial().extend({
+  id: z.string(),
+});
+
+export type InsertUserReminderSettings = z.infer<typeof insertUserReminderSettingsSchema>;
+export type UpdateUserReminderSettings = z.infer<typeof updateUserReminderSettingsSchema>;
+export type UserReminderSettings = typeof userReminderSettings.$inferSelect;
 
 // Guarantee Schemas
 export const insertGuaranteeSchema = createInsertSchema(guarantees).omit({
