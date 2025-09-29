@@ -592,6 +592,84 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Ensure creditLineId is set before creating the loan
       const finalLoanData = { ...loanData, creditLineId: finalCreditLineId };
       const loan = await storage.createLoan(finalLoanData);
+
+      // Auto-generate reminders based on user default settings
+      try {
+        const userSettings = await storage.getUserReminderSettings(userId);
+        
+        if (userSettings && userSettings.autoApplyDefaults && Array.isArray(userSettings.defaultIntervals) && userSettings.defaultIntervals.length > 0) {
+          // Validate and deduplicate intervals
+          const validIntervals = Array.from(new Set(
+            userSettings.defaultIntervals.filter(interval => 
+              Number.isInteger(interval) && interval > 0
+            )
+          ));
+
+          if (validIntervals.length === 0) {
+            console.warn("No valid intervals found for loan:", loan.id, "- skipping auto-reminder generation");
+          } else {
+            // Validate loan due date
+            const loanDueDate = new Date(loan.dueDate);
+            if (isNaN(loanDueDate.getTime())) {
+              console.warn("Invalid due date for loan:", loan.id, "- skipping auto-reminder generation");
+            } else {
+              // Get today's date in KSA timezone (Asia/Riyadh) for accurate comparison
+              const today = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Riyadh' });
+              
+              // Get existing reminders for this loan to prevent duplicates
+              const existingReminders = await storage.getLoanReminders(loan.id);
+              const existingDates = new Set(existingReminders.map(r => r.reminderDate));
+              
+              // Generate reminders based on validated intervals
+              const reminderPromises = validIntervals.map(async (interval) => {
+                const reminderDate = new Date(loanDueDate);
+                reminderDate.setDate(reminderDate.getDate() - interval);
+                const reminderDateStr = reminderDate.toLocaleDateString('en-CA', { timeZone: 'Asia/Riyadh' });
+                
+                // Skip if reminder date is in the past or already exists
+                if (reminderDateStr <= today) {
+                  return { success: false, reason: 'past_date', interval };
+                }
+                
+                if (existingDates.has(reminderDateStr)) {
+                  return { success: false, reason: 'duplicate_date', interval };
+                }
+
+                const reminderData = {
+                  loanId: loan.id,
+                  userId,
+                  reminderDate: reminderDateStr,
+                  message: `Automated reminder: Payment due in ${interval} days`,
+                  isEmailEnabled: userSettings.emailNotifications,
+                  isCalendarEnabled: userSettings.calendarEvents,
+                  templateId: userSettings.defaultTemplateId || null
+                };
+
+                try {
+                  const createdReminder = await storage.createLoanReminder(reminderData);
+                  return { success: true, reminder: createdReminder, interval };
+                } catch (error) {
+                  console.warn(`Failed to create reminder for interval ${interval} days:`, error);
+                  return { success: false, reason: 'creation_failed', interval, error };
+                }
+              });
+
+              // Wait for all reminders and handle individual failures
+              const results = await Promise.allSettled(reminderPromises);
+              const successCount = results.filter(r => r.status === 'fulfilled' && r.value.success).length;
+              const skippedCount = results.filter(r => r.status === 'fulfilled' && !r.value.success).length;
+              
+              if (successCount > 0) {
+                console.log(`Successfully created ${successCount} auto-generated reminders for loan ${loan.id}${skippedCount > 0 ? ` (${skippedCount} skipped)` : ''}`);
+              }
+            }
+          }
+        }
+      } catch (reminderError) {
+        // Log error but don't fail loan creation
+        console.warn("Failed to auto-generate reminders for loan:", loan.id, reminderError);
+      }
+
       res.json(loan);
     } catch (error) {
       console.error("Error creating loan:", error);
