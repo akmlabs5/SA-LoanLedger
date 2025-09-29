@@ -1,11 +1,20 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useLocation } from "wouter";
 import { AdminAuthCard } from "@/components/admin/AdminAuthCard";
+import { useAdminAuth } from "@/hooks/useAdminAuth";
 
 export default function AdminLoginPage() {
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [, setLocation] = useLocation();
+  const { isAdminAuthenticated, refreshAuth } = useAdminAuth();
+
+  // Redirect to dashboard if already authenticated
+  useEffect(() => {
+    if (isAdminAuthenticated) {
+      setLocation("/admin-portal/dashboard");
+    }
+  }, [isAdminAuthenticated, setLocation]);
 
   const handleAdminLogin = async (username: string, password: string) => {
     setIsLoading(true);
@@ -31,8 +40,10 @@ export default function AdminLoginPage() {
       localStorage.setItem('admin_token', data.token);
       localStorage.setItem('admin_user', JSON.stringify(data.admin));
       
-      // Redirect to admin dashboard
-      setLocation("/admin-portal/dashboard");
+      // Refresh authentication state to pick up the new tokens
+      refreshAuth();
+      
+      // The useEffect will handle the redirect once isAdminAuthenticated becomes true
     } catch (error: any) {
       setError(error.message || "Failed to authenticate");
     } finally {

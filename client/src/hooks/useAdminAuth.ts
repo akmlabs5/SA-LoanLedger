@@ -10,6 +10,7 @@ interface AdminUser {
 export function useAdminAuth() {
   const [isAdminAuthenticated, setIsAdminAuthenticated] = useState(false);
   const [adminUser, setAdminUser] = useState<AdminUser | null>(null);
+  const [authCheckTrigger, setAuthCheckTrigger] = useState(0);
 
   // Check for stored admin token
   useEffect(() => {
@@ -19,8 +20,11 @@ export function useAdminAuth() {
     if (token && user) {
       setIsAdminAuthenticated(true);
       setAdminUser(JSON.parse(user));
+    } else {
+      setIsAdminAuthenticated(false);
+      setAdminUser(null);
     }
-  }, []);
+  }, [authCheckTrigger]); // Re-run when authCheckTrigger changes
 
   // Query to validate admin session
   const { data: sessionValid, isLoading, error } = useQuery({
@@ -70,10 +74,15 @@ export function useAdminAuth() {
     window.location.href = '/admin-portal/login';
   };
 
+  const refreshAuth = () => {
+    setAuthCheckTrigger(prev => prev + 1);
+  };
+
   return {
     isAdminAuthenticated: isAdminAuthenticated && (sessionValid !== undefined ? !!sessionValid : true),
     adminUser,
     isLoading,
-    signOut
+    signOut,
+    refreshAuth
   };
 }
