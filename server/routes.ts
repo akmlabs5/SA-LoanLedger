@@ -1853,7 +1853,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Admin session storage (in production, use proper session store)
-  const adminSessions = new Map<string, { username: string; role: string; loginTime: string }>();
+  // Using global to persist sessions during development hot reloads
+  if (!(global as any).adminSessions) {
+    (global as any).adminSessions = new Map<string, { username: string; role: string; loginTime: string }>();
+  }
+  const adminSessions = (global as any).adminSessions;
 
   // Admin authentication routes
   app.post('/api/admin/auth/login', async (req, res) => {
