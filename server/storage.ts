@@ -156,6 +156,7 @@ export interface IStorage {
   getUserReminderSettings(userId: string): Promise<UserReminderSettings | undefined>;
   createUserReminderSettings(settings: InsertUserReminderSettings): Promise<UserReminderSettings>;
   updateUserReminderSettings(userId: string, settings: Partial<UpdateUserReminderSettings>): Promise<UserReminderSettings>;
+  upsertUserReminderSettings(settings: InsertUserReminderSettings): Promise<UserReminderSettings>;
   
   // Guarantee operations
   getUserGuarantees(userId: string): Promise<Array<Guarantee & { facility: Facility & { bank: Bank } }>>;
@@ -906,6 +907,19 @@ export class DatabaseStorage implements IStorage {
     return result;
   }
 
+  async upsertUserReminderSettings(settings: InsertUserReminderSettings): Promise<UserReminderSettings> {
+    // Try to get existing settings
+    const existing = await this.getUserReminderSettings(settings.userId);
+    
+    if (existing) {
+      // Update existing settings
+      return this.updateUserReminderSettings(settings.userId, settings);
+    } else {
+      // Create new settings
+      return this.createUserReminderSettings(settings);
+    }
+  }
+
   // Guarantee operations
   async getUserGuarantees(userId: string): Promise<Array<Guarantee & { facility: Facility & { bank: Bank } }>> {
     return await db
@@ -1358,6 +1372,9 @@ export class MemoryStorage implements IStorage {
   private loans = new Map<string, Loan>();
   private documents = new Map<string, Document>();
   private loanReminders = new Map<string, LoanReminder>();
+  private reminderTemplates = new Map<string, ReminderTemplate>();
+  private userReminderSettings = new Map<string, UserReminderSettings>();
+  private guarantees = new Map<string, Guarantee>();
   private aiConfigs = new Map<string, AiInsightConfig>();
   private exposureSnapshots = new Map<string, ExposureSnapshot>();
   private transactions = new Map<string, Transaction>();
@@ -2182,6 +2199,133 @@ export class MemoryStorage implements IStorage {
     return Array.from(this.attachmentAudits.values())
       .filter(audit => audit.attachmentId === attachmentId)
       .sort((a, b) => (b.createdAt?.getTime() || 0) - (a.createdAt?.getTime() || 0));
+  }
+
+  // Reminder Template operations
+  async getAllReminderTemplates(): Promise<ReminderTemplate[]> {
+    return Array.from(this.reminderTemplates.values())
+      .filter(template => template.isActive)
+      .sort((a, b) => a.name.localeCompare(b.name));
+  }
+
+  async getReminderTemplate(id: string): Promise<ReminderTemplate | undefined> {
+    return this.reminderTemplates.get(id);
+  }
+
+  async createReminderTemplate(template: InsertReminderTemplate): Promise<ReminderTemplate> {
+    const newTemplate: ReminderTemplate = {
+      ...template,
+      id: this.generateId(),
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
+    this.reminderTemplates.set(newTemplate.id, newTemplate);
+    return newTemplate;
+  }
+
+  async updateReminderTemplate(id: string, template: Partial<UpdateReminderTemplate>): Promise<ReminderTemplate> {
+    const existing = this.reminderTemplates.get(id);
+    if (!existing) throw new Error('Template not found');
+
+    const updated: ReminderTemplate = {
+      ...existing,
+      ...template,
+      updatedAt: new Date(),
+    };
+    this.reminderTemplates.set(id, updated);
+    return updated;
+  }
+
+  async deleteReminderTemplate(id: string): Promise<void> {
+    const existing = this.reminderTemplates.get(id);
+    if (existing) {
+      existing.isActive = false;
+      existing.updatedAt = new Date();
+    }
+  }
+
+  // User Reminder Settings operations
+  async getUserReminderSettings(userId: string): Promise<UserReminderSettings | undefined> {
+    return Array.from(this.userReminderSettings.values()).find(settings => settings.userId === userId);
+  }
+
+  async createUserReminderSettings(settings: InsertUserReminderSettings): Promise<UserReminderSettings> {
+    const newSettings: UserReminderSettings = {
+      ...settings,
+      id: this.generateId(),
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
+    this.userReminderSettings.set(newSettings.id, newSettings);
+    return newSettings;
+  }
+
+  async updateUserReminderSettings(userId: string, settings: Partial<UpdateUserReminderSettings>): Promise<UserReminderSettings> {
+    const existing = Array.from(this.userReminderSettings.values()).find(s => s.userId === userId);
+    if (!existing) throw new Error('User reminder settings not found');
+
+    const updated: UserReminderSettings = {
+      ...existing,
+      ...settings,
+      updatedAt: new Date(),
+    };
+    this.userReminderSettings.set(existing.id, updated);
+    return updated;
+  }
+
+  async upsertUserReminderSettings(settings: InsertUserReminderSettings): Promise<UserReminderSettings> {
+    const existing = await this.getUserReminderSettings(settings.userId);
+    
+    if (existing) {
+      return this.updateUserReminderSettings(settings.userId, settings);
+    } else {
+      return this.createUserReminderSettings(settings);
+    }
+  }
+
+  // Guarantee operations
+  async getUserGuarantees(userId: string): Promise<Array<Guarantee & { facility: Facility & { bank: Bank } }>> {
+    return [];
+  }
+
+  async getFacilityGuarantees(facilityId: string): Promise<Guarantee[]> {
+    return Array.from(this.guarantees.values()).filter(g => g.facilityId === facilityId && g.isActive);
+  }
+
+  async getGuaranteeById(guaranteeId: string): Promise<Guarantee | undefined> {
+    return this.guarantees.get(guaranteeId);
+  }
+
+  async createGuarantee(guarantee: InsertGuarantee): Promise<Guarantee> {
+    const newGuarantee: Guarantee = {
+      ...guarantee,
+      id: this.generateId(),
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
+    this.guarantees.set(newGuarantee.id, newGuarantee);
+    return newGuarantee;
+  }
+
+  async updateGuarantee(guaranteeId: string, guarantee: Partial<UpdateGuarantee>): Promise<Guarantee> {
+    const existing = this.guarantees.get(guaranteeId);
+    if (!existing) throw new Error('Guarantee not found');
+
+    const updated: Guarantee = {
+      ...existing,
+      ...guarantee,
+      updatedAt: new Date(),
+    };
+    this.guarantees.set(guaranteeId, updated);
+    return updated;
+  }
+
+  async deleteGuarantee(guaranteeId: string): Promise<void> {
+    const existing = this.guarantees.get(guaranteeId);
+    if (existing) {
+      existing.isActive = false;
+      existing.updatedAt = new Date();
+    }
   }
 }
 

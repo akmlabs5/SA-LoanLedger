@@ -38,6 +38,7 @@ import AdminLoginPage from "@/pages/admin-portal/login";
 import AdminDashboardPage from "@/pages/admin-portal/dashboard";
 import AdminUsersPage from "@/pages/admin-portal/users";
 import AdminTemplatesPage from "@/pages/admin-portal/templates";
+import UserSettingsPage from "@/pages/user-settings";
 
 import AppLayout from "@/components/AppLayout";
 import { useAuth } from "@/hooks/useAuth";
@@ -131,6 +132,7 @@ function App() {
         <Route path="/history" component={HistoryPage} />
         <Route path="/reports" component={ReportsPage} />
         <Route path="/ai-chat" component={AIChatPage} />
+        <Route path="/settings" component={UserSettingsPage} />
         <Route component={NotFoundPage} />
       </Switch>
     </AppLayout>

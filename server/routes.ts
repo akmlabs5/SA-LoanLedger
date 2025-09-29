@@ -828,6 +828,41 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // User reminder settings endpoints
+  app.get('/api/user/reminder-settings', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const settings = await storage.getUserReminderSettings(userId);
+      res.json(settings);
+    } catch (error) {
+      console.error("Error fetching user reminder settings:", error);
+      res.status(500).json({ message: "Failed to fetch reminder settings" });
+    }
+  });
+
+  app.post('/api/user/reminder-settings', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      
+      const settingsData = insertUserReminderSettingsSchema.parse({
+        ...req.body,
+        userId,
+      });
+      
+      const settings = await storage.upsertUserReminderSettings(settingsData);
+      res.json(settings);
+    } catch (error) {
+      console.error("Error saving user reminder settings:", error);
+      
+      // Return 400 for validation errors
+      if (error instanceof Error && error.message.includes('ZodError')) {
+        return res.status(400).json({ message: "Invalid settings data", details: error.message });
+      }
+      
+      res.status(500).json({ message: "Failed to save reminder settings" });
+    }
+  });
+
   // NOTE: Admin template routes moved to after isAdminAuthenticated middleware definition
 
   // Calendar invite endpoints

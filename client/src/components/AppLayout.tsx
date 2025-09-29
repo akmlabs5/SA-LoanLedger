@@ -105,6 +105,16 @@ const navigation = [
       },
     ],
   },
+  {
+    title: "Preferences",
+    items: [
+      {
+        title: "Settings",
+        url: "/settings",
+        icon: Settings,
+      },
+    ],
+  },
 ];
 
 // Feature flag to use Supabase Auth - DISABLED for development  
