@@ -1,4 +1,5 @@
-import { LoanReminder, Loan } from '@shared/schema';
+import { LoanReminder, Loan, ReminderTemplate, User, Bank, Facility } from '@shared/schema';
+import { TemplateService } from './templateService';
 
 interface CalendarEvent {
   uid: string;
@@ -31,6 +32,47 @@ export class CalendarService {
   }
 
   /**
+   * Generate ICS file using a template with loan context data
+   */
+  static generateICSFileWithTemplate(
+    reminder: LoanReminder, 
+    loan: Loan, 
+    userEmail: string,
+    template?: ReminderTemplate,
+    user?: User,
+    bank?: Bank,
+    facility?: Facility
+  ): string {
+    let title: string;
+    let description: string;
+
+    if (template) {
+      // Use template with variable substitution
+      const context = { loan, reminder, user, bank, facility };
+      const rendered = TemplateService.renderCalendarTemplate(template, context);
+      title = rendered.title;
+      description = rendered.description;
+    } else {
+      // Fallback to default generation
+      title = `Loan Payment Reminder - ${loan.referenceNumber}`;
+      description = this.generateEventDescription(reminder, loan);
+    }
+
+    const event: CalendarEvent = {
+      uid: `loan-reminder-${reminder.id}@saudiloanmanager.com`,
+      title,
+      description,
+      startDate: new Date(reminder.reminderDate),
+      endDate: new Date(new Date(reminder.reminderDate).getTime() + 60 * 60 * 1000),
+      location: 'Saudi Arabia',
+      organizer: 'noreply@saudiloanmanager.com',
+      attendee: userEmail,
+    };
+
+    return this.buildICSContent(event);
+  }
+
+  /**
    * Generate ICS file for multiple reminders (bulk calendar export)
    */
   static generateBulkICSFile(reminders: Array<LoanReminder & { loan: Loan }>, userEmail: string): string {
@@ -44,6 +86,54 @@ export class CalendarService {
       organizer: 'noreply@saudiloanmanager.com',
       attendee: userEmail,
     }));
+
+    return this.buildBulkICSContent(events);
+  }
+
+  /**
+   * Generate bulk ICS file with template support
+   */
+  static generateBulkICSFileWithTemplate(
+    reminders: Array<LoanReminder & { 
+      loan: Loan;
+      user?: User;
+      bank?: Bank;
+      facility?: Facility;
+    }>, 
+    userEmail: string,
+    template?: ReminderTemplate
+  ): string {
+    const events: CalendarEvent[] = reminders.map(reminder => {
+      let title: string;
+      let description: string;
+
+      if (template) {
+        const context = { 
+          loan: reminder.loan, 
+          reminder, 
+          user: reminder.user, 
+          bank: reminder.bank, 
+          facility: reminder.facility 
+        };
+        const rendered = TemplateService.renderCalendarTemplate(template, context);
+        title = rendered.title;
+        description = rendered.description;
+      } else {
+        title = `Loan Payment Reminder - ${reminder.loan.referenceNumber}`;
+        description = this.generateEventDescription(reminder, reminder.loan);
+      }
+
+      return {
+        uid: `loan-reminder-${reminder.id}@saudiloanmanager.com`,
+        title,
+        description,
+        startDate: new Date(reminder.reminderDate),
+        endDate: new Date(new Date(reminder.reminderDate).getTime() + 60 * 60 * 1000),
+        location: 'Saudi Arabia',
+        organizer: 'noreply@saudiloanmanager.com',
+        attendee: userEmail,
+      };
+    });
 
     return this.buildBulkICSContent(events);
   }
@@ -143,7 +233,9 @@ export class CalendarService {
    * Format date for ICS format (YYYYMMDDTHHMMSSZ in UTC)
    */
   private static formatICSDate(date: Date): string {
-    return date.toISOString().replace(/[-:]/g, '').replace(/\\.\\d{3}/, '');
+    // Format as YYYYMMDDTHHMMSSZ per RFC 5545
+    const s = date.toISOString();
+    return s.slice(0, 19).replace(/[-:]/g, '') + 'Z';
   }
 
   /**
