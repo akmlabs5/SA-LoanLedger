@@ -630,38 +630,38 @@ export default function Dashboard() {
         <div className="space-y-6 mb-8">
           {/* Row 1: Three Main Charts - Symmetric Layout */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            <Card className="bg-card border border-border shadow-sm hover:shadow-md transition-all duration-200">
-              <CardHeader className="pb-4">
+            <Card className="h-[560px] bg-card border border-border shadow-sm hover:shadow-md transition-all duration-200 flex flex-col">
+              <CardHeader className="pb-4 shrink-0">
                 <CardTitle className="text-lg font-semibold flex items-center space-x-2">
                   <BarChart3 className="h-5 w-5" style={{ color: SAUDI_CHART_COLORS.saudiGreen }} />
                   <span>Outstanding vs Credit Limits</span>
                 </CardTitle>
               </CardHeader>
-              <CardContent className="pt-0">
+              <CardContent className="flex-1 pt-0 flex flex-col min-h-0">
                 <OutstandingVsLimitsChart portfolioSummary={portfolioSummary} />
               </CardContent>
             </Card>
             
-            <Card className="bg-card border border-border shadow-sm hover:shadow-md transition-all duration-200">
-              <CardHeader className="pb-4">
+            <Card className="h-[560px] bg-card border border-border shadow-sm hover:shadow-md transition-all duration-200 flex flex-col">
+              <CardHeader className="pb-4 shrink-0">
                 <CardTitle className="text-lg font-semibold flex items-center space-x-2">
                   <Target className="h-5 w-5" style={{ color: SAUDI_CHART_COLORS.saudiGreen }} />
                   <span>Portfolio Distribution</span>
                 </CardTitle>
               </CardHeader>
-              <CardContent className="pt-0">
+              <CardContent className="flex-1 pt-0 flex flex-col min-h-0">
                 <PortfolioDistributionChart portfolioSummary={portfolioSummary} />
               </CardContent>
             </Card>
 
-            <Card className="bg-card border border-border shadow-sm hover:shadow-md transition-all duration-200">
-              <CardHeader className="pb-4">
+            <Card className="h-[560px] bg-card border border-border shadow-sm hover:shadow-md transition-all duration-200 flex flex-col">
+              <CardHeader className="pb-4 shrink-0">
                 <CardTitle className="text-lg font-semibold flex items-center space-x-2">
                   <Activity className="h-5 w-5" style={{ color: SAUDI_CHART_COLORS.saudiGreen }} />
                   <span>Loans Trend</span>
                 </CardTitle>
               </CardHeader>
-              <CardContent className="pt-0">
+              <CardContent className="flex-1 pt-0 flex flex-col min-h-0">
                 <LoansTrendChart 
                   loans={activeLoans || []}
                   timeframe="month"
@@ -673,14 +673,14 @@ export default function Dashboard() {
           
           {/* Row 2: Priority Status + Loans by Bank */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <Card className="bg-card border border-border shadow-sm hover:shadow-md transition-all duration-200">
-              <CardHeader className="pb-4">
+            <Card className="h-[560px] bg-card border border-border shadow-sm hover:shadow-md transition-all duration-200 flex flex-col">
+              <CardHeader className="pb-4 shrink-0">
                 <CardTitle className="text-lg font-semibold flex items-center space-x-2">
                   <AlertTriangle className="h-5 w-5" style={{ color: SAUDI_CHART_COLORS.saudiGold }} />
                   <span>Priority Status</span>
                 </CardTitle>
               </CardHeader>
-              <CardContent className="pt-0">
+              <CardContent className="flex-1 pt-0 flex flex-col min-h-0">
                 <PriorityStatusChart 
                   loans={activeLoans || []}
                   isLoading={loansLoading}
@@ -688,14 +688,14 @@ export default function Dashboard() {
               </CardContent>
             </Card>
 
-            <Card className="bg-card border border-border shadow-sm hover:shadow-md transition-all duration-200">
-              <CardHeader className="pb-4">
+            <Card className="h-[560px] bg-card border border-border shadow-sm hover:shadow-md transition-all duration-200 flex flex-col">
+              <CardHeader className="pb-4 shrink-0">
                 <CardTitle className="text-lg font-semibold flex items-center space-x-2">
                   <Building className="h-5 w-5" style={{ color: SAUDI_CHART_COLORS.saudiGreen }} />
                   <span>Loans by Bank</span>
                 </CardTitle>
               </CardHeader>
-              <CardContent className="pt-0">
+              <CardContent className="flex-1 pt-0 flex flex-col min-h-0">
                 <LoansByBankChart 
                   loans={activeLoans || []}
                   isLoading={loansLoading}
