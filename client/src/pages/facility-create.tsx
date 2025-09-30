@@ -58,7 +58,7 @@ export default function FacilityCreatePage() {
       creditLimit: "",
       costOfFunding: "",
       startDate: new Date().toISOString().split('T')[0],
-      expiryDate: "",
+      expiryDate: new Date(new Date().setFullYear(new Date().getFullYear() + 1)).toISOString().split('T')[0],
       terms: "",
       isActive: true,
     },
@@ -94,9 +94,19 @@ export default function FacilityCreatePage() {
   });
 
   const onSubmit = (data: FacilityFormData) => {
-    console.log("Form submitted with data:", data);
+    console.log("✅ Form submitted successfully with data:", data);
     console.log("Form errors:", form.formState.errors);
     createFacilityMutation.mutate(data);
+  };
+  
+  const onError = (errors: any) => {
+    console.log("❌ Form validation errors:", errors);
+    const errorFields = Object.keys(errors).join(", ");
+    toast({
+      title: "Validation Error",
+      description: `Please fix these fields: ${errorFields}`,
+      variant: "destructive",
+    });
   };
 
   const selectedType = form.watch("facilityType");
@@ -145,14 +155,7 @@ export default function FacilityCreatePage() {
               </CardHeader>
               <CardContent className="p-6">
                 <Form {...form}>
-                  <form onSubmit={form.handleSubmit(onSubmit, (errors) => {
-                    console.log("Form validation errors:", errors);
-                    toast({
-                      title: "Validation Error",
-                      description: "Please check all required fields and try again.",
-                      variant: "destructive",
-                    });
-                  })} className="space-y-6">
+                  <form onSubmit={form.handleSubmit(onSubmit, onError)} className="space-y-6">
                     {/* Facility Type */}
                     <FormField
                       control={form.control}
