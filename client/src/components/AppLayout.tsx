@@ -393,31 +393,6 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
               </SidebarGroupContent>
             </SidebarGroup>
           ))}
-
-          <SidebarGroup className="mt-auto mb-6">
-            <SidebarGroupLabel className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-3 px-1">
-              System
-            </SidebarGroupLabel>
-            <SidebarGroupContent>
-              <SidebarMenu className="space-y-1">
-                <SidebarMenuItem>
-                  <SidebarMenuButton 
-                    asChild 
-                    data-testid="nav-settings"
-                    className={cn(
-                      "font-medium text-sm hover:bg-accent/50 rounded-lg transition-all duration-200 active:scale-[0.98]",
-                      isMobile ? "h-12 px-4 text-base" : "h-10 px-3"
-                    )}
-                  >
-                    <Link href="/user-settings" className="flex items-center gap-3">
-                      <Settings className={cn(isMobile ? "h-5 w-5" : "h-4 w-4")} />
-                      <span className="font-medium tracking-tight">Settings</span>
-                    </Link>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              </SidebarMenu>
-            </SidebarGroupContent>
-          </SidebarGroup>
           </SidebarContent>
 
           <SidebarFooter className="border-t border-border">
