@@ -384,7 +384,7 @@ export default function Loans() {
               Export
             </Button>
             <Button 
-              onClick={() => setLocation("/loans/new")}
+              onClick={() => setLocation("/loans/create")}
               className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white shadow-lg hover:shadow-xl transition-all duration-300"
               data-testid="button-add-loan"
             >
@@ -542,7 +542,7 @@ export default function Loans() {
                   </p>
                   {(activeLoans as any[])?.length === 0 ? (
                     <Button 
-                      onClick={() => setLocation("/loans/new")}
+                      onClick={() => setLocation("/loans/create")}
                       className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white"
                       data-testid="button-add-first-loan"
                     >

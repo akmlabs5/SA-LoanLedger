@@ -471,7 +471,7 @@ export default function BankDetail() {
                     </CardTitle>
                     <p className="text-sm text-gray-600 dark:text-gray-400">Current loan drawdowns from this bank</p>
                   </div>
-                  <Link href={`/banks/${bankId}/loans/new`}>
+                  <Link href={`/loans/create?bankId=${bankId}`}>
                     <Button 
                       size="sm"
                       className="bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white shadow-lg"
