@@ -154,7 +154,7 @@ export default function LoansTrendChart({
 
   return (
     <div className="flex h-full flex-col" data-testid="chart-loans-trend">
-      <div className="shrink-0 mb-4">
+      <div className="shrink-0 mb-2">
         <div className="grid grid-cols-3 gap-4">
           <div className="text-center">
             <p className="text-2xl font-bold" style={{ color: SAUDI_CHART_COLORS.saudiGreen }} data-testid="text-total-loans">
@@ -177,37 +177,35 @@ export default function LoansTrendChart({
         </div>
       </div>
 
-      <div className="flex-1 min-h-0">
-        <ChartContainer config={chartConfig}>
-          <ResponsiveContainer width="100%" height="100%">
-            <AreaChart data={loanTrendData}>
-              <defs>
-                <linearGradient id="colorLoans" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor={SAUDI_CHART_COLORS.saudiGreen} stopOpacity={0.3}/>
-                  <stop offset="95%" stopColor={SAUDI_CHART_COLORS.saudiGreen} stopOpacity={0.1}/>
-                </linearGradient>
-              </defs>
-              <CartesianGrid strokeDasharray="3 3" className="stroke-gray-200 dark:stroke-gray-700" />
-              <XAxis 
-                dataKey="period" 
-                className="text-gray-600 dark:text-gray-400"
-                fontSize={12}
-              />
-              <YAxis 
-                className="text-gray-600 dark:text-gray-400"
-                fontSize={12}
-              />
-              <Tooltip content={<CustomTooltip />} />
-              <Area
-                type="monotone"
-                dataKey="totalLoans"
-                stroke={SAUDI_CHART_COLORS.saudiGreen}
-                fill="url(#colorLoans)"
-                strokeWidth={3}
-              />
-            </AreaChart>
-          </ResponsiveContainer>
-        </ChartContainer>
+      <div className="flex-1 min-h-0 -mx-2">
+        <ResponsiveContainer width="100%" height="100%">
+          <AreaChart data={loanTrendData}>
+            <defs>
+              <linearGradient id="colorLoans" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="5%" stopColor={SAUDI_CHART_COLORS.saudiGreen} stopOpacity={0.3}/>
+                <stop offset="95%" stopColor={SAUDI_CHART_COLORS.saudiGreen} stopOpacity={0.1}/>
+              </linearGradient>
+            </defs>
+            <CartesianGrid strokeDasharray="3 3" className="stroke-gray-200 dark:stroke-gray-700" />
+            <XAxis 
+              dataKey="period" 
+              className="text-gray-600 dark:text-gray-400"
+              fontSize={12}
+            />
+            <YAxis 
+              className="text-gray-600 dark:text-gray-400"
+              fontSize={12}
+            />
+            <Tooltip content={<CustomTooltip />} />
+            <Area
+              type="monotone"
+              dataKey="totalLoans"
+              stroke={SAUDI_CHART_COLORS.saudiGreen}
+              fill="url(#colorLoans)"
+              strokeWidth={3}
+            />
+          </AreaChart>
+        </ResponsiveContainer>
       </div>
     </div>
   );

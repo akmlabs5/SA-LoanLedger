@@ -101,8 +101,8 @@ export default function PriorityStatusChart({ loans, isLoading = false }: Priori
               data={urgencyData}
               cx="50%"
               cy="50%"
-              innerRadius={60}
-              outerRadius={100}
+              innerRadius={90}
+              outerRadius={150}
               paddingAngle={5}
               dataKey="amount"
             >

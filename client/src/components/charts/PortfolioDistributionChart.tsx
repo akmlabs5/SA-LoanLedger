@@ -62,7 +62,7 @@ export default function PortfolioDistributionChart({ portfolioSummary }: Portfol
               cy="50%"
               labelLine={false}
               label={({ name, percentage }) => `${percentage}%`}
-              outerRadius={100}
+              outerRadius={130}
               fill={SAUDI_CHART_COLORS.saudiGreen}
               dataKey="value"
             >
