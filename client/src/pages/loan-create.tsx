@@ -55,10 +55,15 @@ const loanFormSchema = z.object({
 type LoanFormData = z.infer<typeof loanFormSchema>;
 
 export default function LoanCreatePage() {
-  const { bankId } = useParams();
+  const { bankId: paramBankId } = useParams();
   const [, setLocation] = useLocation();
   const { toast } = useToast();
   const [siborInputMode, setSiborInputMode] = useState<"standard" | "custom">("standard");
+
+  // Get bankId from URL params or query string
+  const urlParams = new URLSearchParams(window.location.search);
+  const queryBankId = urlParams.get('bankId');
+  const bankId = paramBankId || queryBankId || undefined;
 
   const { data: banks } = useQuery<Array<Bank>>({
     queryKey: ["/api/banks"],
@@ -86,10 +91,12 @@ export default function LoanCreatePage() {
   });
 
   // Get current bank info
-  const currentBank = banks?.find(bank => bank.id === bankId);
+  const currentBank = bankId ? banks?.find(bank => bank.id === bankId) : undefined;
   
-  // Filter facilities for current bank
-  const bankFacilities = facilities?.filter(facility => facility.bankId === bankId) || [];
+  // Filter facilities for current bank if bankId is provided, otherwise show all
+  const bankFacilities = bankId 
+    ? (facilities?.filter(facility => facility.bankId === bankId) || [])
+    : (facilities || []);
 
   const form = useForm<LoanFormData>({
     resolver: zodResolver(loanFormSchema),
@@ -156,7 +163,8 @@ export default function LoanCreatePage() {
         title: "Success",
         description: "Loan created successfully",
       });
-      setLocation(`/banks/${bankId}`);
+      // Navigate to bank detail if bankId exists, otherwise to loans page
+      setLocation(bankId ? `/banks/${bankId}` : "/loans");
     },
     onError: (error: any) => {
       toast({
@@ -254,7 +262,10 @@ export default function LoanCreatePage() {
                   <span>Create New Loan</span>
                 </CardTitle>
                 <p className="text-gray-600 dark:text-gray-400">
-                  Create a new loan drawdown from {currentBank?.name}'s available facilities
+                  {currentBank 
+                    ? `Create a new loan drawdown from ${currentBank.name}'s available facilities`
+                    : "Create a new loan drawdown from your available bank facilities"
+                  }
                 </p>
               </CardHeader>
               <CardContent>
@@ -279,6 +290,7 @@ export default function LoanCreatePage() {
                                   <div className="flex flex-col">
                                     <span>{formatFacilityType(facility.facilityType).toUpperCase()}</span>
                                     <span className="text-xs text-muted-foreground">
+                                      {!bankId && facility.bank ? `${facility.bank.name} | ` : ''}
                                       Credit Limit: {parseFloat(facility.creditLimit).toLocaleString()} SAR | SIBOR + {facility.costOfFunding}%
                                     </span>
                                   </div>
