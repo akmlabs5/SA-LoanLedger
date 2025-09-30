@@ -63,6 +63,13 @@ export default function BankContactsSection({ bankId, bankName, isAuthenticated 
       queryClient.invalidateQueries({ queryKey: [`/api/banks/${bankId}/contacts`] });
       toast({ title: "Contact deleted successfully" });
     },
+    onError: (error: any) => {
+      toast({ 
+        title: "Failed to delete contact", 
+        description: error.message || "An error occurred",
+        variant: "destructive" 
+      });
+    },
   });
 
   const setPrimaryContactMutation = useMutation({
@@ -72,6 +79,13 @@ export default function BankContactsSection({ bankId, bankName, isAuthenticated 
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [`/api/banks/${bankId}/contacts`] });
       toast({ title: "Primary contact updated successfully" });
+    },
+    onError: (error: any) => {
+      toast({ 
+        title: "Failed to update primary contact", 
+        description: error.message || "An error occurred",
+        variant: "destructive" 
+      });
     },
   });
 

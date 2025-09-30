@@ -76,7 +76,7 @@ export default function BankContactCreatePage() {
       return apiRequest('POST', `/api/banks/${bankId}/contacts`, data);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: [`/api/banks/${bankId}`] });
+      queryClient.invalidateQueries({ queryKey: ["/api/banks", bankId] });
       queryClient.invalidateQueries({ queryKey: [`/api/banks/${bankId}/contacts`] });
       toast({ 
         title: "Contact created successfully",
