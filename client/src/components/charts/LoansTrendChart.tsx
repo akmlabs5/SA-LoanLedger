@@ -79,7 +79,7 @@ export default function LoansTrendChart({
 
   if (isLoading) {
     return (
-      <div className="h-[450px] bg-gradient-to-br from-green-50 to-yellow-50 dark:from-gray-800 dark:to-gray-900 rounded-lg flex items-center justify-center animate-pulse" data-testid="chart-loans-trend">
+      <div className="h-full bg-gradient-to-br from-green-50 to-yellow-50 dark:from-gray-800 dark:to-gray-900 rounded-lg flex items-center justify-center animate-pulse" data-testid="chart-loans-trend">
         <div className="text-center">
           <div className="h-8 w-32 bg-gray-300 dark:bg-gray-600 rounded mb-2 mx-auto"></div>
           <p className="text-gray-600 dark:text-gray-400">Loading loan trends...</p>
@@ -92,7 +92,7 @@ export default function LoansTrendChart({
 
   if (loanTrendData.length === 0) {
     return (
-      <div className="h-[450px] bg-gradient-to-br from-green-50 to-yellow-50 dark:from-gray-800 dark:to-gray-900 rounded-lg flex items-center justify-center" data-testid="chart-loans-trend">
+      <div className="h-full bg-gradient-to-br from-green-50 to-yellow-50 dark:from-gray-800 dark:to-gray-900 rounded-lg flex items-center justify-center" data-testid="chart-loans-trend">
         <div className="text-center">
           <AlertCircle className="h-12 w-12 text-gray-300 dark:text-gray-600 mx-auto mb-4" />
           <p className="text-gray-600 dark:text-gray-400">No loan data available</p>
@@ -153,8 +153,8 @@ export default function LoansTrendChart({
   };
 
   return (
-    <div className="space-y-4" data-testid="chart-loans-trend">
-      <div className="flex items-center justify-between">
+    <div className="flex h-full flex-col space-y-4" data-testid="chart-loans-trend">
+      <div className="flex items-center justify-between shrink-0">
         <div className="flex items-center space-x-2">
           <Activity className="h-5 w-5" style={{ color: SAUDI_CHART_COLORS.saudiGreen }} />
           <h3 className="text-lg font-semibold">Loans Trend</h3>
@@ -169,7 +169,7 @@ export default function LoansTrendChart({
         </Badge>
       </div>
 
-      <div className="grid grid-cols-3 gap-4 mb-2">
+      <div className="grid grid-cols-3 gap-4 mb-2 shrink-0">
         <div className="text-center">
           <p className="text-2xl font-bold" style={{ color: SAUDI_CHART_COLORS.saudiGreen }} data-testid="text-total-loans">
             {latestData?.totalLoans}
@@ -190,36 +190,38 @@ export default function LoansTrendChart({
         </div>
       </div>
 
-      <ChartContainer config={chartConfig}>
-        <ResponsiveContainer width="100%" height={450}>
-          <AreaChart data={loanTrendData}>
-            <defs>
-              <linearGradient id="colorLoans" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="5%" stopColor={SAUDI_CHART_COLORS.saudiGreen} stopOpacity={0.3}/>
-                <stop offset="95%" stopColor={SAUDI_CHART_COLORS.saudiGreen} stopOpacity={0.1}/>
-              </linearGradient>
-            </defs>
-            <CartesianGrid strokeDasharray="3 3" className="stroke-gray-200 dark:stroke-gray-700" />
-            <XAxis 
-              dataKey="period" 
-              className="text-gray-600 dark:text-gray-400"
-              fontSize={12}
-            />
-            <YAxis 
-              className="text-gray-600 dark:text-gray-400"
-              fontSize={12}
-            />
-            <Tooltip content={<CustomTooltip />} />
-            <Area
-              type="monotone"
-              dataKey="totalLoans"
-              stroke={SAUDI_CHART_COLORS.saudiGreen}
-              fill="url(#colorLoans)"
-              strokeWidth={3}
-            />
-          </AreaChart>
-        </ResponsiveContainer>
-      </ChartContainer>
+      <div className="flex-1 min-h-0">
+        <ChartContainer config={chartConfig}>
+          <ResponsiveContainer width="100%" height="100%">
+            <AreaChart data={loanTrendData}>
+              <defs>
+                <linearGradient id="colorLoans" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%" stopColor={SAUDI_CHART_COLORS.saudiGreen} stopOpacity={0.3}/>
+                  <stop offset="95%" stopColor={SAUDI_CHART_COLORS.saudiGreen} stopOpacity={0.1}/>
+                </linearGradient>
+              </defs>
+              <CartesianGrid strokeDasharray="3 3" className="stroke-gray-200 dark:stroke-gray-700" />
+              <XAxis 
+                dataKey="period" 
+                className="text-gray-600 dark:text-gray-400"
+                fontSize={12}
+              />
+              <YAxis 
+                className="text-gray-600 dark:text-gray-400"
+                fontSize={12}
+              />
+              <Tooltip content={<CustomTooltip />} />
+              <Area
+                type="monotone"
+                dataKey="totalLoans"
+                stroke={SAUDI_CHART_COLORS.saudiGreen}
+                fill="url(#colorLoans)"
+                strokeWidth={3}
+              />
+            </AreaChart>
+          </ResponsiveContainer>
+        </ChartContainer>
+      </div>
     </div>
   );
 }
