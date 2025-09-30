@@ -217,7 +217,7 @@ export default function Reports() {
               {reportType === 'facility-summary' ? (
                 <div className="space-y-3">
                   <div className="p-4 bg-muted/50 rounded-lg">
-                    <h4 className="font-semibold text-sm mb-2">KAM Office Facility Report</h4>
+                    <h4 className="font-semibold text-sm mb-2">Facility Report</h4>
                     <div className="text-xs text-muted-foreground space-y-1">
                       <p>• Total exposure summary by bank</p>
                       <p>• Bank-by-bank facility breakdowns</p>
