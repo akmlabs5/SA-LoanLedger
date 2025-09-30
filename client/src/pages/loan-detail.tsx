@@ -521,16 +521,18 @@ export default function LoanDetailPage() {
         </div>
         
         {/* Reminder Modal */}
-        <ReminderModal
-          loanId={loanId}
-          isOpen={reminderModalOpen}
-          onClose={() => setReminderModalOpen(false)}
-          loanData={{
-            referenceNumber: loan.referenceNumber,
-            dueDate: loan.dueDate,
-            amount: formatCurrency(parseFloat(loan.amount)),
-          }}
-        />
+        {loanId && (
+          <ReminderModal
+            loanId={loanId}
+            isOpen={reminderModalOpen}
+            onClose={() => setReminderModalOpen(false)}
+            loanData={{
+              referenceNumber: loan.referenceNumber,
+              dueDate: loan.dueDate,
+              amount: formatCurrency(parseFloat(loan.amount)),
+            }}
+          />
+        )}
       </div>
     </div>
   );
