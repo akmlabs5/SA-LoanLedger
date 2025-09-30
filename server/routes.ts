@@ -21,6 +21,8 @@ import {
   updateLoanReminderSchema,
   insertReminderTemplateSchema,
   updateReminderTemplateSchema,
+  insertUserReminderSettingsSchema,
+  insertUserPreferencesSchema,
   insertGuaranteeSchema,
   updateGuaranteeSchema,
   insertAiInsightConfigSchema,

@@ -13,6 +13,7 @@ import {
   loanReminders,
   reminderTemplates,
   userReminderSettings,
+  userPreferences,
   guarantees,
   aiInsightConfig,
   exposureSnapshots,
@@ -66,6 +67,8 @@ import {
   type UserReminderSettings,
   type InsertUserReminderSettings,
   type UpdateUserReminderSettings,
+  type UserPreferences,
+  type InsertUserPreferences,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, desc, asc, sql, gte, lte, isNull, isNotNull } from "drizzle-orm";
