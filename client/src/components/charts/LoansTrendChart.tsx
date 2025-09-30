@@ -153,40 +153,27 @@ export default function LoansTrendChart({
   };
 
   return (
-    <div className="flex h-full flex-col space-y-4" data-testid="chart-loans-trend">
-      <div className="flex items-center justify-between shrink-0">
-        <div className="flex items-center space-x-2">
-          <Activity className="h-5 w-5" style={{ color: SAUDI_CHART_COLORS.saudiGreen }} />
-          <h3 className="text-lg font-semibold">Loans Trend</h3>
-        </div>
-        <Badge variant={loanGrowth >= 0 ? "default" : "secondary"} data-testid="badge-loan-growth">
-          {loanGrowth >= 0 ? (
-            <TrendingUp className="mr-1 h-3 w-3" />
-          ) : (
-            <TrendingDown className="mr-1 h-3 w-3" />
-          )}
-          {loanGrowth >= 0 ? '+' : ''}{loanGrowth.toFixed(1)}%
-        </Badge>
-      </div>
-
-      <div className="grid grid-cols-3 gap-4 mb-2 shrink-0">
-        <div className="text-center">
-          <p className="text-2xl font-bold" style={{ color: SAUDI_CHART_COLORS.saudiGreen }} data-testid="text-total-loans">
-            {latestData?.totalLoans}
-          </p>
-          <p className="text-sm text-gray-600 dark:text-gray-400">Total</p>
-        </div>
-        <div className="text-center">
-          <p className="text-2xl font-bold" style={{ color: SAUDI_CHART_COLORS.status.success }} data-testid="text-active-loans">
-            {latestData?.activeLoans}
-          </p>
-          <p className="text-sm text-gray-600 dark:text-gray-400">Active</p>
-        </div>
-        <div className="text-center">
-          <p className="text-2xl font-bold" style={{ color: SAUDI_CHART_COLORS.status.neutral }} data-testid="text-settled-loans">
-            {latestData?.settledLoans}
-          </p>
-          <p className="text-sm text-gray-600 dark:text-gray-400">Settled</p>
+    <div className="flex h-full flex-col" data-testid="chart-loans-trend">
+      <div className="shrink-0 mb-4">
+        <div className="grid grid-cols-3 gap-4">
+          <div className="text-center">
+            <p className="text-2xl font-bold" style={{ color: SAUDI_CHART_COLORS.saudiGreen }} data-testid="text-total-loans">
+              {latestData?.totalLoans}
+            </p>
+            <p className="text-sm text-gray-600 dark:text-gray-400">Total</p>
+          </div>
+          <div className="text-center">
+            <p className="text-2xl font-bold" style={{ color: SAUDI_CHART_COLORS.status.success }} data-testid="text-active-loans">
+              {latestData?.activeLoans}
+            </p>
+            <p className="text-sm text-gray-600 dark:text-gray-400">Active</p>
+          </div>
+          <div className="text-center">
+            <p className="text-2xl font-bold" style={{ color: SAUDI_CHART_COLORS.status.neutral }} data-testid="text-settled-loans">
+              {latestData?.settledLoans}
+            </p>
+            <p className="text-sm text-gray-600 dark:text-gray-400">Settled</p>
+          </div>
         </div>
       </div>
 
