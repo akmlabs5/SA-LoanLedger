@@ -110,7 +110,7 @@ export default function ReminderModal({ loanId, isOpen, onClose, loanData }: Rem
       reminderDate: "",
       emailEnabled: true,
       calendarEnabled: false,
-      templateId: "",
+      templateId: "none",
     },
   });
 
@@ -170,7 +170,7 @@ export default function ReminderModal({ loanId, isOpen, onClose, loanData }: Rem
   const clearTemplate = () => {
     setSelectedTemplate(null);
     setTemplatePreview(null);
-    form.setValue("templateId", "");
+    form.setValue("templateId", "none");
   };
 
   const formatReminderDate = (dateString: string) => {
@@ -299,7 +299,7 @@ export default function ReminderModal({ loanId, isOpen, onClose, loanData }: Rem
                                 </SelectTrigger>
                               </FormControl>
                               <SelectContent>
-                                <SelectItem value="">None (Custom Reminder)</SelectItem>
+                                <SelectItem value="none">None (Custom Reminder)</SelectItem>
                                 {(templates as any[]).map((template) => (
                                   <SelectItem key={template.id} value={template.id}>
                                     {template.name}
