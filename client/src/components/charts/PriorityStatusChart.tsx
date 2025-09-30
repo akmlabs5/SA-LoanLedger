@@ -24,7 +24,7 @@ const URGENCY_COLORS = {
 export default function PriorityStatusChart({ loans, isLoading = false }: PriorityStatusChartProps) {
   if (isLoading) {
     return (
-      <div className="h-[450px] bg-gradient-to-br from-green-50 to-slate-100 dark:from-green-950 dark:to-slate-900 rounded-lg flex items-center justify-center animate-pulse">
+      <div className="h-full bg-gradient-to-br from-green-50 to-slate-100 dark:from-green-950 dark:to-slate-900 rounded-lg flex items-center justify-center animate-pulse">
         <div className="text-center">
           <Loader2 className="h-8 w-8 text-gray-400 dark:text-gray-500 animate-spin mx-auto mb-4" />
           <p className="text-muted-foreground">Loading priority status...</p>
@@ -35,7 +35,7 @@ export default function PriorityStatusChart({ loans, isLoading = false }: Priori
 
   if (!loans || loans.length === 0) {
     return (
-      <div className="h-[450px] bg-gradient-to-br from-green-50 to-slate-100 dark:from-green-950 dark:to-slate-900 rounded-lg flex items-center justify-center">
+      <div className="h-full bg-gradient-to-br from-green-50 to-slate-100 dark:from-green-950 dark:to-slate-900 rounded-lg flex items-center justify-center">
         <div className="text-center">
           <AlertTriangle className="h-12 w-12 text-primary mx-auto mb-4" />
           <p className="text-muted-foreground">No priority data available</p>
@@ -93,8 +93,8 @@ export default function PriorityStatusChart({ loans, isLoading = false }: Priori
   };
 
   return (
-    <div data-testid="chart-priority-status">
-      <div className="h-[450px]">
+    <div className="flex h-full flex-col" data-testid="chart-priority-status">
+      <div className="flex-1 min-h-0">
         <ResponsiveContainer width="100%" height="100%">
           <PieChart>
             <Pie
@@ -116,7 +116,7 @@ export default function PriorityStatusChart({ loans, isLoading = false }: Priori
       </div>
       
       {/* Simple Priority Legend */}
-      <div className="mt-4 flex items-center justify-center space-x-6">
+      <div className="mt-4 shrink-0 flex items-center justify-center space-x-6">
         {urgencyData
           .sort((a, b) => {
             const priority = { 'critical': 0, 'warning': 1, 'normal': 2 };
