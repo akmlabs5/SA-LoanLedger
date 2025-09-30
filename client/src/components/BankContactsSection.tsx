@@ -60,7 +60,7 @@ export default function BankContactsSection({ bankId, bankName, isAuthenticated 
       return apiRequest('DELETE', `/api/bank-contacts/${contactId}`);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/banks", bankId, "contacts"] });
+      queryClient.invalidateQueries({ queryKey: [`/api/banks/${bankId}/contacts`] });
       toast({ title: "Contact deleted successfully" });
     },
   });
@@ -70,7 +70,7 @@ export default function BankContactsSection({ bankId, bankName, isAuthenticated 
       return apiRequest('PUT', `/api/bank-contacts/${contactId}/set-primary`, { bankId });
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/banks", bankId, "contacts"] });
+      queryClient.invalidateQueries({ queryKey: [`/api/banks/${bankId}/contacts`] });
       toast({ title: "Primary contact updated successfully" });
     },
   });
