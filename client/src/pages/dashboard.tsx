@@ -30,7 +30,8 @@ import AIInsightsPanel from "@/components/AIInsightsPanel";
 import OutstandingVsLimitsChart from "@/components/charts/OutstandingVsLimitsChart";
 import PortfolioDistributionChart from "@/components/charts/PortfolioDistributionChart";
 import LoansTrendChart from "@/components/charts/LoansTrendChart";
-import LoanDistributionChart from "@/components/charts/LoanDistributionChart";
+import PriorityStatusChart from "@/components/charts/PriorityStatusChart";
+import LoansByBankChart from "@/components/charts/LoansByBankChart";
 import { isUnauthorizedError } from "@/lib/authUtils";
 import { PortfolioSummary, SiborRate, LoanWithDetails } from "@shared/types";
 import { SAUDI_CHART_COLORS } from "@/lib/chart-colors";
@@ -680,9 +681,8 @@ export default function Dashboard() {
                 </CardTitle>
               </CardHeader>
               <CardContent className="pt-0">
-                <LoanDistributionChart 
-                  loans={activeLoans} 
-                  showTimeDistribution={false} 
+                <PriorityStatusChart 
+                  loans={activeLoans || []}
                   isLoading={loansLoading}
                 />
               </CardContent>
@@ -696,9 +696,8 @@ export default function Dashboard() {
                 </CardTitle>
               </CardHeader>
               <CardContent className="pt-0">
-                <LoanDistributionChart 
-                  loans={activeLoans} 
-                  showTimeDistribution={false} 
+                <LoansByBankChart 
+                  loans={activeLoans || []}
                   isLoading={loansLoading}
                 />
               </CardContent>
