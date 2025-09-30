@@ -24,7 +24,7 @@ const URGENCY_COLORS = {
 export default function PriorityStatusChart({ loans, isLoading = false }: PriorityStatusChartProps) {
   if (isLoading) {
     return (
-      <div className="h-[300px] bg-gradient-to-br from-green-50 to-slate-100 dark:from-green-950 dark:to-slate-900 rounded-lg flex items-center justify-center animate-pulse">
+      <div className="h-[450px] bg-gradient-to-br from-green-50 to-slate-100 dark:from-green-950 dark:to-slate-900 rounded-lg flex items-center justify-center animate-pulse">
         <div className="text-center">
           <Loader2 className="h-8 w-8 text-gray-400 dark:text-gray-500 animate-spin mx-auto mb-4" />
           <p className="text-muted-foreground">Loading priority status...</p>
@@ -35,7 +35,7 @@ export default function PriorityStatusChart({ loans, isLoading = false }: Priori
 
   if (!loans || loans.length === 0) {
     return (
-      <div className="h-[300px] bg-gradient-to-br from-green-50 to-slate-100 dark:from-green-950 dark:to-slate-900 rounded-lg flex items-center justify-center">
+      <div className="h-[450px] bg-gradient-to-br from-green-50 to-slate-100 dark:from-green-950 dark:to-slate-900 rounded-lg flex items-center justify-center">
         <div className="text-center">
           <AlertTriangle className="h-12 w-12 text-primary mx-auto mb-4" />
           <p className="text-muted-foreground">No priority data available</p>
@@ -94,7 +94,7 @@ export default function PriorityStatusChart({ loans, isLoading = false }: Priori
 
   return (
     <div data-testid="chart-priority-status">
-      <div className="h-[300px]">
+      <div className="h-[450px]">
         <ResponsiveContainer width="100%" height="100%">
           <PieChart>
             <Pie

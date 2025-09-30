@@ -79,7 +79,7 @@ export default function LoansTrendChart({
 
   if (isLoading) {
     return (
-      <div className="h-[300px] bg-gradient-to-br from-green-50 to-yellow-50 dark:from-gray-800 dark:to-gray-900 rounded-lg flex items-center justify-center animate-pulse" data-testid="chart-loans-trend">
+      <div className="h-[450px] bg-gradient-to-br from-green-50 to-yellow-50 dark:from-gray-800 dark:to-gray-900 rounded-lg flex items-center justify-center animate-pulse" data-testid="chart-loans-trend">
         <div className="text-center">
           <div className="h-8 w-32 bg-gray-300 dark:bg-gray-600 rounded mb-2 mx-auto"></div>
           <p className="text-gray-600 dark:text-gray-400">Loading loan trends...</p>
@@ -92,7 +92,7 @@ export default function LoansTrendChart({
 
   if (loanTrendData.length === 0) {
     return (
-      <div className="h-[300px] bg-gradient-to-br from-green-50 to-yellow-50 dark:from-gray-800 dark:to-gray-900 rounded-lg flex items-center justify-center" data-testid="chart-loans-trend">
+      <div className="h-[450px] bg-gradient-to-br from-green-50 to-yellow-50 dark:from-gray-800 dark:to-gray-900 rounded-lg flex items-center justify-center" data-testid="chart-loans-trend">
         <div className="text-center">
           <AlertCircle className="h-12 w-12 text-gray-300 dark:text-gray-600 mx-auto mb-4" />
           <p className="text-gray-600 dark:text-gray-400">No loan data available</p>
@@ -191,7 +191,7 @@ export default function LoansTrendChart({
       </div>
 
       <ChartContainer config={chartConfig}>
-        <ResponsiveContainer width="100%" height={300}>
+        <ResponsiveContainer width="100%" height={450}>
           <AreaChart data={loanTrendData}>
             <defs>
               <linearGradient id="colorLoans" x1="0" y1="0" x2="0" y2="1">

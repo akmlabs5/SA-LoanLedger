@@ -17,7 +17,7 @@ interface PortfolioDistributionChartProps {
 export default function PortfolioDistributionChart({ portfolioSummary }: PortfolioDistributionChartProps) {
   if (!portfolioSummary?.bankExposures) {
     return (
-      <div className="h-[300px] bg-gradient-to-br from-green-50 to-slate-100 dark:from-green-950 dark:to-slate-900 rounded-lg flex items-center justify-center">
+      <div className="h-[450px] bg-gradient-to-br from-green-50 to-slate-100 dark:from-green-950 dark:to-slate-900 rounded-lg flex items-center justify-center">
         <div className="text-center">
           <TrendingUp className="h-12 w-12 text-primary mx-auto mb-4" />
           <p className="text-muted-foreground">No data available</p>
@@ -53,7 +53,7 @@ export default function PortfolioDistributionChart({ portfolioSummary }: Portfol
 
   return (
     <div data-testid="chart-portfolio-distribution">
-      <div className="h-[300px]">
+      <div className="h-[450px]">
         <ResponsiveContainer width="100%" height="100%">
           <PieChart>
             <Pie
