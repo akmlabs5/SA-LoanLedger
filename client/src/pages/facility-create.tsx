@@ -94,6 +94,8 @@ export default function FacilityCreatePage() {
   });
 
   const onSubmit = (data: FacilityFormData) => {
+    console.log("Form submitted with data:", data);
+    console.log("Form errors:", form.formState.errors);
     createFacilityMutation.mutate(data);
   };
 
@@ -143,7 +145,14 @@ export default function FacilityCreatePage() {
               </CardHeader>
               <CardContent className="p-6">
                 <Form {...form}>
-                  <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+                  <form onSubmit={form.handleSubmit(onSubmit, (errors) => {
+                    console.log("Form validation errors:", errors);
+                    toast({
+                      title: "Validation Error",
+                      description: "Please check all required fields and try again.",
+                      variant: "destructive",
+                    });
+                  })} className="space-y-6">
                     {/* Facility Type */}
                     <FormField
                       control={form.control}
