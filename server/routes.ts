@@ -2302,6 +2302,307 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Report Generation Routes
+  app.get('/api/reports/facility-summary', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const format = req.query.format || 'pdf';
+      const startDate = req.query.startDate;
+      const endDate = req.query.endDate;
+
+      // Fetch data for the report
+      const facilities = await storage.getUserFacilities(userId);
+      const banks = await storage.getAllBanks();
+      const loans = await storage.getActiveLoansByUser(userId);
+
+      // Calculate totals and summaries
+      const bankSummaries = banks.map(bank => {
+        const bankFacilities = facilities.filter((f: any) => f.bankId === bank.id);
+        const bankLoans = loans.filter(l => {
+          const facility = facilities.find((f: any) => f.id === l.facilityId);
+          return facility?.bankId === bank.id;
+        });
+        
+        const totalCreditLimit = bankFacilities.reduce((sum: number, f: any) => 
+          sum + parseFloat(f.creditLimit.toString()), 0);
+        const totalOutstanding = bankLoans.reduce((sum: number, l: any) => 
+          sum + parseFloat(l.amount.toString()), 0);
+        const utilization = totalCreditLimit > 0 
+          ? (totalOutstanding / totalCreditLimit * 100).toFixed(2) 
+          : '0.00';
+
+        return {
+          bankName: bank.name,
+          bankCode: bank.code,
+          facilitiesCount: bankFacilities.length,
+          totalCreditLimit,
+          totalOutstanding,
+          utilization,
+          facilities: bankFacilities.map((f: any) => ({
+            type: f.facilityType,
+            creditLimit: parseFloat(f.creditLimit.toString()),
+            costOfFunding: parseFloat(f.costOfFunding.toString()),
+            expiryDate: f.expiryDate
+          }))
+        };
+      }).filter(summary => summary.facilitiesCount > 0);
+
+      if (format === 'excel') {
+        // Generate Excel report
+        const workbook = XLSX.utils.book_new();
+        
+        // Summary sheet
+        const summaryData = [
+          ['Facility Report'],
+          ['Generated:', new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })],
+          startDate && endDate ? ['Period:', `${startDate} to ${endDate}`] : [],
+          [],
+          ['Bank', 'Code', 'Facilities', 'Credit Limit (SAR)', 'Outstanding (SAR)', 'Utilization %']
+        ];
+
+        bankSummaries.forEach(summary => {
+          summaryData.push([
+            summary.bankName,
+            summary.bankCode,
+            summary.facilitiesCount.toString(),
+            summary.totalCreditLimit.toLocaleString('en-US', { minimumFractionDigits: 2 }),
+            summary.totalOutstanding.toLocaleString('en-US', { minimumFractionDigits: 2 }),
+            summary.utilization + '%'
+          ]);
+        });
+
+        const ws = XLSX.utils.aoa_to_sheet(summaryData);
+        XLSX.utils.book_append_sheet(workbook, ws, 'Summary');
+
+        // Detailed facilities sheet
+        const detailData = [
+          ['Bank', 'Facility Type', 'Credit Limit (SAR)', 'Cost of Funding %', 'Expiry Date']
+        ];
+
+        bankSummaries.forEach(summary => {
+          summary.facilities.forEach((facility: any) => {
+            detailData.push([
+              summary.bankName,
+              facility.type,
+              facility.creditLimit.toLocaleString('en-US', { minimumFractionDigits: 2 }),
+              facility.costOfFunding.toFixed(2) + '%',
+              facility.expiryDate || 'N/A'
+            ]);
+          });
+        });
+
+        const wsDetail = XLSX.utils.aoa_to_sheet(detailData);
+        XLSX.utils.book_append_sheet(workbook, wsDetail, 'Facility Details');
+
+        const buffer = XLSX.write(workbook, { type: 'buffer', bookType: 'xlsx' });
+        
+        res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+        res.setHeader('Content-Disposition', `attachment; filename="facility-report-${new Date().toISOString().split('T')[0]}.xlsx"`);
+        res.send(buffer);
+      } else {
+        // Generate PDF report
+        const PDFDoc = (jsPDF as any).default || jsPDF;
+        const doc = new PDFDoc();
+        
+        // Title
+        doc.setFontSize(18);
+        doc.text('Facility Report', 14, 20);
+        
+        doc.setFontSize(10);
+        doc.text(`Generated: ${new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}`, 14, 28);
+        if (startDate && endDate) {
+          doc.text(`Period: ${startDate} to ${endDate}`, 14, 34);
+        }
+
+        // Summary table
+        const tableData = bankSummaries.map(summary => [
+          summary.bankName,
+          summary.bankCode,
+          summary.facilitiesCount.toString(),
+          `SAR ${summary.totalCreditLimit.toLocaleString('en-US', { minimumFractionDigits: 2 })}`,
+          `SAR ${summary.totalOutstanding.toLocaleString('en-US', { minimumFractionDigits: 2 })}`,
+          `${summary.utilization}%`
+        ]);
+
+        autoTable(doc, {
+          startY: startDate && endDate ? 40 : 34,
+          head: [['Bank', 'Code', 'Facilities', 'Credit Limit', 'Outstanding', 'Utilization']],
+          body: tableData,
+          theme: 'grid',
+          headStyles: { fillColor: [183, 28, 28] }, // Saudi red color
+          styles: { fontSize: 9 }
+        });
+
+        // Add facility details
+        let yPos = (doc as any).lastAutoTable.finalY + 10;
+        doc.setFontSize(14);
+        doc.text('Facility Details', 14, yPos);
+        
+        const detailTableData: any[] = [];
+        bankSummaries.forEach(summary => {
+          summary.facilities.forEach((facility: any) => {
+            detailTableData.push([
+              summary.bankName,
+              facility.type,
+              `SAR ${facility.creditLimit.toLocaleString('en-US', { minimumFractionDigits: 2 })}`,
+              `${facility.costOfFunding.toFixed(2)}%`,
+              facility.expiryDate || 'N/A'
+            ]);
+          });
+        });
+
+        autoTable(doc, {
+          startY: yPos + 5,
+          head: [['Bank', 'Facility Type', 'Credit Limit', 'Cost of Funding', 'Expiry Date']],
+          body: detailTableData,
+          theme: 'grid',
+          headStyles: { fillColor: [183, 28, 28] },
+          styles: { fontSize: 8 }
+        });
+
+        const pdfBuffer = Buffer.from(doc.output('arraybuffer'));
+        
+        res.setHeader('Content-Type', 'application/pdf');
+        res.setHeader('Content-Disposition', `attachment; filename="facility-report-${new Date().toISOString().split('T')[0]}.pdf"`);
+        res.send(pdfBuffer);
+      }
+    } catch (error) {
+      console.error('Error generating facility summary report:', error);
+      res.status(500).json({ message: 'Failed to generate facility summary report' });
+    }
+  });
+
+  app.get('/api/reports/bank-exposures', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const format = req.query.format || 'pdf';
+      const startDate = req.query.startDate;
+      const endDate = req.query.endDate;
+
+      // Fetch exposure data
+      const facilities = await storage.getUserFacilities(userId);
+      const banks = await storage.getAllBanks();
+      const loans = await storage.getActiveLoansByUser(userId);
+
+      // Calculate bank exposures
+      const exposures = banks.map(bank => {
+        const bankFacilities = facilities.filter((f: any) => f.bankId === bank.id);
+        const bankLoans = loans.filter(l => {
+          const facility = facilities.find((f: any) => f.id === l.facilityId);
+          return facility?.bankId === bank.id;
+        });
+
+        const totalCreditLimit = bankFacilities.reduce((sum: number, f: any) => 
+          sum + parseFloat(f.creditLimit.toString()), 0);
+        const totalOutstanding = bankLoans.reduce((sum: number, l: any) => 
+          sum + parseFloat(l.amount.toString()), 0);
+        const availableCredit = totalCreditLimit - totalOutstanding;
+        const utilization = totalCreditLimit > 0 
+          ? (totalOutstanding / totalCreditLimit * 100).toFixed(2) 
+          : '0.00';
+
+        return {
+          bankName: bank.name,
+          bankCode: bank.code,
+          totalCreditLimit,
+          totalOutstanding,
+          availableCredit,
+          utilization,
+          activeLoans: bankLoans.length
+        };
+      }).filter(exp => exp.totalCreditLimit > 0);
+
+      const totalExposure = exposures.reduce((sum, exp) => sum + exp.totalOutstanding, 0);
+      const totalCreditLimit = exposures.reduce((sum, exp) => sum + exp.totalCreditLimit, 0);
+
+      if (format === 'excel') {
+        // Generate Excel report
+        const workbook = XLSX.utils.book_new();
+        
+        const exposureData = [
+          ['Bank Exposure Analysis'],
+          ['Generated:', new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })],
+          startDate && endDate ? ['Period:', `${startDate} to ${endDate}`] : [],
+          [],
+          ['Total Exposure:', `SAR ${totalExposure.toLocaleString('en-US', { minimumFractionDigits: 2 })}`],
+          ['Total Credit Limit:', `SAR ${totalCreditLimit.toLocaleString('en-US', { minimumFractionDigits: 2 })}`],
+          [],
+          ['Bank', 'Code', 'Credit Limit (SAR)', 'Outstanding (SAR)', 'Available (SAR)', 'Utilization %', 'Active Loans']
+        ];
+
+        exposures.forEach(exp => {
+          exposureData.push([
+            exp.bankName,
+            exp.bankCode,
+            exp.totalCreditLimit.toLocaleString('en-US', { minimumFractionDigits: 2 }),
+            exp.totalOutstanding.toLocaleString('en-US', { minimumFractionDigits: 2 }),
+            exp.availableCredit.toLocaleString('en-US', { minimumFractionDigits: 2 }),
+            exp.utilization + '%',
+            exp.activeLoans.toString()
+          ]);
+        });
+
+        const ws = XLSX.utils.aoa_to_sheet(exposureData);
+        XLSX.utils.book_append_sheet(workbook, ws, 'Exposure Analysis');
+
+        const buffer = XLSX.write(workbook, { type: 'buffer', bookType: 'xlsx' });
+        
+        res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+        res.setHeader('Content-Disposition', `attachment; filename="bank-exposure-${new Date().toISOString().split('T')[0]}.xlsx"`);
+        res.send(buffer);
+      } else {
+        // Generate PDF report
+        const PDFDoc = (jsPDF as any).default || jsPDF;
+        const doc = new PDFDoc();
+        
+        // Title
+        doc.setFontSize(18);
+        doc.text('Bank Exposure Analysis', 14, 20);
+        
+        doc.setFontSize(10);
+        doc.text(`Generated: ${new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}`, 14, 28);
+        if (startDate && endDate) {
+          doc.text(`Period: ${startDate} to ${endDate}`, 14, 34);
+        }
+
+        // Summary
+        const yStart = startDate && endDate ? 42 : 36;
+        doc.setFontSize(12);
+        doc.text(`Total Exposure: SAR ${totalExposure.toLocaleString('en-US', { minimumFractionDigits: 2 })}`, 14, yStart);
+        doc.text(`Total Credit Limit: SAR ${totalCreditLimit.toLocaleString('en-US', { minimumFractionDigits: 2 })}`, 14, yStart + 6);
+
+        // Exposure table
+        const tableData = exposures.map(exp => [
+          exp.bankName,
+          exp.bankCode,
+          `SAR ${exp.totalCreditLimit.toLocaleString('en-US', { minimumFractionDigits: 2 })}`,
+          `SAR ${exp.totalOutstanding.toLocaleString('en-US', { minimumFractionDigits: 2 })}`,
+          `SAR ${exp.availableCredit.toLocaleString('en-US', { minimumFractionDigits: 2 })}`,
+          `${exp.utilization}%`,
+          exp.activeLoans.toString()
+        ]);
+
+        autoTable(doc, {
+          startY: yStart + 14,
+          head: [['Bank', 'Code', 'Credit Limit', 'Outstanding', 'Available', 'Utilization', 'Loans']],
+          body: tableData,
+          theme: 'grid',
+          headStyles: { fillColor: [183, 28, 28] }, // Saudi red color
+          styles: { fontSize: 8 }
+        });
+
+        const pdfBuffer = Buffer.from(doc.output('arraybuffer'));
+        
+        res.setHeader('Content-Type', 'application/pdf');
+        res.setHeader('Content-Disposition', `attachment; filename="bank-exposure-${new Date().toISOString().split('T')[0]}.pdf"`);
+        res.send(pdfBuffer);
+      }
+    } catch (error) {
+      console.error('Error generating bank exposure report:', error);
+      res.status(500).json({ message: 'Failed to generate bank exposure report' });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }
