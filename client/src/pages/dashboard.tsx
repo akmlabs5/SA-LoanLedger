@@ -71,7 +71,7 @@ export default function Dashboard() {
     enabled: isAuthenticated,
   });
 
-  const { data: allBanks } = useQuery({
+  const { data: allBanks } = useQuery<any[]>({
     queryKey: ["/api/banks"],
     enabled: isAuthenticated,
   });
@@ -175,13 +175,9 @@ export default function Dashboard() {
                       <SelectItem 
                         key={bank.id} 
                         value={bank.id}
-                        className="flex items-center"
                         data-testid={`option-bank-${bank.id}`}
                       >
-                        <div className="flex items-center space-x-2">
-                          <Building className="h-4 w-4 text-indigo-500" />
-                          <span>{bank.name}</span>
-                        </div>
+                        {bank.name}
                       </SelectItem>
                     ))}
                   </SelectContent>
