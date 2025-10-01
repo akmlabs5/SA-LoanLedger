@@ -200,6 +200,10 @@ export const facilities = pgTable("facilities", {
   expiryDate: date("expiry_date").notNull(),
   terms: text("terms"),
   isActive: boolean("is_active").default(true),
+  // Optional revolving period tracking for complex loan structures
+  enableRevolvingTracking: boolean("enable_revolving_tracking").default(false),
+  maxRevolvingPeriod: integer("max_revolving_period"), // Maximum days (e.g., 360)
+  initialDrawdownDate: date("initial_drawdown_date"), // Set on first loan drawdown
   createdAt: timestamp("created_at").defaultNow(),
 });
 
@@ -844,7 +848,7 @@ export const insertBankContactSchema = createInsertSchema(bankContacts)
   });
 
 export const insertFacilitySchema = createInsertSchema(facilities)
-  .omit({ id: true, createdAt: true })
+  .omit({ id: true, createdAt: true, initialDrawdownDate: true })
   .extend({
     facilityType: facilityTypeZodEnum,
     creditLimit: positiveDecimalString(15, 2),
@@ -854,6 +858,8 @@ export const insertFacilitySchema = createInsertSchema(facilities)
       .refine((val) => Number(val) <= 100, "Must be 100% or less"),
     startDate: z.string().refine((val) => !isNaN(Date.parse(val)), "Must be a valid date"),
     expiryDate: z.string().refine((val) => !isNaN(Date.parse(val)), "Must be a valid date"),
+    enableRevolvingTracking: z.boolean().optional(),
+    maxRevolvingPeriod: z.number().int().positive("Maximum period must be positive").optional(),
   });
 
 export const insertCreditLineSchema = createInsertSchema(creditLines)
