@@ -582,7 +582,12 @@ export default function BankDetail() {
                       const urgency = daysUntilDue <= 7 ? 'critical' : daysUntilDue <= 15 ? 'warning' : 'normal';
                       
                       return (
-                        <div key={loan.id} className="p-4 border border-gray-200 dark:border-gray-700 rounded-xl bg-white dark:bg-gray-800/50 hover:shadow-md transition-shadow">
+                        <div 
+                          key={loan.id} 
+                          className="p-4 border border-gray-200 dark:border-gray-700 rounded-xl bg-white dark:bg-gray-800/50 hover:shadow-md transition-shadow cursor-pointer"
+                          onClick={() => setLocation(`/loans/${loan.id}`)}
+                          data-testid={`card-loan-${loan.id}`}
+                        >
                           <div className="flex items-center justify-between mb-2">
                             <div className="flex-1">
                               <h5 className="font-semibold text-gray-900 dark:text-gray-100">
@@ -614,6 +619,7 @@ export default function BankDetail() {
                                     size="sm"
                                     className="h-8 w-8 p-0"
                                     data-testid={`button-loan-actions-${loan.id}`}
+                                    onClick={(e) => e.stopPropagation()}
                                   >
                                     <MoreVertical className="h-4 w-4" />
                                   </Button>

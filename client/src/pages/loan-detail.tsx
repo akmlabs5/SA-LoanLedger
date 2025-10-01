@@ -16,6 +16,7 @@ import { isUnauthorizedError } from "@/lib/authUtils";
 import DocumentUpload from "@/components/DocumentUpload";
 import DocumentList from "@/components/DocumentList";
 import ReminderModal from "@/components/ReminderModal";
+import { RevolvingPeriodTracker } from "@/components/RevolvingPeriodTracker";
 
 export default function LoanDetailPage() {
   const { id: loanId } = useParams<{ id: string }>();
@@ -65,6 +66,12 @@ export default function LoanDetailPage() {
     staleTime: 5 * 60 * 1000, // 5 minutes
     gcTime: 15 * 60 * 1000, // 15 minutes
     refetchOnWindowFocus: false,
+  });
+
+  // Fetch facility info for revolving period tracking
+  const { data: facility } = useQuery({
+    queryKey: ["/api/facilities", loan?.facilityId],
+    enabled: !!loan?.facilityId && isAuthenticated,
   });
 
   // Settlement mutation
@@ -489,6 +496,15 @@ export default function LoanDetailPage() {
                 )}
               </CardContent>
             </Card>
+
+            {/* Revolving Period Tracker - Show only if facility has tracking enabled */}
+            {facility?.enableRevolvingTracking && (
+              <RevolvingPeriodTracker 
+                facilityId={loan.facilityId}
+                maxRevolvingPeriod={facility.maxRevolvingPeriod}
+                initialDrawdownDate={facility.initialDrawdownDate}
+              />
+            )}
 
             {/* Balance Information */}
             {balance && (
