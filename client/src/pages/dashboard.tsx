@@ -398,10 +398,12 @@ export default function Dashboard() {
                 </Button>
               </Link>
               
-              <Button variant="ghost" className="w-full justify-start" data-testid="button-quick-export-reports">
-                <Download className="mr-3 h-4 w-4" />
-                Export Portfolio Report
-              </Button>
+              <Link href="/reports">
+                <Button variant="ghost" className="w-full justify-start" data-testid="button-quick-export-reports">
+                  <Download className="mr-3 h-4 w-4" />
+                  Export Portfolio Report
+                </Button>
+              </Link>
               
               <Separator className="my-4" />
               
