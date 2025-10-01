@@ -472,7 +472,7 @@ export default function LoanDetailPage() {
                     <Button 
                       variant="outline" 
                       className="w-full"
-                      onClick={() => setLocation(`/loans/${loan.id}/payment`)}
+                      onClick={() => setLocation(`/loans/${loan.id}/payment/create`)}
                     >
                       Process Payment
                     </Button>
