@@ -34,7 +34,7 @@ import UpcomingLoansByMonthChart from "@/components/charts/UpcomingLoansByMonthC
 import { isUnauthorizedError } from "@/lib/authUtils";
 import { PortfolioSummary, SiborRate, LoanWithDetails } from "@shared/types";
 import { SAUDI_CHART_COLORS } from "@/lib/chart-colors";
-import backgroundImage from "@assets/loantrack_background_variant_1_1759302325282.png";
+import backgroundImage from "@assets/loan_management_background_excel_green_1759302449019.png";
 
 export default function Dashboard() {
   const { user, isLoading, isAuthenticated } = useAuth();
