@@ -34,6 +34,7 @@ import UpcomingLoansByMonthChart from "@/components/charts/UpcomingLoansByMonthC
 import { isUnauthorizedError } from "@/lib/authUtils";
 import { PortfolioSummary, SiborRate, LoanWithDetails } from "@shared/types";
 import { SAUDI_CHART_COLORS } from "@/lib/chart-colors";
+import backgroundImage from "@assets/loantrack_background_variant_1_1759302325282.png";
 
 export default function Dashboard() {
   const { user, isLoading, isAuthenticated } = useAuth();
@@ -141,7 +142,15 @@ export default function Dashboard() {
   };
 
   return (
-    <div className="min-h-screen bg-background">
+    <div 
+      className="min-h-screen bg-background"
+      style={{
+        backgroundImage: `url(${backgroundImage})`,
+        backgroundSize: 'cover',
+        backgroundPosition: 'center',
+        backgroundAttachment: 'fixed'
+      }}
+    >
       <div className="max-w-7xl mx-auto px-6 py-6 space-y-6">
         {/* Welcome Header */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
