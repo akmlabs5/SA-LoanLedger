@@ -489,7 +489,6 @@ export default function GeneralFacilityCreatePage() {
                                     type="number"
                                     placeholder="e.g., 360"
                                     {...field}
-                                    onChange={(e) => field.onChange(e.target.value ? parseInt(e.target.value) : undefined)}
                                     value={field.value ?? ""}
                                   />
                                 </FormControl>
