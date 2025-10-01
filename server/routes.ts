@@ -263,7 +263,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
           return {
             facilityId: facility.id,
-            facilityName: `${facility.type.replace('_', ' ').toUpperCase()} - ${parseFloat(facility.limit).toLocaleString('en-SA')} SAR`,
+            facilityName: `${(facility.type || 'facility').replace('_', ' ').toUpperCase()} - ${parseFloat(facility.limit).toLocaleString('en-SA')} SAR`,
             limit: parseFloat(facility.limit),
             outstanding: facilityOutstanding,
             utilization: Math.round(utilization * 10) / 10,
