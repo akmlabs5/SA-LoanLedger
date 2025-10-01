@@ -69,49 +69,16 @@ export function SignInCard({ onSubmit, onReplitAuth, isLoading: externalLoading 
   };
 
   return (
-    <div className="min-h-screen w-screen bg-black relative overflow-hidden flex items-center justify-center">
-      {/* Background gradient effect - matches the purple style but with Saudi green touches */}
-      <div className="absolute inset-0 bg-gradient-to-b from-green-500/20 via-purple-700/30 to-black" />
-      
-      {/* Subtle noise texture overlay */}
-      <div className="absolute inset-0 opacity-[0.03] mix-blend-soft-light" 
+    <div className="min-h-screen w-screen bg-white relative overflow-hidden flex items-center justify-center">
+      {/* Background gradient image with 40% opacity */}
+      <div 
+        className="absolute inset-0 opacity-40"
         style={{
-          backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E")`,
-          backgroundSize: '200px 200px'
+          backgroundImage: `url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 768" preserveAspectRatio="xMidYMid slice"><defs><linearGradient id="g1" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" style="stop-color:%2380d4a8;stop-opacity:1"/><stop offset="50%" style="stop-color:%2366c79a;stop-opacity:1"/><stop offset="100%" style="stop-color:%234db88c;stop-opacity:1"/></linearGradient><linearGradient id="g2" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" style="stop-color:%2366c79a;stop-opacity:0.8"/><stop offset="100%" style="stop-color:%2338a375;stop-opacity:0.8"/></linearGradient></defs><rect width="1024" height="768" fill="url(%23g1)"/><g opacity="0.6"><path d="M-100 -100 L400 400 L-100 900 Z" fill="url(%23g2)"/><path d="M150 -100 L900 650 L150 900 Z" fill="url(%23g2)"/><path d="M400 -100 L1124 624 L400 900 Z" fill="url(%23g2)"/><path d="M650 -100 L1374 624 L650 900 Z" fill="url(%23g2)"/></g><ellipse cx="750" cy="350" rx="280" ry="320" fill="%2338a375" opacity="0.3"/><ellipse cx="300" cy="500" rx="250" ry="280" fill="%2366c79a" opacity="0.25"/></svg>')`,
+          backgroundSize: 'cover',
+          backgroundPosition: 'center'
         }}
       />
-
-      {/* Top radial glow */}
-      <div className="absolute top-0 left-1/2 transform -translate-x-1/2 w-[120vh] h-[60vh] rounded-b-[50%] bg-green-400/10 blur-[80px]" />
-      <motion.div 
-        className="absolute top-0 left-1/2 transform -translate-x-1/2 w-[100vh] h-[60vh] rounded-b-full bg-green-300/15 blur-[60px]"
-        animate={{ 
-          opacity: [0.15, 0.3, 0.15],
-          scale: [0.98, 1.02, 0.98]
-        }}
-        transition={{ 
-          duration: 8, 
-          repeat: Infinity,
-          repeatType: "mirror"
-        }}
-      />
-      <motion.div 
-        className="absolute bottom-0 left-1/2 transform -translate-x-1/2 w-[90vh] h-[90vh] rounded-t-full bg-purple-400/15 blur-[60px]"
-        animate={{ 
-          opacity: [0.3, 0.5, 0.3],
-          scale: [1, 1.1, 1]
-        }}
-        transition={{ 
-          duration: 6, 
-          repeat: Infinity,
-          repeatType: "mirror",
-          delay: 1
-        }}
-      />
-
-      {/* Animated glow spots */}
-      <div className="absolute left-1/4 top-1/4 w-96 h-96 bg-white/5 rounded-full blur-[100px] animate-pulse opacity-40" />
-      <div className="absolute right-1/4 bottom-1/4 w-96 h-96 bg-white/5 rounded-full blur-[100px] animate-pulse delay-1000 opacity-40" />
 
       <motion.div
         initial={{ opacity: 0, y: 20 }}
@@ -120,30 +87,13 @@ export function SignInCard({ onSubmit, onReplitAuth, isLoading: externalLoading 
         className="w-full max-w-sm relative z-10"
         style={{ perspective: 1500 }}
       >
-        <motion.div
-          className="relative"
-          style={{ rotateX, rotateY }}
-          onMouseMove={handleMouseMove}
-          onMouseLeave={handleMouseLeave}
-          whileHover={{ z: 10 }}
-        >
-          <div className="relative group">
-            {/* Card glow effect */}
-            <motion.div 
-              className="absolute -inset-[1px] rounded-2xl opacity-0 group-hover:opacity-70 transition-opacity duration-700"
-              animate={{
-                boxShadow: [
-                  "0 0 10px 2px rgba(255,255,255,0.03)",
-                  "0 0 15px 5px rgba(255,255,255,0.05)",
-                  "0 0 10px 2px rgba(255,255,255,0.03)"
-                ],
-                opacity: [0.2, 0.4, 0.2]
-              }}
-              transition={{ 
-                duration: 4, 
-                repeat: Infinity, 
-                ease: "easeInOut", 
-                repeatType: "mirror" 
+        <div className="relative">
+          <div className="relative group" style={{ transform: 'rotateX(2deg) rotateY(0deg)' }}>
+            {/* Card glow effect - static */}
+            <div 
+              className="absolute -inset-[1px] rounded-2xl opacity-30 transition-opacity duration-700"
+              style={{
+                boxShadow: "0 0 20px 5px rgba(102, 199, 154, 0.15)"
               }}
             />
 
@@ -325,14 +275,14 @@ export function SignInCard({ onSubmit, onReplitAuth, isLoading: externalLoading 
             </div>
 
             {/* Card border glow */}
-            <div className="absolute -inset-[0.5px] rounded-2xl bg-gradient-to-r from-white/3 via-white/7 to-white/3 opacity-0 group-hover:opacity-70 transition-opacity duration-500" />
+            <div className="absolute -inset-[0.5px] rounded-2xl bg-gradient-to-r from-green-500/10 via-green-400/20 to-green-500/10 opacity-50 transition-opacity duration-500" />
             
             {/* Glass card background */}
-            <div className="relative bg-black/40 backdrop-blur-xl rounded-2xl p-6 border border-white/[0.05] shadow-2xl overflow-hidden">
+            <div className="relative bg-white/90 backdrop-blur-xl rounded-2xl p-6 border border-green-200/30 shadow-2xl overflow-hidden">
               {/* Subtle card inner patterns */}
-              <div className="absolute inset-0 opacity-[0.03]" 
+              <div className="absolute inset-0 opacity-[0.02]" 
                 style={{
-                  backgroundImage: `linear-gradient(135deg, white 0.5px, transparent 0.5px), linear-gradient(45deg, white 0.5px, transparent 0.5px)`,
+                  backgroundImage: `linear-gradient(135deg, #66c79a 0.5px, transparent 0.5px), linear-gradient(45deg, #66c79a 0.5px, transparent 0.5px)`,
                   backgroundSize: '30px 30px'
                 }}
               />
@@ -355,7 +305,7 @@ export function SignInCard({ onSubmit, onReplitAuth, isLoading: externalLoading 
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.2 }}
-                  className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-b from-white to-white/80"
+                  className="text-xl font-bold text-gray-800"
                 >
                   Welcome Back
                 </motion.h1>
@@ -364,7 +314,7 @@ export function SignInCard({ onSubmit, onReplitAuth, isLoading: externalLoading 
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   transition={{ delay: 0.3 }}
-                  className="text-white/60 text-xs"
+                  className="text-gray-600 text-xs"
                 >
                   Sign in to Saudi Loan Manager
                 </motion.p>
@@ -395,7 +345,7 @@ export function SignInCard({ onSubmit, onReplitAuth, isLoading: externalLoading 
                     
                     <div className="relative flex items-center overflow-hidden rounded-lg">
                       <Mail className={`absolute left-3 w-4 h-4 transition-all duration-300 ${
-                        focusedInput === "email" ? 'text-white' : 'text-white/40'
+                        focusedInput === "email" ? 'text-green-600' : 'text-gray-400'
                       }`} />
                       
                       <Input
@@ -405,7 +355,7 @@ export function SignInCard({ onSubmit, onReplitAuth, isLoading: externalLoading 
                         onChange={(e) => setEmail(e.target.value)}
                         onFocus={() => setFocusedInput("email")}
                         onBlur={() => setFocusedInput(null)}
-                        className="w-full bg-white/5 border-transparent focus:border-white/20 text-white placeholder:text-white/30 h-10 transition-all duration-300 pl-10 pr-3 focus:bg-white/10"
+                        className="w-full bg-gray-50 border-gray-200 focus:border-green-400 text-gray-900 placeholder:text-gray-400 h-10 transition-all duration-300 pl-10 pr-3 focus:bg-white"
                         data-testid="input-email"
                       />
                       
@@ -434,7 +384,7 @@ export function SignInCard({ onSubmit, onReplitAuth, isLoading: externalLoading 
                     
                     <div className="relative flex items-center overflow-hidden rounded-lg">
                       <Lock className={`absolute left-3 w-4 h-4 transition-all duration-300 ${
-                        focusedInput === "password" ? 'text-white' : 'text-white/40'
+                        focusedInput === "password" ? 'text-green-600' : 'text-gray-400'
                       }`} />
                       
                       <Input
@@ -444,7 +394,7 @@ export function SignInCard({ onSubmit, onReplitAuth, isLoading: externalLoading 
                         onChange={(e) => setPassword(e.target.value)}
                         onFocus={() => setFocusedInput("password")}
                         onBlur={() => setFocusedInput(null)}
-                        className="w-full bg-white/5 border-transparent focus:border-white/20 text-white placeholder:text-white/30 h-10 transition-all duration-300 pl-10 pr-10 focus:bg-white/10"
+                        className="w-full bg-gray-50 border-gray-200 focus:border-green-400 text-gray-900 placeholder:text-gray-400 h-10 transition-all duration-300 pl-10 pr-10 focus:bg-white"
                         data-testid="input-password"
                       />
                       
@@ -455,9 +405,9 @@ export function SignInCard({ onSubmit, onReplitAuth, isLoading: externalLoading 
                         data-testid="button-toggle-password"
                       >
                         {showPassword ? (
-                          <Eye className="w-4 h-4 text-white/40 hover:text-white transition-colors duration-300" />
+                          <Eye className="w-4 h-4 text-gray-400 hover:text-gray-600 transition-colors duration-300" />
                         ) : (
-                          <EyeClosed className="w-4 h-4 text-white/40 hover:text-white transition-colors duration-300" />
+                          <EyeClosed className="w-4 h-4 text-gray-400 hover:text-gray-600 transition-colors duration-300" />
                         )}
                       </div>
                       
@@ -486,14 +436,14 @@ export function SignInCard({ onSubmit, onReplitAuth, isLoading: externalLoading 
                         type="checkbox"
                         checked={rememberMe}
                         onChange={() => setRememberMe(!rememberMe)}
-                        className="appearance-none h-4 w-4 rounded border border-white/20 bg-white/5 checked:bg-white checked:border-white focus:outline-none focus:ring-1 focus:ring-white/30 transition-all duration-200"
+                        className="appearance-none h-4 w-4 rounded border border-gray-300 bg-gray-50 checked:bg-green-600 checked:border-green-600 focus:outline-none focus:ring-1 focus:ring-green-400 transition-all duration-200"
                         data-testid="checkbox-remember-me"
                       />
                       {rememberMe && (
                         <motion.div 
                           initial={{ opacity: 0, scale: 0.5 }}
                           animate={{ opacity: 1, scale: 1 }}
-                          className="absolute inset-0 flex items-center justify-center text-black pointer-events-none"
+                          className="absolute inset-0 flex items-center justify-center text-white pointer-events-none"
                         >
                           <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
                             <polyline points="20 6 9 17 4 12"></polyline>
@@ -501,13 +451,13 @@ export function SignInCard({ onSubmit, onReplitAuth, isLoading: externalLoading 
                         </motion.div>
                       )}
                     </div>
-                    <label htmlFor="remember-me" className="text-xs text-white/60 hover:text-white/80 transition-colors duration-200">
+                    <label htmlFor="remember-me" className="text-xs text-gray-600 hover:text-gray-800 transition-colors duration-200">
                       Remember me
                     </label>
                   </div>
                   
                   <div className="text-xs relative group/link">
-                    <Link href="/auth/forgot-password" className="text-white/60 hover:text-white transition-colors duration-200">
+                    <Link href="/auth/forgot-password" className="text-gray-600 hover:text-green-600 transition-colors duration-200">
                       Forgot password?
                     </Link>
                   </div>
@@ -523,21 +473,12 @@ export function SignInCard({ onSubmit, onReplitAuth, isLoading: externalLoading 
                   data-testid="button-signin-email"
                 >
                   {/* Button glow effect */}
-                  <div className="absolute inset-0 bg-white/10 rounded-lg blur-lg opacity-0 group-hover/button:opacity-70 transition-opacity duration-300" />
+                  <div className="absolute inset-0 bg-green-400/20 rounded-lg blur-lg opacity-0 group-hover/button:opacity-70 transition-opacity duration-300" />
                   
-                  <div className="relative overflow-hidden bg-white text-black font-medium h-10 rounded-lg transition-all duration-300 flex items-center justify-center">
-                    {/* Button background animation */}
-                    <motion.div 
-                      className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/30 to-white/0 -z-10"
-                      animate={{ 
-                        x: ['-100%', '100%'],
-                      }}
-                      transition={{ 
-                        duration: 1.5, 
-                        ease: "easeInOut", 
-                        repeat: Infinity,
-                        repeatDelay: 1
-                      }}
+                  <div className="relative overflow-hidden bg-gradient-to-r from-green-600 to-green-700 text-white font-medium h-10 rounded-lg transition-all duration-300 flex items-center justify-center hover:from-green-700 hover:to-green-800">
+                    {/* Button shine effect - static */}
+                    <div 
+                      className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent -z-10"
                       style={{ 
                         opacity: loading ? 1 : 0,
                         transition: 'opacity 0.3s ease'
@@ -573,16 +514,11 @@ export function SignInCard({ onSubmit, onReplitAuth, isLoading: externalLoading 
 
                 {/* Divider */}
                 <div className="relative mt-6 mb-5 flex items-center">
-                  <div className="flex-grow border-t border-white/5"></div>
-                  <motion.span 
-                    className="mx-3 text-xs text-white/40"
-                    initial={{ opacity: 0.7 }}
-                    animate={{ opacity: [0.7, 0.9, 0.7] }}
-                    transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
-                  >
+                  <div className="flex-grow border-t border-gray-200"></div>
+                  <span className="mx-3 text-xs text-gray-500">
                     or
-                  </motion.span>
-                  <div className="flex-grow border-t border-white/5"></div>
+                  </span>
+                  <div className="flex-grow border-t border-gray-200"></div>
                 </div>
 
                 {/* Replit Auth button */}
@@ -596,29 +532,18 @@ export function SignInCard({ onSubmit, onReplitAuth, isLoading: externalLoading 
                 >
                   <div className="absolute inset-0 bg-green-500/10 rounded-lg blur opacity-0 group-hover/replit:opacity-70 transition-opacity duration-300" />
                   
-                  <div className="relative overflow-hidden bg-green-600/20 text-white font-medium h-10 rounded-lg border border-green-500/30 hover:border-green-400/50 transition-all duration-300 flex items-center justify-center gap-2">
-                    <University className="w-4 h-4 text-green-400" />
+                  <div className="relative overflow-hidden bg-white border-2 border-green-600 text-green-700 font-medium h-10 rounded-lg hover:bg-green-50 transition-all duration-300 flex items-center justify-center gap-2">
+                    <University className="w-4 h-4 text-green-600" />
                     
-                    <span className="text-white/90 group-hover/replit:text-white transition-colors text-sm">
+                    <span className="text-sm">
                       Sign in with Replit Auth
                     </span>
-                    
-                    {/* Button hover effect */}
-                    <motion.div 
-                      className="absolute inset-0 bg-gradient-to-r from-green-500/0 via-green-500/10 to-green-500/0"
-                      initial={{ x: '-100%' }}
-                      whileHover={{ x: '100%' }}
-                      transition={{ 
-                        duration: 1, 
-                        ease: "easeInOut"
-                      }}
-                    />
                   </div>
                 </motion.button>
 
                 {/* Sign up link */}
                 <motion.p 
-                  className="text-center text-xs text-white/60 mt-4"
+                  className="text-center text-xs text-gray-600 mt-4"
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   transition={{ delay: 0.5 }}
@@ -628,16 +553,16 @@ export function SignInCard({ onSubmit, onReplitAuth, isLoading: externalLoading 
                     href="/auth/signup" 
                     className="relative inline-block group/signup"
                   >
-                    <span className="relative z-10 text-white group-hover/signup:text-white/70 transition-colors duration-300 font-medium">
+                    <span className="relative z-10 text-green-600 group-hover/signup:text-green-700 transition-colors duration-300 font-medium">
                       Sign up
                     </span>
-                    <span className="absolute bottom-0 left-0 w-0 h-[1px] bg-white group-hover/signup:w-full transition-all duration-300" />
+                    <span className="absolute bottom-0 left-0 w-0 h-[1px] bg-green-600 group-hover/signup:w-full transition-all duration-300" />
                   </Link>
                 </motion.p>
               </form>
             </div>
           </div>
-        </motion.div>
+        </div>
       </motion.div>
     </div>
   );
