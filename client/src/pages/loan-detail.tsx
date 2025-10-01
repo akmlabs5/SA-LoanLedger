@@ -9,6 +9,16 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { apiRequest, queryClient } from "@/lib/queryClient";
@@ -25,6 +35,7 @@ export default function LoanDetailPage() {
   const { isAuthenticated } = useAuth();
   const [activeTab, setActiveTab] = useState("transactions");
   const [reminderModalOpen, setReminderModalOpen] = useState(false);
+  const [settleConfirmOpen, setSettleConfirmOpen] = useState(false);
 
   // Fetch loan details (always needed for overview)
   const { data: loan, isLoading: loanLoading, isError: loanError } = useQuery<LoanWithDetails>({
@@ -109,8 +120,13 @@ export default function LoanDetailPage() {
   });
 
   const handleSettleLoan = () => {
-    if (loan && window.confirm(`Are you sure you want to settle this loan for ${formatCurrency(parseFloat(loan.amount))}?`)) {
+    setSettleConfirmOpen(true);
+  };
+
+  const confirmSettle = () => {
+    if (loan) {
       settleLoanMutation.mutate({ loanId: loan.id, settledAmount: parseFloat(loan.amount) });
+      setSettleConfirmOpen(false);
     }
   };
 
@@ -549,6 +565,29 @@ export default function LoanDetailPage() {
             }}
           />
         )}
+
+        {/* Settle Loan Confirmation Dialog */}
+        <AlertDialog open={settleConfirmOpen} onOpenChange={setSettleConfirmOpen}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Settle Loan</AlertDialogTitle>
+              <AlertDialogDescription>
+                Are you sure you want to settle this loan for <span className="font-semibold">{formatCurrency(parseFloat(loan?.amount || "0"))}</span>?
+                <br /><br />
+                This will mark the loan as settled and close the loan cycle.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <AlertDialogAction 
+                onClick={confirmSettle}
+                className="bg-emerald-600 hover:bg-emerald-700"
+              >
+                Settle Loan
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </div>
     </div>
   );
