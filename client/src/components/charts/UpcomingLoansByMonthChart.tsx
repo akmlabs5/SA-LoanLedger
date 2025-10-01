@@ -24,19 +24,17 @@ export default function UpcomingLoansByMonthChart({ allBanks }: UpcomingLoansByM
   const [selectedBank, setSelectedBank] = useState<string>("all");
   const [selectedFacilityType, setSelectedFacilityType] = useState<string>("all");
 
-  const { data: monthlyData, isLoading } = useQuery<MonthData[]>({
-    queryKey: ["/api/dashboard/upcoming-loans-by-month", selectedBank, selectedFacilityType],
-    queryFn: async () => {
-      const params = new URLSearchParams();
-      if (selectedBank !== "all") params.append("bankId", selectedBank);
-      if (selectedFacilityType !== "all") params.append("facilityType", selectedFacilityType);
-      
-      const response = await fetch(`/api/dashboard/upcoming-loans-by-month?${params}`, {
-        credentials: 'include'
-      });
-      if (!response.ok) throw new Error('Failed to fetch monthly data');
-      return response.json();
-    },
+  // Build query string for filters
+  const queryString = (() => {
+    const params = new URLSearchParams();
+    if (selectedBank !== "all") params.append("bankId", selectedBank);
+    if (selectedFacilityType !== "all") params.append("facilityType", selectedFacilityType);
+    const qs = params.toString();
+    return qs ? `?${qs}` : '';
+  })();
+
+  const { data: monthlyData, isLoading, error } = useQuery<MonthData[]>({
+    queryKey: [`/api/dashboard/upcoming-loans-by-month${queryString}`],
   });
 
   if (isLoading) {
@@ -45,6 +43,18 @@ export default function UpcomingLoansByMonthChart({ allBanks }: UpcomingLoansByM
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
           <p className="text-muted-foreground">Loading chart data...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="h-full bg-gradient-to-br from-red-50 to-slate-100 dark:from-red-950 dark:to-slate-900 rounded-lg flex items-center justify-center">
+        <div className="text-center">
+          <TrendingUp className="h-12 w-12 text-destructive mx-auto mb-4" />
+          <p className="text-muted-foreground">Failed to load chart data</p>
+          <p className="text-sm text-muted-foreground mt-2">Please try refreshing the page</p>
         </div>
       </div>
     );
