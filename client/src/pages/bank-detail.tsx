@@ -1295,10 +1295,10 @@ function RevolveDialog({ open, onOpenChange, loan, onSubmit, isPending }: any) {
               </label>
             </div>
 
-            {/* Conditional SIBOR Input */}
+            {/* New SIBOR Rate Selection */}
             {useCustomSibor ? (
               <FormItem>
-                <FormLabel>Custom SIBOR Rate (%)</FormLabel>
+                <FormLabel>New SIBOR Rate (%)</FormLabel>
                 <FormControl>
                   <Input 
                     type="number" 
@@ -1309,60 +1309,66 @@ function RevolveDialog({ open, onOpenChange, loan, onSubmit, isPending }: any) {
                     data-testid="input-custom-sibor" 
                   />
                 </FormControl>
-                <p className="text-xs text-gray-500">Enter custom SIBOR rate if new term doesn't align with standard terms</p>
+                <p className="text-xs text-gray-500">Enter the SIBOR rate for the new loan cycle</p>
               </FormItem>
             ) : (
-              <FormField
-                control={form.control}
-                name="siborTermMonths"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>SIBOR Term</FormLabel>
-                    <Select onValueChange={(value) => field.onChange(parseInt(value))} defaultValue={field.value?.toString()}>
-                      <FormControl>
-                        <SelectTrigger data-testid="select-sibor-term">
-                          <SelectValue placeholder="Select SIBOR term" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        <SelectItem value="1">1 Month</SelectItem>
-                        <SelectItem value="3">3 Months</SelectItem>
-                        <SelectItem value="6">6 Months</SelectItem>
-                        <SelectItem value="12">12 Months</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+              <div className="space-y-3">
+                <FormField
+                  control={form.control}
+                  name="siborTermMonths"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>New SIBOR Term</FormLabel>
+                      <Select onValueChange={(value) => field.onChange(parseInt(value))} defaultValue={field.value?.toString()}>
+                        <FormControl>
+                          <SelectTrigger data-testid="select-sibor-term">
+                            <SelectValue placeholder="Select SIBOR term" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="1">1 Month</SelectItem>
+                          <SelectItem value="3">3 Months</SelectItem>
+                          <SelectItem value="6">6 Months</SelectItem>
+                          <SelectItem value="12">12 Months</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <div className="p-2 bg-blue-50 dark:bg-blue-900/20 rounded text-sm">
+                  <p className="text-gray-600 dark:text-gray-400">
+                    Current Market SIBOR: <span className="font-semibold">{(siborRate as any)?.rate || 0}%</span>
+                  </p>
+                </div>
+              </div>
             )}
             
             {/* Read-only Margin (inherited from facility) */}
-            <FormItem>
-              <FormLabel>Margin (%) - From Facility</FormLabel>
-              <FormControl>
-                <Input 
-                  value={inheritedMargin} 
-                  readOnly 
-                  disabled
-                  className="bg-gray-100 dark:bg-gray-800" 
-                  data-testid="input-revolve-margin" 
-                />
-              </FormControl>
-              <p className="text-xs text-gray-500">Margin is inherited from the facility and remains constant</p>
-            </FormItem>
+            <div className="p-3 border border-gray-200 dark:border-gray-700 rounded-lg bg-gray-50 dark:bg-gray-800/50">
+              <div className="flex items-center justify-between mb-1">
+                <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Margin (Constant)</label>
+                <span className="text-lg font-semibold text-gray-900 dark:text-gray-100">{parseFloat(inheritedMargin).toFixed(2)}%</span>
+              </div>
+              <p className="text-xs text-gray-500 dark:text-gray-400">Inherited from facility - remains constant across revolving cycles</p>
+            </div>
 
-            {/* Rate Display */}
-            <div className="p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg space-y-1">
-              <p className="text-sm text-gray-600 dark:text-gray-400">
-                {useCustomSibor ? 'Custom' : 'Current'} SIBOR Rate: <span className="font-semibold">{effectiveSiborRate.toFixed(2)}%</span>
-              </p>
-              <p className="text-sm text-gray-600 dark:text-gray-400">
-                Margin: <span className="font-semibold">{parseFloat(inheritedMargin).toFixed(2)}%</span>
-              </p>
-              <p className="text-sm font-semibold text-blue-700 dark:text-blue-400">
-                Total Rate: {totalRate.toFixed(2)}%
-              </p>
+            {/* Total Rate Calculation */}
+            <div className="p-4 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 rounded-lg border-2 border-blue-200 dark:border-blue-800">
+              <div className="space-y-2">
+                <div className="flex items-center justify-between text-sm">
+                  <span className="text-gray-600 dark:text-gray-400">New SIBOR Rate:</span>
+                  <span className="font-semibold text-gray-900 dark:text-gray-100">{effectiveSiborRate.toFixed(2)}%</span>
+                </div>
+                <div className="flex items-center justify-between text-sm">
+                  <span className="text-gray-600 dark:text-gray-400">+ Margin:</span>
+                  <span className="font-semibold text-gray-900 dark:text-gray-100">{parseFloat(inheritedMargin).toFixed(2)}%</span>
+                </div>
+                <div className="pt-2 border-t border-blue-300 dark:border-blue-700 flex items-center justify-between">
+                  <span className="font-semibold text-blue-900 dark:text-blue-100">New Total Rate:</span>
+                  <span className="text-xl font-bold text-blue-700 dark:text-blue-400">{totalRate.toFixed(2)}%</span>
+                </div>
+              </div>
             </div>
             <FormField
               control={form.control}
