@@ -30,8 +30,7 @@ import AIInsightsPanel from "@/components/AIInsightsPanel";
 import OutstandingVsLimitsChart from "@/components/charts/OutstandingVsLimitsChart";
 import PortfolioDistributionChart from "@/components/charts/PortfolioDistributionChart";
 import LoansTrendChart from "@/components/charts/LoansTrendChart";
-import PriorityStatusChart from "@/components/charts/PriorityStatusChart";
-import LoansByBankChart from "@/components/charts/LoansByBankChart";
+import UpcomingLoansByMonthChart from "@/components/charts/UpcomingLoansByMonthChart";
 import { isUnauthorizedError } from "@/lib/authUtils";
 import { PortfolioSummary, SiborRate, LoanWithDetails } from "@shared/types";
 import { SAUDI_CHART_COLORS } from "@/lib/chart-colors";
@@ -667,38 +666,23 @@ export default function Dashboard() {
             </Card>
           </div>
           
-          {/* Row 2: Priority Status + Loans by Bank */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <Card className="h-[560px] bg-card border border-border shadow-sm hover:shadow-md transition-all duration-200 flex flex-col">
-              <CardHeader className="pb-4 shrink-0">
-                <CardTitle className="text-lg font-semibold flex items-center space-x-2">
-                  <AlertTriangle className="h-5 w-5" style={{ color: SAUDI_CHART_COLORS.saudiGold }} />
-                  <span>Priority Status</span>
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="flex-1 pt-0 flex flex-col min-h-0">
-                <PriorityStatusChart 
-                  loans={activeLoans || []}
-                  isLoading={loansLoading}
-                />
-              </CardContent>
-            </Card>
-
-            <Card className="h-[560px] bg-card border border-border shadow-sm hover:shadow-md transition-all duration-200 flex flex-col">
-              <CardHeader className="pb-4 shrink-0">
-                <CardTitle className="text-lg font-semibold flex items-center space-x-2">
-                  <Building className="h-5 w-5" style={{ color: SAUDI_CHART_COLORS.saudiGreen }} />
-                  <span>Loans by Bank</span>
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="flex-1 pt-0 flex flex-col min-h-0">
-                <LoansByBankChart 
-                  loans={activeLoans || []}
-                  isLoading={loansLoading}
-                />
-              </CardContent>
-            </Card>
-          </div>
+          {/* Row 2: Upcoming Loans by Month */}
+          <Card className="h-[600px] bg-card border border-border shadow-sm hover:shadow-md transition-all duration-200 flex flex-col">
+            <CardHeader className="pb-4 shrink-0">
+              <CardTitle className="text-lg font-semibold flex items-center space-x-2">
+                <BarChart3 className="h-5 w-5" style={{ color: SAUDI_CHART_COLORS.status.error }} />
+                <span>Upcoming Loans by Month</span>
+              </CardTitle>
+              <p className="text-sm text-muted-foreground mt-1">
+                Next 12 months of loan maturities with interactive filtering
+              </p>
+            </CardHeader>
+            <CardContent className="flex-1 pt-0 flex flex-col min-h-0">
+              <UpcomingLoansByMonthChart 
+                allBanks={allBanks || []}
+              />
+            </CardContent>
+          </Card>
         </div>
       </div>
     </div>
