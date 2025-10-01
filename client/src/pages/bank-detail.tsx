@@ -867,7 +867,7 @@ export default function BankDetail() {
                 <Button 
                   variant="outline" 
                   className="w-full justify-start"
-                  onClick={() => setLocation("/dashboard")}
+                  onClick={() => setLocation(`/banks/${bankId}/analytics`)}
                   data-testid="button-performance-analytics"
                 >
                   <BarChart3 className="mr-2 h-4 w-4" />

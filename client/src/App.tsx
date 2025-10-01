@@ -9,6 +9,7 @@ import DashboardPage from "@/pages/dashboard";
 import LoansPage from "@/pages/loans";
 import BanksPage from "@/pages/banks";
 import BankDetailPage from "@/pages/bank-detail";
+import BankAnalyticsPage from "@/pages/bank-analytics";
 import BankContactCreatePage from "@/pages/bank-contact-create";
 import FacilityCreatePage from "@/pages/facility-create";
 import FacilityCreateGeneralPage from "@/pages/facility-create-general";
@@ -119,6 +120,7 @@ function App() {
         <Route path="/loans/:id/edit" component={LoanEditPage} />
         <Route path="/loans/:id/payment/create" component={PaymentCreatePage} />
         <Route path="/banks" component={BanksPage} />
+        <Route path="/banks/:bankId/analytics" component={BankAnalyticsPage} />
         <Route path="/banks/:id" component={BankDetailPage} />
         <Route path="/banks/:bankId/contacts/new" component={BankContactCreatePage} />
         <Route path="/banks/:bankId/facility/create" component={FacilityCreatePage} />

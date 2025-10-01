@@ -188,6 +188,115 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Bank analytics endpoint
+  app.get('/api/banks/:bankId/analytics', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const { bankId } = req.params;
+
+      // Get all facilities for this bank and user
+      const allFacilities = await storage.getUserFacilities(userId);
+      const facilities = allFacilities.filter(f => f.bankId === bankId);
+
+      // Get all loans for this bank
+      const allLoans = await storage.getUserLoans(userId);
+      const loans = allLoans.filter(loan => 
+        facilities.some(f => f.id === loan.facilityId)
+      );
+
+      const activeLoans = loans.filter(l => l.status === 'active').length;
+      const settledLoans = loans.filter(l => l.status === 'settled').length;
+      const cancelledLoans = loans.filter(l => l.status === 'cancelled').length;
+
+      // Get balances for all active loans in parallel
+      const activeLoansList = loans.filter(l => l.status === 'active');
+      const balancePromises = activeLoansList.map(loan => storage.getLoanBalance(loan.id));
+      const balances = await Promise.all(balancePromises);
+
+      // Calculate total outstanding using real balances
+      const totalOutstanding = balances.reduce((sum, balance) => {
+        return sum + (balance ? parseFloat(balance.total) : 0);
+      }, 0);
+
+      const totalCreditLimit = facilities.reduce((sum, f) => sum + parseFloat(f.limit), 0);
+      const utilizationRate = totalCreditLimit > 0 ? (totalOutstanding / totalCreditLimit) * 100 : 0;
+
+      // Get transactions for all loans in parallel
+      const loanIds = loans.map(l => l.id);
+      const transactionPromises = loanIds.map(loanId => storage.getLoanTransactions(loanId));
+      const transactionArrays = await Promise.all(transactionPromises);
+      const transactions = transactionArrays.flat();
+
+      // Group transactions by month for trends
+      const paymentsByMonth: Record<string, number> = {};
+      const interestByMonth: Record<string, number> = {};
+
+      transactions.forEach(t => {
+        const date = new Date(t.date);
+        const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+        
+        if (t.transactionType === 'payment' || t.transactionType === 'settlement') {
+          paymentsByMonth[monthKey] = (paymentsByMonth[monthKey] || 0) + parseFloat(t.amount);
+        }
+        
+        if (t.transactionType === 'interest_accrual') {
+          interestByMonth[monthKey] = (interestByMonth[monthKey] || 0) + parseFloat(t.amount);
+        }
+      });
+
+      // Calculate facility utilization breakdown using real balances
+      const facilityUtilization = await Promise.all(
+        facilities.map(async facility => {
+          const facilityLoans = loans.filter(l => l.facilityId === facility.id && l.status === 'active');
+          
+          // Get balances for facility loans
+          const facilityBalancePromises = facilityLoans.map(loan => storage.getLoanBalance(loan.id));
+          const facilityBalances = await Promise.all(facilityBalancePromises);
+          
+          const facilityOutstanding = facilityBalances.reduce((sum, balance) => {
+            return sum + (balance ? parseFloat(balance.total) : 0);
+          }, 0);
+          
+          const utilization = parseFloat(facility.limit) > 0 
+            ? (facilityOutstanding / parseFloat(facility.limit)) * 100 
+            : 0;
+
+          return {
+            facilityId: facility.id,
+            facilityName: `${facility.type.replace('_', ' ').toUpperCase()} - ${parseFloat(facility.limit).toLocaleString('en-SA')} SAR`,
+            limit: parseFloat(facility.limit),
+            outstanding: facilityOutstanding,
+            utilization: Math.round(utilization * 10) / 10,
+            activeLoans: facilityLoans.length
+          };
+        })
+      );
+
+      res.json({
+        summary: {
+          totalOutstanding,
+          totalCreditLimit,
+          utilizationRate: Math.round(utilizationRate * 10) / 10,
+          activeLoans,
+          settledLoans,
+          cancelledLoans,
+          facilitiesCount: facilities.length
+        },
+        facilityUtilization,
+        paymentsByMonth,
+        interestByMonth,
+        loanStatusBreakdown: {
+          active: activeLoans,
+          settled: settledLoans,
+          cancelled: cancelledLoans
+        }
+      });
+    } catch (error) {
+      console.error("Error fetching bank analytics:", error);
+      res.status(500).json({ message: "Failed to fetch bank analytics" });
+    }
+  });
+
   // Facility routes
   app.get('/api/facilities', isAuthenticated, async (req: any, res) => {
     try {
