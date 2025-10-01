@@ -155,10 +155,16 @@ export default function LoanCreatePage() {
       // Use apiRequest helper for consistency
       return apiRequest('POST', '/api/loans', loanData);
     },
-    onSuccess: () => {
+    onSuccess: (newLoan: any) => {
       queryClient.invalidateQueries({ queryKey: ["/api/loans"] });
       queryClient.invalidateQueries({ queryKey: ["/api/loans", "settled"] });
       queryClient.invalidateQueries({ queryKey: ["/api/dashboard/portfolio"] });
+      
+      // Invalidate revolving usage cache for the facility
+      if (newLoan?.facilityId) {
+        queryClient.invalidateQueries({ queryKey: ["/api/facilities", newLoan.facilityId, "revolving-usage"] });
+      }
+      
       toast({
         title: "Success",
         description: "Loan created successfully",
