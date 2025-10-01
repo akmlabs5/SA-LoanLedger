@@ -175,7 +175,45 @@ export default function LoanCreatePage() {
     },
   });
 
-  const onSubmit = (data: LoanFormData) => {
+  const onSubmit = async (data: LoanFormData) => {
+    // Check revolving period tracking if enabled
+    if (selectedFacility?.enableRevolvingTracking && selectedFacility?.maxRevolvingPeriod) {
+      try {
+        // Fetch current revolving usage
+        const usageResponse = await fetch(`/api/facilities/${selectedFacility.id}/revolving-usage`);
+        
+        if (usageResponse.ok) {
+          const usageData = await usageResponse.json();
+          
+          // Calculate loan duration in days
+          const startDate = new Date(data.startDate);
+          const dueDate = new Date(data.dueDate);
+          const loanDurationDays = Math.ceil((dueDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24));
+          
+          // Check if there are enough remaining days
+          if (loanDurationDays > usageData.daysRemaining) {
+            toast({
+              title: "Revolving Period Exceeded",
+              description: `This loan requires ${loanDurationDays} days, but only ${usageData.daysRemaining} days remain in the facility's ${selectedFacility.maxRevolvingPeriod}-day revolving period. Please reduce the loan duration or wait for existing loans to settle.`,
+              variant: "destructive",
+            });
+            return; // Prevent loan creation
+          }
+          
+          // Warn if getting close to limit (within 10% of remaining)
+          if (loanDurationDays > usageData.daysRemaining * 0.9) {
+            toast({
+              title: "Warning: Low Days Remaining",
+              description: `After this loan, only ${usageData.daysRemaining - loanDurationDays} days will remain in the revolving period.`,
+            });
+          }
+        }
+      } catch (error) {
+        console.error("Error checking revolving period:", error);
+        // Continue with loan creation even if usage check fails
+      }
+    }
+    
     // Clean up date fields - convert empty strings to undefined
     const cleanedData = {
       ...data,
