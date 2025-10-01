@@ -63,38 +63,49 @@ export default function BankAnalyticsPage() {
     );
   }
 
-  if (!analytics) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="text-center">
-          <p className="text-muted-foreground">No analytics data available</p>
-        </div>
-      </div>
-    );
-  }
+  // Use default empty analytics if none provided
+  const analyticsData = analytics || {
+    summary: {
+      totalOutstanding: 0,
+      totalCreditLimit: 0,
+      utilizationRate: 0,
+      activeLoans: 0,
+      settledLoans: 0,
+      cancelledLoans: 0,
+      facilitiesCount: 0
+    },
+    facilityUtilization: [],
+    paymentsByMonth: {},
+    interestByMonth: {},
+    loanStatusBreakdown: {
+      active: 0,
+      settled: 0,
+      cancelled: 0
+    }
+  };
 
   // Prepare data for charts
   const loanStatusData = [
-    { name: 'Active', value: analytics.loanStatusBreakdown.active, color: '#00C49F' },
-    { name: 'Settled', value: analytics.loanStatusBreakdown.settled, color: '#0088FE' },
-    { name: 'Cancelled', value: analytics.loanStatusBreakdown.cancelled, color: '#FF8042' }
+    { name: 'Active', value: analyticsData.loanStatusBreakdown.active, color: '#00C49F' },
+    { name: 'Settled', value: analyticsData.loanStatusBreakdown.settled, color: '#0088FE' },
+    { name: 'Cancelled', value: analyticsData.loanStatusBreakdown.cancelled, color: '#FF8042' }
   ].filter(item => item.value > 0);
 
-  const facilityPieData = analytics.facilityUtilization.map((f, idx) => ({
+  const facilityPieData = analyticsData.facilityUtilization.map((f, idx) => ({
     name: f.facilityName,
     value: f.outstanding,
     color: COLORS[idx % COLORS.length]
   }));
 
-  const paymentTrendData = Object.entries(analytics.paymentsByMonth)
+  const paymentTrendData = Object.entries(analyticsData.paymentsByMonth)
     .sort(([a], [b]) => a.localeCompare(b))
     .map(([month, amount]) => ({
       month: new Date(month + '-01').toLocaleDateString('en-US', { month: 'short', year: 'numeric' }),
       payments: amount,
-      interest: analytics.interestByMonth[month] || 0
+      interest: analyticsData.interestByMonth[month] || 0
     }));
 
-  const utilizationRate = analytics.summary.utilizationRate;
+  const utilizationRate = analyticsData.summary.utilizationRate;
   const utilizationColor = utilizationRate > 80 ? 'text-red-600' : utilizationRate > 60 ? 'text-orange-600' : 'text-green-600';
 
   return (
@@ -132,10 +143,10 @@ export default function BankAnalyticsPage() {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold" data-testid="text-total-outstanding">
-                {formatCurrency(analytics.summary.totalOutstanding)}
+                {formatCurrency(analyticsData.summary.totalOutstanding)}
               </div>
               <p className="text-xs text-muted-foreground mt-1">
-                Across {analytics.summary.activeLoans} active loans
+                Across {analyticsData.summary.activeLoans} active loans
               </p>
             </CardContent>
           </Card>
@@ -147,10 +158,10 @@ export default function BankAnalyticsPage() {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold" data-testid="text-credit-limit">
-                {formatCurrency(analytics.summary.totalCreditLimit)}
+                {formatCurrency(analyticsData.summary.totalCreditLimit)}
               </div>
               <p className="text-xs text-muted-foreground mt-1">
-                {analytics.summary.facilitiesCount} facilities
+                {analyticsData.summary.facilitiesCount} facilities
               </p>
             </CardContent>
           </Card>
@@ -162,7 +173,7 @@ export default function BankAnalyticsPage() {
             </CardHeader>
             <CardContent>
               <div className={`text-2xl font-bold ${utilizationColor}`} data-testid="text-utilization-rate">
-                {analytics.summary.utilizationRate.toFixed(1)}%
+                {analyticsData.summary.utilizationRate.toFixed(1)}%
               </div>
               <p className="text-xs text-muted-foreground mt-1">
                 {utilizationRate > 80 ? 'High utilization' : utilizationRate > 60 ? 'Moderate' : 'Healthy'}
@@ -177,10 +188,10 @@ export default function BankAnalyticsPage() {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold" data-testid="text-loan-count">
-                {analytics.summary.activeLoans + analytics.summary.settledLoans + analytics.summary.cancelledLoans}
+                {analyticsData.summary.activeLoans + analyticsData.summary.settledLoans + analyticsData.summary.cancelledLoans}
               </div>
               <p className="text-xs text-muted-foreground mt-1">
-                {analytics.summary.settledLoans} settled, {analytics.summary.cancelledLoans} cancelled
+                {analyticsData.summary.settledLoans} settled, {analyticsData.summary.cancelledLoans} cancelled
               </p>
             </CardContent>
           </Card>
@@ -286,7 +297,7 @@ export default function BankAnalyticsPage() {
             <CardTitle>Facility Details</CardTitle>
           </CardHeader>
           <CardContent>
-            {analytics.facilityUtilization.length > 0 ? (
+            {analyticsData.facilityUtilization.length > 0 ? (
               <div className="overflow-x-auto">
                 <table className="w-full">
                   <thead>
@@ -299,7 +310,7 @@ export default function BankAnalyticsPage() {
                     </tr>
                   </thead>
                   <tbody>
-                    {analytics.facilityUtilization.map((facility, idx) => (
+                    {analyticsData.facilityUtilization.map((facility, idx) => (
                       <tr key={facility.facilityId} className="border-b" data-testid={`row-facility-${idx}`}>
                         <td className="py-3 px-4">{facility.facilityName}</td>
                         <td className="text-right py-3 px-4">{formatCurrency(facility.limit)}</td>
