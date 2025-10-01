@@ -1,0 +1,25 @@
+I have a challenging loan that the structure in which I took from the bank. I wan to make sure that this structure can be reflected in the loantrack software. The facility term is that a loan can be draw down from the initial date for UP to 180 days, then when the 180 days is lapsed it can be either settled or it can be revolved again for another 180 days , BUT max tenor of that loan should not exceed 360 days. Therefore, when the 360 days is lapsed the loan has to be settled. 
+
+Also, there is flexibility from the bank that the borrower that the Revolving Credit Facility can be drawdown a loan at any term they choose within the full year (360 days) from the Initial Drawdown Date, rather than being strictly limited to 180-day or 30-day cycles with fixed renewal patterns. This means the borrower can draw down for 3 months, then 1 month, then any other term (e.g., 2 months, 5 months), as long as the total cumulative drawdown period across all drawdowns and renewals does not exceed 360 days from the Initial Drawdown Date. After 360 days, the facility must be fully settled.
+
+The challenge would be for the borrower to know how many months it has took that loan so in case they have ability to revolve it or they have to settle it. So for example if the loan is taken for 180 days, then it can be revolved for another 180 days its easy. But also the borrower needs to know in case they have this ability. 
+
+I want to make sure that the system can reflect that but without inputting additional complicated features, as its not a common term maybe. 
+
+This introduces a more dynamic revolving structure where each drawdown can have a custom term, and the system must track the total elapsed time to enforce the 360-day limit. 
+
+
+Summery, Revolving Credit with Custom Terms
+•	Description: A credit facility allowing multiple drawdowns with custom terms (e.g., 3 months, 1 month, etc.) within a 360-day period from the Initial Drawdown Date. The facility can be revolved as needed, but the total cumulative term of all drawdowns must not exceed 360 days, after which full settlement is required.
+•	Template Details: 
+o	Fields: 
+	Facility Limit (SAR)
+	SIBOR Rate (manual input)
+	Bank Rate (auto-populated from facility)
+	Initial Drawdown Option: Custom term selection (e.g., 30 days to 360 days in increments)
+	Maximum Term: 360 days total from Initial Drawdown Date
+	Terms: "Multiple drawdowns allowed with custom terms; total term cannot exceed 360 days from initial drawdown; full settlement required after."
+o	Default Settings: 
+	Allow drawdowns with user-defined terms (e.g., 90 days, 30 days, 150 days).
+	Interest Calculation: Daily accrual on drawn amount (SIBOR + Bank Rate) for each drawdown’s active period.
+	No fixed renewal cycle; each drawdown’s term is independent but cumulative.
