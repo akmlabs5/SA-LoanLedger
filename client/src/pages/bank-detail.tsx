@@ -1356,7 +1356,7 @@ function RevolveDialog({ open, onOpenChange, loan, onSubmit, isPending }: any) {
                 data-testid="button-revolve-submit"
                 className={hasOutstandingInterest ? "bg-orange-600 hover:bg-orange-700" : ""}
               >
-                {isPending ? "Processing..." : hasOutstandingInterest ? "Settle Interest & Revolve" : "Revolve Loan"}
+                {isPending ? "Processing..." : hasOutstandingInterest ? "Settle & Revolve" : "Revolve Loan"}
               </Button>
             </DialogFooter>
           </form>
