@@ -541,24 +541,35 @@ export function SignInCard({ onSubmit, onReplitAuth, isLoading: externalLoading 
                   </div>
                 </motion.button>
 
-                {/* Sign up link */}
-                <motion.p 
-                  className="text-center text-xs text-gray-600 mt-4"
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  transition={{ delay: 0.5 }}
-                >
-                  Don't have an account?{' '}
-                  <Link 
-                    href="/auth/signup" 
-                    className="relative inline-block group/signup"
+                {/* Sign up section */}
+                <div className="mt-4 space-y-2">
+                  <motion.p 
+                    className="text-center text-xs text-gray-600"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ delay: 0.5 }}
                   >
-                    <span className="relative z-10 text-green-600 group-hover/signup:text-green-700 transition-colors duration-300 font-medium">
-                      Sign up
-                    </span>
-                    <span className="absolute bottom-0 left-0 w-0 h-[1px] bg-green-600 group-hover/signup:w-full transition-all duration-300" />
+                    Don't have an account?
+                  </motion.p>
+                  
+                  <Link href="/auth/signup" className="block">
+                    <motion.button
+                      whileHover={{ scale: 1.02 }}
+                      whileTap={{ scale: 0.98 }}
+                      type="button"
+                      className="w-full relative group/signup"
+                      data-testid="button-signup"
+                    >
+                      <div className="absolute inset-0 bg-green-500/10 rounded-lg blur opacity-0 group-hover/signup:opacity-70 transition-opacity duration-300" />
+                      
+                      <div className="relative overflow-hidden bg-white border-2 border-green-600 text-green-700 font-medium h-10 rounded-lg hover:bg-green-50 transition-all duration-300 flex items-center justify-center gap-2">
+                        <span className="text-sm">
+                          Sign up
+                        </span>
+                      </div>
+                    </motion.button>
                   </Link>
-                </motion.p>
+                </div>
               </form>
             </div>
           </div>
