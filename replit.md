@@ -4,6 +4,13 @@ This is a comprehensive loan management platform specifically designed for the S
 
 ## Recent Updates - October 1, 2025
 
+### Optional Facility Duration
+- **Flexible Term Toggle**: Added "Fixed Duration" toggle to facility creation - enables facilities without fixed expiry dates
+- **Database Schema**: Made `expiryDate` optional in facilities table for flexible-term facilities
+- **Smart Validation**: Expiry date only required when "Fixed Duration" is enabled
+- **UX Enhancement**: Clear visual indicators showing "Flexible Term" for facilities without expiry dates
+- **Use Case**: Enables facilities that can be terminated upon negotiation with the bank rather than fixed-term arrangements
+
 ### Bank Linkage Architecture Fix
 - **Direct Facility Relationship**: Loans now access bank information directly via `loan.facility.bank` instead of the indirect `loan.creditLine.facility.bank` path
 - **Schema Enhancement**: Added direct facility relation to loansRelations in schema.ts for cleaner data access

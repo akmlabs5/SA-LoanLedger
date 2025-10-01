@@ -197,7 +197,7 @@ export const facilities = pgTable("facilities", {
   creditLimit: decimal("credit_limit", { precision: 15, scale: 2 }).notNull(),
   costOfFunding: decimal("cost_of_funding", { precision: 5, scale: 2 }).notNull(), // SIBOR + margin
   startDate: date("start_date").notNull(),
-  expiryDate: date("expiry_date").notNull(),
+  expiryDate: date("expiry_date"), // Optional - for facilities with flexible terms
   terms: text("terms"),
   isActive: boolean("is_active").default(true),
   // Optional revolving period tracking for complex loan structures

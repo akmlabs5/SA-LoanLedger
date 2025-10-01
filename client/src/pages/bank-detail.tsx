@@ -488,7 +488,10 @@ export default function BankDetail() {
                           <div>
                             <p className="text-xs text-gray-500 dark:text-gray-400">Expiry Date</p>
                             <p className="font-semibold text-gray-900 dark:text-gray-100">
-                              {new Date(facility.expiryDate).toLocaleDateString()}
+                              {facility.expiryDate 
+                                ? new Date(facility.expiryDate).toLocaleDateString()
+                                : <span className="text-blue-600 dark:text-blue-400 text-sm">Flexible Term</span>
+                              }
                             </p>
                           </div>
                         </div>

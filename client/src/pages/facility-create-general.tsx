@@ -42,7 +42,8 @@ const facilityFormSchema = insertFacilitySchema.extend({
   creditLimit: z.string().min(1, "Credit limit is required"),
   costOfFunding: z.string().min(1, "Cost of funding is required"),
   startDate: z.string().min(1, "Start date is required"),
-  expiryDate: z.string().min(1, "Expiry date is required"),
+  hasFixedDuration: z.boolean().optional(),
+  expiryDate: z.string().optional(),
   terms: z.string().optional(),
   enableRevolvingTracking: z.boolean().optional(),
   maxRevolvingPeriod: z.string().optional(),
@@ -54,6 +55,15 @@ const facilityFormSchema = insertFacilitySchema.extend({
       code: z.ZodIssueCode.custom,
       path: ["costOfFunding"],
       message: "Cost of funding must be greater than 0 for cash facilities"
+    });
+  }
+  
+  // Require expiry date when fixed duration is enabled
+  if (data.hasFixedDuration && (!data.expiryDate || data.expiryDate.trim() === "")) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ["expiryDate"],
+      message: "Expiry date is required when fixed duration is enabled"
     });
   }
   
@@ -95,6 +105,7 @@ export default function GeneralFacilityCreatePage() {
       creditLimit: "",
       costOfFunding: "",
       startDate: new Date().toISOString().split('T')[0],
+      hasFixedDuration: true,
       expiryDate: "",
       terms: "",
       enableRevolvingTracking: false,
@@ -109,6 +120,9 @@ export default function GeneralFacilityCreatePage() {
         ...data,
         creditLimit: parseFloat(data.creditLimit).toString(),
         costOfFunding: parseFloat(data.costOfFunding).toString(),
+        expiryDate: data.hasFixedDuration && data.expiryDate && data.expiryDate.trim() !== ""
+          ? data.expiryDate
+          : null,
         maxRevolvingPeriod: data.maxRevolvingPeriod && data.maxRevolvingPeriod.trim() !== "" 
           ? parseInt(data.maxRevolvingPeriod) 
           : null,
@@ -116,7 +130,9 @@ export default function GeneralFacilityCreatePage() {
           ? data.initialDrawdownDate 
           : null,
       };
-      return apiRequest("POST", "/api/facilities", facilityData);
+      // Remove hasFixedDuration as it's not in the database schema
+      const { hasFixedDuration, ...facilityPayload } = facilityData;
+      return apiRequest("POST", "/api/facilities", facilityPayload);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/facilities"] });
@@ -172,10 +188,11 @@ export default function GeneralFacilityCreatePage() {
   // Auto-calculate expiry date when start date or facility type changes
   const startDate = form.watch("startDate");
   const facilityType = form.watch("facilityType");
+  const hasFixedDuration = form.watch("hasFixedDuration");
   const enableRevolvingTracking = form.watch("enableRevolvingTracking");
   
   useEffect(() => {
-    if (startDate && facilityType) {
+    if (startDate && facilityType && hasFixedDuration) {
       const newExpiryDate = calculateExpiryDate(startDate, facilityType);
       if (newExpiryDate) {
         form.setValue("expiryDate", newExpiryDate);
@@ -186,7 +203,7 @@ export default function GeneralFacilityCreatePage() {
     if (facilityType === "non_cash_guarantee") {
       form.setValue("costOfFunding", "0");
     }
-  }, [startDate, facilityType, form]);
+  }, [startDate, facilityType, hasFixedDuration, form]);
 
   // Clear maxRevolvingPeriod when tracking is disabled
   useEffect(() => {
@@ -194,6 +211,13 @@ export default function GeneralFacilityCreatePage() {
       form.setValue("maxRevolvingPeriod", undefined);
     }
   }, [enableRevolvingTracking, form]);
+  
+  // Clear expiry date when fixed duration is disabled
+  useEffect(() => {
+    if (!hasFixedDuration) {
+      form.setValue("expiryDate", undefined);
+    }
+  }, [hasFixedDuration, form]);
 
   const onSubmit = (data: z.infer<typeof facilityFormSchema>) => {
     createFacilityMutation.mutate(data);
@@ -361,10 +385,38 @@ export default function GeneralFacilityCreatePage() {
 
                     {/* Duration */}
                     <div className="space-y-4">
-                      <h3 className="text-lg font-medium flex items-center space-x-2">
-                        <Calendar className="h-4 w-4" />
-                        <span>Duration</span>
-                      </h3>
+                      <div className="space-y-2">
+                        <h3 className="text-lg font-medium flex items-center space-x-2">
+                          <Calendar className="h-4 w-4" />
+                          <span>Duration</span>
+                        </h3>
+                        <p className="text-sm text-muted-foreground">
+                          Enable fixed duration for facilities with a specific expiry date. Disable for flexible-term facilities that can be terminated upon negotiation.
+                        </p>
+                      </div>
+
+                      <FormField
+                        control={form.control}
+                        name="hasFixedDuration"
+                        render={({ field }) => (
+                          <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4 bg-muted/10">
+                            <div className="space-y-0.5">
+                              <FormLabel className="text-base">Fixed Duration</FormLabel>
+                              <FormDescription>
+                                Facility has a specific expiry date
+                              </FormDescription>
+                            </div>
+                            <FormControl>
+                              <Switch
+                                data-testid="switch-fixed-duration"
+                                checked={field.value}
+                                onCheckedChange={field.onChange}
+                              />
+                            </FormControl>
+                          </FormItem>
+                        )}
+                      />
+
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <FormField
                           control={form.control}
@@ -385,25 +437,36 @@ export default function GeneralFacilityCreatePage() {
                           )}
                         />
                         
-                        <FormField
-                          control={form.control}
-                          name="expiryDate"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>Expiry Date *</FormLabel>
-                              <FormControl>
-                                <ModernDatePicker 
-                                  value={field.value} 
-                                  onChange={field.onChange}
-                                  placeholder="Select expiry date"
-                                  dataTestId="input-expiry-date"
-                                />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
+                        {hasFixedDuration && (
+                          <FormField
+                            control={form.control}
+                            name="expiryDate"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Expiry Date *</FormLabel>
+                                <FormControl>
+                                  <ModernDatePicker 
+                                    value={field.value} 
+                                    onChange={field.onChange}
+                                    placeholder="Select expiry date"
+                                    dataTestId="input-expiry-date"
+                                  />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                        )}
                       </div>
+
+                      {!hasFixedDuration && (
+                        <Alert className="border-blue-200 bg-blue-50 dark:bg-blue-950 dark:border-blue-800">
+                          <AlertCircle className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+                          <AlertDescription className="text-sm text-blue-800 dark:text-blue-200">
+                            This facility has flexible terms and can be terminated upon negotiation with the bank.
+                          </AlertDescription>
+                        </Alert>
+                      )}
                     </div>
 
                     <Separator />
