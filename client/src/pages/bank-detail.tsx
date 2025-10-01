@@ -116,19 +116,11 @@ export default function BankDetail() {
   const bankFacilities = (facilities as any[])?.filter((f: any) => f.bankId === bankId) || [];
   const bankExposure = (portfolioSummary as PortfolioSummary)?.bankExposures?.find(exp => exp.bankId === bankId);
   
-  // Get credit lines for this bank's facilities
-  const bankCreditLineIds = (creditLines as any[])?.filter((cl: any) => {
-    const facility = bankFacilities.find(f => f.id === cl.facilityId);
-    return !!facility;
-  }).map(cl => cl.id) || [];
-  
-  // Get loans that belong to this bank via credit lines OR facilities
+  // Get loans that belong to this bank via their facility
   const bankFacilityIds = bankFacilities.map(f => f.id);
   const bankLoans = (loans as any[])?.filter((l: any) => 
-    // Include loans linked to bank's credit lines
-    (l.creditLineId && bankCreditLineIds.includes(l.creditLineId)) ||
-    // Include loans linked directly to bank's facilities (when creditLineId is null)
-    (!l.creditLineId && l.facilityId && bankFacilityIds.includes(l.facilityId))
+    // Include all loans that belong to this bank's facilities
+    l.facilityId && bankFacilityIds.includes(l.facilityId)
   ) || [];
   
   // Calculate fallback metrics when portfolio summary doesn't have bank data
