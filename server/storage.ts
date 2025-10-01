@@ -1869,12 +1869,9 @@ export class MemoryStorage implements IStorage {
     
     // Get user loans
     const userLoans = Array.from(this.loans.values()).filter(loan => {
-      if (loan.creditLineId) {
-        const creditLine = this.creditLines.get(loan.creditLineId);
-        if (creditLine) {
-          const facility = this.facilities.get(creditLine.facilityId);
-          return facility && facility.userId === userId;
-        }
+      if (loan.facilityId) {
+        const facility = this.facilities.get(loan.facilityId);
+        return facility && facility.userId === userId;
       }
       return false;
     });
@@ -1911,16 +1908,13 @@ export class MemoryStorage implements IStorage {
     
     // Add outstanding amounts by bank
     userLoans.filter(loan => loan.status === 'active').forEach(loan => {
-      if (loan.creditLineId) {
-        const creditLine = this.creditLines.get(loan.creditLineId);
-        if (creditLine) {
-          const facility = this.facilities.get(creditLine.facilityId);
-          if (facility) {
-            const existing = bankGroups.get(facility.bankId);
-            if (existing) {
-              existing.outstanding += Number(loan.amount || 0);
-              bankGroups.set(facility.bankId, existing);
-            }
+      if (loan.facilityId) {
+        const facility = this.facilities.get(loan.facilityId);
+        if (facility) {
+          const existing = bankGroups.get(facility.bankId);
+          if (existing) {
+            existing.outstanding += Number(loan.amount || 0);
+            bankGroups.set(facility.bankId, existing);
           }
         }
       }
