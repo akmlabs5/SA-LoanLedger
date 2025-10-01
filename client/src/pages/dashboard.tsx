@@ -143,15 +143,19 @@ export default function Dashboard() {
 
   return (
     <div 
-      className="min-h-screen bg-background"
-      style={{
-        backgroundImage: `url(${backgroundImage})`,
-        backgroundSize: 'cover',
-        backgroundPosition: 'center',
-        backgroundAttachment: 'fixed'
-      }}
+      className="min-h-screen bg-background relative"
     >
-      <div className="max-w-7xl mx-auto px-6 py-6 space-y-6">
+      <div 
+        className="absolute inset-0 z-0"
+        style={{
+          backgroundImage: `url(${backgroundImage})`,
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+          backgroundAttachment: 'fixed',
+          opacity: 0.15
+        }}
+      />
+      <div className="max-w-7xl mx-auto px-6 py-6 space-y-6 relative z-10">
         {/* Welcome Header */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
           <div>
