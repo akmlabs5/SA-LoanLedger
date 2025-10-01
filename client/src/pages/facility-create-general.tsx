@@ -9,14 +9,16 @@ import { insertFacilitySchema } from "@shared/schema";
 import { z } from "zod";
 import { useEffect } from "react";
 
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDescription } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
+import { Switch } from "@/components/ui/switch";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 import { 
   ArrowLeft, 
@@ -26,6 +28,8 @@ import {
   Percent,
   Save,
   X,
+  Clock,
+  AlertCircle,
 } from "lucide-react";
 
 import { Link } from "wouter";
@@ -40,6 +44,8 @@ const facilityFormSchema = insertFacilitySchema.extend({
   startDate: z.string().min(1, "Start date is required"),
   expiryDate: z.string().min(1, "Expiry date is required"),
   terms: z.string().optional(),
+  enableRevolvingTracking: z.boolean().optional(),
+  maxRevolvingPeriod: z.number().int().positive().optional(),
 }).superRefine((data, ctx) => {
   // Allow 0 cost of funding for non-cash guarantee facilities
   if (data.facilityType !== "non_cash_guarantee" && parseFloat(data.costOfFunding) <= 0) {
@@ -47,6 +53,15 @@ const facilityFormSchema = insertFacilitySchema.extend({
       code: z.ZodIssueCode.custom,
       path: ["costOfFunding"],
       message: "Cost of funding must be greater than 0 for cash facilities"
+    });
+  }
+  
+  // Require maxRevolvingPeriod when revolving tracking is enabled
+  if (data.enableRevolvingTracking && !data.maxRevolvingPeriod) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ["maxRevolvingPeriod"],
+      message: "Maximum revolving period is required when tracking is enabled"
     });
   }
 });
@@ -81,6 +96,8 @@ export default function GeneralFacilityCreatePage() {
       startDate: new Date().toISOString().split('T')[0],
       expiryDate: "",
       terms: "",
+      enableRevolvingTracking: false,
+      maxRevolvingPeriod: undefined,
     },
   });
 
@@ -147,6 +164,7 @@ export default function GeneralFacilityCreatePage() {
   // Auto-calculate expiry date when start date or facility type changes
   const startDate = form.watch("startDate");
   const facilityType = form.watch("facilityType");
+  const enableRevolvingTracking = form.watch("enableRevolvingTracking");
   
   useEffect(() => {
     if (startDate && facilityType) {
@@ -161,6 +179,13 @@ export default function GeneralFacilityCreatePage() {
       form.setValue("costOfFunding", "0");
     }
   }, [startDate, facilityType, form]);
+
+  // Clear maxRevolvingPeriod when tracking is disabled
+  useEffect(() => {
+    if (!enableRevolvingTracking) {
+      form.setValue("maxRevolvingPeriod", undefined);
+    }
+  }, [enableRevolvingTracking, form]);
 
   const onSubmit = (data: z.infer<typeof facilityFormSchema>) => {
     createFacilityMutation.mutate(data);
@@ -396,6 +421,79 @@ export default function GeneralFacilityCreatePage() {
                           </FormItem>
                         )}
                       />
+                    </div>
+
+                    <Separator />
+
+                    {/* Revolving Period Tracking (Optional) */}
+                    <div className="space-y-4">
+                      <div className="space-y-2">
+                        <h3 className="text-lg font-medium flex items-center space-x-2">
+                          <Clock className="h-4 w-4" />
+                          <span>Revolving Period Tracking</span>
+                          <Badge variant="outline" className="text-xs">Optional</Badge>
+                        </h3>
+                        <p className="text-sm text-muted-foreground">
+                          For complex revolving credit structures with maximum cumulative period limits (e.g., 360 days).
+                        </p>
+                      </div>
+
+                      <FormField
+                        control={form.control}
+                        name="enableRevolvingTracking"
+                        render={({ field }) => (
+                          <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4 bg-muted/10">
+                            <div className="space-y-0.5">
+                              <FormLabel className="text-base">Enable Period Tracking</FormLabel>
+                              <FormDescription>
+                                Track cumulative days used across all loans under this facility
+                              </FormDescription>
+                            </div>
+                            <FormControl>
+                              <Switch
+                                data-testid="switch-enable-tracking"
+                                checked={field.value}
+                                onCheckedChange={field.onChange}
+                              />
+                            </FormControl>
+                          </FormItem>
+                        )}
+                      />
+
+                      {enableRevolvingTracking && (
+                        <>
+                          <Alert className="border-green-200 bg-green-50 dark:bg-green-950 dark:border-green-800">
+                            <AlertCircle className="h-4 w-4 text-green-600 dark:text-green-400" />
+                            <AlertDescription className="text-sm text-green-800 dark:text-green-200">
+                              When enabled, the system will track the total days used across all loans. This helps manage facilities with maximum revolving periods (e.g., 360 days) where borrowers can drawdown multiple times with custom terms.
+                            </AlertDescription>
+                          </Alert>
+
+                          <FormField
+                            control={form.control}
+                            name="maxRevolvingPeriod"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Maximum Revolving Period (Days) *</FormLabel>
+                                <FormControl>
+                                  <Input 
+                                    data-testid="input-max-period" 
+                                    type="number"
+                                    placeholder="e.g., 360"
+                                    {...field}
+                                    onChange={(e) => field.onChange(e.target.value ? parseInt(e.target.value) : undefined)}
+                                    value={field.value ?? ""}
+                                  />
+                                </FormControl>
+                                <FormDescription>
+                                  Total cumulative days allowed for all drawdowns under this facility
+                                </FormDescription>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                        </>
+                      )}
                     </div>
 
                     {/* Submit Buttons */}
