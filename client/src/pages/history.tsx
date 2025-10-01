@@ -398,9 +398,10 @@ export default function HistoryPage() {
   }
 
   return (
-    <div className="p-6 space-y-6 bg-background min-h-screen">
-      {/* Header */}
-      <div className="flex items-center justify-between">
+    <div className="min-h-screen bg-gradient-to-br from-green-50 via-white to-emerald-50 dark:from-gray-900 dark:via-gray-900 dark:to-gray-800">
+      <div className="p-6 space-y-6">
+        {/* Header */}
+        <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold tracking-tight text-foreground" data-testid="text-page-title">
             Portfolio History
@@ -427,533 +428,534 @@ export default function HistoryPage() {
             Filters
           </Button>
         </div>
-      </div>
+        </div>
 
-      {/* Timeframe Selection */}
-      <Card>
-        <CardHeader className="pb-3">
-          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
-            <CardTitle className="flex items-center gap-2">
-              <TrendingUp className="h-5 w-5" style={{ color: SAUDI_CHART_COLORS.saudiGreen }} />
-              Exposure Over Time
-            </CardTitle>
-            
-            {/* Controls Row */}
-            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
-              {/* View Toggle */}
-              <div className="flex items-center gap-2">
-                <Button
-                  variant={showTop5Only ? "default" : "outline"}
-                  size="sm"
-                  onClick={() => {
-                    setShowTop5Only(true);
-                    setVisibleBanks(new Set(topBanks.map(item => item.bankKey)));
-                  }}
-                  data-testid="button-top5-view"
-                >
-                  Top 5
-                </Button>
-                <Button
-                  variant={!showTop5Only ? "default" : "outline"}
-                  size="sm"
-                  onClick={() => {
-                    setShowTop5Only(false);
-                    setVisibleBanks(new Set(allBanks.map(item => item.bankKey)));
-                  }}
-                  data-testid="button-all-banks-view"
-                >
-                  All Banks
-                </Button>
-              </div>
+        {/* Timeframe Selection */}
+          <Card>
+          <CardHeader className="pb-3">
+            <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+              <CardTitle className="flex items-center gap-2">
+                <TrendingUp className="h-5 w-5" style={{ color: SAUDI_CHART_COLORS.saudiGreen }} />
+                Exposure Over Time
+              </CardTitle>
               
-              {/* Timeframe Selection */}
-              <div className="flex items-center gap-2">
-                {(['30D', '6M', '1Y', 'MAX'] as TimeframeType[]).map((timeframe) => (
+              {/* Controls Row */}
+              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
+                {/* View Toggle */}
+                <div className="flex items-center gap-2">
                   <Button
-                    key={timeframe}
-                    variant={selectedTimeframe === timeframe ? "default" : "outline"}
+                    variant={showTop5Only ? "default" : "outline"}
                     size="sm"
-                    onClick={() => handleTimeframeChange(timeframe)}
-                    data-testid={`button-timeframe-${timeframe.toLowerCase()}`}
+                    onClick={() => {
+                      setShowTop5Only(true);
+                      setVisibleBanks(new Set(topBanks.map(item => item.bankKey)));
+                    }}
+                    data-testid="button-top5-view"
                   >
-                    {timeframe}
+                    Top 5
                   </Button>
-                ))}
-              </div>
-            </div>
-          </div>
-          
-          {/* Bank Toggle Controls - Only show when not in Top 5 mode */}
-          {!showTop5Only && allBanks.length > 0 && (
-            <div className="mt-4">
-              <div className="flex flex-wrap gap-2">
-                {allBanks.map((item, index) => {
-                  const isVisible = visibleBanks.has(item.bankKey);
-                  return (
+                  <Button
+                    variant={!showTop5Only ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => {
+                      setShowTop5Only(false);
+                      setVisibleBanks(new Set(allBanks.map(item => item.bankKey)));
+                    }}
+                    data-testid="button-all-banks-view"
+                  >
+                    All Banks
+                  </Button>
+                </div>
+                
+                {/* Timeframe Selection */}
+                <div className="flex items-center gap-2">
+                  {(['30D', '6M', '1Y', 'MAX'] as TimeframeType[]).map((timeframe) => (
                     <Button
-                      key={item.bankKey}
-                      variant={isVisible ? "default" : "outline"}
+                      key={timeframe}
+                      variant={selectedTimeframe === timeframe ? "default" : "outline"}
                       size="sm"
-                      onClick={() => {
-                        const newVisible = new Set(visibleBanks);
-                        if (isVisible) {
-                          newVisible.delete(item.bankKey);
-                        } else {
-                          newVisible.add(item.bankKey);
-                        }
-                        setVisibleBanks(newVisible);
-                      }}
-                      className="text-xs"
-                      data-testid={`button-toggle-${item.bankKey}`}
+                      onClick={() => handleTimeframeChange(timeframe)}
+                      data-testid={`button-timeframe-${timeframe.toLowerCase()}`}
                     >
-                      {isVisible ? <Eye className="h-3 w-3 mr-1" /> : <EyeOff className="h-3 w-3 mr-1" />}
-                      {item.name}
+                      {timeframe}
                     </Button>
-                  );
-                })}
+                  ))}
+                </div>
               </div>
             </div>
-          )}
-        </CardHeader>
-        <CardContent>
-          {exposureLoading ? (
-            <div className="h-80 flex items-center justify-center">
-              <div className="space-y-2">
-                <Skeleton className="h-4 w-[250px]" />
-                <Skeleton className="h-4 w-[200px]" />
-                <Skeleton className="h-64 w-full" />
-              </div>
-            </div>
-          ) : enhancedChartData.length > 0 ? (
-            <div className="h-80 w-full" data-testid="chart-exposure-trends">
-              <ResponsiveContainer width="100%" height="100%">
-                <LineChart data={enhancedChartData} margin={{ top: 20, right: 30, left: 20, bottom: 20 }}>
-                  <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
-                  <XAxis 
-                    dataKey="date" 
-                    className="text-muted-foreground text-sm"
-                    tickFormatter={(value) => format(new Date(value), 'MMM yyyy')}
-                  />
-                  <YAxis 
-                    className="text-muted-foreground text-sm"
-                    tickFormatter={(value) => formatCurrency(value)}
-                  />
-                  <Tooltip 
-                    labelFormatter={(value) => format(new Date(value as string), 'MMM dd, yyyy')}
-                    formatter={(value: number, name: string) => {
-                      if (name === 'Others') {
-                        return [formatCurrency(value), 'Other Banks'];
-                      }
-                      const bank = banks.find(b => b.name.replace(/[^a-zA-Z0-9]/g, '_') === name);
-                      return [formatCurrency(value), bank?.name || name];
-                    }}
-                    contentStyle={{
-                      backgroundColor: 'hsl(var(--card))',
-                      border: '1px solid hsl(var(--border))',
-                      borderRadius: '8px',
-                    }}
-                  />
-                  <Legend />
-                  {banksToDisplay.map((bankKey, index) => {
-                    const color = bankKey === 'Others' 
-                      ? SAUDI_CHART_COLORS.status.neutral 
-                      : getBankColor(index);
-                    
+            
+            {/* Bank Toggle Controls - Only show when not in Top 5 mode */}
+            {!showTop5Only && allBanks.length > 0 && (
+              <div className="mt-4">
+                <div className="flex flex-wrap gap-2">
+                  {allBanks.map((item, index) => {
+                    const isVisible = visibleBanks.has(item.bankKey);
                     return (
-                      <Line
-                        key={bankKey}
-                        type="monotone"
-                        dataKey={bankKey}
-                        stroke={color}
-                        strokeWidth={2}
-                        dot={{ fill: color, strokeWidth: 2, r: 3 }}
-                        activeDot={{ r: 5, stroke: color, strokeWidth: 2 }}
-                        connectNulls={false}
-                      />
+                      <Button
+                        key={item.bankKey}
+                        variant={isVisible ? "default" : "outline"}
+                        size="sm"
+                        onClick={() => {
+                          const newVisible = new Set(visibleBanks);
+                          if (isVisible) {
+                            newVisible.delete(item.bankKey);
+                          } else {
+                            newVisible.add(item.bankKey);
+                          }
+                          setVisibleBanks(newVisible);
+                        }}
+                        className="text-xs"
+                        data-testid={`button-toggle-${item.bankKey}`}
+                      >
+                        {isVisible ? <Eye className="h-3 w-3 mr-1" /> : <EyeOff className="h-3 w-3 mr-1" />}
+                        {item.name}
+                      </Button>
                     );
                   })}
-                </LineChart>
-              </ResponsiveContainer>
-            </div>
-          ) : (
-            <div className="h-80 flex items-center justify-center text-muted-foreground">
-              <div className="text-center">
-                <TrendingUp className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                <p>No exposure data available for the selected period</p>
+                </div>
               </div>
-            </div>
-          )}
-        </CardContent>
-      </Card>
+            )}
+          </CardHeader>
+          <CardContent>
+            {exposureLoading ? (
+              <div className="h-80 flex items-center justify-center">
+                <div className="space-y-2">
+                  <Skeleton className="h-4 w-[250px]" />
+                  <Skeleton className="h-4 w-[200px]" />
+                  <Skeleton className="h-64 w-full" />
+                </div>
+              </div>
+            ) : enhancedChartData.length > 0 ? (
+              <div className="h-80 w-full" data-testid="chart-exposure-trends">
+                <ResponsiveContainer width="100%" height="100%">
+                  <LineChart data={enhancedChartData} margin={{ top: 20, right: 30, left: 20, bottom: 20 }}>
+                    <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
+                    <XAxis 
+                      dataKey="date" 
+                      className="text-muted-foreground text-sm"
+                      tickFormatter={(value) => format(new Date(value), 'MMM yyyy')}
+                    />
+                    <YAxis 
+                      className="text-muted-foreground text-sm"
+                      tickFormatter={(value) => formatCurrency(value)}
+                    />
+                    <Tooltip 
+                      labelFormatter={(value) => format(new Date(value as string), 'MMM dd, yyyy')}
+                      formatter={(value: number, name: string) => {
+                        if (name === 'Others') {
+                          return [formatCurrency(value), 'Other Banks'];
+                        }
+                        const bank = banks.find(b => b.name.replace(/[^a-zA-Z0-9]/g, '_') === name);
+                        return [formatCurrency(value), bank?.name || name];
+                      }}
+                      contentStyle={{
+                        backgroundColor: 'hsl(var(--card))',
+                        border: '1px solid hsl(var(--border))',
+                        borderRadius: '8px',
+                      }}
+                    />
+                    <Legend />
+                    {banksToDisplay.map((bankKey, index) => {
+                      const color = bankKey === 'Others' 
+                        ? SAUDI_CHART_COLORS.status.neutral 
+                        : getBankColor(index);
+                      
+                      return (
+                        <Line
+                          key={bankKey}
+                          type="monotone"
+                          dataKey={bankKey}
+                          stroke={color}
+                          strokeWidth={2}
+                          dot={{ fill: color, strokeWidth: 2, r: 3 }}
+                          activeDot={{ r: 5, stroke: color, strokeWidth: 2 }}
+                          connectNulls={false}
+                        />
+                      );
+                    })}
+                  </LineChart>
+                </ResponsiveContainer>
+              </div>
+            ) : (
+              <div className="h-80 flex items-center justify-center text-muted-foreground">
+                <div className="text-center">
+                  <TrendingUp className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                  <p>No exposure data available for the selected period</p>
+                </div>
+              </div>
+            )}
+          </CardContent>
+        </Card>
 
-      {/* Filters Row */}
-      <Card>
-        <CardHeader className="pb-3">
-          <CardTitle className="flex items-center gap-2">
-            <Filter className="h-5 w-5 text-saudi" />
-            Transaction Filters
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="date-from">From Date</Label>
-              <Input
-                id="date-from"
-                type="date"
-                value={filters.dateFrom}
-                onChange={(e) => setFilters(prev => ({ ...prev, dateFrom: e.target.value }))}
-                data-testid="input-date-from"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="date-to">To Date</Label>
-              <Input
-                id="date-to"
-                type="date"
-                value={filters.dateTo}
-                onChange={(e) => setFilters(prev => ({ ...prev, dateTo: e.target.value }))}
-                data-testid="input-date-to"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label>Bank</Label>
-              <Select
-                value={filters.bankId}
-                onValueChange={(value) => setFilters(prev => ({ ...prev, bankId: value === 'all' ? '' : value }))}
-                data-testid="select-bank-filter"
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="All banks" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All banks</SelectItem>
-                  {banks.map((bank) => (
-                    <SelectItem key={bank.id} value={bank.id}>
-                      {bank.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-2">
-              <Label>Transaction Type</Label>
-              <Select
-                value={filters.transactionType}
-                onValueChange={(value) => setFilters(prev => ({ ...prev, transactionType: value === 'all' ? '' : value }))}
-                data-testid="select-transaction-type-filter"
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="All types" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All types</SelectItem>
-                  <SelectItem value="draw">Draw</SelectItem>
-                  <SelectItem value="repayment">Repayment</SelectItem>
-                  <SelectItem value="fee">Fee</SelectItem>
-                  <SelectItem value="interest">Interest</SelectItem>
-                  <SelectItem value="limit_change">Limit Change</SelectItem>
-                  <SelectItem value="other">Other</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-2">
-              <Label>Settlement Status</Label>
-              <Select
-                value={filters.settlementStatus}
-                onValueChange={(value) => setFilters(prev => ({ ...prev, settlementStatus: value === 'all' ? '' : value }))}
-                data-testid="select-settlement-status-filter"
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="All statuses" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All statuses</SelectItem>
-                  <SelectItem value="active">Active</SelectItem>
-                  <SelectItem value="settled">Settled</SelectItem>
-                  <SelectItem value="overdue">Overdue</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Settlement Summary */}
-      {settlementSummary && (
+        {/* Filters Row */}
         <Card>
           <CardHeader className="pb-3">
             <CardTitle className="flex items-center gap-2">
-              <Receipt className="h-5 w-5 text-saudi" />
-              Loan Settlement Summary
+              <Filter className="h-5 w-5 text-saudi" />
+              Transaction Filters
             </CardTitle>
           </CardHeader>
-          <CardContent>
-            <div className="space-y-6">
-              {/* Loan Status Overview */}
-              <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-                <div className="text-center">
-                  <div className="text-2xl font-bold text-foreground">{settlementSummary.totalLoans}</div>
-                  <div className="text-sm text-muted-foreground">Total Loans</div>
-                </div>
-                <div className="text-center">
-                  <div className="text-2xl font-bold text-blue-600">{settlementSummary.activeLoans}</div>
-                  <div className="text-sm text-muted-foreground">Active</div>
-                </div>
-                <div className="text-center">
-                  <div className="text-2xl font-bold text-green-600">{settlementSummary.settledLoans}</div>
-                  <div className="text-sm text-muted-foreground">Settled</div>
-                </div>
-                <div className="text-center">
-                  <div className="text-2xl font-bold text-red-600">{settlementSummary.overdueLoans}</div>
-                  <div className="text-sm text-muted-foreground">Overdue</div>
-                </div>
-                <div className="text-center">
-                  <div className="text-2xl font-bold text-foreground">
-                    {formatCurrency(settlementSummary.totalOutstanding)}
-                  </div>
-                  <div className="text-sm text-muted-foreground">Outstanding</div>
-                </div>
+          <CardContent className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="date-from">From Date</Label>
+                <Input
+                  id="date-from"
+                  type="date"
+                  value={filters.dateFrom}
+                  onChange={(e) => setFilters(prev => ({ ...prev, dateFrom: e.target.value }))}
+                  data-testid="input-date-from"
+                />
               </div>
-              
-              {/* Principal vs Interest Breakdown */}
-              {loanSettlements.length > 0 && (
-                <div className="border-t pt-4">
-                  <h4 className="font-medium text-foreground mb-3">Payment Allocation Analysis</h4>
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div className="bg-blue-50 dark:bg-blue-950 rounded-lg p-4">
-                      <div className="text-lg font-bold text-blue-600">
-                        {formatCurrency(loanSettlements.reduce((sum, loan) => sum + loan.principalPaid, 0))}
-                      </div>
-                      <div className="text-sm text-muted-foreground">Principal Paid</div>
-                      <div className="text-xs text-muted-foreground mt-1">
-                        vs. {formatCurrency(loanSettlements.reduce((sum, loan) => sum + loan.breakdown.principalRemaining, 0))} remaining
-                      </div>
-                    </div>
-                    <div className="bg-orange-50 dark:bg-orange-950 rounded-lg p-4">
-                      <div className="text-lg font-bold text-orange-600">
-                        {formatCurrency(loanSettlements.reduce((sum, loan) => sum + loan.totalInterestPaid, 0))}
-                      </div>
-                      <div className="text-sm text-muted-foreground">Interest Paid</div>
-                      <div className="text-xs text-muted-foreground mt-1">
-                        vs. {formatCurrency(loanSettlements.reduce((sum, loan) => sum + loan.breakdown.interestRemaining, 0))} remaining
-                      </div>
-                    </div>
-                    <div className="bg-gray-50 dark:bg-gray-950 rounded-lg p-4">
-                      <div className="text-lg font-bold text-gray-600">
-                        {formatCurrency(loanSettlements.reduce((sum, loan) => sum + loan.feeCharges, 0))}
-                      </div>
-                      <div className="text-sm text-muted-foreground">Total Fees</div>
-                      <div className="text-xs text-muted-foreground mt-1">
-                        Administrative charges
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              )}
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Loan Settlement Progress */}
-      {loanSettlements.length > 0 && (
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="flex items-center gap-2">
-              <TrendingUp className="h-5 w-5 text-saudi" />
-              Loan Settlement Progress
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              {loanSettlements.slice(0, 10).map((loan) => (
-                <div key={loan.loanId} className="border rounded-lg p-4">
-                  <div className="flex items-center justify-between mb-2">
-                    <div className="flex items-center gap-3">
-                      <div>
-                        <div className="font-medium">{loan.referenceNumber}</div>
-                        <div className="text-sm text-muted-foreground">{loan.bankName}</div>
-                      </div>
-                      <Badge 
-                        className={getSettlementStatusColor(loan.settlementStatus)}
-                        data-testid={`badge-settlement-${loan.settlementStatus}`}
-                      >
-                        {formatSettlementStatus(loan.settlementStatus)}
-                      </Badge>
-                    </div>
-                    <div className="text-right">
-                      <div className="font-medium">{formatCurrency(loan.outstandingBalance)}</div>
-                      <div className="text-sm text-muted-foreground">Outstanding</div>
-                    </div>
-                  </div>
-                  <div className="space-y-2">
-                    <div className="flex items-center justify-between text-sm">
-                      <span>Settlement Progress</span>
-                      <span>{loan.settlementProgress.toFixed(1)}%</span>
-                    </div>
-                    <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
-                      <div 
-                        className="bg-saudi h-2 rounded-full transition-all duration-300"
-                        style={{ width: `${loan.settlementProgress}%` }}
-                        data-testid={`progress-settlement-${loan.loanId}`}
-                      />
-                    </div>
-                    <div className="grid grid-cols-2 gap-4 text-xs">
-                      <div>
-                        <div className="font-medium text-muted-foreground mb-1">Principal</div>
-                        <div className="flex justify-between">
-                          <span className="text-green-600">Paid:</span>
-                          <span>{formatCurrency(loan.principalPaid)}</span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span className="text-muted-foreground">Remaining:</span>
-                          <span>{formatCurrency(loan.breakdown.principalRemaining)}</span>
-                        </div>
-                        <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-1 mt-1">
-                          <div 
-                            className="bg-blue-500 h-1 rounded-full"
-                            style={{ width: `${loan.principalProgress}%` }}
-                          />
-                        </div>
-                      </div>
-                      <div>
-                        <div className="font-medium text-muted-foreground mb-1">Interest & Fees</div>
-                        <div className="flex justify-between">
-                          <span className="text-orange-600">Paid:</span>
-                          <span>{formatCurrency(loan.totalInterestPaid)}</span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span className="text-muted-foreground">Remaining:</span>
-                          <span>{formatCurrency(loan.breakdown.interestRemaining + loan.breakdown.feesRemaining)}</span>
-                        </div>
-                        <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-1 mt-1">
-                          <div 
-                            className="bg-orange-500 h-1 rounded-full"
-                            style={{ width: `${loan.interestProgress}%` }}
-                          />
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Transactions Table */}
-      <Card>
-        <CardHeader className="pb-3">
-          <div className="flex items-center justify-between">
-            <CardTitle className="flex items-center gap-2">
-              <Building2 className="h-5 w-5 text-saudi" />
-              Transaction History
-            </CardTitle>
-            <div className="text-sm text-muted-foreground">
-              {transactionResponse?.total || 0} transactions found
-            </div>
-          </div>
-        </CardHeader>
-        <CardContent>
-          {transactionLoading ? (
-            <div className="space-y-3">
-              {[...Array(5)].map((_, i) => (
-                <Skeleton key={i} className="h-12 w-full" />
-              ))}
-            </div>
-          ) : transactions.length > 0 ? (
-            <>
-              <div className="rounded-md border" data-testid="table-transactions">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead className="w-[100px]">Date</TableHead>
-                      <TableHead>Bank</TableHead>
-                      <TableHead>Type</TableHead>
-                      <TableHead className="text-right">Amount</TableHead>
-                      <TableHead>Reference</TableHead>
-                      <TableHead>Notes</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {transactions.map((transaction) => (
-                      <TableRow key={transaction.id} data-testid={`row-transaction-${transaction.id}`}>
-                        <TableCell className="font-medium">
-                          {format(new Date(transaction.date), 'MMM dd')}
-                        </TableCell>
-                        <TableCell>
-                          {banks.find(b => b.id === transaction.bankId)?.name || 'Unknown'}
-                        </TableCell>
-                        <TableCell>
-                          <Badge 
-                            className={getTransactionTypeColor(transaction.type)}
-                            data-testid={`badge-transaction-type-${transaction.type}`}
-                          >
-                            {formatTransactionType(transaction.type)}
-                          </Badge>
-                        </TableCell>
-                        <TableCell className="text-right font-medium">
-                          {formatCurrency(transaction.amount)}
-                        </TableCell>
-                        <TableCell className="text-muted-foreground">
-                          {transaction.reference || '-'}
-                        </TableCell>
-                        <TableCell className="text-muted-foreground max-w-[200px] truncate">
-                          {transaction.notes || '-'}
-                        </TableCell>
-                      </TableRow>
+              <div className="space-y-2">
+                <Label htmlFor="date-to">To Date</Label>
+                <Input
+                  id="date-to"
+                  type="date"
+                  value={filters.dateTo}
+                  onChange={(e) => setFilters(prev => ({ ...prev, dateTo: e.target.value }))}
+                  data-testid="input-date-to"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Bank</Label>
+                <Select
+                  value={filters.bankId}
+                  onValueChange={(value) => setFilters(prev => ({ ...prev, bankId: value === 'all' ? '' : value }))}
+                  data-testid="select-bank-filter"
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="All banks" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All banks</SelectItem>
+                    {banks.map((bank) => (
+                      <SelectItem key={bank.id} value={bank.id}>
+                        {bank.name}
+                      </SelectItem>
                     ))}
-                  </TableBody>
-                </Table>
+                  </SelectContent>
+                </Select>
               </div>
-
-              {/* Pagination */}
-              {totalPages > 1 && (
-                <div className="flex items-center justify-between pt-4">
-                  <div className="text-sm text-muted-foreground">
-                    Showing {((currentPage - 1) * pageSize) + 1} to {Math.min(currentPage * pageSize, transactionResponse?.total || 0)} of {transactionResponse?.total || 0} transactions
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
-                      disabled={currentPage === 1}
-                      data-testid="button-prev-page"
-                    >
-                      <ChevronLeft className="h-4 w-4 mr-1" />
-                      Previous
-                    </Button>
-                    <div className="text-sm font-medium">
-                      Page {currentPage} of {totalPages}
-                    </div>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
-                      disabled={currentPage === totalPages}
-                      data-testid="button-next-page"
-                    >
-                      Next
-                      <ChevronRight className="h-4 w-4 ml-1" />
-                    </Button>
-                  </div>
-                </div>
-              )}
-            </>
-          ) : (
-            <div className="text-center py-12 text-muted-foreground">
-              <div className="space-y-3">
-                <Building2 className="h-12 w-12 mx-auto opacity-50" />
-                <p>No transactions found for the selected criteria</p>
-                <p className="text-sm">Try adjusting your filters to see more results</p>
+              <div className="space-y-2">
+                <Label>Transaction Type</Label>
+                <Select
+                  value={filters.transactionType}
+                  onValueChange={(value) => setFilters(prev => ({ ...prev, transactionType: value === 'all' ? '' : value }))}
+                  data-testid="select-transaction-type-filter"
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="All types" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All types</SelectItem>
+                    <SelectItem value="draw">Draw</SelectItem>
+                    <SelectItem value="repayment">Repayment</SelectItem>
+                    <SelectItem value="fee">Fee</SelectItem>
+                    <SelectItem value="interest">Interest</SelectItem>
+                    <SelectItem value="limit_change">Limit Change</SelectItem>
+                    <SelectItem value="other">Other</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label>Settlement Status</Label>
+                <Select
+                  value={filters.settlementStatus}
+                  onValueChange={(value) => setFilters(prev => ({ ...prev, settlementStatus: value === 'all' ? '' : value }))}
+                  data-testid="select-settlement-status-filter"
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="All statuses" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All statuses</SelectItem>
+                    <SelectItem value="active">Active</SelectItem>
+                    <SelectItem value="settled">Settled</SelectItem>
+                    <SelectItem value="overdue">Overdue</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
             </div>
-          )}
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
+
+        {/* Settlement Summary */}
+        {settlementSummary && (
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="flex items-center gap-2">
+                <Receipt className="h-5 w-5 text-saudi" />
+                Loan Settlement Summary
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-6">
+                {/* Loan Status Overview */}
+                <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+                  <div className="text-center">
+                    <div className="text-2xl font-bold text-foreground">{settlementSummary.totalLoans}</div>
+                    <div className="text-sm text-muted-foreground">Total Loans</div>
+                  </div>
+                  <div className="text-center">
+                    <div className="text-2xl font-bold text-blue-600">{settlementSummary.activeLoans}</div>
+                    <div className="text-sm text-muted-foreground">Active</div>
+                  </div>
+                  <div className="text-center">
+                    <div className="text-2xl font-bold text-green-600">{settlementSummary.settledLoans}</div>
+                    <div className="text-sm text-muted-foreground">Settled</div>
+                  </div>
+                  <div className="text-center">
+                    <div className="text-2xl font-bold text-red-600">{settlementSummary.overdueLoans}</div>
+                    <div className="text-sm text-muted-foreground">Overdue</div>
+                  </div>
+                  <div className="text-center">
+                    <div className="text-2xl font-bold text-foreground">
+                      {formatCurrency(settlementSummary.totalOutstanding)}
+                    </div>
+                    <div className="text-sm text-muted-foreground">Outstanding</div>
+                  </div>
+                </div>
+                
+                {/* Principal vs Interest Breakdown */}
+                {loanSettlements.length > 0 && (
+                  <div className="border-t pt-4">
+                    <h4 className="font-medium text-foreground mb-3">Payment Allocation Analysis</h4>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                      <div className="bg-blue-50 dark:bg-blue-950 rounded-lg p-4">
+                        <div className="text-lg font-bold text-blue-600">
+                          {formatCurrency(loanSettlements.reduce((sum, loan) => sum + loan.principalPaid, 0))}
+                        </div>
+                        <div className="text-sm text-muted-foreground">Principal Paid</div>
+                        <div className="text-xs text-muted-foreground mt-1">
+                          vs. {formatCurrency(loanSettlements.reduce((sum, loan) => sum + loan.breakdown.principalRemaining, 0))} remaining
+                        </div>
+                      </div>
+                      <div className="bg-orange-50 dark:bg-orange-950 rounded-lg p-4">
+                        <div className="text-lg font-bold text-orange-600">
+                          {formatCurrency(loanSettlements.reduce((sum, loan) => sum + loan.totalInterestPaid, 0))}
+                        </div>
+                        <div className="text-sm text-muted-foreground">Interest Paid</div>
+                        <div className="text-xs text-muted-foreground mt-1">
+                          vs. {formatCurrency(loanSettlements.reduce((sum, loan) => sum + loan.breakdown.interestRemaining, 0))} remaining
+                        </div>
+                      </div>
+                      <div className="bg-gray-50 dark:bg-gray-950 rounded-lg p-4">
+                        <div className="text-lg font-bold text-gray-600">
+                          {formatCurrency(loanSettlements.reduce((sum, loan) => sum + loan.feeCharges, 0))}
+                        </div>
+                        <div className="text-sm text-muted-foreground">Total Fees</div>
+                        <div className="text-xs text-muted-foreground mt-1">
+                          Administrative charges
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Loan Settlement Progress */}
+        {loanSettlements.length > 0 && (
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="flex items-center gap-2">
+                <TrendingUp className="h-5 w-5 text-saudi" />
+                Loan Settlement Progress
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                {loanSettlements.slice(0, 10).map((loan) => (
+                  <div key={loan.loanId} className="border rounded-lg p-4">
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="flex items-center gap-3">
+                        <div>
+                          <div className="font-medium">{loan.referenceNumber}</div>
+                          <div className="text-sm text-muted-foreground">{loan.bankName}</div>
+                        </div>
+                        <Badge 
+                          className={getSettlementStatusColor(loan.settlementStatus)}
+                          data-testid={`badge-settlement-${loan.settlementStatus}`}
+                        >
+                          {formatSettlementStatus(loan.settlementStatus)}
+                        </Badge>
+                      </div>
+                      <div className="text-right">
+                        <div className="font-medium">{formatCurrency(loan.outstandingBalance)}</div>
+                        <div className="text-sm text-muted-foreground">Outstanding</div>
+                      </div>
+                    </div>
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between text-sm">
+                        <span>Settlement Progress</span>
+                        <span>{loan.settlementProgress.toFixed(1)}%</span>
+                      </div>
+                      <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+                        <div 
+                          className="bg-saudi h-2 rounded-full transition-all duration-300"
+                          style={{ width: `${loan.settlementProgress}%` }}
+                          data-testid={`progress-settlement-${loan.loanId}`}
+                        />
+                      </div>
+                      <div className="grid grid-cols-2 gap-4 text-xs">
+                        <div>
+                          <div className="font-medium text-muted-foreground mb-1">Principal</div>
+                          <div className="flex justify-between">
+                            <span className="text-green-600">Paid:</span>
+                            <span>{formatCurrency(loan.principalPaid)}</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-muted-foreground">Remaining:</span>
+                            <span>{formatCurrency(loan.breakdown.principalRemaining)}</span>
+                          </div>
+                          <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-1 mt-1">
+                            <div 
+                              className="bg-blue-500 h-1 rounded-full"
+                              style={{ width: `${loan.principalProgress}%` }}
+                            />
+                          </div>
+                        </div>
+                        <div>
+                          <div className="font-medium text-muted-foreground mb-1">Interest & Fees</div>
+                          <div className="flex justify-between">
+                            <span className="text-orange-600">Paid:</span>
+                            <span>{formatCurrency(loan.totalInterestPaid)}</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-muted-foreground">Remaining:</span>
+                            <span>{formatCurrency(loan.breakdown.interestRemaining + loan.breakdown.feesRemaining)}</span>
+                          </div>
+                          <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-1 mt-1">
+                            <div 
+                              className="bg-orange-500 h-1 rounded-full"
+                              style={{ width: `${loan.interestProgress}%` }}
+                            />
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Transactions Table */}
+        <Card>
+          <CardHeader className="pb-3">
+            <div className="flex items-center justify-between">
+              <CardTitle className="flex items-center gap-2">
+                <Building2 className="h-5 w-5 text-saudi" />
+                Transaction History
+              </CardTitle>
+              <div className="text-sm text-muted-foreground">
+                {transactionResponse?.total || 0} transactions found
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent>
+            {transactionLoading ? (
+              <div className="space-y-3">
+                {[...Array(5)].map((_, i) => (
+                  <Skeleton key={i} className="h-12 w-full" />
+                ))}
+              </div>
+            ) : transactions.length > 0 ? (
+              <>
+                <div className="rounded-md border" data-testid="table-transactions">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead className="w-[100px]">Date</TableHead>
+                        <TableHead>Bank</TableHead>
+                        <TableHead>Type</TableHead>
+                        <TableHead className="text-right">Amount</TableHead>
+                        <TableHead>Reference</TableHead>
+                        <TableHead>Notes</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {transactions.map((transaction) => (
+                        <TableRow key={transaction.id} data-testid={`row-transaction-${transaction.id}`}>
+                          <TableCell className="font-medium">
+                            {format(new Date(transaction.date), 'MMM dd')}
+                          </TableCell>
+                          <TableCell>
+                            {banks.find(b => b.id === transaction.bankId)?.name || 'Unknown'}
+                          </TableCell>
+                          <TableCell>
+                            <Badge 
+                              className={getTransactionTypeColor(transaction.type)}
+                              data-testid={`badge-transaction-type-${transaction.type}`}
+                            >
+                              {formatTransactionType(transaction.type)}
+                            </Badge>
+                          </TableCell>
+                          <TableCell className="text-right font-medium">
+                            {formatCurrency(transaction.amount)}
+                          </TableCell>
+                          <TableCell className="text-muted-foreground">
+                            {transaction.reference || '-'}
+                          </TableCell>
+                          <TableCell className="text-muted-foreground max-w-[200px] truncate">
+                            {transaction.notes || '-'}
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+
+                {/* Pagination */}
+                {totalPages > 1 && (
+                  <div className="flex items-center justify-between pt-4">
+                    <div className="text-sm text-muted-foreground">
+                      Showing {((currentPage - 1) * pageSize) + 1} to {Math.min(currentPage * pageSize, transactionResponse?.total || 0)} of {transactionResponse?.total || 0} transactions
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                        disabled={currentPage === 1}
+                        data-testid="button-prev-page"
+                      >
+                        <ChevronLeft className="h-4 w-4 mr-1" />
+                        Previous
+                      </Button>
+                      <div className="text-sm font-medium">
+                        Page {currentPage} of {totalPages}
+                      </div>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                        disabled={currentPage === totalPages}
+                        data-testid="button-next-page"
+                      >
+                        Next
+                        <ChevronRight className="h-4 w-4 ml-1" />
+                      </Button>
+                    </div>
+                  </div>
+                )}
+              </>
+            ) : (
+              <div className="text-center py-12 text-muted-foreground">
+                <div className="space-y-3">
+                  <Building2 className="h-12 w-12 mx-auto opacity-50" />
+                  <p>No transactions found for the selected criteria</p>
+                  <p className="text-sm">Try adjusting your filters to see more results</p>
+                </div>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 }
