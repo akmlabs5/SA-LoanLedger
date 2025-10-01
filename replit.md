@@ -2,7 +2,19 @@
 
 This is a comprehensive loan management platform specifically designed for the Saudi Arabian market. The system is a full-stack web application that enables users to manage loan portfolios with SIBOR (Saudi Interbank Offered Rate) based calculations. It features intelligent Rules-Based AI insights for portfolio risk management, concentration alerts, and LTV (Loan-to-Value) monitoring. The platform is mobile-responsive and designed to handle complex financial data including bank facilities, collateral tracking, and loan lifecycle management.
 
-## Recent Updates - September 28, 2025
+## Recent Updates - October 1, 2025
+
+### Revolving Period Tracking System
+- **Optional Revolving Tracking**: Facilities can now track cumulative usage days across all loans (e.g., 360-day annual limits)
+- **Flexible Configuration**: Configurable maximum revolving period per facility, not hardcoded
+- **Visual Tracker Component**: Color-coded progress widget (green/yellow/red) showing days used, remaining, and status
+- **Intelligent Validation**: Loan creation automatically checks remaining days and blocks if exceeded
+- **Database Schema**: Added `enableRevolvingTracking`, `maxRevolvingPeriod`, and `initialDrawdownDate` fields to facilities table
+- **API Endpoint**: `/api/facilities/:facilityId/revolving-usage` calculates cumulative days with proper date handling
+- **Bank Detail Integration**: Tracker displays automatically for facilities with tracking enabled
+- **Backward Compatible**: Completely optional feature that doesn't affect existing simple facilities
+
+## Previous Updates - September 28, 2025
 
 ### Complete Admin Portal System
 - **Separate Admin Portal**: Implemented completely isolated admin portal with its own authentication system at `/admin-portal/login`

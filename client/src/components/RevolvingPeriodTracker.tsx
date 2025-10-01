@@ -32,29 +32,8 @@ export function RevolvingPeriodTracker({
 }: RevolvingPeriodTrackerProps) {
   const { data: usageData, isLoading, error } = useQuery<RevolvingUsageData>({
     queryKey: ["/api/facilities", facilityId, "revolving-usage"],
-    enabled: !!facilityId && !!initialDrawdownDate,
+    enabled: !!facilityId,
   });
-
-  // If no initial drawdown yet, show waiting state
-  if (!initialDrawdownDate) {
-    return (
-      <Card className={className} data-testid="card-revolving-tracker-waiting">
-        <CardHeader className="pb-3">
-          <CardTitle className="text-base flex items-center space-x-2">
-            <Clock className="h-4 w-4 text-muted-foreground" />
-            <span>Revolving Period Tracking</span>
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <Alert className="border-blue-200 bg-blue-50 dark:bg-blue-950 dark:border-blue-800" data-testid="alert-waiting-state">
-            <AlertDescription className="text-sm text-blue-800 dark:text-blue-200">
-              Tracking will begin with the first loan drawdown under this facility.
-            </AlertDescription>
-          </Alert>
-        </CardContent>
-      </Card>
-    );
-  }
 
   if (isLoading) {
     return (
@@ -96,6 +75,27 @@ export function RevolvingPeriodTracker({
   }
 
   const { daysUsed, daysRemaining, percentageUsed, status, canRevolve, activeLoans, totalLoans } = usageData;
+
+  // If no loans yet, show waiting state
+  if (totalLoans === 0 && daysUsed === 0) {
+    return (
+      <Card className={className} data-testid="card-revolving-tracker-waiting">
+        <CardHeader className="pb-3">
+          <CardTitle className="text-base flex items-center space-x-2">
+            <Clock className="h-4 w-4 text-muted-foreground" />
+            <span>Revolving Period Tracking</span>
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <Alert className="border-blue-200 bg-blue-50 dark:bg-blue-950 dark:border-blue-800" data-testid="alert-waiting-state">
+            <AlertDescription className="text-sm text-blue-800 dark:text-blue-200">
+              Tracking will begin with the first loan drawdown under this facility.
+            </AlertDescription>
+          </Alert>
+        </CardContent>
+      </Card>
+    );
+  }
 
   // Status color and icon
   const getStatusConfig = () => {

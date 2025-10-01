@@ -45,7 +45,8 @@ const facilityFormSchema = insertFacilitySchema.extend({
   expiryDate: z.string().min(1, "Expiry date is required"),
   terms: z.string().optional(),
   enableRevolvingTracking: z.boolean().optional(),
-  maxRevolvingPeriod: z.number().int().positive().optional(),
+  maxRevolvingPeriod: z.string().optional(),
+  initialDrawdownDate: z.string().optional(),
 }).superRefine((data, ctx) => {
   // Allow 0 cost of funding for non-cash guarantee facilities
   if (data.facilityType !== "non_cash_guarantee" && parseFloat(data.costOfFunding) <= 0) {
@@ -57,7 +58,7 @@ const facilityFormSchema = insertFacilitySchema.extend({
   }
   
   // Require maxRevolvingPeriod when revolving tracking is enabled
-  if (data.enableRevolvingTracking && !data.maxRevolvingPeriod) {
+  if (data.enableRevolvingTracking && (!data.maxRevolvingPeriod || data.maxRevolvingPeriod.trim() === "")) {
     ctx.addIssue({
       code: z.ZodIssueCode.custom,
       path: ["maxRevolvingPeriod"],
@@ -97,7 +98,8 @@ export default function GeneralFacilityCreatePage() {
       expiryDate: "",
       terms: "",
       enableRevolvingTracking: false,
-      maxRevolvingPeriod: undefined,
+      maxRevolvingPeriod: "",
+      initialDrawdownDate: "",
     },
   });
 
@@ -107,6 +109,12 @@ export default function GeneralFacilityCreatePage() {
         ...data,
         creditLimit: parseFloat(data.creditLimit).toString(),
         costOfFunding: parseFloat(data.costOfFunding).toString(),
+        maxRevolvingPeriod: data.maxRevolvingPeriod && data.maxRevolvingPeriod.trim() !== "" 
+          ? parseInt(data.maxRevolvingPeriod) 
+          : null,
+        initialDrawdownDate: data.initialDrawdownDate && data.initialDrawdownDate.trim() !== "" 
+          ? data.initialDrawdownDate 
+          : null,
       };
       return apiRequest("POST", "/api/facilities", facilityData);
     },

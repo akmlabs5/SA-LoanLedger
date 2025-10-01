@@ -36,6 +36,18 @@ const facilityFormSchema = z.object({
   expiryDate: z.string().min(1, "Expiry date is required"),
   terms: z.string().optional(),
   isActive: z.boolean().default(true),
+  enableRevolvingTracking: z.boolean().default(false),
+  maxRevolvingPeriod: z.string().optional(),
+  initialDrawdownDate: z.string().optional(),
+}).superRefine((data, ctx) => {
+  // Require maxRevolvingPeriod when revolving tracking is enabled
+  if (data.enableRevolvingTracking && (!data.maxRevolvingPeriod || data.maxRevolvingPeriod.trim() === "")) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: "Maximum revolving period is required when revolving tracking is enabled",
+      path: ["maxRevolvingPeriod"],
+    });
+  }
 });
 
 type FacilityFormData = z.infer<typeof facilityFormSchema>;
@@ -61,6 +73,9 @@ export default function FacilityCreatePage() {
       expiryDate: new Date(new Date().setFullYear(new Date().getFullYear() + 1)).toISOString().split('T')[0],
       terms: "",
       isActive: true,
+      enableRevolvingTracking: false,
+      maxRevolvingPeriod: "",
+      initialDrawdownDate: "",
     },
   });
 
@@ -71,6 +86,12 @@ export default function FacilityCreatePage() {
         bankId,
         creditLimit: parseFloat(data.creditLimit).toString(),
         costOfFunding: parseFloat(data.costOfFunding).toString(),
+        maxRevolvingPeriod: data.maxRevolvingPeriod && data.maxRevolvingPeriod.trim() !== "" 
+          ? parseInt(data.maxRevolvingPeriod) 
+          : null,
+        initialDrawdownDate: data.initialDrawdownDate && data.initialDrawdownDate.trim() !== "" 
+          ? data.initialDrawdownDate 
+          : null,
       };
       return await apiRequest("POST", "/api/facilities", facilityData);
     },
@@ -315,6 +336,81 @@ export default function FacilityCreatePage() {
                         </FormItem>
                       )}
                     />
+
+                    <Separator />
+
+                    {/* Revolving Period Tracking (Optional) */}
+                    <div className="space-y-4 p-4 rounded-lg border border-dashed">
+                      <FormField
+                        control={form.control}
+                        name="enableRevolvingTracking"
+                        render={({ field }) => (
+                          <FormItem className="flex flex-row items-center justify-between">
+                            <div className="space-y-0.5">
+                              <FormLabel className="text-base">Revolving Period Tracking</FormLabel>
+                              <div className="text-sm text-muted-foreground">
+                                Track cumulative usage days across all loans (e.g., 360-day limit)
+                              </div>
+                            </div>
+                            <FormControl>
+                              <Switch
+                                checked={field.value || false}
+                                onCheckedChange={field.onChange}
+                                data-testid="switch-enable-revolving-tracking"
+                              />
+                            </FormControl>
+                          </FormItem>
+                        )}
+                      />
+
+                      {form.watch("enableRevolvingTracking") && (
+                        <div className="space-y-4 pl-4 border-l-2 border-blue-200 dark:border-blue-800">
+                          <FormField
+                            control={form.control}
+                            name="maxRevolvingPeriod"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Maximum Revolving Period (days)</FormLabel>
+                                <FormControl>
+                                  <Input
+                                    {...field}
+                                    type="number"
+                                    min="1"
+                                    placeholder="e.g., 360"
+                                    data-testid="input-max-revolving-period"
+                                  />
+                                </FormControl>
+                                <div className="text-xs text-muted-foreground">
+                                  Total days allowed for all loans combined (e.g., 360 days per year)
+                                </div>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+
+                          <FormField
+                            control={form.control}
+                            name="initialDrawdownDate"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Initial Drawdown Date (Optional)</FormLabel>
+                                <FormControl>
+                                  <Input
+                                    {...field}
+                                    type="date"
+                                    data-testid="input-initial-drawdown-date"
+                                  />
+                                </FormControl>
+                                <div className="text-xs text-muted-foreground">
+                                  Start tracking from this date (leave blank to start tracking from first loan)
+                                </div>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                        </div>
+                      )}
+                    </div>
 
                     <Separator />
 
