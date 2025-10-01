@@ -110,32 +110,22 @@ export default function Reports() {
   };
 
   return (
-    <div className="min-h-screen bg-background relative">
-      <div 
-        className="absolute inset-0 z-0"
-        style={{
-          backgroundImage: `url(${backgroundImage})`,
-          backgroundSize: 'cover',
-          backgroundPosition: 'center',
-          backgroundAttachment: 'fixed',
-          opacity: 0.15
-        }}
-      />
-      <div className="flex-1 space-y-6 p-6 relative z-10">
+    <div className="min-h-screen bg-gradient-to-br from-green-50 via-white to-emerald-50 dark:from-gray-900 dark:via-gray-900 dark:to-gray-800">
+      <div className="flex-1 space-y-6 p-6">
         <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">Reports</h1>
-          <p className="text-muted-foreground">
-            Generate professional facility reports and export portfolio data
-          </p>
+          <div>
+            <h1 className="text-3xl font-bold tracking-tight">Reports</h1>
+            <p className="text-muted-foreground">
+              Generate professional facility reports and export portfolio data
+            </p>
+          </div>
+          <Badge variant="secondary" className="bg-saudi/10 text-saudi">
+            <TrendingUp className="w-4 h-4 mr-1" />
+            Professional Export
+          </Badge>
         </div>
-        <Badge variant="secondary" className="bg-saudi/10 text-saudi">
-          <TrendingUp className="w-4 h-4 mr-1" />
-          Professional Export
-        </Badge>
-      </div>
 
-      <div className="grid gap-6 md:grid-cols-2">
+        <div className="grid gap-6 md:grid-cols-2">
         {/* Report Configuration */}
         <Card>
           <CardHeader>
@@ -349,21 +339,21 @@ export default function Reports() {
         </CardContent>
       </Card>
 
-      {isGenerating && (
-        <div className="fixed inset-0 bg-background/80 backdrop-blur-sm z-50 flex items-center justify-center">
-          <Card className="w-[300px]">
-            <CardContent className="pt-6">
-              <div className="flex items-center space-x-4">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-saudi"></div>
-                <div>
-                  <p className="font-medium">Generating Report</p>
-                  <p className="text-sm text-muted-foreground">Please wait...</p>
+        {isGenerating && (
+          <div className="fixed inset-0 bg-background/80 backdrop-blur-sm z-50 flex items-center justify-center">
+            <Card className="w-[300px]">
+              <CardContent className="pt-6">
+                <div className="flex items-center space-x-4">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-saudi"></div>
+                  <div>
+                    <p className="font-medium">Generating Report</p>
+                    <p className="text-sm text-muted-foreground">Please wait...</p>
+                  </div>
                 </div>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-      )}
+              </CardContent>
+            </Card>
+          </div>
+        )}
       </div>
     </div>
   );
