@@ -241,6 +241,116 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Get revolving period usage for a facility
+  app.get('/api/facilities/:facilityId/revolving-usage', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const { facilityId } = req.params;
+      
+      // Get facility with bank information  
+      const facility = await storage.getFacilityWithBank(facilityId);
+      
+      if (!facility) {
+        return res.status(404).json({ message: "Facility not found" });
+      }
+
+      // Verify user has access to this facility
+      if (facility.userId !== userId) {
+        return res.status(403).json({ message: "Access denied" });
+      }
+
+      // Check if revolving tracking is enabled
+      if (!facility.enableRevolvingTracking || !facility.maxRevolvingPeriod) {
+        return res.status(400).json({ message: "Revolving period tracking is not enabled for this facility" });
+      }
+      
+      // Get all loans for this facility
+      const allLoans = await storage.getUserLoans(userId);
+      const facilityLoans = allLoans.filter((loan: any) => loan.facilityId === facilityId);
+      
+      // Calculate cumulative days used across all loans
+      let totalDaysUsed = 0;
+      let activeLoansCount = 0;
+      
+      for (const loan of facilityLoans) {
+        try {
+          const startDate = new Date(loan.startDate);
+          
+          // Determine end date: use settledDate if available and earlier than dueDate, otherwise use dueDate
+          let endDate: Date;
+          if (loan.settledDate) {
+            const settled = new Date(loan.settledDate);
+            const due = new Date(loan.dueDate);
+            endDate = settled < due ? settled : due;
+          } else {
+            endDate = new Date(loan.dueDate);
+          }
+          
+          // Validate dates
+          if (isNaN(startDate.getTime()) || isNaN(endDate.getTime())) {
+            console.warn(`Invalid dates for loan ${loan.id}, skipping duration calculation`);
+            continue;
+          }
+          
+          const loanDays = Math.ceil((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24));
+          
+          // Only add positive days
+          if (loanDays > 0) {
+            totalDaysUsed += loanDays;
+          }
+          
+          if (loan.status === 'active') {
+            activeLoansCount++;
+          }
+        } catch (error) {
+          console.error(`Error calculating days for loan ${loan.id}:`, error);
+          continue;
+        }
+      }
+      
+      // Calculate remaining days
+      const maxPeriod = facility.maxRevolvingPeriod;
+      const daysRemaining = Math.max(0, Math.round(maxPeriod - totalDaysUsed));
+      
+      // Calculate percentage (guard against NaN and ensure finite)
+      let percentageUsed = (totalDaysUsed / maxPeriod) * 100;
+      if (!isFinite(percentageUsed)) {
+        percentageUsed = 0;
+      }
+      percentageUsed = Math.min(100, Math.max(0, Math.round(percentageUsed * 10) / 10)); // Round to 1 decimal
+      
+      // Determine status based on usage
+      let status: 'available' | 'warning' | 'critical' | 'expired';
+      if (percentageUsed >= 100) {
+        status = 'expired';
+      } else if (percentageUsed >= 90) {
+        status = 'critical';
+      } else if (percentageUsed >= 70) {
+        status = 'warning';
+      } else {
+        status = 'available';
+      }
+      
+      const canRevolve = daysRemaining > 0;
+      
+      const usageData = {
+        daysUsed: Math.round(totalDaysUsed),
+        daysRemaining,
+        percentageUsed,
+        status,
+        canRevolve,
+        activeLoans: activeLoansCount,
+        totalLoans: facilityLoans.length,
+        maxRevolvingPeriod: maxPeriod,
+      };
+      
+      res.json(usageData);
+    } catch (error) {
+      console.error("Error calculating revolving usage:", error);
+      res.status(500).json({ message: "Failed to calculate revolving usage" });
+    }
+  });
+
   app.put('/api/facilities/:facilityId', isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
