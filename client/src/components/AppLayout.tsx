@@ -427,7 +427,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
         <SidebarInset className={cn(isMobile && "w-full")}>
           {/* Mobile Header with Menu Toggle */}
           <header className={cn(
-            "flex shrink-0 items-center gap-2 border-b px-4 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60",
+            "flex shrink-0 items-center gap-2 border-b px-4 bg-sidebar",
             isMobile ? "h-14" : "h-16"
           )}>
             {/* Mobile Menu Toggle */}
