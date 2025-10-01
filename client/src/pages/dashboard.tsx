@@ -623,7 +623,25 @@ export default function Dashboard() {
 
         {/* Enhanced Interactive Charts Section */}
         <div className="space-y-6 mb-8">
-          {/* Row 1: Three Main Charts - Symmetric Layout */}
+          {/* Row 1: Upcoming Loans by Month */}
+          <Card className="h-[600px] bg-card border border-border shadow-sm hover:shadow-md transition-all duration-200 flex flex-col">
+            <CardHeader className="pb-4 shrink-0">
+              <CardTitle className="text-lg font-semibold flex items-center space-x-2">
+                <BarChart3 className="h-5 w-5" style={{ color: SAUDI_CHART_COLORS.status.error }} />
+                <span>Upcoming Loans by Month</span>
+              </CardTitle>
+              <p className="text-sm text-muted-foreground mt-1">
+                Next 12 months of loan maturities with interactive filtering
+              </p>
+            </CardHeader>
+            <CardContent className="flex-1 pt-0 flex flex-col min-h-0">
+              <UpcomingLoansByMonthChart 
+                allBanks={allBanks || []}
+              />
+            </CardContent>
+          </Card>
+          
+          {/* Row 2: Three Main Charts - Symmetric Layout */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             <Card className="h-[560px] bg-card border border-border shadow-sm hover:shadow-md transition-all duration-200 flex flex-col">
               <CardHeader className="pb-4 shrink-0">
@@ -665,24 +683,6 @@ export default function Dashboard() {
               </CardContent>
             </Card>
           </div>
-          
-          {/* Row 2: Upcoming Loans by Month */}
-          <Card className="h-[600px] bg-card border border-border shadow-sm hover:shadow-md transition-all duration-200 flex flex-col">
-            <CardHeader className="pb-4 shrink-0">
-              <CardTitle className="text-lg font-semibold flex items-center space-x-2">
-                <BarChart3 className="h-5 w-5" style={{ color: SAUDI_CHART_COLORS.status.error }} />
-                <span>Upcoming Loans by Month</span>
-              </CardTitle>
-              <p className="text-sm text-muted-foreground mt-1">
-                Next 12 months of loan maturities with interactive filtering
-              </p>
-            </CardHeader>
-            <CardContent className="flex-1 pt-0 flex flex-col min-h-0">
-              <UpcomingLoansByMonthChart 
-                allBanks={allBanks || []}
-              />
-            </CardContent>
-          </Card>
         </div>
       </div>
     </div>
