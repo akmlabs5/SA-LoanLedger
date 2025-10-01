@@ -614,31 +614,31 @@ export default function BankDetail() {
                                   </Button>
                                 </DropdownMenuTrigger>
                                 <DropdownMenuContent align="end" className="w-48">
-                                  <DropdownMenuItem onClick={() => setLocation(`/loans/${loan.id}/edit`)} data-testid={`button-edit-loan-${loan.id}`}>
+                                  <DropdownMenuItem onClick={(e) => { e.stopPropagation(); setLocation(`/loans/${loan.id}/edit`); }} data-testid={`button-edit-loan-${loan.id}`}>
                                     <Edit className="mr-2 h-4 w-4" />
                                     Edit Details
                                   </DropdownMenuItem>
-                                  <DropdownMenuItem onClick={() => { setSelectedLoan(loan); setPaymentDialogOpen(true); }} data-testid={`button-repay-loan-${loan.id}`}>
+                                  <DropdownMenuItem onClick={(e) => { e.stopPropagation(); setSelectedLoan(loan); setPaymentDialogOpen(true); }} data-testid={`button-repay-loan-${loan.id}`}>
                                     <Receipt className="mr-2 h-4 w-4" />
                                     Make Payment
                                   </DropdownMenuItem>
                                   <DropdownMenuSeparator />
-                                  <DropdownMenuItem onClick={() => { setSelectedLoan(loan); setSettleDialogOpen(true); }} data-testid={`button-settle-loan-${loan.id}`}>
+                                  <DropdownMenuItem onClick={(e) => { e.stopPropagation(); setSelectedLoan(loan); setSettleDialogOpen(true); }} data-testid={`button-settle-loan-${loan.id}`}>
                                     <CheckSquare className="mr-2 h-4 w-4" />
                                     Settle Loan
                                   </DropdownMenuItem>
-                                  <DropdownMenuItem onClick={() => { setSelectedLoan(loan); setRevolveDialogOpen(true); }} data-testid={`button-revolve-loan-${loan.id}`}>
+                                  <DropdownMenuItem onClick={(e) => { e.stopPropagation(); setSelectedLoan(loan); setRevolveDialogOpen(true); }} data-testid={`button-revolve-loan-${loan.id}`}>
                                     <RotateCcw className="mr-2 h-4 w-4" />
                                     Revolve Loan
                                   </DropdownMenuItem>
                                   <DropdownMenuSeparator />
-                                  <DropdownMenuItem onClick={() => { setSelectedLoan(loan); setLedgerDialogOpen(true); }} data-testid={`button-ledger-loan-${loan.id}`}>
+                                  <DropdownMenuItem onClick={(e) => { e.stopPropagation(); setSelectedLoan(loan); setLedgerDialogOpen(true); }} data-testid={`button-ledger-loan-${loan.id}`}>
                                     <History className="mr-2 h-4 w-4" />
                                     View Ledger
                                   </DropdownMenuItem>
                                   <DropdownMenuSeparator />
                                   <DropdownMenuItem 
-                                    onClick={() => { setSelectedLoan(loan); setCancelDialogOpen(true); }} 
+                                    onClick={(e) => { e.stopPropagation(); setSelectedLoan(loan); setCancelDialogOpen(true); }} 
                                     className="text-red-600 dark:text-red-400 focus:text-red-600 dark:focus:text-red-400"
                                     data-testid={`button-cancel-loan-${loan.id}`}
                                   >
