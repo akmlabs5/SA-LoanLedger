@@ -1150,12 +1150,11 @@ function SettleDialog({ open, onOpenChange, loan, onSubmit, isPending }: any) {
 
 // Revolve Loan Dialog Component
 function RevolveDialog({ open, onOpenChange, loan, onSubmit, isPending }: any) {
-  const [useCustomSibor, setUseCustomSibor] = useState(false);
-  const [customSiborRate, setCustomSiborRate] = useState("");
-  
   const { data: siborRate } = useQuery({
     queryKey: ["/api/sibor-rate"],
   });
+
+  const [newSiborRate, setNewSiborRate] = useState((siborRate as any)?.rate?.toString() || "5.75");
 
   const form = useForm({
     resolver: zodResolver(revolveRequestSchema),
@@ -1196,10 +1195,8 @@ function RevolveDialog({ open, onOpenChange, loan, onSubmit, isPending }: any) {
     }
   };
   
-  // Calculate effective SIBOR rate
-  const effectiveSiborRate = useCustomSibor 
-    ? parseFloat(customSiborRate || "0")
-    : (siborRate as any)?.rate || 0;
+  // Calculate effective SIBOR rate from user input
+  const effectiveSiborRate = parseFloat(newSiborRate || "0");
   
   const totalRate = effectiveSiborRate + parseFloat(inheritedMargin);
   
@@ -1245,10 +1242,10 @@ function RevolveDialog({ open, onOpenChange, loan, onSubmit, isPending }: any) {
               <div className="flex-1">
                 <h4 className="font-semibold text-orange-900 dark:text-orange-100">Outstanding Accrued Interest</h4>
                 <p className="text-sm text-orange-800 dark:text-orange-200 mt-1">
-                  Accrued interest of <span className="font-semibold">SAR {accruedInterest.toLocaleString('en-SA', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span> must be settled before revolving.
+                  Accrued interest of <span className="font-semibold">SAR {accruedInterest.toLocaleString('en-SA', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span> will be automatically settled.
                 </p>
                 <p className="text-xs text-orange-700 dark:text-orange-300 mt-2">
-                  Please make a payment to settle the interest accrued from {loan?.lastAccrualDate ? new Date(loan.lastAccrualDate).toLocaleDateString() : new Date(loan?.startDate).toLocaleDateString()} to today before creating a new loan cycle.
+                  Interest accrued from {loan?.lastAccrualDate ? new Date(loan.lastAccrualDate).toLocaleDateString() : new Date(loan?.startDate).toLocaleDateString()} to today will be recorded in the ledger when you revolve the loan.
                 </p>
               </div>
             </div>
@@ -1279,70 +1276,23 @@ function RevolveDialog({ open, onOpenChange, loan, onSubmit, isPending }: any) {
               )}
             />
             
-            {/* Custom SIBOR Toggle */}
-            <div className="flex items-center space-x-2 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
-              <Checkbox 
-                id="custom-sibor" 
-                checked={useCustomSibor}
-                onCheckedChange={(checked) => setUseCustomSibor(checked as boolean)}
-                data-testid="checkbox-custom-sibor"
-              />
-              <label 
-                htmlFor="custom-sibor" 
-                className="text-sm font-medium leading-none cursor-pointer"
-              >
-                Use Custom SIBOR Rate
-              </label>
-            </div>
-
-            {/* New SIBOR Rate Selection */}
-            {useCustomSibor ? (
-              <FormItem>
-                <FormLabel>New SIBOR Rate (%)</FormLabel>
-                <FormControl>
-                  <Input 
-                    type="number" 
-                    step="0.01"
-                    value={customSiborRate}
-                    onChange={(e) => setCustomSiborRate(e.target.value)}
-                    placeholder="5.75" 
-                    data-testid="input-custom-sibor" 
-                  />
-                </FormControl>
-                <p className="text-xs text-gray-500">Enter the SIBOR rate for the new loan cycle</p>
-              </FormItem>
-            ) : (
-              <div className="space-y-3">
-                <FormField
-                  control={form.control}
-                  name="siborTermMonths"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>New SIBOR Term</FormLabel>
-                      <Select onValueChange={(value) => field.onChange(parseInt(value))} defaultValue={field.value?.toString()}>
-                        <FormControl>
-                          <SelectTrigger data-testid="select-sibor-term">
-                            <SelectValue placeholder="Select SIBOR term" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          <SelectItem value="1">1 Month</SelectItem>
-                          <SelectItem value="3">3 Months</SelectItem>
-                          <SelectItem value="6">6 Months</SelectItem>
-                          <SelectItem value="12">12 Months</SelectItem>
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
+            {/* New SIBOR Rate Input */}
+            <FormItem>
+              <FormLabel>New SIBOR Rate (%)</FormLabel>
+              <FormControl>
+                <Input 
+                  type="number" 
+                  step="0.01"
+                  value={newSiborRate}
+                  onChange={(e) => setNewSiborRate(e.target.value)}
+                  placeholder="5.75" 
+                  data-testid="input-new-sibor" 
                 />
-                <div className="p-2 bg-blue-50 dark:bg-blue-900/20 rounded text-sm">
-                  <p className="text-gray-600 dark:text-gray-400">
-                    Current Market SIBOR: <span className="font-semibold">{(siborRate as any)?.rate || 0}%</span>
-                  </p>
-                </div>
-              </div>
-            )}
+              </FormControl>
+              <p className="text-xs text-gray-500">
+                Current market SIBOR: <span className="font-semibold">{(siborRate as any)?.rate || 0}%</span> - Adjust as needed for the new loan cycle
+              </p>
+            </FormItem>
             
             {/* Read-only Margin (inherited from facility) */}
             <div className="p-3 border border-gray-200 dark:border-gray-700 rounded-lg bg-gray-50 dark:bg-gray-800/50">
@@ -1402,11 +1352,11 @@ function RevolveDialog({ open, onOpenChange, loan, onSubmit, isPending }: any) {
               </Button>
               <Button 
                 type="submit" 
-                disabled={isPending || hasOutstandingInterest} 
+                disabled={isPending} 
                 data-testid="button-revolve-submit"
-                title={hasOutstandingInterest ? "Please settle accrued interest before revolving" : ""}
+                className={hasOutstandingInterest ? "bg-orange-600 hover:bg-orange-700" : ""}
               >
-                {isPending ? "Revolving..." : hasOutstandingInterest ? "Settle Interest First" : "Revolve Loan"}
+                {isPending ? "Processing..." : hasOutstandingInterest ? "Settle Interest & Revolve" : "Revolve Loan"}
               </Button>
             </DialogFooter>
           </form>
