@@ -10,6 +10,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
+import backgroundImage from "@assets/loan_management_background_excel_green_1759302449019.png";
 
 export default function Reports() {
   const { isLoading, isAuthenticated } = useAuth();
@@ -109,8 +110,19 @@ export default function Reports() {
   };
 
   return (
-    <div className="flex-1 space-y-6 p-6">
-      <div className="flex items-center justify-between">
+    <div className="min-h-screen bg-background relative">
+      <div 
+        className="absolute inset-0 z-0"
+        style={{
+          backgroundImage: `url(${backgroundImage})`,
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+          backgroundAttachment: 'fixed',
+          opacity: 0.15
+        }}
+      />
+      <div className="flex-1 space-y-6 p-6 relative z-10">
+        <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Reports</h1>
           <p className="text-muted-foreground">
@@ -352,6 +364,7 @@ export default function Reports() {
           </Card>
         </div>
       )}
+      </div>
     </div>
   );
 }

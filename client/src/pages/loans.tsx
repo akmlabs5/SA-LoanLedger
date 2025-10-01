@@ -44,6 +44,7 @@ import {
 import { Link, useLocation } from "wouter";
 import { isUnauthorizedError } from "@/lib/authUtils";
 import { apiRequest } from "@/lib/queryClient";
+import backgroundImage from "@assets/loan_management_background_excel_green_1759302449019.png";
 
 type SortField = 'dueDate' | 'amount' | 'bank' | 'startDate' | 'status' | 'dailyInterest';
 type SortOrder = 'asc' | 'desc';
@@ -360,8 +361,18 @@ export default function Loans() {
   ).length;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-gray-100 dark:from-gray-900 dark:to-slate-900">
-      <div className="p-6 space-y-6">
+    <div className="min-h-screen bg-background relative">
+      <div 
+        className="absolute inset-0 z-0"
+        style={{
+          backgroundImage: `url(${backgroundImage})`,
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+          backgroundAttachment: 'fixed',
+          opacity: 0.15
+        }}
+      />
+      <div className="p-6 space-y-6 relative z-10">
         {/* Enhanced Header */}
         <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between space-y-4 lg:space-y-0">
           <div>

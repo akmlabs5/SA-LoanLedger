@@ -21,6 +21,7 @@ import {
 import { Link, useLocation } from "wouter";
 import { isUnauthorizedError } from "@/lib/authUtils";
 import { PortfolioSummary } from "@shared/types";
+import backgroundImage from "@assets/loan_management_background_excel_green_1759302449019.png";
 
 interface BankLoginCredentials {
   bankId: string;
@@ -116,8 +117,18 @@ export default function Banks() {
   };
 
   return (
-    <div className="min-h-screen bg-background">
-      <div className="max-w-7xl mx-auto px-6 py-6 space-y-6">
+    <div className="min-h-screen bg-background relative">
+      <div 
+        className="absolute inset-0 z-0"
+        style={{
+          backgroundImage: `url(${backgroundImage})`,
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+          backgroundAttachment: 'fixed',
+          opacity: 0.15
+        }}
+      />
+      <div className="max-w-7xl mx-auto px-6 py-6 space-y-6 relative z-10">
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
           <div>
