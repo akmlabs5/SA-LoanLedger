@@ -6,7 +6,7 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { apiRequest, queryClient } from "@/lib/queryClient";
-import { insertFacilitySchema, Bank } from "@shared/schema";
+import { insertFacilitySchema, Bank, paymentRequestSchema, settlementRequestSchema, revolveRequestSchema, type PaymentRequest, type SettlementRequest, type RevolveRequest } from "@shared/schema";
 import { z } from "zod";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -68,6 +68,14 @@ export default function BankDetail() {
   const [, setLocation] = useLocation();
   const { isAuthenticated } = useAuth();
   const { toast } = useToast();
+  
+  // Dialog states for loan actions
+  const [selectedLoan, setSelectedLoan] = useState<any>(null);
+  const [paymentDialogOpen, setPaymentDialogOpen] = useState(false);
+  const [settleDialogOpen, setSettleDialogOpen] = useState(false);
+  const [revolveDialogOpen, setRevolveDialogOpen] = useState(false);
+  const [ledgerDialogOpen, setLedgerDialogOpen] = useState(false);
+  const [cancelDialogOpen, setCancelDialogOpen] = useState(false);
 
   const { data: bank, isLoading: bankLoading, error: bankError } = useQuery<Bank>({
     queryKey: ["/api/banks", bankId],
@@ -176,6 +184,77 @@ export default function BankDetail() {
       deleteFacilityMutation.mutate(facilityId);
     }
   };
+
+  // Loan action mutations
+  const makePaymentMutation = useMutation({
+    mutationFn: async ({ loanId, data }: { loanId: string; data: PaymentRequest }) => {
+      return apiRequest('POST', `/api/loans/${loanId}/repayments`, data);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/loans"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/dashboard/portfolio"] });
+      toast({ title: "Payment processed successfully" });
+      setPaymentDialogOpen(false);
+    },
+    onError: (error: any) => {
+      toast({ title: "Failed to process payment", description: error.message, variant: "destructive" });
+    },
+  });
+
+  const settleLoanMutation = useMutation({
+    mutationFn: async ({ loanId, data }: { loanId: string; data: SettlementRequest }) => {
+      return apiRequest('POST', `/api/loans/${loanId}/settle`, data);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/loans"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/dashboard/portfolio"] });
+      toast({ title: "Loan settled successfully" });
+      setSettleDialogOpen(false);
+    },
+    onError: (error: any) => {
+      toast({ title: "Failed to settle loan", description: error.message, variant: "destructive" });
+    },
+  });
+
+  const revolveLoanMutation = useMutation({
+    mutationFn: async ({ loanId, data }: { loanId: string; data: RevolveRequest }) => {
+      return apiRequest('POST', `/api/loans/${loanId}/revolve`, data);
+    },
+    onSuccess: (newLoan: any) => {
+      queryClient.invalidateQueries({ queryKey: ["/api/loans"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/dashboard/portfolio"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/facilities"] });
+      if (newLoan?.facilityId) {
+        queryClient.invalidateQueries({ queryKey: ["/api/facilities", newLoan.facilityId, "revolving-usage"] });
+      }
+      toast({ title: "Loan revolved successfully" });
+      setRevolveDialogOpen(false);
+    },
+    onError: (error: any) => {
+      toast({ title: "Failed to revolve loan", description: error.message, variant: "destructive" });
+    },
+  });
+
+  const deleteLoanMutation = useMutation({
+    mutationFn: async (loanId: string) => {
+      return apiRequest('DELETE', `/api/loans/${loanId}`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/loans"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/dashboard/portfolio"] });
+      toast({ title: "Loan cancelled successfully" });
+      setCancelDialogOpen(false);
+    },
+    onError: (error: any) => {
+      toast({ title: "Failed to cancel loan", description: error.message, variant: "destructive" });
+    },
+  });
+
+  // Fetch loan ledger when dialog opens
+  const { data: loanLedger } = useQuery({
+    queryKey: ["/api/loans", selectedLoan?.id, "ledger"],
+    enabled: isAuthenticated && ledgerDialogOpen && !!selectedLoan?.id,
+  });
 
   // Show loading state while data is being fetched
   if (bankLoading || facilitiesLoading || portfolioLoading || loansLoading) {
@@ -539,31 +618,31 @@ export default function BankDetail() {
                                   </Button>
                                 </DropdownMenuTrigger>
                                 <DropdownMenuContent align="end" className="w-48">
-                                  <DropdownMenuItem onClick={() => {/* TODO: Open edit dialog */}} data-testid={`button-edit-loan-${loan.id}`}>
+                                  <DropdownMenuItem onClick={() => setLocation(`/loans/${loan.id}/edit`)} data-testid={`button-edit-loan-${loan.id}`}>
                                     <Edit className="mr-2 h-4 w-4" />
                                     Edit Details
                                   </DropdownMenuItem>
-                                  <DropdownMenuItem onClick={() => {/* TODO: Open payment dialog */}} data-testid={`button-repay-loan-${loan.id}`}>
+                                  <DropdownMenuItem onClick={() => { setSelectedLoan(loan); setPaymentDialogOpen(true); }} data-testid={`button-repay-loan-${loan.id}`}>
                                     <Receipt className="mr-2 h-4 w-4" />
                                     Make Payment
                                   </DropdownMenuItem>
                                   <DropdownMenuSeparator />
-                                  <DropdownMenuItem onClick={() => {/* TODO: Open settle dialog */}} data-testid={`button-settle-loan-${loan.id}`}>
+                                  <DropdownMenuItem onClick={() => { setSelectedLoan(loan); setSettleDialogOpen(true); }} data-testid={`button-settle-loan-${loan.id}`}>
                                     <CheckSquare className="mr-2 h-4 w-4" />
                                     Settle Loan
                                   </DropdownMenuItem>
-                                  <DropdownMenuItem onClick={() => {/* TODO: Open revolve dialog */}} data-testid={`button-revolve-loan-${loan.id}`}>
+                                  <DropdownMenuItem onClick={() => { setSelectedLoan(loan); setRevolveDialogOpen(true); }} data-testid={`button-revolve-loan-${loan.id}`}>
                                     <RotateCcw className="mr-2 h-4 w-4" />
                                     Revolve Loan
                                   </DropdownMenuItem>
                                   <DropdownMenuSeparator />
-                                  <DropdownMenuItem onClick={() => {/* TODO: Open ledger view */}} data-testid={`button-ledger-loan-${loan.id}`}>
+                                  <DropdownMenuItem onClick={() => { setSelectedLoan(loan); setLedgerDialogOpen(true); }} data-testid={`button-ledger-loan-${loan.id}`}>
                                     <History className="mr-2 h-4 w-4" />
                                     View Ledger
                                   </DropdownMenuItem>
                                   <DropdownMenuSeparator />
                                   <DropdownMenuItem 
-                                    onClick={() => {/* TODO: Cancel loan */}} 
+                                    onClick={() => { setSelectedLoan(loan); setCancelDialogOpen(true); }} 
                                     className="text-red-600 dark:text-red-400 focus:text-red-600 dark:focus:text-red-400"
                                     data-testid={`button-cancel-loan-${loan.id}`}
                                   >
@@ -843,7 +922,446 @@ export default function BankDetail() {
         </div>
       </div>
 
+      {/* Make Payment Dialog */}
+      <PaymentDialog 
+        open={paymentDialogOpen}
+        onOpenChange={setPaymentDialogOpen}
+        loan={selectedLoan}
+        onSubmit={(data: PaymentRequest) => makePaymentMutation.mutate({ loanId: selectedLoan.id, data })}
+        isPending={makePaymentMutation.isPending}
+      />
+
+      {/* Settle Loan Dialog */}
+      <SettleDialog 
+        open={settleDialogOpen}
+        onOpenChange={setSettleDialogOpen}
+        loan={selectedLoan}
+        onSubmit={(data: SettlementRequest) => settleLoanMutation.mutate({ loanId: selectedLoan.id, data })}
+        isPending={settleLoanMutation.isPending}
+      />
+
+      {/* Revolve Loan Dialog */}
+      <RevolveDialog 
+        open={revolveDialogOpen}
+        onOpenChange={setRevolveDialogOpen}
+        loan={selectedLoan}
+        onSubmit={(data: RevolveRequest) => revolveLoanMutation.mutate({ loanId: selectedLoan.id, data })}
+        isPending={revolveLoanMutation.isPending}
+      />
+
+      {/* View Ledger Dialog */}
+      <LedgerDialog 
+        open={ledgerDialogOpen}
+        onOpenChange={setLedgerDialogOpen}
+        loan={selectedLoan}
+        ledger={loanLedger}
+      />
+
+      {/* Cancel Loan Dialog */}
+      <Dialog open={cancelDialogOpen} onOpenChange={setCancelDialogOpen}>
+        <DialogContent data-testid="dialog-cancel-loan">
+          <DialogHeader>
+            <DialogTitle>Cancel Loan</DialogTitle>
+            <DialogDescription>
+              Are you sure you want to cancel loan {selectedLoan?.referenceNumber}? This action cannot be undone.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setCancelDialogOpen(false)} data-testid="button-cancel-dialog-close">
+              No, Keep Loan
+            </Button>
+            <Button 
+              variant="destructive" 
+              onClick={() => deleteLoanMutation.mutate(selectedLoan?.id)}
+              disabled={deleteLoanMutation.isPending}
+              data-testid="button-confirm-cancel-loan"
+            >
+              {deleteLoanMutation.isPending ? "Cancelling..." : "Yes, Cancel Loan"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
     </div>
+  );
+}
+
+// Payment Dialog Component
+function PaymentDialog({ open, onOpenChange, loan, onSubmit, isPending }: any) {
+  const form = useForm({
+    resolver: zodResolver(paymentRequestSchema),
+    defaultValues: {
+      amount: "",
+      date: new Date().toISOString().split('T')[0],
+      reference: "",
+      memo: "",
+    },
+  });
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-md" data-testid="dialog-make-payment">
+        <DialogHeader>
+          <DialogTitle>Make Payment</DialogTitle>
+          <DialogDescription>
+            Process a payment for loan {loan?.referenceNumber}
+          </DialogDescription>
+        </DialogHeader>
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+            <FormField
+              control={form.control}
+              name="amount"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Payment Amount (SAR)</FormLabel>
+                  <FormControl>
+                    <Input {...field} placeholder="0.00" data-testid="input-payment-amount" />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="date"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Payment Date</FormLabel>
+                  <FormControl>
+                    <Input {...field} type="date" data-testid="input-payment-date" />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="reference"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Reference (Optional)</FormLabel>
+                  <FormControl>
+                    <Input {...field} placeholder="Payment reference" data-testid="input-payment-reference" />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="memo"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Memo (Optional)</FormLabel>
+                  <FormControl>
+                    <Textarea {...field} placeholder="Additional notes" data-testid="input-payment-memo" />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <DialogFooter>
+              <Button type="button" variant="outline" onClick={() => onOpenChange(false)} data-testid="button-payment-cancel">
+                Cancel
+              </Button>
+              <Button type="submit" disabled={isPending} data-testid="button-payment-submit">
+                {isPending ? "Processing..." : "Process Payment"}
+              </Button>
+            </DialogFooter>
+          </form>
+        </Form>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+// Settle Loan Dialog Component
+function SettleDialog({ open, onOpenChange, loan, onSubmit, isPending }: any) {
+  const form = useForm({
+    resolver: zodResolver(settlementRequestSchema),
+    defaultValues: {
+      date: new Date().toISOString().split('T')[0],
+      amount: "",
+      memo: "",
+    },
+  });
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-md" data-testid="dialog-settle-loan">
+        <DialogHeader>
+          <DialogTitle>Settle Loan</DialogTitle>
+          <DialogDescription>
+            Settle loan {loan?.referenceNumber}. Leave amount empty to settle full outstanding balance.
+          </DialogDescription>
+        </DialogHeader>
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+            <FormField
+              control={form.control}
+              name="date"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Settlement Date</FormLabel>
+                  <FormControl>
+                    <Input {...field} type="date" data-testid="input-settlement-date" />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="amount"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Settlement Amount (Optional)</FormLabel>
+                  <FormControl>
+                    <Input {...field} placeholder="Leave empty for full settlement" data-testid="input-settlement-amount" />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="memo"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Memo (Optional)</FormLabel>
+                  <FormControl>
+                    <Textarea {...field} placeholder="Settlement notes" data-testid="input-settlement-memo" />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <DialogFooter>
+              <Button type="button" variant="outline" onClick={() => onOpenChange(false)} data-testid="button-settlement-cancel">
+                Cancel
+              </Button>
+              <Button type="submit" disabled={isPending} data-testid="button-settlement-submit">
+                {isPending ? "Settling..." : "Settle Loan"}
+              </Button>
+            </DialogFooter>
+          </form>
+        </Form>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+// Revolve Loan Dialog Component
+function RevolveDialog({ open, onOpenChange, loan, onSubmit, isPending }: any) {
+  const { data: siborRate } = useQuery({
+    queryKey: ["/api/sibor-rate"],
+  });
+
+  const form = useForm({
+    resolver: zodResolver(revolveRequestSchema),
+    defaultValues: {
+      newTerm: 90,
+      siborTermMonths: 3,
+      margin: loan?.margin || "0",
+      dueDate: "",
+      memo: "",
+    },
+  });
+
+  const newTerm = form.watch("newTerm");
+  
+  // Calculate due date based on newTerm with Saudi weekend adjustment
+  const calculateDueDate = (days: number) => {
+    const start = new Date();
+    const due = new Date(start);
+    due.setDate(due.getDate() + days);
+    
+    // Adjust for Saudi weekend (Friday/Saturday)
+    const dayOfWeek = due.getDay();
+    if (dayOfWeek === 5) { // Friday
+      due.setDate(due.getDate() + 2); // Move to Sunday
+    } else if (dayOfWeek === 6) { // Saturday
+      due.setDate(due.getDate() + 1); // Move to Sunday
+    }
+    
+    return due.toISOString().split('T')[0];
+  };
+
+  // Update due date when term changes
+  const handleTermChange = (value: string) => {
+    const days = parseInt(value);
+    if (!isNaN(days) && days > 0) {
+      form.setValue("dueDate", calculateDueDate(days));
+    }
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-lg" data-testid="dialog-revolve-loan">
+        <DialogHeader>
+          <DialogTitle>Revolve Loan</DialogTitle>
+          <DialogDescription>
+            Create a new loan cycle for {loan?.referenceNumber} with updated terms
+          </DialogDescription>
+        </DialogHeader>
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+            <FormField
+              control={form.control}
+              name="newTerm"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>New Term (Days)</FormLabel>
+                  <FormControl>
+                    <Input 
+                      {...field} 
+                      type="number" 
+                      onChange={(e) => {
+                        field.onChange(parseInt(e.target.value));
+                        handleTermChange(e.target.value);
+                      }}
+                      data-testid="input-revolve-term" 
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="siborTermMonths"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>SIBOR Term</FormLabel>
+                  <Select onValueChange={(value) => field.onChange(parseInt(value))} defaultValue={field.value?.toString()}>
+                    <FormControl>
+                      <SelectTrigger data-testid="select-sibor-term">
+                        <SelectValue placeholder="Select SIBOR term" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      <SelectItem value="1">1 Month</SelectItem>
+                      <SelectItem value="3">3 Months</SelectItem>
+                      <SelectItem value="6">6 Months</SelectItem>
+                      <SelectItem value="12">12 Months</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="margin"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Margin (%)</FormLabel>
+                  <FormControl>
+                    <Input {...field} placeholder="1.50" data-testid="input-revolve-margin" />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            {siborRate ? (
+              <div className="p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+                <p className="text-sm text-gray-600 dark:text-gray-400">
+                  Current SIBOR Rate: <span className="font-semibold">{(siborRate as any).rate}%</span>
+                </p>
+                <p className="text-sm text-gray-600 dark:text-gray-400">
+                  Total Rate: <span className="font-semibold">{((siborRate as any).rate + parseFloat(form.watch("margin") || "0")).toFixed(2)}%</span>
+                </p>
+              </div>
+            ) : null}
+            <FormField
+              control={form.control}
+              name="dueDate"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Due Date</FormLabel>
+                  <FormControl>
+                    <Input {...field} type="date" data-testid="input-revolve-duedate" />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="memo"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Memo (Optional)</FormLabel>
+                  <FormControl>
+                    <Textarea {...field} placeholder="Revolve notes" data-testid="input-revolve-memo" />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <DialogFooter>
+              <Button type="button" variant="outline" onClick={() => onOpenChange(false)} data-testid="button-revolve-cancel">
+                Cancel
+              </Button>
+              <Button type="submit" disabled={isPending} data-testid="button-revolve-submit">
+                {isPending ? "Revolving..." : "Revolve Loan"}
+              </Button>
+            </DialogFooter>
+          </form>
+        </Form>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+// Ledger Dialog Component
+function LedgerDialog({ open, onOpenChange, loan, ledger }: any) {
+  const formatCurrency = (amount: string | number) => {
+    return new Intl.NumberFormat('en-SA', { style: 'currency', currency: 'SAR' }).format(Number(amount));
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-3xl max-h-[80vh] overflow-y-auto" data-testid="dialog-view-ledger">
+        <DialogHeader>
+          <DialogTitle>Loan Ledger</DialogTitle>
+          <DialogDescription>
+            Transaction history for {loan?.referenceNumber}
+          </DialogDescription>
+        </DialogHeader>
+        <div className="mt-4">
+          {!ledger || ledger.length === 0 ? (
+            <div className="text-center py-12">
+              <History className="h-12 w-12 text-gray-300 dark:text-gray-600 mx-auto mb-4" />
+              <p className="text-gray-600 dark:text-gray-400">No transactions found</p>
+            </div>
+          ) : (
+            <div className="space-y-2">
+              {ledger.map((transaction: any, index: number) => (
+                <div 
+                  key={transaction.id || index} 
+                  className="p-4 border border-gray-200 dark:border-gray-700 rounded-lg"
+                  data-testid={`ledger-transaction-${index}`}
+                >
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="flex items-center space-x-2">
+                      <Badge>{transaction.type}</Badge>
+                      <span className="text-sm text-gray-600 dark:text-gray-400">
+                        {new Date(transaction.date).toLocaleDateString()}
+                      </span>
+                    </div>
+                    <span className="font-semibold">{formatCurrency(transaction.amount)}</span>
+                  </div>
+                  {transaction.memo && (
+                    <p className="text-sm text-gray-600 dark:text-gray-400">{transaction.memo}</p>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </DialogContent>
+    </Dialog>
   );
 }
