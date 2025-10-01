@@ -4,6 +4,14 @@ This is a comprehensive loan management platform specifically designed for the S
 
 ## Recent Updates - October 1, 2025
 
+### Bank Linkage Architecture Fix
+- **Direct Facility Relationship**: Loans now access bank information directly via `loan.facility.bank` instead of the indirect `loan.creditLine.facility.bank` path
+- **Schema Enhancement**: Added direct facility relation to loansRelations in schema.ts for cleaner data access
+- **Type Safety**: Updated IStorage interfaces and LoanWithDetails type to reflect actual nested return structures
+- **Comprehensive Update**: Fixed all frontend components (loans list, detail pages, charts) and backend logic (routes, AI insights, dashboard)
+- **Resolved "Unknown Bank" Bug**: Loans with facilityId but no creditLineId now correctly display bank information
+- **Backward Compatible**: Retained creditLine relationship for legacy support while prioritizing direct facility access
+
 ### Revolving Period Tracking System
 - **Optional Revolving Tracking**: Facilities can now track cumulative usage days across all loans (e.g., 360-day annual limits)
 - **Flexible Configuration**: Configurable maximum revolving period per facility, not hardcoded

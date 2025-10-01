@@ -238,7 +238,7 @@ export default function PaymentCreatePage() {
                                   <div className="flex flex-col">
                                     <span>{loan.referenceNumber}</span>
                                     <span className="text-xs text-muted-foreground">
-                                      {loan.creditLine?.facility?.bank?.name} | {parseFloat(loan.amount).toLocaleString()} SAR
+                                      {loan.facility?.bank?.name} | {parseFloat(loan.amount).toLocaleString()} SAR
                                     </span>
                                   </div>
                                 </SelectItem>

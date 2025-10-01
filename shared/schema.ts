@@ -641,6 +641,10 @@ export const creditLinesRelations = relations(creditLines, ({ one, many }) => ({
 }));
 
 export const loansRelations = relations(loans, ({ one, many }) => ({
+  facility: one(facilities, {
+    fields: [loans.facilityId],
+    references: [facilities.id],
+  }),
   creditLine: one(creditLines, {
     fields: [loans.creditLineId],
     references: [creditLines.id],

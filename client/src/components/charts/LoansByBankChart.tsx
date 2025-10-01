@@ -40,7 +40,7 @@ export default function LoansByBankChart({ loans, isLoading = false }: LoansByBa
   }
 
   const bankData = loans.reduce((acc: BankData[], loan: LoanWithDetails) => {
-    const bankName = loan.creditLine?.facility?.bank?.name || 'Unknown Bank';
+    const bankName = loan.facility?.bank?.name || 'Unknown Bank';
     const amount = Number(loan.amount) || 0;
     
     const existing = acc.find((item: BankData) => item.fullName === bankName);

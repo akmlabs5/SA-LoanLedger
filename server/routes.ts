@@ -1958,8 +1958,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
           return {
             loanId: loan.id,
             referenceNumber: loan.referenceNumber,
-            bankName: loan.creditLine.facility.bank.name,
-            facilityId: loan.creditLine.facilityId,
+            bankName: loan.facility.bank.name,
+            facilityId: loan.facilityId,
             amount: parseFloat(loan.amount),
             totalDrawn,
             totalRepaid,
@@ -1999,7 +1999,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       if (queryResult.data.bankId) {
         filteredData = filteredData.filter(loan => 
-          allLoans.find(l => l.id === loan.loanId)?.creditLine.facility.bank.id === queryResult.data.bankId
+          allLoans.find(l => l.id === loan.loanId)?.facility.bank.id === queryResult.data.bankId
         );
       }
       

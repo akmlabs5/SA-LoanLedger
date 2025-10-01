@@ -48,6 +48,26 @@ export interface LoanWithDetails {
   isDeleted: boolean;
   updatedAt: string;
   createdAt: string;
+  facility?: {
+    id: string;
+    bankId: string;
+    userId: string;
+    facilityType: string;
+    creditLimit: string;
+    costOfFunding: string;
+    startDate: string;
+    expiryDate: string;
+    terms: string;
+    isActive: boolean;
+    createdAt: string;
+    bank: {
+      id: string;
+      name: string;
+      code: string;
+      isActive: boolean;
+      createdAt: string;
+    };
+  };
   creditLine: {
     id: string;
     facilityId: string;

@@ -122,7 +122,7 @@ export default function LoanDistributionChart({ loans = [], showTimeDistribution
 
   // Loan distribution by bank
   const bankData = loans.reduce((acc: BankData[], loan: LoanWithDetails) => {
-    const bankName = loan.creditLine?.facility?.bank?.name || 'Unknown Bank';
+    const bankName = loan.facility?.bank?.name || 'Unknown Bank';
     const amount = Number(loan.amount) || 0;
     
     const existing = acc.find((item: BankData) => item.bank === bankName);

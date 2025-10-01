@@ -270,7 +270,7 @@ export default function LoanDetailPage() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div>
                     <label className="text-sm font-medium text-muted-foreground">Bank</label>
-                    <p className="text-lg font-semibold">{loan.creditLine?.facility?.bank?.name || 'Unknown Bank'}</p>
+                    <p className="text-lg font-semibold">{loan.facility?.bank?.name || 'Unknown Bank'}</p>
                   </div>
                   <div>
                     <label className="text-sm font-medium text-muted-foreground">Amount</label>

@@ -120,9 +120,9 @@ export interface IStorage {
   
   // Loan operations
   getUserLoans(userId: string): Promise<Loan[]>;
-  getActiveLoansByUser(userId: string): Promise<(Loan & { creditLine: CreditLine & { facility: Facility & { bank: Bank } } })[]>;
-  getSettledLoansByUser(userId: string): Promise<(Loan & { creditLine: CreditLine & { facility: Facility & { bank: Bank } } })[]>;
-  getLoanById(loanId: string): Promise<Loan | undefined>;
+  getActiveLoansByUser(userId: string): Promise<(Loan & { facility: Facility & { bank: Bank } })[]>;
+  getSettledLoansByUser(userId: string): Promise<(Loan & { facility: Facility & { bank: Bank } })[]>;
+  getLoanById(loanId: string): Promise<(Loan & { facility: Facility & { bank: Bank } }) | undefined>;
   createLoan(loan: InsertLoan): Promise<Loan>;
   updateLoan(loanId: string, loan: Partial<InsertLoan>, userId: string, reason?: string): Promise<Loan>;
   deleteLoan(loanId: string, userId: string, reason?: string): Promise<void>;
@@ -523,46 +523,38 @@ export class DatabaseStorage implements IStorage {
       .orderBy(desc(loans.createdAt));
   }
 
-  async getActiveLoansByUser(userId: string): Promise<(Loan & { creditLine: CreditLine & { facility: Facility & { bank: Bank } } })[]> {
+  async getActiveLoansByUser(userId: string): Promise<(Loan & { facility: Facility & { bank: Bank } })[]> {
     const result = await db
       .select()
       .from(loans)
-      .innerJoin(creditLines, eq(loans.creditLineId, creditLines.id))
-      .innerJoin(facilities, eq(creditLines.facilityId, facilities.id))
+      .innerJoin(facilities, eq(loans.facilityId, facilities.id))
       .innerJoin(banks, eq(facilities.bankId, banks.id))
       .where(and(eq(loans.userId, userId), eq(loans.status, 'active')))
       .orderBy(asc(loans.dueDate));
 
     return result.map(row => ({
       ...row.loans,
-      creditLine: {
-        ...row.credit_lines,
-        facility: {
-          ...row.facilities,
-          bank: row.banks,
-        },
+      facility: {
+        ...row.facilities,
+        bank: row.banks,
       },
     }));
   }
 
-  async getSettledLoansByUser(userId: string): Promise<(Loan & { creditLine: CreditLine & { facility: Facility & { bank: Bank } } })[]> {
+  async getSettledLoansByUser(userId: string): Promise<(Loan & { facility: Facility & { bank: Bank } })[]> {
     const result = await db
       .select()
       .from(loans)
-      .innerJoin(creditLines, eq(loans.creditLineId, creditLines.id))
-      .innerJoin(facilities, eq(creditLines.facilityId, facilities.id))
+      .innerJoin(facilities, eq(loans.facilityId, facilities.id))
       .innerJoin(banks, eq(facilities.bankId, banks.id))
       .where(and(eq(loans.userId, userId), eq(loans.status, 'settled')))
       .orderBy(desc(loans.settledDate));
 
     return result.map(row => ({
       ...row.loans,
-      creditLine: {
-        ...row.credit_lines,
-        facility: {
-          ...row.facilities,
-          bank: row.banks,
-        },
+      facility: {
+        ...row.facilities,
+        bank: row.banks,
       },
     }));
   }
@@ -572,12 +564,11 @@ export class DatabaseStorage implements IStorage {
     return newLoan;
   }
 
-  async getLoanById(loanId: string): Promise<(Loan & { creditLine: CreditLine & { facility: Facility & { bank: Bank } } }) | undefined> {
+  async getLoanById(loanId: string): Promise<(Loan & { facility: Facility & { bank: Bank } }) | undefined> {
     const result = await db
       .select()
       .from(loans)
-      .innerJoin(creditLines, eq(loans.creditLineId, creditLines.id))
-      .innerJoin(facilities, eq(creditLines.facilityId, facilities.id))
+      .innerJoin(facilities, eq(loans.facilityId, facilities.id))
       .innerJoin(banks, eq(facilities.bankId, banks.id))
       .where(eq(loans.id, loanId))
       .limit(1);
@@ -587,12 +578,9 @@ export class DatabaseStorage implements IStorage {
     const row = result[0];
     return {
       ...row.loans,
-      creditLine: {
-        ...row.credit_lines,
-        facility: {
-          ...row.facilities,
-          bank: row.banks,
-        },
+      facility: {
+        ...row.facilities,
+        bank: row.banks,
       },
     };
   }
@@ -1109,8 +1097,8 @@ export class DatabaseStorage implements IStorage {
 
     // Add outstanding amounts by bank
     activeLoans.forEach(loan => {
-      const bankId = loan.creditLine.facility.bank.id;
-      const bankName = loan.creditLine.facility.bank.name;
+      const bankId = loan.facility.bank.id;
+      const bankName = loan.facility.bank.name;
       const amount = parseFloat(loan.amount);
 
       if (bankExposuresMap.has(bankId)) {
