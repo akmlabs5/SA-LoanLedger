@@ -18,6 +18,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { 
   Building, 
@@ -1154,6 +1155,9 @@ function SettleDialog({ open, onOpenChange, loan, onSubmit, isPending }: any) {
 
 // Revolve Loan Dialog Component
 function RevolveDialog({ open, onOpenChange, loan, onSubmit, isPending }: any) {
+  const [useCustomSibor, setUseCustomSibor] = useState(false);
+  const [customSiborRate, setCustomSiborRate] = useState("");
+  
   const { data: siborRate } = useQuery({
     queryKey: ["/api/sibor-rate"],
   });
@@ -1170,6 +1174,7 @@ function RevolveDialog({ open, onOpenChange, loan, onSubmit, isPending }: any) {
   });
 
   const newTerm = form.watch("newTerm");
+  const inheritedMargin = loan?.margin || "0";
   
   // Calculate due date based on newTerm with Saudi weekend adjustment
   const calculateDueDate = (days: number) => {
@@ -1195,6 +1200,37 @@ function RevolveDialog({ open, onOpenChange, loan, onSubmit, isPending }: any) {
       form.setValue("dueDate", calculateDueDate(days));
     }
   };
+  
+  // Calculate effective SIBOR rate
+  const effectiveSiborRate = useCustomSibor 
+    ? parseFloat(customSiborRate || "0")
+    : (siborRate as any)?.rate || 0;
+  
+  const totalRate = effectiveSiborRate + parseFloat(inheritedMargin);
+  
+  // Calculate accrued interest from last accrual date to today
+  const calculateAccruedInterest = () => {
+    if (!loan) return 0;
+    
+    const principal = parseFloat(loan.amount || "0");
+    const annualRate = parseFloat(loan.bankRate || "0") / 100;
+    const lastAccrual = loan.lastAccrualDate ? new Date(loan.lastAccrualDate) : new Date(loan.startDate);
+    const today = new Date();
+    
+    // Calculate days between last accrual and today
+    const daysDiff = Math.floor((today.getTime() - lastAccrual.getTime()) / (1000 * 60 * 60 * 24));
+    
+    // Use loan's interest basis (actual_360 or actual_365)
+    const dayBasis = loan.interestBasis === 'actual_365' ? 365 : 360;
+    
+    // Calculate accrued interest
+    const accruedInterest = (principal * annualRate * daysDiff) / dayBasis;
+    
+    return accruedInterest;
+  };
+  
+  const accruedInterest = calculateAccruedInterest();
+  const hasOutstandingInterest = accruedInterest > 0;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -1205,6 +1241,25 @@ function RevolveDialog({ open, onOpenChange, loan, onSubmit, isPending }: any) {
             Create a new loan cycle for {loan?.referenceNumber} with updated terms
           </DialogDescription>
         </DialogHeader>
+        
+        {/* Accrued Interest Warning */}
+        {hasOutstandingInterest && (
+          <div className="p-4 bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-800 rounded-lg">
+            <div className="flex items-start gap-3">
+              <AlertTriangle className="h-5 w-5 text-orange-600 dark:text-orange-400 mt-0.5" />
+              <div className="flex-1">
+                <h4 className="font-semibold text-orange-900 dark:text-orange-100">Outstanding Accrued Interest</h4>
+                <p className="text-sm text-orange-800 dark:text-orange-200 mt-1">
+                  Accrued interest of <span className="font-semibold">SAR {accruedInterest.toLocaleString('en-SA', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span> must be settled before revolving.
+                </p>
+                <p className="text-xs text-orange-700 dark:text-orange-300 mt-2">
+                  Please make a payment to settle the interest accrued from {loan?.lastAccrualDate ? new Date(loan.lastAccrualDate).toLocaleDateString() : new Date(loan?.startDate).toLocaleDateString()} to today before creating a new loan cycle.
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
+        
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
             <FormField
@@ -1228,52 +1283,92 @@ function RevolveDialog({ open, onOpenChange, loan, onSubmit, isPending }: any) {
                 </FormItem>
               )}
             />
-            <FormField
-              control={form.control}
-              name="siborTermMonths"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>SIBOR Term</FormLabel>
-                  <Select onValueChange={(value) => field.onChange(parseInt(value))} defaultValue={field.value?.toString()}>
-                    <FormControl>
-                      <SelectTrigger data-testid="select-sibor-term">
-                        <SelectValue placeholder="Select SIBOR term" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      <SelectItem value="1">1 Month</SelectItem>
-                      <SelectItem value="3">3 Months</SelectItem>
-                      <SelectItem value="6">6 Months</SelectItem>
-                      <SelectItem value="12">12 Months</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="margin"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Margin (%)</FormLabel>
-                  <FormControl>
-                    <Input {...field} placeholder="1.50" data-testid="input-revolve-margin" />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            {siborRate ? (
-              <div className="p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
-                <p className="text-sm text-gray-600 dark:text-gray-400">
-                  Current SIBOR Rate: <span className="font-semibold">{(siborRate as any).rate}%</span>
-                </p>
-                <p className="text-sm text-gray-600 dark:text-gray-400">
-                  Total Rate: <span className="font-semibold">{((siborRate as any).rate + parseFloat(form.watch("margin") || "0")).toFixed(2)}%</span>
-                </p>
-              </div>
-            ) : null}
+            
+            {/* Custom SIBOR Toggle */}
+            <div className="flex items-center space-x-2 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
+              <Checkbox 
+                id="custom-sibor" 
+                checked={useCustomSibor}
+                onCheckedChange={(checked) => setUseCustomSibor(checked as boolean)}
+                data-testid="checkbox-custom-sibor"
+              />
+              <label 
+                htmlFor="custom-sibor" 
+                className="text-sm font-medium leading-none cursor-pointer"
+              >
+                Use Custom SIBOR Rate
+              </label>
+            </div>
+
+            {/* Conditional SIBOR Input */}
+            {useCustomSibor ? (
+              <FormItem>
+                <FormLabel>Custom SIBOR Rate (%)</FormLabel>
+                <FormControl>
+                  <Input 
+                    type="number" 
+                    step="0.01"
+                    value={customSiborRate}
+                    onChange={(e) => setCustomSiborRate(e.target.value)}
+                    placeholder="5.75" 
+                    data-testid="input-custom-sibor" 
+                  />
+                </FormControl>
+                <p className="text-xs text-gray-500">Enter custom SIBOR rate if new term doesn't align with standard terms</p>
+              </FormItem>
+            ) : (
+              <FormField
+                control={form.control}
+                name="siborTermMonths"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>SIBOR Term</FormLabel>
+                    <Select onValueChange={(value) => field.onChange(parseInt(value))} defaultValue={field.value?.toString()}>
+                      <FormControl>
+                        <SelectTrigger data-testid="select-sibor-term">
+                          <SelectValue placeholder="Select SIBOR term" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="1">1 Month</SelectItem>
+                        <SelectItem value="3">3 Months</SelectItem>
+                        <SelectItem value="6">6 Months</SelectItem>
+                        <SelectItem value="12">12 Months</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            )}
+            
+            {/* Read-only Margin (inherited from facility) */}
+            <FormItem>
+              <FormLabel>Margin (%) - From Facility</FormLabel>
+              <FormControl>
+                <Input 
+                  value={inheritedMargin} 
+                  readOnly 
+                  disabled
+                  className="bg-gray-100 dark:bg-gray-800" 
+                  data-testid="input-revolve-margin" 
+                />
+              </FormControl>
+              <p className="text-xs text-gray-500">Margin is inherited from the facility and remains constant</p>
+            </FormItem>
+
+            {/* Rate Display */}
+            <div className="p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg space-y-1">
+              <p className="text-sm text-gray-600 dark:text-gray-400">
+                {useCustomSibor ? 'Custom' : 'Current'} SIBOR Rate: <span className="font-semibold">{effectiveSiborRate.toFixed(2)}%</span>
+              </p>
+              <p className="text-sm text-gray-600 dark:text-gray-400">
+                Margin: <span className="font-semibold">{parseFloat(inheritedMargin).toFixed(2)}%</span>
+              </p>
+              <p className="text-sm font-semibold text-blue-700 dark:text-blue-400">
+                Total Rate: {totalRate.toFixed(2)}%
+              </p>
+            </div>
             <FormField
               control={form.control}
               name="dueDate"
@@ -1304,8 +1399,13 @@ function RevolveDialog({ open, onOpenChange, loan, onSubmit, isPending }: any) {
               <Button type="button" variant="outline" onClick={() => onOpenChange(false)} data-testid="button-revolve-cancel">
                 Cancel
               </Button>
-              <Button type="submit" disabled={isPending} data-testid="button-revolve-submit">
-                {isPending ? "Revolving..." : "Revolve Loan"}
+              <Button 
+                type="submit" 
+                disabled={isPending || hasOutstandingInterest} 
+                data-testid="button-revolve-submit"
+                title={hasOutstandingInterest ? "Please settle accrued interest before revolving" : ""}
+              >
+                {isPending ? "Revolving..." : hasOutstandingInterest ? "Settle Interest First" : "Revolve Loan"}
               </Button>
             </DialogFooter>
           </form>
