@@ -12,7 +12,6 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { RevolvingPeriodTracker } from "@/components/RevolvingPeriodTracker";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
@@ -500,16 +499,6 @@ export default function BankDetail() {
                             <p className="text-sm text-gray-700 dark:text-gray-300 bg-gray-50 dark:bg-gray-800 p-3 rounded-lg">
                               {facility.terms}
                             </p>
-                          </div>
-                        )}
-                        
-                        {facility.enableRevolvingTracking && (
-                          <div className="mt-4">
-                            <RevolvingPeriodTracker 
-                              facilityId={facility.id} 
-                              maxRevolvingPeriod={facility.maxRevolvingPeriod}
-                              initialDrawdownDate={facility.initialDrawdownDate}
-                            />
                           </div>
                         )}
                         
