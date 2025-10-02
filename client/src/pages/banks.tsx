@@ -124,7 +124,7 @@ export default function Banks() {
           <div>
             <h1 className="text-3xl font-bold text-foreground">Bank Exposures</h1>
             <p className="text-muted-foreground mt-1">
-              Manage your banking relationships and credit facilities
+              Manage your banking relationships and credit facilities • <span className="font-semibold text-primary">All amounts in SAR Millions</span>
             </p>
           </div>
           <div className="flex items-center space-x-3 mt-4 sm:mt-0">
@@ -148,7 +148,7 @@ export default function Banks() {
                 <TrendingUp className="h-5 w-5 text-primary" />
                 <span>Outstanding & Limits</span>
               </CardTitle>
-              <p className="text-sm text-muted-foreground">Current exposure by banking partner</p>
+              <p className="text-sm text-muted-foreground">Current exposure by banking partner (SAR Millions)</p>
             </CardHeader>
             <CardContent>
               <div className="overflow-x-auto">
@@ -215,7 +215,7 @@ export default function Banks() {
                 <Target className="h-5 w-5 text-primary" />
                 <span>Available Limits</span>
               </CardTitle>
-              <p className="text-sm text-muted-foreground">Remaining credit capacity by bank</p>
+              <p className="text-sm text-muted-foreground">Remaining credit capacity by bank (SAR Millions)</p>
             </CardHeader>
             <CardContent>
               <div className="overflow-x-auto">
@@ -285,7 +285,7 @@ export default function Banks() {
                   <p className="text-2xl font-bold text-foreground">
                     {formatCurrency(totalExposure.outstanding)}
                   </p>
-                  <p className="text-xs text-muted-foreground mt-1">Across all banks</p>
+                  <p className="text-xs text-muted-foreground mt-1">Across all banks (SAR Millions)</p>
                 </div>
                 <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center">
                   <AlertTriangle className="h-6 w-6 text-primary" />
@@ -302,7 +302,7 @@ export default function Banks() {
                   <p className="text-2xl font-bold text-foreground">
                     {formatCurrency(totalExposure.creditLimit)}
                   </p>
-                  <p className="text-xs text-muted-foreground mt-1">Combined facilities</p>
+                  <p className="text-xs text-muted-foreground mt-1">Combined facilities (SAR Millions)</p>
                 </div>
                 <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center">
                   <Building className="h-6 w-6 text-primary" />
@@ -319,7 +319,7 @@ export default function Banks() {
                   <p className="text-2xl font-bold text-foreground">
                     {formatCurrency(totalExposure.available)}
                   </p>
-                  <p className="text-xs text-muted-foreground mt-1">Ready for drawdown</p>
+                  <p className="text-xs text-muted-foreground mt-1">Ready for drawdown (SAR Millions)</p>
                 </div>
                 <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center">
                   <Target className="h-6 w-6 text-primary" />
