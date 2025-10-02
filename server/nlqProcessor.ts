@@ -208,11 +208,25 @@ export class NLQProcessor {
       };
     }
     
-    const rates = loans.map((l: any) => parseFloat(l.interestRate.toString()));
+    // Filter out loans without valid interest rates
+    const loansWithRates = loans.filter((l: any) => {
+      const rate = parseFloat(l.interestRate?.toString() || '');
+      return !isNaN(rate) && isFinite(rate);
+    });
+    
+    if (loansWithRates.length === 0) {
+      return {
+        answer: "None of your active loans have interest rates set.",
+        queryUnderstood: true,
+        type: 'text'
+      };
+    }
+    
+    const rates = loansWithRates.map((l: any) => parseFloat(l.interestRate.toString()));
     
     if (query.includes('highest')) {
       const highestRate = Math.max(...rates);
-      const highestLoans = loans.filter((l: any) => 
+      const highestLoans = loansWithRates.filter((l: any) => 
         parseFloat(l.interestRate.toString()) === highestRate
       );
       
@@ -230,7 +244,7 @@ export class NLQProcessor {
       };
     } else if (query.includes('lowest')) {
       const lowestRate = Math.min(...rates);
-      const lowestLoans = loans.filter((l: any) => 
+      const lowestLoans = loansWithRates.filter((l: any) => 
         parseFloat(l.interestRate.toString()) === lowestRate
       );
       
@@ -251,8 +265,8 @@ export class NLQProcessor {
       const avgRate = rates.reduce((sum, r) => sum + r, 0) / rates.length;
       
       return {
-        answer: `Your average interest rate across ${loans.length} active loans is ${avgRate.toFixed(2)}%.`,
-        data: { averageRate: avgRate, loanCount: loans.length },
+        answer: `Your average interest rate across ${loansWithRates.length} loan(s) is ${avgRate.toFixed(2)}%.`,
+        data: { averageRate: avgRate, loanCount: loansWithRates.length },
         queryUnderstood: true,
         type: 'number'
       };

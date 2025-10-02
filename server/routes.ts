@@ -9,6 +9,7 @@ import { sendLoanDueNotification, sendTemplateReminderEmail } from "./emailServi
 import { CalendarService } from "./calendarService";
 import { initializeDatabase } from "./db";
 import { NLQProcessor } from "./nlqProcessor";
+import { DailyAlertsService } from "./dailyAlerts";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import * as XLSX from "xlsx";
@@ -741,6 +742,41 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error processing natural language query:", error);
       res.status(500).json({ message: "Failed to process query" });
+    }
+  });
+
+  // Daily Alerts - Generate alerts for current user
+  app.get('/api/ai/daily-alerts', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      
+      const alertsService = new DailyAlertsService(storage);
+      const alerts = await alertsService.generateDailyAlerts(userId);
+      
+      res.json({ alerts, count: alerts.length });
+    } catch (error) {
+      console.error("Error generating daily alerts:", error);
+      res.status(500).json({ message: "Failed to generate alerts" });
+    }
+  });
+
+  // Daily Alerts - Send digest email
+  app.post('/api/ai/daily-alerts/send', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const userEmail = req.user.claims.email || req.body.email;
+      
+      if (!userEmail) {
+        return res.status(400).json({ message: "Email address is required" });
+      }
+      
+      const alertsService = new DailyAlertsService(storage);
+      await alertsService.generateAndSendDailyDigest(userId, userEmail);
+      
+      res.json({ message: "Daily digest sent successfully" });
+    } catch (error) {
+      console.error("Error sending daily digest:", error);
+      res.status(500).json({ message: "Failed to send daily digest" });
     }
   });
 
