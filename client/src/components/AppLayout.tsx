@@ -112,14 +112,9 @@ const navigation = [
     title: "Help & Resources",
     items: [
       {
-        title: "Features",
-        url: "/features",
+        title: "Features & Tips",
+        url: "/features-tips",
         icon: Boxes,
-      },
-      {
-        title: "Tips",
-        url: "/tips",
-        icon: Lightbulb,
       },
       {
         title: "Help Desk",
