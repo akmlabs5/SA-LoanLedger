@@ -11,7 +11,6 @@ import {
   AlertCircle, 
   Lightbulb, 
   TrendingUp, 
-  Settings,
   Eye
 } from "lucide-react";
 import { isUnauthorizedError } from "@/lib/authUtils";
@@ -120,10 +119,6 @@ export default function AIInsightsPanel() {
             <Button variant="ghost" size="sm" data-testid="button-view-all-insights">
               <Eye className="h-4 w-4 mr-1" />
               View All
-            </Button>
-            <Button variant="ghost" size="sm" data-testid="button-configure-thresholds">
-              <Settings className="h-4 w-4 mr-1" />
-              Configure
             </Button>
           </div>
         </div>
