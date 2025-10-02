@@ -1101,33 +1101,14 @@ export class DatabaseStorage implements IStorage {
     // Calculate bank exposures
     const bankExposuresMap = new Map<string, { bankId: string; bankName: string; outstanding: number; creditLimit: number; }>();
 
-    // Add outstanding amounts by bank
-    activeLoans.forEach(loan => {
-      const bankId = loan.facility.bank.id;
-      const bankName = loan.facility.bank.name;
-      const amount = parseFloat(loan.amount);
-
-      if (bankExposuresMap.has(bankId)) {
-        const existing = bankExposuresMap.get(bankId)!;
-        existing.outstanding += amount;
-      } else {
-        bankExposuresMap.set(bankId, {
-          bankId,
-          bankName,
-          outstanding: amount,
-          creditLimit: 0,
-        });
-      }
-    });
-
-    // Add credit limits by bank
+    // FIRST: Initialize map with all facilities (ensures facilities without loans appear)
     userFacilities.forEach(facility => {
       const bankId = facility.banks.id;
       const bankName = facility.banks.name;
       const creditLimit = parseFloat(facility.facilities.creditLimit);
 
-      if (bankExposuresMap.has(bankId)) {
-        const existing = bankExposuresMap.get(bankId)!;
+      const existing = bankExposuresMap.get(bankId);
+      if (existing) {
         existing.creditLimit += creditLimit;
       } else {
         bankExposuresMap.set(bankId, {
@@ -1135,6 +1116,26 @@ export class DatabaseStorage implements IStorage {
           bankName,
           outstanding: 0,
           creditLimit,
+        });
+      }
+    });
+
+    // SECOND: Add outstanding amounts from active loans
+    activeLoans.forEach(loan => {
+      const bankId = loan.facility.bank.id;
+      const bankName = loan.facility.bank.name;
+      const amount = parseFloat(loan.amount);
+
+      const existing = bankExposuresMap.get(bankId);
+      if (existing) {
+        existing.outstanding += amount;
+      } else {
+        // Edge case: loan's bank not in map (shouldn't happen if facility exists)
+        bankExposuresMap.set(bankId, {
+          bankId,
+          bankName,
+          outstanding: amount,
+          creditLimit: 0,
         });
       }
     });
