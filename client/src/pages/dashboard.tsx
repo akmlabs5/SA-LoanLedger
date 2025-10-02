@@ -31,6 +31,7 @@ import OutstandingVsLimitsChart from "@/components/charts/OutstandingVsLimitsCha
 import PortfolioDistributionChart from "@/components/charts/PortfolioDistributionChart";
 import LoansTrendChart from "@/components/charts/LoansTrendChart";
 import UpcomingLoansByMonthChart from "@/components/charts/UpcomingLoansByMonthChart";
+import { SmartLoanMatcher } from "@/components/SmartLoanMatcher";
 import { isUnauthorizedError } from "@/lib/authUtils";
 import { PortfolioSummary, SiborRate, LoanWithDetails } from "@shared/types";
 import { SAUDI_CHART_COLORS } from "@/lib/chart-colors";
@@ -269,12 +270,15 @@ export default function Dashboard() {
                     </CardTitle>
                     <p className="text-sm text-muted-foreground">Loans requiring attention, sorted by urgency</p>
                   </div>
-                  <Link href="/loans">
-                    <Button className="bg-primary hover:bg-primary/90 text-primary-foreground" data-testid="button-add-loan">
-                      <Plus className="mr-2 h-4 w-4" />
-                      New Loan
-                    </Button>
-                  </Link>
+                  <div className="flex gap-2">
+                    <SmartLoanMatcher />
+                    <Link href="/loans">
+                      <Button className="bg-primary hover:bg-primary/90 text-primary-foreground" data-testid="button-add-loan">
+                        <Plus className="mr-2 h-4 w-4" />
+                        New Loan
+                      </Button>
+                    </Link>
+                  </div>
                 </div>
               </CardHeader>
               

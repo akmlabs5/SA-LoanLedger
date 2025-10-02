@@ -723,6 +723,168 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Smart Loan Matcher - recommend optimal facility for new loan
+  app.post('/api/ai/loan-matcher', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const { loanAmount, facilityType, duration } = req.body;
+      
+      if (!loanAmount || loanAmount <= 0) {
+        return res.status(400).json({ message: "Valid loan amount is required" });
+      }
+      
+      // Get all user facilities with their loans
+      const facilities = await storage.getUserFacilities(userId);
+      const loans = await storage.getActiveLoansByUser(userId);
+      
+      if (facilities.length === 0) {
+        return res.json({
+          recommendation: null,
+          message: "No facilities available. Please create a facility first."
+        });
+      }
+      
+      // Analyze each facility
+      const facilityScores = await Promise.all(facilities.map(async (facility: any) => {
+        // Calculate current utilization
+        const facilityLoans = loans.filter((l: any) => l.facilityId === facility.id);
+        const currentOutstanding = facilityLoans.reduce((sum: number, l: any) => 
+          sum + parseFloat(l.amount.toString()), 0);
+        const creditLimit = parseFloat(facility.limit.toString());
+        const availableCredit = creditLimit - currentOutstanding;
+        const utilizationPercent = (currentOutstanding / creditLimit) * 100;
+        
+        let score = 0;
+        const reasons: string[] = [];
+        const warnings: string[] = [];
+        
+        // 1. Available Credit (40 points)
+        if (availableCredit < loanAmount) {
+          score = 0;
+          warnings.push(`Insufficient credit: SAR ${availableCredit.toFixed(2)} available, SAR ${loanAmount.toFixed(2)} needed`);
+        } else {
+          const creditRatio = availableCredit / loanAmount;
+          if (creditRatio >= 3) {
+            score += 40;
+            reasons.push("Excellent available credit");
+          } else if (creditRatio >= 1.5) {
+            score += 30;
+            reasons.push("Good available credit");
+          } else {
+            score += 20;
+            warnings.push("Limited available credit after drawdown");
+          }
+        }
+        
+        // 2. Current Utilization (20 points) - lower is better
+        if (utilizationPercent < 30) {
+          score += 20;
+          reasons.push("Low utilization");
+        } else if (utilizationPercent < 60) {
+          score += 15;
+        } else if (utilizationPercent < 80) {
+          score += 10;
+          warnings.push("High utilization");
+        } else {
+          score += 5;
+          warnings.push("Very high utilization");
+        }
+        
+        // 3. Interest Rate (20 points) - lower is better
+        const rate = parseFloat(facility.costOfFunding.toString());
+        const minRate = Math.min(...facilities.map((f: any) => parseFloat(f.costOfFunding.toString())));
+        if (rate === minRate) {
+          score += 20;
+          reasons.push(`Best interest rate: ${rate}%`);
+        } else {
+          const rateDiff = rate - minRate;
+          if (rateDiff < 0.5) {
+            score += 15;
+          } else if (rateDiff < 1.0) {
+            score += 10;
+          } else {
+            score += 5;
+            warnings.push(`Higher interest rate: ${rate}% vs ${minRate}%`);
+          }
+        }
+        
+        // 4. Facility Type Match (10 points)
+        if (facilityType && facility.facilityType === facilityType) {
+          score += 10;
+          reasons.push("Facility type matches requirement");
+        } else if (facilityType) {
+          score += 5;
+        }
+        
+        // 5. Revolving Period Check (10 points)
+        if (facility.enableRevolvingTracking && duration) {
+          try {
+            const response = await fetch(`http://localhost:${process.env.PORT || 5000}/api/facilities/${facility.id}/revolving-usage`, {
+              headers: { 'Authorization': req.headers.authorization || '' }
+            });
+            const usage = await response.json();
+            
+            const remainingDays = usage.remainingDays || 0;
+            if (remainingDays >= duration) {
+              score += 10;
+              reasons.push(`Sufficient revolving period: ${remainingDays} days available`);
+            } else {
+              score += 0;
+              warnings.push(`Insufficient revolving period: ${remainingDays} days available, ${duration} needed`);
+            }
+          } catch {
+            score += 5; // Give partial credit if check fails
+          }
+        } else {
+          score += 5; // Not applicable
+        }
+        
+        return {
+          facilityId: facility.id,
+          facilityName: `${facility.bank?.name || 'Unknown Bank'} - ${facility.facilityType}`,
+          bankName: facility.bank?.name || 'Unknown Bank',
+          score,
+          availableCredit,
+          utilizationPercent: utilizationPercent.toFixed(2),
+          interestRate: rate,
+          creditLimit,
+          currentOutstanding,
+          reasons,
+          warnings,
+          isEligible: availableCredit >= loanAmount
+        };
+      }));
+      
+      // Sort by score (highest first)
+      facilityScores.sort((a, b) => b.score - a.score);
+      
+      // Filter eligible facilities
+      const eligibleFacilities = facilityScores.filter(f => f.isEligible);
+      
+      if (eligibleFacilities.length === 0) {
+        return res.json({
+          recommendation: null,
+          message: "No facilities have sufficient available credit for this loan amount.",
+          allFacilities: facilityScores
+        });
+      }
+      
+      const topRecommendation = eligibleFacilities[0];
+      const alternatives = eligibleFacilities.slice(1, 3); // Top 2 alternatives
+      
+      res.json({
+        recommendation: topRecommendation,
+        alternatives,
+        allFacilities: facilityScores,
+        message: `Recommended: ${topRecommendation.facilityName} (Score: ${topRecommendation.score}/100)`
+      });
+      
+    } catch (error) {
+      console.error("Error in loan matcher:", error);
+      res.status(500).json({ message: "Failed to analyze facilities" });
+    }
+  });
+
   // Loan routes
   app.get('/api/loans', isAuthenticated, async (req: any, res) => {
     try {
