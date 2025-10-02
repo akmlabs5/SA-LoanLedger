@@ -618,6 +618,7 @@ export default function GeneralFacilityCreatePage() {
                   <div><span className="font-medium">Bullet:</span> Lump sum repayment at maturity</div>
                   <div><span className="font-medium">Bridge:</span> Short-term financing solution</div>
                   <div><span className="font-medium">Working Capital:</span> Operational funding facility</div>
+                  <div><span className="font-medium">Non Bank Guarantee:</span> Guarantee facility without cash drawdown</div>
                 </div>
               </CardContent>
             </Card>
@@ -626,14 +627,14 @@ export default function GeneralFacilityCreatePage() {
               <CardHeader>
                 <CardTitle className="flex items-center space-x-2">
                   <Percent className="h-5 w-5 text-primary" />
-                  <span>SIBOR Information</span>
+                  <span>Cost Information</span>
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
                 <div className="text-sm text-muted-foreground space-y-2">
                   <p>• <span className="font-semibold">Cost of Funding (*)</span> is the margin/spread above SIBOR</p>
                   <p>• Total rate = SIBOR + Cost of Funding</p>
-                  <p>• Current SIBOR rates are automatically factored into calculations</p>
+                  <p>• SIBOR rates to be input in each loan creation independently depending on the duration and rate that time</p>
                   <p>• Facility terms may include rate adjustment clauses</p>
                 </div>
               </CardContent>
