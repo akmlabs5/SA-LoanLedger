@@ -24,7 +24,6 @@ import {
   Boxes,
   BarChart3,
   Lightbulb,
-  Keyboard,
   CheckCircle,
   Smartphone
 } from "lucide-react";
@@ -361,100 +360,6 @@ export default function FeaturesTipsPage() {
                     <p className="text-sm text-muted-foreground ml-8">
                       Always enter complete facility details, use consistent naming conventions, update collateral values monthly, and upload supporting documents for better AI insights.
                     </p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Keyboard Shortcuts Section */}
-            <Card data-testid="card-keyboard-shortcuts">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Keyboard className="h-5 w-5" />
-                  Keyboard Shortcuts
-                </CardTitle>
-                <CardDescription>Speed up your workflow with these keyboard shortcuts</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="space-y-3" data-testid="shortcuts-navigation">
-                    <h4 className="font-semibold text-sm">Common Navigation</h4>
-                    <div className="space-y-2">
-                      <div className="flex items-center justify-between text-sm">
-                        <span className="text-muted-foreground">Dashboard</span>
-                        <kbd className="px-2 py-1 bg-muted rounded text-xs">Alt + D</kbd>
-                      </div>
-                      <div className="flex items-center justify-between text-sm">
-                        <span className="text-muted-foreground">Loans</span>
-                        <kbd className="px-2 py-1 bg-muted rounded text-xs">Alt + L</kbd>
-                      </div>
-                      <div className="flex items-center justify-between text-sm">
-                        <span className="text-muted-foreground">Banks</span>
-                        <kbd className="px-2 py-1 bg-muted rounded text-xs">Alt + B</kbd>
-                      </div>
-                      <div className="flex items-center justify-between text-sm">
-                        <span className="text-muted-foreground">AI Chat</span>
-                        <kbd className="px-2 py-1 bg-muted rounded text-xs">Alt + A</kbd>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="space-y-3" data-testid="shortcuts-actions">
-                    <h4 className="font-semibold text-sm">Quick Actions</h4>
-                    <div className="space-y-2">
-                      <div className="flex items-center justify-between text-sm">
-                        <span className="text-muted-foreground">New Loan</span>
-                        <kbd className="px-2 py-1 bg-muted rounded text-xs">Ctrl + N</kbd>
-                      </div>
-                      <div className="flex items-center justify-between text-sm">
-                        <span className="text-muted-foreground">Save Form</span>
-                        <kbd className="px-2 py-1 bg-muted rounded text-xs">Ctrl + S</kbd>
-                      </div>
-                      <div className="flex items-center justify-between text-sm">
-                        <span className="text-muted-foreground">Search</span>
-                        <kbd className="px-2 py-1 bg-muted rounded text-xs">Ctrl + K</kbd>
-                      </div>
-                      <div className="flex items-center justify-between text-sm">
-                        <span className="text-muted-foreground">Close Dialog</span>
-                        <kbd className="px-2 py-1 bg-muted rounded text-xs">Esc</kbd>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="space-y-3" data-testid="shortcuts-forms">
-                    <h4 className="font-semibold text-sm">Form Shortcuts</h4>
-                    <div className="space-y-2">
-                      <div className="flex items-center justify-between text-sm">
-                        <span className="text-muted-foreground">Next Field</span>
-                        <kbd className="px-2 py-1 bg-muted rounded text-xs">Tab</kbd>
-                      </div>
-                      <div className="flex items-center justify-between text-sm">
-                        <span className="text-muted-foreground">Previous Field</span>
-                        <kbd className="px-2 py-1 bg-muted rounded text-xs">Shift + Tab</kbd>
-                      </div>
-                      <div className="flex items-center justify-between text-sm">
-                        <span className="text-muted-foreground">Submit Form</span>
-                        <kbd className="px-2 py-1 bg-muted rounded text-xs">Ctrl + Enter</kbd>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="space-y-3" data-testid="shortcuts-search">
-                    <h4 className="font-semibold text-sm">Search Shortcuts</h4>
-                    <div className="space-y-2">
-                      <div className="flex items-center justify-between text-sm">
-                        <span className="text-muted-foreground">Filter Table</span>
-                        <kbd className="px-2 py-1 bg-muted rounded text-xs">Ctrl + F</kbd>
-                      </div>
-                      <div className="flex items-center justify-between text-sm">
-                        <span className="text-muted-foreground">Clear Filters</span>
-                        <kbd className="px-2 py-1 bg-muted rounded text-xs">Ctrl + Shift + F</kbd>
-                      </div>
-                      <div className="flex items-center justify-between text-sm">
-                        <span className="text-muted-foreground">Export Data</span>
-                        <kbd className="px-2 py-1 bg-muted rounded text-xs">Ctrl + E</kbd>
-                      </div>
-                    </div>
                   </div>
                 </div>
               </CardContent>
