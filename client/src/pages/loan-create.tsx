@@ -15,7 +15,6 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { insertLoanSchema, Facility, Bank, Loan, CreditLine } from "@shared/schema";
-import { SiborRate } from "@shared/types";
 import { z } from "zod";
 import { 
   ArrowLeft, 
@@ -73,10 +72,6 @@ export default function LoanCreatePage() {
     queryKey: ["/api/facilities"],
   });
 
-  const { data: siborRate } = useQuery<SiborRate>({
-    queryKey: ["/api/sibor-rate"],
-  });
-
   const { data: creditLines } = useQuery<Array<CreditLine & { facility: Facility & { bank: Bank } }>>({ 
     queryKey: ["/api/credit-lines"],
   });
@@ -108,7 +103,7 @@ export default function LoanCreatePage() {
       startDate: new Date().toISOString().split('T')[0],
       dueDate: "",
       chargesDueDate: undefined,
-      siborRate: siborRate?.rate?.toString() || "",
+      siborRate: "",
       siborTerm: "3M",
       customSiborMonths: "",
       notes: "",
@@ -124,13 +119,6 @@ export default function LoanCreatePage() {
     setLocation("/guarantees/create");
     return null; // Prevent rendering while redirecting
   }
-  
-  // Update SIBOR rate when form loads
-  React.useEffect(() => {
-    if (siborRate?.rate && !form.getValues('siborRate')) {
-      form.setValue('siborRate', siborRate.rate.toString());
-    }
-  }, [siborRate, form]);
 
   const createLoanMutation = useMutation({
     mutationFn: async (data: LoanFormData) => {
