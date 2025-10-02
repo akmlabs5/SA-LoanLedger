@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDescription } from "@/components/ui/form";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
@@ -614,11 +614,14 @@ export default function LoanCreatePage() {
                               <Input 
                                 type="number" 
                                 step="0.01" 
-                                placeholder="5.75" 
+                                placeholder="Enter SIBOR Rate" 
                                 {...field} 
                                 data-testid="input-sibor-rate"
                               />
                             </FormControl>
+                            <FormDescription>
+                              Input the SIBOR rate based on the loan duration and terms negotiated with the bank
+                            </FormDescription>
                             <FormMessage />
                           </FormItem>
                         )}
@@ -790,25 +793,6 @@ export default function LoanCreatePage() {
               </CardContent>
             </Card>
 
-            {/* Current SIBOR Rate */}
-            {siborRate && (
-              <Card className="border-0 shadow-lg">
-                <CardHeader>
-                  <CardTitle className="text-lg flex items-center space-x-2">
-                    <span>Current SIBOR</span>
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="text-center">
-                    <div className="text-2xl font-bold text-blue-600">{siborRate.rate}%</div>
-                    <div className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-                      {siborRate.monthlyChange > 0 ? '↗' : siborRate.monthlyChange < 0 ? '↘' : '→'} 
-                      {Math.abs(siborRate.monthlyChange)}% this month
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            )}
           </div>
         </div>
       </div>
