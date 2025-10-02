@@ -14,6 +14,7 @@ import {
   reminderTemplates,
   userReminderSettings,
   userPreferences,
+  dailyAlertsPreferences,
   guarantees,
   aiInsightConfig,
   exposureSnapshots,
@@ -71,6 +72,8 @@ import {
   type UpdateUserReminderSettings,
   type UserPreferences,
   type InsertUserPreferences,
+  type DailyAlertsPreferences,
+  type InsertDailyAlertsPreferences,
   type ChatConversation,
   type InsertChatConversation,
   type ChatMessage,
@@ -170,6 +173,10 @@ export interface IStorage {
   // User Preferences operations
   getUserPreferences(userId: string): Promise<UserPreferences | undefined>;
   upsertUserPreferences(preferences: InsertUserPreferences): Promise<UserPreferences>;
+  
+  // Daily Alerts Preferences operations
+  getDailyAlertsPreferences(userId: string): Promise<DailyAlertsPreferences | undefined>;
+  upsertDailyAlertsPreferences(preferences: InsertDailyAlertsPreferences): Promise<DailyAlertsPreferences>;
   
   // Guarantee operations
   getUserGuarantees(userId: string): Promise<Array<Guarantee & { facility: Facility & { bank: Bank } }>>;
@@ -947,6 +954,29 @@ export class DatabaseStorage implements IStorage {
       .values(preferences)
       .onConflictDoUpdate({
         target: userPreferences.userId,
+        set: {
+          ...preferences,
+          updatedAt: new Date(),
+        },
+      })
+      .returning();
+    return result;
+  }
+
+  async getDailyAlertsPreferences(userId: string): Promise<DailyAlertsPreferences | undefined> {
+    const [result] = await db
+      .select()
+      .from(dailyAlertsPreferences)
+      .where(eq(dailyAlertsPreferences.userId, userId));
+    return result;
+  }
+
+  async upsertDailyAlertsPreferences(preferences: InsertDailyAlertsPreferences): Promise<DailyAlertsPreferences> {
+    const [result] = await db
+      .insert(dailyAlertsPreferences)
+      .values(preferences)
+      .onConflictDoUpdate({
+        target: dailyAlertsPreferences.userId,
         set: {
           ...preferences,
           updatedAt: new Date(),

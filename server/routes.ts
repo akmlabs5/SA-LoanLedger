@@ -27,6 +27,7 @@ import {
   updateReminderTemplateSchema,
   insertUserReminderSettingsSchema,
   insertUserPreferencesSchema,
+  insertDailyAlertsPreferencesSchema,
   insertGuaranteeSchema,
   updateGuaranteeSchema,
   insertAiInsightConfigSchema,
@@ -1684,6 +1685,41 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       res.status(500).json({ message: "Failed to save user preferences" });
+    }
+  });
+
+  // Daily Alerts Preferences endpoints
+  app.get('/api/user/daily-alerts-preferences', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const preferences = await storage.getDailyAlertsPreferences(userId);
+      res.json(preferences);
+    } catch (error) {
+      console.error("Error fetching daily alerts preferences:", error);
+      res.status(500).json({ message: "Failed to fetch daily alerts preferences" });
+    }
+  });
+
+  app.post('/api/user/daily-alerts-preferences', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      
+      const preferencesData = insertDailyAlertsPreferencesSchema.parse({
+        ...req.body,
+        userId,
+      });
+      
+      const preferences = await storage.upsertDailyAlertsPreferences(preferencesData);
+      res.json(preferences);
+    } catch (error) {
+      console.error("Error saving daily alerts preferences:", error);
+      
+      // Return 400 for validation errors
+      if (error instanceof Error && error.message.includes('ZodError')) {
+        return res.status(400).json({ message: "Invalid daily alerts preferences data", details: error.message });
+      }
+      
+      res.status(500).json({ message: "Failed to save daily alerts preferences" });
     }
   });
 
