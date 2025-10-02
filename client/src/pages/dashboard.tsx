@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import { useQuery } from "@tanstack/react-query";
@@ -22,7 +22,8 @@ import {
   Activity,
   AlertTriangle,
   Target,
-  BarChart3
+  BarChart3,
+  ChevronDown
 } from "lucide-react";
 import { Link, useLocation } from "wouter";
 import StatisticCard from "@/components/StatisticCard";
@@ -41,6 +42,7 @@ export default function Dashboard() {
   const { user, isLoading, isAuthenticated } = useAuth();
   const { toast } = useToast();
   const [, setLocation] = useLocation();
+  const [visibleLoans, setVisibleLoans] = useState(8);
 
   // Redirect to login if not authenticated
   useEffect(() => {
@@ -260,8 +262,8 @@ export default function Dashboard() {
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 mb-8">
           {/* Priority Loans with Compact Cards */}
           <div className="lg:col-span-3">
-            <Card className="bg-card border border-border shadow-sm hover:shadow-md transition-shadow duration-200">
-              <CardHeader className="pb-4">
+            <Card className="bg-card border border-border shadow-sm hover:shadow-md transition-shadow duration-200 h-full flex flex-col">
+              <CardHeader className="pb-4 shrink-0">
                 <div className="flex items-center justify-between">
                   <div className="space-y-1">
                     <CardTitle className="text-xl font-semibold flex items-center space-x-2">
@@ -282,7 +284,7 @@ export default function Dashboard() {
                 </div>
               </CardHeader>
               
-              <CardContent className="space-y-2">
+              <CardContent className="flex-1 min-h-0 flex flex-col">
                 {loansLoading ? (
                   <div className="flex items-center justify-center py-12">
                     <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
@@ -300,71 +302,88 @@ export default function Dashboard() {
                     </Link>
                   </div>
                 ) : (
-                  sortedLoans.slice(0, 6).map((loan) => {
-                    const urgency = getLoanUrgency(loan.dueDate);
-                    const urgencyBorderClass = urgency.color === 'red' 
-                      ? 'border-l-destructive' 
-                      : urgency.color === 'yellow' 
-                        ? 'border-l-amber-500'
-                        : 'border-l-primary';
-                    
-                    return (
-                      <div key={loan.id} className={`bg-card border border-border ${urgencyBorderClass} border-l-4 p-4 rounded-lg shadow-sm hover:shadow-md transition-shadow duration-200`} data-testid={`card-loan-${loan.id}`}>
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center space-x-3 min-w-0 flex-1">
-                            <Badge 
-                              className={`${
-                                urgency.color === 'red' ? 'bg-destructive text-destructive-foreground' : 
-                                urgency.color === 'yellow' ? 'bg-amber-500 text-white' : 
-                                'bg-primary text-primary-foreground'
-                              } text-xs`}
-                            >
-                              {urgency.priority === 'critical' ? 'Critical' : urgency.priority === 'warning' ? 'Warning' : 'Normal'}
-                            </Badge>
-                            <div className="min-w-0 flex-1">
-                              <div className="flex items-center space-x-2">
-                                <button
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    handleBankRowClick((loan as any).facility?.bank?.id, (loan as any).facility?.bank?.name);
-                                  }}
-                                  className="font-medium text-foreground hover:text-primary hover:underline transition-colors duration-200 truncate"
-                                  data-testid={`text-loan-reference-${loan.id}`}
-                                  title={`Click to view ${(loan as any).facility?.bank?.name} details`}
+                  <>
+                    <div className="space-y-2 overflow-y-auto pr-2 flex-1 max-h-[500px]">
+                      {sortedLoans.slice(0, visibleLoans).map((loan) => {
+                        const urgency = getLoanUrgency(loan.dueDate);
+                        const urgencyBorderClass = urgency.color === 'red' 
+                          ? 'border-l-destructive' 
+                          : urgency.color === 'yellow' 
+                            ? 'border-l-amber-500'
+                            : 'border-l-primary';
+                        
+                        return (
+                          <div key={loan.id} className={`bg-card border border-border ${urgencyBorderClass} border-l-4 p-4 rounded-lg shadow-sm hover:shadow-md transition-shadow duration-200`} data-testid={`card-loan-${loan.id}`}>
+                            <div className="flex items-center justify-between">
+                              <div className="flex items-center space-x-3 min-w-0 flex-1">
+                                <Badge 
+                                  className={`${
+                                    urgency.color === 'red' ? 'bg-destructive text-destructive-foreground' : 
+                                    urgency.color === 'yellow' ? 'bg-amber-500 text-white' : 
+                                    'bg-primary text-primary-foreground'
+                                  } text-xs`}
                                 >
-                                  {(loan as any).facility?.bank?.name}
-                                </button>
-                                <span className="text-sm text-muted-foreground">•</span>
-                                <span className="text-sm text-muted-foreground truncate">{loan.referenceNumber}</span>
+                                  {urgency.priority === 'critical' ? 'Critical' : urgency.priority === 'warning' ? 'Warning' : 'Normal'}
+                                </Badge>
+                                <div className="min-w-0 flex-1">
+                                  <div className="flex items-center space-x-2">
+                                    <button
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        handleBankRowClick((loan as any).facility?.bank?.id, (loan as any).facility?.bank?.name);
+                                      }}
+                                      className="font-medium text-foreground hover:text-primary hover:underline transition-colors duration-200 truncate"
+                                      data-testid={`text-loan-reference-${loan.id}`}
+                                      title={`Click to view ${(loan as any).facility?.bank?.name} details`}
+                                    >
+                                      {(loan as any).facility?.bank?.name}
+                                    </button>
+                                    <span className="text-sm text-muted-foreground">•</span>
+                                    <span className="text-sm text-muted-foreground truncate">{loan.referenceNumber}</span>
+                                  </div>
+                                  <div className="flex items-center space-x-4 text-xs text-muted-foreground mt-1">
+                                    <span>Due {new Date(loan.dueDate).toLocaleDateString()}</span>
+                                    <span>•</span>
+                                    <span>SIBOR + {loan.bankRate}%</span>
+                                  </div>
+                                </div>
                               </div>
-                              <div className="flex items-center space-x-4 text-xs text-muted-foreground mt-1">
-                                <span>Due {new Date(loan.dueDate).toLocaleDateString()}</span>
-                                <span>•</span>
-                                <span>SIBOR + {loan.bankRate}%</span>
+                              <div className="text-right flex items-center space-x-3">
+                                <div>
+                                  <p className="text-lg font-bold text-foreground" data-testid={`text-loan-amount-${loan.id}`}>
+                                    {(parseFloat(loan.amount) / 1000000).toFixed(1)}M
+                                  </p>
+                                  <p className="text-xs text-muted-foreground">SAR</p>
+                                </div>
+                                <Button 
+                                  size="sm" 
+                                  variant={urgency.priority === 'critical' ? 'destructive' : 'outline'}
+                                  className="text-xs"
+                                  onClick={() => setLocation(`/loans/${loan.id}`)}
+                                  data-testid={`button-view-loan-${loan.id}`}
+                                >
+                                  {urgency.priority === 'critical' ? 'Urgent' : 'View'}
+                                </Button>
                               </div>
                             </div>
                           </div>
-                          <div className="text-right flex items-center space-x-3">
-                            <div>
-                              <p className="text-lg font-bold text-foreground" data-testid={`text-loan-amount-${loan.id}`}>
-                                {(parseFloat(loan.amount) / 1000000).toFixed(1)}M
-                              </p>
-                              <p className="text-xs text-muted-foreground">SAR</p>
-                            </div>
-                            <Button 
-                              size="sm" 
-                              variant={urgency.priority === 'critical' ? 'destructive' : 'outline'}
-                              className="text-xs"
-                              onClick={() => setLocation(`/loans/${loan.id}`)}
-                              data-testid={`button-view-loan-${loan.id}`}
-                            >
-                              {urgency.priority === 'critical' ? 'Urgent' : 'View'}
-                            </Button>
-                          </div>
-                        </div>
+                        );
+                      })}
+                    </div>
+                    {sortedLoans.length > visibleLoans && (
+                      <div className="mt-4 pt-4 border-t border-border shrink-0">
+                        <Button 
+                          variant="outline" 
+                          className="w-full"
+                          onClick={() => setVisibleLoans(prev => prev + 8)}
+                          data-testid="button-load-more-loans"
+                        >
+                          <ChevronDown className="mr-2 h-4 w-4" />
+                          Load more ({sortedLoans.length - visibleLoans} remaining)
+                        </Button>
                       </div>
-                    );
-                  })
+                    )}
+                  </>
                 )}
               </CardContent>
             </Card>
@@ -372,76 +391,80 @@ export default function Dashboard() {
           
           {/* Sticky Quick Actions Panel */}
           <div className="lg:sticky lg:top-6 lg:self-start">
-            <Card className="bg-card border border-border shadow-sm hover:shadow-md transition-shadow duration-200">
-              <CardHeader className="pb-4">
+            <Card className="bg-card border border-border shadow-sm hover:shadow-md transition-shadow duration-200 h-full flex flex-col">
+              <CardHeader className="pb-4 shrink-0">
               <CardTitle className="text-xl font-semibold flex items-center space-x-2">
                 <TrendingUp className="h-5 w-5 text-primary" />
                 <span>Quick Actions</span>
               </CardTitle>
               <p className="text-sm text-muted-foreground">Streamline your portfolio management</p>
             </CardHeader>
-            <CardContent className="space-y-4">
-              <Link href="/loans">
-                <Button className="w-full justify-start bg-primary hover:bg-primary/90 text-primary-foreground" data-testid="button-quick-add-loan">
-                  <Plus className="mr-3 h-4 w-4" />
-                  Add New Loan
-                </Button>
-              </Link>
+            <CardContent className="flex-1 flex flex-col justify-between">
+              <div className="space-y-4">
+                <Link href="/loans">
+                  <Button className="w-full justify-start bg-primary hover:bg-primary/90 text-primary-foreground" data-testid="button-quick-add-loan">
+                    <Plus className="mr-3 h-4 w-4" />
+                    Add New Loan
+                  </Button>
+                </Link>
+                
+                <Link href="/banks">
+                  <Button variant="outline" className="w-full justify-start" data-testid="button-quick-manage-banks">
+                    <Building className="mr-3 h-4 w-4" />
+                    Manage Bank Facilities
+                  </Button>
+                </Link>
+                
+                <Link href="/collateral">
+                  <Button variant="outline" className="w-full justify-start" data-testid="button-quick-update-collateral">
+                    <Home className="mr-3 h-4 w-4" />
+                    Update Collateral
+                  </Button>
+                </Link>
+                
+                <Link href="/reports">
+                  <Button variant="ghost" className="w-full justify-start" data-testid="button-quick-export-reports">
+                    <Download className="mr-3 h-4 w-4" />
+                    Export Portfolio Report
+                  </Button>
+                </Link>
+              </div>
               
-              <Link href="/banks">
-                <Button variant="outline" className="w-full justify-start" data-testid="button-quick-manage-banks">
-                  <Building className="mr-3 h-4 w-4" />
-                  Manage Bank Facilities
-                </Button>
-              </Link>
-              
-              <Link href="/collateral">
-                <Button variant="outline" className="w-full justify-start" data-testid="button-quick-update-collateral">
-                  <Home className="mr-3 h-4 w-4" />
-                  Update Collateral
-                </Button>
-              </Link>
-              
-              <Link href="/reports">
-                <Button variant="ghost" className="w-full justify-start" data-testid="button-quick-export-reports">
-                  <Download className="mr-3 h-4 w-4" />
-                  Export Portfolio Report
-                </Button>
-              </Link>
-              
-              <Separator className="my-4" />
-              
-              {/* Enhanced SIBOR Rate Display */}
-              <div className="p-5 bg-secondary border border-border rounded-lg">
-                <div className="flex items-center justify-between mb-2">
-                  <div className="flex items-center space-x-2">
-                    <div className="w-3 h-3 bg-blue-500 rounded-full animate-pulse"></div>
-                    <span className="text-sm text-foreground font-semibold">SIBOR Rate</span>
-                  </div>
-                  <span className="text-2xl font-bold text-foreground" data-testid="text-sibor-rate">
-                    {siborRate ? `${siborRate.rate}%` : '5.75%'}
-                  </span>
-                </div>
-                <div className="flex items-center justify-between text-xs">
-                  <span className="text-muted-foreground">Monthly Change</span>
-                  <div className="flex items-center space-x-1">
-                    {((siborRate?.monthlyChange || 0.25) > 0) ? (
-                      <ArrowUp className="h-3 w-3 text-green-600 dark:text-green-400" />
-                    ) : (
-                      <ArrowDown className="h-3 w-3 text-red-600 dark:text-red-400" />
-                    )}
-                    <span className={`font-medium ${
-                      (siborRate?.monthlyChange || 0.25) > 0 
-                        ? 'text-green-600 dark:text-green-400' 
-                        : 'text-red-600 dark:text-red-400'
-                    }`}>
-                      {siborRate ? `${siborRate.monthlyChange > 0 ? '+' : ''}${siborRate.monthlyChange}%` : '+0.25%'}
+              <div className="mt-4">
+                <Separator className="mb-4" />
+                
+                {/* Enhanced SIBOR Rate Display */}
+                <div className="p-5 bg-secondary border border-border rounded-lg">
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="flex items-center space-x-2">
+                      <div className="w-3 h-3 bg-blue-500 rounded-full animate-pulse"></div>
+                      <span className="text-sm text-foreground font-semibold">SIBOR Rate</span>
+                    </div>
+                    <span className="text-2xl font-bold text-foreground" data-testid="text-sibor-rate">
+                      {siborRate ? `${siborRate.rate}%` : '5.75%'}
                     </span>
                   </div>
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="text-muted-foreground">Monthly Change</span>
+                    <div className="flex items-center space-x-1">
+                      {((siborRate?.monthlyChange || 0.25) > 0) ? (
+                        <ArrowUp className="h-3 w-3 text-green-600 dark:text-green-400" />
+                      ) : (
+                        <ArrowDown className="h-3 w-3 text-red-600 dark:text-red-400" />
+                      )}
+                      <span className={`font-medium ${
+                        (siborRate?.monthlyChange || 0.25) > 0 
+                          ? 'text-green-600 dark:text-green-400' 
+                          : 'text-red-600 dark:text-red-400'
+                      }`}>
+                        {siborRate ? `${siborRate.monthlyChange > 0 ? '+' : ''}${siborRate.monthlyChange}%` : '+0.25%'}
+                      </span>
+                    </div>
+                  </div>
+                  <p className="text-xs text-muted-foreground mt-2 opacity-75">
+                    Last updated: {new Date().toLocaleDateString()}
+                  </p>
                 </div>
-                <p className="text-xs text-muted-foreground mt-2 opacity-75">
-                  Last updated: {new Date().toLocaleDateString()}
-                </p>
               </div>
             </CardContent>
           </Card>
