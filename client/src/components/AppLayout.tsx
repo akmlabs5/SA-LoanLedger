@@ -11,7 +11,6 @@ import {
   University,
   User,
   Bell,
-  Search,
   History,
   LogOut,
   FileText,
@@ -40,7 +39,6 @@ import {
   SidebarInset,
 } from "@/components/ui/sidebar";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/hooks/useAuth";
@@ -54,17 +52,22 @@ interface AppLayoutProps {
 
 const navigation = [
   {
-    title: "Overview",
+    title: "Main",
     items: [
       {
         title: "Dashboard",
         url: "/",
         icon: LayoutDashboard,
       },
+      {
+        title: "AI Assistant",
+        url: "/ai-chat",
+        icon: MessageCircle,
+      },
     ],
   },
   {
-    title: "Portfolio Management",
+    title: "Portfolio",
     items: [
       {
         title: "Bank Exposures",
@@ -86,6 +89,11 @@ const navigation = [
         url: "/collateral",
         icon: Shield,
       },
+    ],
+  },
+  {
+    title: "Reports & History",
+    items: [
       {
         title: "Reports",
         url: "/reports",
@@ -99,18 +107,13 @@ const navigation = [
     ],
   },
   {
-    title: "Intelligence",
+    title: "Settings & Support",
     items: [
       {
-        title: "AI Assistant",
-        url: "/ai-chat",
-        icon: MessageCircle,
+        title: "User Settings",
+        url: "/user-settings",
+        icon: Settings,
       },
-    ],
-  },
-  {
-    title: "Help & Resources",
-    items: [
       {
         title: "Features & Tips",
         url: "/features-tips",
@@ -121,16 +124,6 @@ const navigation = [
         url: "/help-desk",
         icon: HelpCircle,
         comingSoon: true,
-      },
-    ],
-  },
-  {
-    title: "Preferences",
-    items: [
-      {
-        title: "User Settings",
-        url: "/user-settings",
-        icon: Settings,
       },
     ],
   },
@@ -363,26 +356,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
             </div>
           </SidebarHeader>
 
-          <SidebarContent className="px-3">
-            <div className={cn("mb-6 mt-4", isMobile && "mb-4 mt-2")}>
-              <div className="relative">
-                <Search className={cn(
-                  "absolute left-3 text-muted-foreground top-1/2 -translate-y-1/2",
-                  isMobile ? "h-5 w-5" : "h-4 w-4"
-                )} />
-                <Input 
-                  placeholder={isMobile ? "Search..." : "Search portfolios, loans..."} 
-                  className={cn(
-                    "bg-background/50 border-border font-normal rounded-lg transition-all duration-200 focus:bg-background focus:ring-2 focus:ring-saudi/20",
-                    isMobile ? "pl-12 h-12 text-base" : "pl-10 h-10 text-sm"
-                  )}
-                  data-testid="input-search"
-                  autoComplete="off"
-                  inputMode={isMobile ? "search" : "text"}
-                />
-              </div>
-            </div>
-
+          <SidebarContent className="px-3 pt-2">
           {navigation.map((group) => (
             <SidebarGroup key={group.title} className="mb-6">
               <SidebarGroupLabel className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-3 px-1">
