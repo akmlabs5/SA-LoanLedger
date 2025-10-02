@@ -1519,6 +1519,7 @@ export class MemoryStorage implements IStorage {
   private userPreferences = new Map<string, UserPreferences>();
   private guarantees = new Map<string, Guarantee>();
   private aiConfigs = new Map<string, AiInsightConfig>();
+  private dailyAlertsPrefs = new Map<string, DailyAlertsPreferences>();
   private exposureSnapshots = new Map<string, ExposureSnapshot>();
   private transactions = new Map<string, Transaction>();
   private attachments = new Map<string, Attachment>();
@@ -1985,6 +1986,22 @@ export class MemoryStorage implements IStorage {
     };
     this.aiConfigs.set(newConfig.id, newConfig);
     return newConfig;
+  }
+
+  async getDailyAlertsPreferences(userId: string): Promise<DailyAlertsPreferences | undefined> {
+    return Array.from(this.dailyAlertsPrefs.values()).find(pref => pref.userId === userId);
+  }
+
+  async upsertDailyAlertsPreferences(preferences: InsertDailyAlertsPreferences): Promise<DailyAlertsPreferences> {
+    const existing = Array.from(this.dailyAlertsPrefs.values()).find(p => p.userId === preferences.userId);
+    const newPrefs: DailyAlertsPreferences = {
+      ...preferences,
+      id: existing?.id || this.generateId(),
+      createdAt: existing?.createdAt || new Date(),
+      updatedAt: new Date(),
+    };
+    this.dailyAlertsPrefs.set(newPrefs.id, newPrefs);
+    return newPrefs;
   }
 
   async getUserPortfolioSummary(userId: string): Promise<{
