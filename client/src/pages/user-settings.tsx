@@ -13,7 +13,28 @@ import {
   Globe,
   Palette,
   Clock,
-  DollarSign
+  DollarSign,
+  Mail,
+  Sparkles,
+  Building2,
+  TrendingUp,
+  LifeBuoy,
+  FileText,
+  AlertTriangle,
+  Target,
+  BarChart3,
+  Zap,
+  MessageSquare,
+  Download,
+  Eye,
+  Globe2,
+  Percent,
+  Calendar,
+  CreditCard,
+  Languages,
+  BookOpen,
+  Database,
+  Boxes
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -24,6 +45,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Separator } from "@/components/ui/separator";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 
@@ -66,10 +89,25 @@ const aiInsightsSchema = z.object({
   dueDateAlertDays: z.coerce.number().min(1).max(365).default(30),
 });
 
+// Daily Alerts schema
+const dailyAlertsSchema = z.object({
+  enabled: z.boolean().default(false),
+  preferredTime: z.string().default("08:00"),
+  enableCriticalAlerts: z.boolean().default(true),
+  enableHighAlerts: z.boolean().default(true),
+  enableMediumAlerts: z.boolean().default(true),
+  enableLowAlerts: z.boolean().default(false),
+  utilizationThreshold: z.string().default("80.00"),
+  concentrationThreshold: z.string().default("40.00"),
+  ltvThreshold: z.string().default("70.00"),
+  revolvingThreshold: z.string().default("80.00"),
+});
+
 type ProfileFormData = z.infer<typeof profileSchema>;
 type PreferencesFormData = z.infer<typeof preferencesSchema>;
 type NotificationFormData = z.infer<typeof notificationSchema>;
 type AIInsightsFormData = z.infer<typeof aiInsightsSchema>;
+type DailyAlertsFormData = z.infer<typeof dailyAlertsSchema>;
 
 export default function UserSettingsPage() {
   const { toast } = useToast();
@@ -93,6 +131,11 @@ export default function UserSettingsPage() {
   // Fetch AI insights config
   const { data: aiConfig } = useQuery({
     queryKey: ['/api/user/ai-insights'],
+  });
+
+  // Fetch daily alerts preferences
+  const { data: dailyAlertsConfig, isLoading: dailyAlertsLoading } = useQuery({
+    queryKey: ['/api/user/daily-alerts-preferences'],
   });
 
   // Profile form
@@ -143,6 +186,23 @@ export default function UserSettingsPage() {
       cashFlowStrainThreshold: aiConfig?.cashFlowStrainThreshold || "20.00",
       rateDifferentialThreshold: aiConfig?.rateDifferentialThreshold || "0.50",
       dueDateAlertDays: aiConfig?.dueDateAlertDays || 30,
+    },
+  });
+
+  // Daily Alerts form
+  const dailyAlertsForm = useForm<DailyAlertsFormData>({
+    resolver: zodResolver(dailyAlertsSchema),
+    values: {
+      enabled: dailyAlertsConfig?.enabled ?? false,
+      preferredTime: dailyAlertsConfig?.preferredTime || "08:00",
+      enableCriticalAlerts: dailyAlertsConfig?.enableCriticalAlerts ?? true,
+      enableHighAlerts: dailyAlertsConfig?.enableHighAlerts ?? true,
+      enableMediumAlerts: dailyAlertsConfig?.enableMediumAlerts ?? true,
+      enableLowAlerts: dailyAlertsConfig?.enableLowAlerts ?? false,
+      utilizationThreshold: dailyAlertsConfig?.utilizationThreshold || "80.00",
+      concentrationThreshold: dailyAlertsConfig?.concentrationThreshold || "40.00",
+      ltvThreshold: dailyAlertsConfig?.ltvThreshold || "70.00",
+      revolvingThreshold: dailyAlertsConfig?.revolvingThreshold || "80.00",
     },
   });
 
@@ -235,6 +295,47 @@ export default function UserSettingsPage() {
     },
   });
 
+  // Daily Alerts mutation
+  const dailyAlertsMutation = useMutation({
+    mutationFn: async (data: DailyAlertsFormData) => {
+      return await apiRequest("POST", "/api/user/daily-alerts-preferences", data);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/user/daily-alerts-preferences'] });
+      toast({
+        title: "Daily Alerts Saved",
+        description: "Your daily alerts preferences have been updated successfully",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to save daily alerts preferences",
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Send test email mutation
+  const sendTestEmailMutation = useMutation({
+    mutationFn: async () => {
+      return await apiRequest("POST", "/api/ai/daily-alerts/send", {});
+    },
+    onSuccess: () => {
+      toast({
+        title: "Test Email Sent",
+        description: "A test daily alerts email has been sent to your email address",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to send test email",
+        variant: "destructive",
+      });
+    },
+  });
+
   // Interval management functions
   const addInterval = () => {
     const intervals = notificationForm.getValues("defaultReminderIntervals");
@@ -269,7 +370,7 @@ export default function UserSettingsPage() {
         </div>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="grid w-full grid-cols-5" data-testid="tabs-settings">
+          <TabsList className="grid w-full grid-cols-7" data-testid="tabs-settings">
             <TabsTrigger value="profile" className="flex items-center gap-2" data-testid="tab-profile">
               <User className="h-4 w-4" />
               <span className="hidden sm:inline">Profile</span>
@@ -282,6 +383,10 @@ export default function UserSettingsPage() {
               <Bell className="h-4 w-4" />
               <span className="hidden sm:inline">Notifications</span>
             </TabsTrigger>
+            <TabsTrigger value="daily-alerts" className="flex items-center gap-2" data-testid="tab-daily-alerts">
+              <Mail className="h-4 w-4" />
+              <span className="hidden sm:inline">Daily Alerts</span>
+            </TabsTrigger>
             <TabsTrigger value="ai-insights" className="flex items-center gap-2" data-testid="tab-ai-insights">
               <Brain className="h-4 w-4" />
               <span className="hidden sm:inline">AI Insights</span>
@@ -289,6 +394,10 @@ export default function UserSettingsPage() {
             <TabsTrigger value="security" className="flex items-center gap-2" data-testid="tab-security">
               <Shield className="h-4 w-4" />
               <span className="hidden sm:inline">Security</span>
+            </TabsTrigger>
+            <TabsTrigger value="features" className="flex items-center gap-2" data-testid="tab-features">
+              <Sparkles className="h-4 w-4" />
+              <span className="hidden sm:inline">Features</span>
             </TabsTrigger>
           </TabsList>
 
@@ -757,6 +866,318 @@ export default function UserSettingsPage() {
             </Card>
           </TabsContent>
 
+          {/* Daily Alerts Tab */}
+          <TabsContent value="daily-alerts" className="space-y-6">
+            <Card data-testid="card-daily-alerts">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Mail className="h-5 w-5" />
+                  Daily Email Alerts
+                </CardTitle>
+                <CardDescription>Configure automated daily email alerts for your portfolio</CardDescription>
+              </CardHeader>
+              <CardContent>
+                {dailyAlertsLoading ? (
+                  <div className="space-y-4">
+                    <div className="h-20 bg-muted animate-pulse rounded-lg" />
+                    <div className="h-20 bg-muted animate-pulse rounded-lg" />
+                    <div className="h-32 bg-muted animate-pulse rounded-lg" />
+                    <div className="h-32 bg-muted animate-pulse rounded-lg" />
+                  </div>
+                ) : (
+                <Form {...dailyAlertsForm}>
+                  <form onSubmit={dailyAlertsForm.handleSubmit((data) => dailyAlertsMutation.mutate(data))} className="space-y-6">
+                    <FormField
+                      control={dailyAlertsForm.control}
+                      name="enabled"
+                      render={({ field }) => (
+                        <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
+                          <div className="space-y-0.5">
+                            <FormLabel className="text-base">Enable Daily Alerts</FormLabel>
+                            <FormDescription>Receive daily email summaries of portfolio alerts</FormDescription>
+                          </div>
+                          <FormControl>
+                            <Switch
+                              checked={field.value}
+                              onCheckedChange={field.onChange}
+                              data-testid="switch-daily-alerts-enabled"
+                            />
+                          </FormControl>
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={dailyAlertsForm.control}
+                      name="preferredTime"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="flex items-center gap-2">
+                            <Clock className="h-4 w-4" />
+                            Preferred Time
+                          </FormLabel>
+                          <Select onValueChange={field.onChange} value={field.value}>
+                            <FormControl>
+                              <SelectTrigger data-testid="select-preferred-time">
+                                <SelectValue />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              {Array.from({ length: 13 }, (_, i) => i + 8).map((hour) => {
+                                const time = `${hour.toString().padStart(2, '0')}:00`;
+                                return (
+                                  <SelectItem key={time} value={time}>
+                                    {time}
+                                  </SelectItem>
+                                );
+                              })}
+                            </SelectContent>
+                          </Select>
+                          <FormDescription>Time to receive daily alerts (08:00-20:00)</FormDescription>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <Separator />
+
+                    <div>
+                      <h3 className="text-lg font-semibold mb-4">Alert Categories</h3>
+                      <div className="space-y-4">
+                        <FormField
+                          control={dailyAlertsForm.control}
+                          name="enableCriticalAlerts"
+                          render={({ field }) => (
+                            <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
+                              <FormControl>
+                                <Checkbox
+                                  checked={field.value}
+                                  onCheckedChange={field.onChange}
+                                  data-testid="checkbox-critical-alerts"
+                                />
+                              </FormControl>
+                              <div className="space-y-1 leading-none">
+                                <FormLabel className="flex items-center gap-2">
+                                  <Badge variant="destructive">Critical</Badge>
+                                  Critical Alerts
+                                </FormLabel>
+                                <FormDescription>
+                                  Overdue Loans, Expiring Facilities (within 7 days)
+                                </FormDescription>
+                              </div>
+                            </FormItem>
+                          )}
+                        />
+
+                        <FormField
+                          control={dailyAlertsForm.control}
+                          name="enableHighAlerts"
+                          render={({ field }) => (
+                            <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
+                              <FormControl>
+                                <Checkbox
+                                  checked={field.value}
+                                  onCheckedChange={field.onChange}
+                                  data-testid="checkbox-high-alerts"
+                                />
+                              </FormControl>
+                              <div className="space-y-1 leading-none">
+                                <FormLabel className="flex items-center gap-2">
+                                  <Badge className="bg-orange-500">High</Badge>
+                                  High Priority Alerts
+                                </FormLabel>
+                                <FormDescription>
+                                  Due Soon (7 days), High Utilization
+                                </FormDescription>
+                              </div>
+                            </FormItem>
+                          )}
+                        />
+
+                        <FormField
+                          control={dailyAlertsForm.control}
+                          name="enableMediumAlerts"
+                          render={({ field }) => (
+                            <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
+                              <FormControl>
+                                <Checkbox
+                                  checked={field.value}
+                                  onCheckedChange={field.onChange}
+                                  data-testid="checkbox-medium-alerts"
+                                />
+                              </FormControl>
+                              <div className="space-y-1 leading-none">
+                                <FormLabel className="flex items-center gap-2">
+                                  <Badge className="bg-yellow-500">Medium</Badge>
+                                  Medium Priority Alerts
+                                </FormLabel>
+                                <FormDescription>
+                                  Bank Concentration, Portfolio LTV, Revolving Period
+                                </FormDescription>
+                              </div>
+                            </FormItem>
+                          )}
+                        />
+
+                        <FormField
+                          control={dailyAlertsForm.control}
+                          name="enableLowAlerts"
+                          render={({ field }) => (
+                            <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
+                              <FormControl>
+                                <Checkbox
+                                  checked={field.value}
+                                  onCheckedChange={field.onChange}
+                                  data-testid="checkbox-low-alerts"
+                                />
+                              </FormControl>
+                              <div className="space-y-1 leading-none">
+                                <FormLabel className="flex items-center gap-2">
+                                  <Badge variant="outline">Low</Badge>
+                                  Low Priority Alerts
+                                </FormLabel>
+                                <FormDescription>
+                                  Due Soon (30 days)
+                                </FormDescription>
+                              </div>
+                            </FormItem>
+                          )}
+                        />
+                      </div>
+                    </div>
+
+                    <Separator />
+
+                    <div>
+                      <h3 className="text-lg font-semibold mb-4">Custom Thresholds</h3>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <FormField
+                          control={dailyAlertsForm.control}
+                          name="concentrationThreshold"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel className="flex items-center gap-2">
+                                <Percent className="h-4 w-4" />
+                                Concentration Risk %
+                              </FormLabel>
+                              <FormControl>
+                                <Input
+                                  {...field}
+                                  type="number"
+                                  step="0.01"
+                                  placeholder="40.00"
+                                  data-testid="input-concentration-threshold"
+                                />
+                              </FormControl>
+                              <FormDescription>Default: 40%</FormDescription>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+
+                        <FormField
+                          control={dailyAlertsForm.control}
+                          name="ltvThreshold"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel className="flex items-center gap-2">
+                                <Target className="h-4 w-4" />
+                                Portfolio LTV %
+                              </FormLabel>
+                              <FormControl>
+                                <Input
+                                  {...field}
+                                  type="number"
+                                  step="0.01"
+                                  placeholder="70.00"
+                                  data-testid="input-ltv-threshold"
+                                />
+                              </FormControl>
+                              <FormDescription>Default: 70%</FormDescription>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+
+                        <FormField
+                          control={dailyAlertsForm.control}
+                          name="utilizationThreshold"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel className="flex items-center gap-2">
+                                <BarChart3 className="h-4 w-4" />
+                                Utilization %
+                              </FormLabel>
+                              <FormControl>
+                                <Input
+                                  {...field}
+                                  type="number"
+                                  step="0.01"
+                                  placeholder="80.00"
+                                  data-testid="input-utilization-threshold"
+                                />
+                              </FormControl>
+                              <FormDescription>Default: 80%</FormDescription>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+
+                        <FormField
+                          control={dailyAlertsForm.control}
+                          name="revolvingThreshold"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel className="flex items-center gap-2">
+                                <Clock className="h-4 w-4" />
+                                Revolving Period %
+                              </FormLabel>
+                              <FormControl>
+                                <Input
+                                  {...field}
+                                  type="number"
+                                  step="0.01"
+                                  placeholder="80.00"
+                                  data-testid="input-revolving-threshold"
+                                />
+                              </FormControl>
+                              <FormDescription>Default: 80%</FormDescription>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      </div>
+                    </div>
+
+                    <div className="flex flex-col sm:flex-row gap-3 justify-end">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={() => sendTestEmailMutation.mutate()}
+                        disabled={sendTestEmailMutation.isPending}
+                        className="flex items-center gap-2"
+                        data-testid="button-send-test-email"
+                      >
+                        <Mail className="h-4 w-4" />
+                        {sendTestEmailMutation.isPending ? "Sending..." : "Send Test Email"}
+                      </Button>
+                      <Button
+                        type="submit"
+                        disabled={dailyAlertsMutation.isPending}
+                        className="flex items-center gap-2"
+                        data-testid="button-save-daily-alerts"
+                      >
+                        <Save className="h-4 w-4" />
+                        {dailyAlertsMutation.isPending ? "Saving..." : "Save Daily Alerts"}
+                      </Button>
+                    </div>
+                  </form>
+                </Form>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+
           {/* AI Insights Tab */}
           <TabsContent value="ai-insights" className="space-y-6">
             <Card data-testid="card-ai-thresholds">
@@ -927,6 +1348,247 @@ export default function UserSettingsPage() {
                 </div>
               </CardContent>
             </Card>
+          </TabsContent>
+
+          {/* Feature Showcase Tab */}
+          <TabsContent value="features" className="space-y-6">
+            <div className="space-y-6">
+              {/* Core Features Section */}
+              <Card data-testid="card-core-features">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Boxes className="h-5 w-5" />
+                    Core Features
+                  </CardTitle>
+                  <CardDescription>Essential tools for comprehensive loan portfolio management</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    <div className="p-4 border rounded-lg hover:border-primary transition-colors" data-testid="feature-card-bank-management">
+                      <Building2 className="h-8 w-8 text-primary mb-3" />
+                      <h3 className="font-semibold mb-2">Bank Management</h3>
+                      <p className="text-sm text-muted-foreground">
+                        Manage relationships with all Saudi banks, track contacts, and monitor facility agreements across your entire banking portfolio.
+                      </p>
+                    </div>
+
+                    <div className="p-4 border rounded-lg hover:border-primary transition-colors" data-testid="feature-card-facility-tracking">
+                      <CreditCard className="h-8 w-8 text-primary mb-3" />
+                      <h3 className="font-semibold mb-2">Facility Tracking</h3>
+                      <p className="text-sm text-muted-foreground">
+                        Track credit facilities including revolving, term, and bridge loans with automated limit monitoring and expiry alerts.
+                      </p>
+                    </div>
+
+                    <div className="p-4 border rounded-lg hover:border-primary transition-colors" data-testid="feature-card-loan-lifecycle">
+                      <TrendingUp className="h-8 w-8 text-primary mb-3" />
+                      <h3 className="font-semibold mb-2">Loan Lifecycle</h3>
+                      <p className="text-sm text-muted-foreground">
+                        Complete loan lifecycle management from drawdown to settlement, including payments, restructuring, and interest calculations.
+                      </p>
+                    </div>
+
+                    <div className="p-4 border rounded-lg hover:border-primary transition-colors" data-testid="feature-card-collateral-tracking">
+                      <Shield className="h-8 w-8 text-primary mb-3" />
+                      <h3 className="font-semibold mb-2">Collateral Tracking</h3>
+                      <p className="text-sm text-muted-foreground">
+                        Monitor collateral values, pledges, and loan-to-value ratios with support for real estate, stocks, and other asset types.
+                      </p>
+                    </div>
+
+                    <div className="p-4 border rounded-lg hover:border-primary transition-colors" data-testid="feature-card-document-management">
+                      <FileText className="h-8 w-8 text-primary mb-3" />
+                      <h3 className="font-semibold mb-2">Document Management</h3>
+                      <p className="text-sm text-muted-foreground">
+                        Centralized document storage with AI-powered text extraction from PDFs, images, and Word documents for intelligent search.
+                      </p>
+                    </div>
+
+                    <div className="p-4 border rounded-lg hover:border-primary transition-colors" data-testid="feature-card-reminder-system">
+                      <Bell className="h-8 w-8 text-primary mb-3" />
+                      <h3 className="font-semibold mb-2">Reminder System</h3>
+                      <p className="text-sm text-muted-foreground">
+                        Automated email and calendar reminders for due dates, payments, and reviews with customizable intervals and templates.
+                      </p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* AI Features Section */}
+              <Card data-testid="card-ai-features">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Brain className="h-5 w-5" />
+                    AI-Powered Features
+                  </CardTitle>
+                  <CardDescription>Advanced AI capabilities for intelligent portfolio insights</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    <div className="p-4 border rounded-lg hover:border-primary transition-colors" data-testid="feature-card-ai-chat">
+                      <MessageSquare className="h-8 w-8 text-primary mb-3" />
+                      <h3 className="font-semibold mb-2">AI Chat Assistant</h3>
+                      <p className="text-sm text-muted-foreground">
+                        Natural language conversations about your portfolio with context-aware responses and intelligent recommendations.
+                      </p>
+                    </div>
+
+                    <div className="p-4 border rounded-lg hover:border-primary transition-colors" data-testid="feature-card-loan-matcher">
+                      <Target className="h-8 w-8 text-primary mb-3" />
+                      <h3 className="font-semibold mb-2">Smart Loan Matcher</h3>
+                      <p className="text-sm text-muted-foreground">
+                        AI-powered facility recommendations based on loan amount, duration, and current portfolio characteristics.
+                      </p>
+                    </div>
+
+                    <div className="p-4 border rounded-lg hover:border-primary transition-colors" data-testid="feature-card-what-if">
+                      <Zap className="h-8 w-8 text-primary mb-3" />
+                      <h3 className="font-semibold mb-2">What-If Scenarios</h3>
+                      <p className="text-sm text-muted-foreground">
+                        Model different financing scenarios with instant calculations for utilization, LTV ratios, and cash flow impact.
+                      </p>
+                    </div>
+
+                    <div className="p-4 border rounded-lg hover:border-primary transition-colors" data-testid="feature-card-nlq">
+                      <MessageSquare className="h-8 w-8 text-primary mb-3" />
+                      <h3 className="font-semibold mb-2">Natural Language Queries</h3>
+                      <p className="text-sm text-muted-foreground">
+                        Ask questions about your portfolio in plain language and get instant, accurate answers powered by AI.
+                      </p>
+                    </div>
+
+                    <div className="p-4 border rounded-lg hover:border-primary transition-colors" data-testid="feature-card-daily-alerts">
+                      <Mail className="h-8 w-8 text-primary mb-3" />
+                      <h3 className="font-semibold mb-2">Daily Alerts</h3>
+                      <p className="text-sm text-muted-foreground">
+                        Automated daily email summaries categorizing portfolio alerts by priority from critical overdue loans to routine updates.
+                      </p>
+                    </div>
+
+                    <div className="p-4 border rounded-lg hover:border-primary transition-colors" data-testid="feature-card-pdf-export">
+                      <Download className="h-8 w-8 text-primary mb-3" />
+                      <h3 className="font-semibold mb-2">PDF Export</h3>
+                      <p className="text-sm text-muted-foreground">
+                        Export comprehensive portfolio reports and analytics to PDF with professional formatting and charts.
+                      </p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Analytics & Insights Section */}
+              <Card data-testid="card-analytics-features">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <BarChart3 className="h-5 w-5" />
+                    Analytics & Insights
+                  </CardTitle>
+                  <CardDescription>Powerful analytics and reporting tools for portfolio optimization</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    <div className="p-4 border rounded-lg hover:border-primary transition-colors" data-testid="feature-card-portfolio-dashboard">
+                      <Eye className="h-8 w-8 text-primary mb-3" />
+                      <h3 className="font-semibold mb-2">Portfolio Dashboard</h3>
+                      <p className="text-sm text-muted-foreground">
+                        Real-time overview of total exposure, credit utilization, upcoming maturities, and key performance indicators.
+                      </p>
+                    </div>
+
+                    <div className="p-4 border rounded-lg hover:border-primary transition-colors" data-testid="feature-card-bank-performance">
+                      <Building2 className="h-8 w-8 text-primary mb-3" />
+                      <h3 className="font-semibold mb-2">Bank Performance</h3>
+                      <p className="text-sm text-muted-foreground">
+                        Detailed analytics for each bank including exposure concentration, facility utilization, and relationship history.
+                      </p>
+                    </div>
+
+                    <div className="p-4 border rounded-lg hover:border-primary transition-colors" data-testid="feature-card-exposure-tracking">
+                      <AlertTriangle className="h-8 w-8 text-primary mb-3" />
+                      <h3 className="font-semibold mb-2">Exposure Tracking</h3>
+                      <p className="text-sm text-muted-foreground">
+                        Monitor bank concentration risk with historical snapshots and trend analysis across your entire portfolio.
+                      </p>
+                    </div>
+
+                    <div className="p-4 border rounded-lg hover:border-primary transition-colors" data-testid="feature-card-ltv-monitoring">
+                      <Percent className="h-8 w-8 text-primary mb-3" />
+                      <h3 className="font-semibold mb-2">LTV Monitoring</h3>
+                      <p className="text-sm text-muted-foreground">
+                        Track loan-to-value ratios against both outstanding balances and credit limits with automated threshold alerts.
+                      </p>
+                    </div>
+
+                    <div className="p-4 border rounded-lg hover:border-primary transition-colors" data-testid="feature-card-sibor-integration">
+                      <TrendingUp className="h-8 w-8 text-primary mb-3" />
+                      <h3 className="font-semibold mb-2">SIBOR Integration</h3>
+                      <p className="text-sm text-muted-foreground">
+                        Live SIBOR rates with monthly trend tracking for accurate interest calculations and rate benchmarking.
+                      </p>
+                    </div>
+
+                    <div className="p-4 border rounded-lg hover:border-primary transition-colors" data-testid="feature-card-mobile-design">
+                      <Globe2 className="h-8 w-8 text-primary mb-3" />
+                      <h3 className="font-semibold mb-2">Mobile-First Design</h3>
+                      <p className="text-sm text-muted-foreground">
+                        Fully responsive interface optimized for smartphones and tablets with touch-friendly navigation and controls.
+                      </p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Coming Soon Section */}
+              <Card data-testid="card-coming-soon-features">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Sparkles className="h-5 w-5" />
+                    Coming Soon
+                  </CardTitle>
+                  <CardDescription>Exciting new features in development</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    <div className="p-4 border rounded-lg hover:border-primary transition-colors relative" data-testid="feature-card-arabic-support">
+                      <Badge className="absolute top-3 right-3" data-testid="badge-coming-soon-arabic">Coming Soon</Badge>
+                      <Languages className="h-8 w-8 text-muted-foreground mb-3" />
+                      <h3 className="font-semibold mb-2">Arabic Language Support</h3>
+                      <p className="text-sm text-muted-foreground">
+                        Full Arabic language interface with RTL support for native Saudi users and bilingual document handling.
+                      </p>
+                    </div>
+
+                    <div className="p-4 border rounded-lg hover:border-primary transition-colors relative" data-testid="feature-card-advanced-reporting">
+                      <Badge className="absolute top-3 right-3" data-testid="badge-coming-soon-reporting">Coming Soon</Badge>
+                      <BookOpen className="h-8 w-8 text-muted-foreground mb-3" />
+                      <h3 className="font-semibold mb-2">Advanced Reporting</h3>
+                      <p className="text-sm text-muted-foreground">
+                        Customizable report builder with scheduled exports, executive summaries, and compliance documentation.
+                      </p>
+                    </div>
+
+                    <div className="p-4 border rounded-lg hover:border-primary transition-colors relative" data-testid="feature-card-multi-currency">
+                      <Badge className="absolute top-3 right-3" data-testid="badge-coming-soon-currency">Coming Soon</Badge>
+                      <DollarSign className="h-8 w-8 text-muted-foreground mb-3" />
+                      <h3 className="font-semibold mb-2">Multi-Currency</h3>
+                      <p className="text-sm text-muted-foreground">
+                        Support for multiple currencies with live exchange rates and automatic conversion for international facilities.
+                      </p>
+                    </div>
+
+                    <div className="p-4 border rounded-lg hover:border-primary transition-colors relative" data-testid="feature-card-api-integration">
+                      <Badge className="absolute top-3 right-3" data-testid="badge-coming-soon-api">Coming Soon</Badge>
+                      <Database className="h-8 w-8 text-muted-foreground mb-3" />
+                      <h3 className="font-semibold mb-2">API Integration</h3>
+                      <p className="text-sm text-muted-foreground">
+                        RESTful API for integrating with accounting systems, ERPs, and custom applications for seamless data flow.
+                      </p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
           </TabsContent>
         </Tabs>
         </div>
