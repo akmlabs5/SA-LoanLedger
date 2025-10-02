@@ -48,8 +48,9 @@ export default function BankAnalyticsPage() {
     enabled: !!bankId
   });
 
-  const formatCurrency = (amount: number) => {
-    return `${amount.toLocaleString('en-SA', { minimumFractionDigits: 0, maximumFractionDigits: 0 })} SAR`;
+  const formatCurrency = (amount: number | null | undefined) => {
+    const value = amount || 0;
+    return `${value.toLocaleString('en-SA', { minimumFractionDigits: 0, maximumFractionDigits: 0 })} SAR`;
   };
 
   if (isLoading) {

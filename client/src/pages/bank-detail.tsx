@@ -712,7 +712,7 @@ export default function BankDetail() {
                     <span>Assigned Collateral</span>
                   </div>
                   <Button 
-                    onClick={() => setLocation("/collateral/new")}
+                    onClick={() => setLocation("/collateral/create")}
                     size="sm"
                     className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white shadow-lg"
                     data-testid="button-add-collateral"
