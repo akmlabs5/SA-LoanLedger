@@ -12,7 +12,8 @@ import {
   ChevronRight,
   Receipt,
   Eye,
-  EyeOff
+  EyeOff,
+  ChevronDown
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -120,8 +121,7 @@ interface SettlementResponse {
 type TimeframeType = '30D' | '6M' | '1Y' | 'MAX';
 
 export default function HistoryPage() {
-  const [currentPage, setCurrentPage] = useState(1);
-  const [pageSize] = useState(25);
+  const [visibleTransactions, setVisibleTransactions] = useState(8);
   
   // Bank visibility controls for interactive chart
   const [visibleBanks, setVisibleBanks] = useState<Set<string>>(new Set());
@@ -180,6 +180,11 @@ export default function HistoryPage() {
     }));
   };
 
+  // Reset visible transactions when filters change
+  useEffect(() => {
+    setVisibleTransactions(8);
+  }, [filters]);
+
   // Fetch banks for filtering
   const { data: banks = [] } = useQuery<Bank[]>({
     queryKey: ['/api/banks'],
@@ -204,12 +209,14 @@ export default function HistoryPage() {
         .then(res => res.json()),
   });
 
-  // Fetch transactions for table
+  // Fetch transactions for table - fetch enough to support load more functionality
+  // We'll slice on the client side based on visibleTransactions
+  const fetchLimit = Math.max(visibleTransactions, 100); // Always fetch at least 100 or what we need
   const transactionParams = new URLSearchParams({
     from: filters.dateFrom,
     to: filters.dateTo,
-    limit: pageSize.toString(),
-    offset: ((currentPage - 1) * pageSize).toString(),
+    limit: fetchLimit.toString(),
+    offset: '0',
     ...(filters.bankId && { bankId: filters.bankId }),
     ...(filters.facilityId && { facilityId: filters.facilityId }),
     ...(filters.loanId && { loanId: filters.loanId }),
@@ -221,14 +228,14 @@ export default function HistoryPage() {
     isLoading: transactionLoading,
     error: transactionError 
   } = useQuery<TransactionResponse>({
-    queryKey: ['/api/history/transactions', transactionParams],
+    queryKey: ['/api/history/transactions', filters, fetchLimit],
     queryFn: () => 
       fetch(`/api/history/transactions?${transactionParams}`)
         .then(res => res.json()),
   });
 
   const transactions = transactionResponse?.data || [];
-  const totalPages = Math.ceil((transactionResponse?.total || 0) / pageSize);
+  const totalTransactions = transactionResponse?.total || 0;
 
   // Fetch settlement data for loan grouping
   const settlementParams = new URLSearchParams({
@@ -879,7 +886,7 @@ export default function HistoryPage() {
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {transactions.map((transaction) => (
+                      {transactions.slice(0, visibleTransactions).map((transaction) => (
                         <TableRow key={transaction.id} data-testid={`row-transaction-${transaction.id}`}>
                           <TableCell className="font-medium">
                             {format(new Date(transaction.date), 'MMM dd')}
@@ -910,37 +917,17 @@ export default function HistoryPage() {
                   </Table>
                 </div>
 
-                {/* Pagination */}
-                {totalPages > 1 && (
-                  <div className="flex items-center justify-between pt-4">
-                    <div className="text-sm text-muted-foreground">
-                      Showing {((currentPage - 1) * pageSize) + 1} to {Math.min(currentPage * pageSize, transactionResponse?.total || 0)} of {transactionResponse?.total || 0} transactions
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
-                        disabled={currentPage === 1}
-                        data-testid="button-prev-page"
-                      >
-                        <ChevronLeft className="h-4 w-4 mr-1" />
-                        Previous
-                      </Button>
-                      <div className="text-sm font-medium">
-                        Page {currentPage} of {totalPages}
-                      </div>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
-                        disabled={currentPage === totalPages}
-                        data-testid="button-next-page"
-                      >
-                        Next
-                        <ChevronRight className="h-4 w-4 ml-1" />
-                      </Button>
-                    </div>
+                {/* Load More Button */}
+                {totalTransactions > visibleTransactions && (
+                  <div className="mt-4 flex justify-center">
+                    <Button 
+                      variant="outline" 
+                      onClick={() => setVisibleTransactions(prev => prev + 8)}
+                      data-testid="button-load-more-transactions"
+                    >
+                      <ChevronDown className="mr-2 h-4 w-4" />
+                      Load more ({totalTransactions - visibleTransactions} remaining)
+                    </Button>
                   </div>
                 )}
               </>

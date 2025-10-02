@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { 
   Building, 
   Plus, 
@@ -128,6 +129,34 @@ export default function Banks() {
             </p>
           </div>
           <div className="flex items-center space-x-3 mt-4 sm:mt-0">
+            {/* Quick Bank Access */}
+            {banks && Array.isArray(banks) && banks.length > 0 && (
+              <div className="flex items-center space-x-2">
+                <span className="text-sm text-muted-foreground">Quick Access:</span>
+                <Select onValueChange={(bankId) => {
+                  setLocation(`/banks/${bankId}`);
+                }}>
+                  <SelectTrigger 
+                    className="w-48 bg-background border-border hover:border-primary transition-colors focus:ring-2 focus:ring-primary focus:border-primary" 
+                    data-testid="select-bank-quick-access"
+                    aria-label="Quick access to bank details"
+                  >
+                    <SelectValue placeholder="Select bank..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {banks.map((bank: any) => (
+                      <SelectItem 
+                        key={bank.id} 
+                        value={bank.id}
+                        data-testid={`option-bank-${bank.id}`}
+                      >
+                        {bank.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
             <Button 
               onClick={() => setLocation("/facility/create-general")}
               className="bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white shadow-lg"
