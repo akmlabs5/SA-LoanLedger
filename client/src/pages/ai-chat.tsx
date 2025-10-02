@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useToast } from "@/hooks/use-toast";
-import { MessageCircle, Send, Bot, User, Plus, Trash2, Loader2 } from "lucide-react";
+import { MessageCircle, Send, Bot, User, Plus, Trash2, Loader2, Paperclip, X, FileText } from "lucide-react";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import type { ChatConversation, ChatMessage } from "@shared/schema";
 
@@ -14,10 +14,18 @@ interface ConversationWithMessages {
   messages: ChatMessage[];
 }
 
+interface UploadedFile {
+  attachmentId: string;
+  fileName: string;
+  extractedText: string;
+}
+
 export default function AIChatPage() {
   const [selectedConversationId, setSelectedConversationId] = useState<string | null>(null);
   const [inputMessage, setInputMessage] = useState("");
+  const [uploadedFiles, setUploadedFiles] = useState<UploadedFile[]>([]);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
 
   // Fetch all conversations
@@ -68,8 +76,8 @@ export default function AIChatPage() {
 
   // Send message
   const sendMessageMutation = useMutation({
-    mutationFn: async ({ conversationId, content }: { conversationId: string; content: string }) => {
-      const response = await apiRequest('POST', `/api/chat/conversations/${conversationId}/messages`, { content });
+    mutationFn: async ({ conversationId, content }: { conversationId: string; content: any }) => {
+      const response = await apiRequest('POST', `/api/chat/conversations/${conversationId}/messages`, content);
       return await response.json();
     },
     onSuccess: (_, variables) => {
@@ -116,12 +124,53 @@ export default function AIChatPage() {
       });
     },
   });
+  
+  // Upload file
+  const uploadFileMutation = useMutation({
+    mutationFn: async ({ conversationId, file }: { conversationId: string; file: File }) => {
+      const formData = new FormData();
+      formData.append('file', file);
+      
+      const response = await fetch(`/api/chat/conversations/${conversationId}/upload`, {
+        method: 'POST',
+        body: formData,
+        credentials: 'include',
+      });
+      
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || 'Upload failed');
+      }
+      
+      return await response.json();
+    },
+    onSuccess: (data) => {
+      setUploadedFiles(prev => [...prev, {
+        attachmentId: data.attachment.id,
+        fileName: data.attachment.fileName,
+        extractedText: data.extractedText,
+      }]);
+      toast({
+        title: "File uploaded",
+        description: `${data.attachment.fileName} has been uploaded and analyzed`,
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Upload failed",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
 
   const handleSendMessage = () => {
     if (!inputMessage.trim() || !selectedConversationId) return;
     const messageToSend = inputMessage;
     const conversationId = selectedConversationId; // Snapshot the ID
+    const filesToSend = [...uploadedFiles]; // Snapshot files
     setInputMessage(""); // Clear input immediately for better UX
+    setUploadedFiles([]); // Clear uploaded files
     
     // Optimistically add user message to UI
     const optimisticUserMessage: ChatMessage = {
@@ -129,7 +178,7 @@ export default function AIChatPage() {
       conversationId,
       role: 'user',
       content: messageToSend,
-      metadata: {},
+      metadata: filesToSend.length > 0 ? { attachmentIds: filesToSend.map(f => f.attachmentId) } : {},
       createdAt: new Date(),
     };
     
@@ -144,7 +193,34 @@ export default function AIChatPage() {
       }
     );
     
-    sendMessageMutation.mutate({ conversationId, content: messageToSend });
+    // Include attachment data in the request
+    const requestBody: any = { content: messageToSend };
+    if (filesToSend.length > 0) {
+      requestBody.attachmentIds = filesToSend.map(f => f.attachmentId);
+      requestBody.attachmentTexts = filesToSend.map(f => ({
+        fileName: f.fileName,
+        extractedText: f.extractedText,
+      }));
+    }
+    
+    sendMessageMutation.mutate({ conversationId, content: requestBody });
+  };
+  
+  const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files || files.length === 0 || !selectedConversationId) return;
+    
+    const file = files[0]; // Process one file at a time
+    uploadFileMutation.mutate({ conversationId: selectedConversationId, file });
+    
+    // Reset file input
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  };
+  
+  const handleRemoveFile = (attachmentId: string) => {
+    setUploadedFiles(prev => prev.filter(f => f.attachmentId !== attachmentId));
   };
 
   const handleDeleteConversation = (conversationId: string) => {
@@ -315,7 +391,55 @@ export default function AIChatPage() {
               </ScrollArea>
 
               <div className="border-t p-4">
+                {/* Uploaded Files Display */}
+                {uploadedFiles.length > 0 && (
+                  <div className="mb-3 space-y-2">
+                    {uploadedFiles.map((file) => (
+                      <div 
+                        key={file.attachmentId} 
+                        className="flex items-center justify-between gap-2 bg-muted px-3 py-2 rounded-md"
+                      >
+                        <div className="flex items-center gap-2 flex-1 min-w-0">
+                          <FileText className="h-4 w-4 text-saudi flex-shrink-0" />
+                          <span className="text-sm truncate">{file.fileName}</span>
+                        </div>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          className="h-6 w-6 p-0"
+                          onClick={() => handleRemoveFile(file.attachmentId)}
+                          data-testid={`button-remove-file-${file.attachmentId}`}
+                        >
+                          <X className="h-3 w-3" />
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+                
                 <div className="flex gap-2">
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    className="hidden"
+                    accept=".pdf,.docx,.xlsx,.xls,.txt,.csv"
+                    onChange={handleFileSelect}
+                    data-testid="input-file-upload"
+                  />
+                  <Button
+                    size="icon"
+                    variant="outline"
+                    onClick={() => fileInputRef.current?.click()}
+                    disabled={uploadFileMutation.isPending || !selectedConversationId}
+                    data-testid="button-attach-file"
+                    title="Upload file (PDF, DOCX, XLSX, TXT, CSV)"
+                  >
+                    {uploadFileMutation.isPending ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <Paperclip className="h-4 w-4" />
+                    )}
+                  </Button>
                   <Input
                     value={inputMessage}
                     onChange={(e) => setInputMessage(e.target.value)}
@@ -338,7 +462,7 @@ export default function AIChatPage() {
                   </Button>
                 </div>
                 <p className="text-xs text-muted-foreground mt-2">
-                  Powered by DeepSeek AI • Analyzes your portfolio data only
+                  Powered by DeepSeek AI • Analyzes your portfolio data only • Supports PDF, DOCX, XLSX, TXT, CSV
                 </p>
               </div>
             </CardContent>

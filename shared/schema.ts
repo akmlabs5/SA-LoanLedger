@@ -72,7 +72,8 @@ export const attachmentOwnerTypeEnum = pgEnum('attachment_owner_type', [
   'bank',
   'facility',
   'loan',
-  'collateral'
+  'collateral',
+  'chat_message'
 ]);
 
 export const attachmentCategoryEnum = pgEnum('attachment_category', [
@@ -85,6 +86,7 @@ export const attachmentCategoryEnum = pgEnum('attachment_category', [
   'valuation_report',
   'asset_documentation',
   'compliance_document',
+  'chat_attachment',
   'other'
 ]);
 

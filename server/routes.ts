@@ -1,6 +1,7 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import cookieParser from "cookie-parser";
+import multer from "multer";
 import { createStorage, type IStorage, initializeStorage } from "./storage";
 import { setupAuth, isAuthenticated } from "./replitAuth";
 import { generateAIInsights } from "./aiInsights";
@@ -10,6 +11,7 @@ import { initializeDatabase } from "./db";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import * as XLSX from "xlsx";
+import { extractTextFromFile, getSupportedFileTypes, getMaxFileSize } from "./fileExtractor";
 import {
   insertBankSchema,
   insertBankContactSchema,
@@ -2882,6 +2884,98 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // ================== CHAT API ROUTES ==================
   
+  // Configure multer for file uploads (store in memory for text extraction)
+  const upload = multer({
+    storage: multer.memoryStorage(),
+    limits: {
+      fileSize: getMaxFileSize(),
+    },
+    fileFilter: (req, file, cb) => {
+      const supportedTypes = getSupportedFileTypes();
+      if (supportedTypes.includes(file.mimetype)) {
+        cb(null, true);
+      } else {
+        cb(new Error(`Unsupported file type: ${file.mimetype}. Supported: PDF, DOCX, XLSX, TXT, CSV`));
+      }
+    },
+  });
+  
+  // Upload file to chat conversation
+  app.post('/api/chat/conversations/:conversationId/upload', 
+    isAuthenticated, 
+    upload.single('file'), 
+    async (req: any, res) => {
+      try {
+        const { conversationId } = req.params;
+        const userId = req.user.claims.sub;
+        const file = req.file;
+        
+        if (!file) {
+          return res.status(400).json({ message: 'No file uploaded' });
+        }
+        
+        // Verify conversation ownership
+        const conversation = await storage.getConversation(conversationId);
+        if (!conversation) {
+          return res.status(404).json({ message: 'Conversation not found' });
+        }
+        if (conversation.userId !== userId) {
+          return res.status(403).json({ message: 'Access denied' });
+        }
+        
+        // Extract text from file for AI context
+        const extractedText = await extractTextFromFile(file.buffer, file.mimetype, file.originalname);
+        
+        // Generate storage key
+        const timestamp = new Date().toISOString().slice(0, 7);
+        const fileId = crypto.randomUUID();
+        const sanitizedFileName = file.originalname.replace(/[^a-zA-Z0-9.-]/g, '_');
+        const storageKey = `chat-attachments/${conversationId}/${timestamp}/${fileId}_${sanitizedFileName}`;
+        
+        // NOTE: For AI chat attachments, the primary value is the extracted text for AI context
+        // Binary file storage to object storage is intentionally deferred to keep implementation simple
+        // The attachment metadata provides an audit trail of uploads
+        // If binary file retrieval/download is needed later, object storage integration can be added
+        const attachment = await storage.createAttachment({
+          ownerType: 'chat_message',
+          ownerId: conversationId, // Using conversation ID as owner for now
+          userId,
+          fileName: file.originalname,
+          contentType: file.mimetype,
+          fileSize: file.size,
+          storageKey, // Storage key for future object storage integration
+          category: 'chat_attachment',
+          uploadedBy: userId,
+        });
+        
+        // Log audit trail
+        await storage.createAttachmentAudit({
+          attachmentId: attachment.id,
+          userId,
+          action: 'upload',
+          ipAddress: req.ip,
+          userAgent: req.get('User-Agent'),
+          metadata: { 
+            fileName: file.originalname, 
+            fileSize: file.size,
+            conversationId,
+            extractedTextLength: extractedText.length,
+          },
+        });
+        
+        res.json({
+          attachment,
+          extractedText,
+        });
+      } catch (error) {
+        console.error('Error uploading chat file:', error);
+        res.status(500).json({ 
+          message: error instanceof Error ? error.message : 'Failed to upload file' 
+        });
+      }
+    }
+  );
+  
   // Get all conversations for a user
   app.get('/api/chat/conversations', isAuthenticated, async (req: any, res) => {
     try {
@@ -2946,7 +3040,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { conversationId } = req.params;
       const userId = req.user.claims.sub;
-      const { content } = req.body;
+      const { content, attachmentIds, attachmentTexts } = req.body;
       
       if (!content || typeof content !== 'string') {
         return res.status(400).json({ message: 'Message content is required' });
@@ -2962,12 +3056,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(403).json({ message: 'Access denied' });
       }
       
+      // Build metadata with attachment info
+      const metadata: any = {};
+      if (attachmentIds && Array.isArray(attachmentIds) && attachmentIds.length > 0) {
+        metadata.attachmentIds = attachmentIds;
+      }
+      
       // Save user message
       const userMessage = await storage.addMessage({
         conversationId,
         role: 'user',
         content,
-        metadata: {},
+        metadata,
       });
       
       // Get conversation history
@@ -3019,6 +3119,14 @@ ${collateralList.map(col =>
           content: msg.content,
         }));
       
+      // Build file attachment context
+      let fileContext = '';
+      if (attachmentTexts && Array.isArray(attachmentTexts) && attachmentTexts.length > 0) {
+        fileContext = '\n\nATTACHED FILES:\n' + attachmentTexts.map((fileData: any, index: number) => 
+          `\n--- File ${index + 1}: ${fileData.fileName} ---\n${fileData.extractedText}\n`
+        ).join('\n');
+      }
+      
       // Call DeepSeek API
       const deepseekApiKey = process.env.DEEPSEEK_API_KEY;
       if (!deepseekApiKey) {
@@ -3028,15 +3136,16 @@ ${collateralList.map(col =>
       const systemPrompt = `You are a loan portfolio advisor for the Saudi Arabian market. You analyze loan portfolios, facilities, collateral, and bank relationships to provide strategic insights and recommendations.
 
 IMPORTANT RULES:
-1. ONLY use data from the portfolio context provided - NEVER make assumptions or use external data
+1. ONLY use data from the portfolio context and attached files provided - NEVER make assumptions or use external data
 2. All financial figures are in SAR (Saudi Riyals)
 3. Be specific and reference actual numbers from the portfolio
 4. Focus on portfolio optimization, risk management, and cost efficiency
 5. When answering questions, cite specific loans, facilities, or banks from the context
 6. If the user asks about data not in the context, explain what data is available
 7. Keep responses concise and actionable
+8. If files are attached, analyze them and incorporate their data into your response
 
-${portfolioContext}`;
+${portfolioContext}${fileContext}`;
       
       try {
         const response = await fetch('https://api.deepseek.com/v1/chat/completions', {
