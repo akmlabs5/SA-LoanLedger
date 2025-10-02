@@ -43,6 +43,7 @@ export default function Dashboard() {
   const { toast } = useToast();
   const [, setLocation] = useLocation();
   const [visibleLoans, setVisibleLoans] = useState(8);
+  const [visibleBanks, setVisibleBanks] = useState(3);
 
   // Redirect to login if not authenticated
   useEffect(() => {
@@ -502,7 +503,7 @@ export default function Dashboard() {
                 </thead>
                 <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
                   {portfolioSummary?.bankExposures && portfolioSummary.bankExposures.length > 0 ? (
-                    portfolioSummary.bankExposures.map((exposure, index) => (
+                    portfolioSummary.bankExposures.slice(0, visibleBanks).map((exposure, index) => (
                       <tr 
                         key={exposure.bankId} 
                         className="group hover:bg-accent cursor-pointer transition-colors duration-200 focus-within:ring-2 focus-within:ring-primary focus-within:ring-opacity-50" 
@@ -612,6 +613,20 @@ export default function Dashboard() {
                 </tbody>
               </table>
             </div>
+
+            {/* Load More Banks Button */}
+            {portfolioSummary?.bankExposures && portfolioSummary.bankExposures.length > visibleBanks && (
+              <div className="mt-4 flex justify-center">
+                <Button 
+                  variant="outline" 
+                  onClick={() => setVisibleBanks(prev => prev + 3)}
+                  data-testid="button-load-more-banks"
+                >
+                  <ChevronDown className="mr-2 h-4 w-4" />
+                  Load more ({portfolioSummary.bankExposures.length - visibleBanks} remaining)
+                </Button>
+              </div>
+            )}
             
             {/* Enhanced Portfolio Summary Footer */}
             {portfolioSummary && (
