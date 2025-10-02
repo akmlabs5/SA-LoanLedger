@@ -3,8 +3,8 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { z } from "zod";
-import { useLocation } from "wouter";
-import { ArrowLeft, PiggyBank, TrendingUp, AlertCircle, DollarSign, Calendar } from "lucide-react";
+import { useLocation, Link } from "wouter";
+import { ArrowLeft, PiggyBank, TrendingUp, AlertCircle, DollarSign, Calendar, Building2 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -134,6 +134,9 @@ export default function CollateralCreatePage() {
 
   const currentValue = form.watch("currentValue");
 
+  // Check if there are no facilities
+  const noFacilities = !facilitiesLoading && (!facilities || facilities.length === 0);
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-50 to-pink-100 dark:from-gray-900 dark:to-gray-800">
       {/* Header */}
@@ -165,6 +168,51 @@ export default function CollateralCreatePage() {
 
       {/* Main Content */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Show message when no facilities exist */}
+        {noFacilities ? (
+          <Card className="max-w-2xl mx-auto shadow-lg border-0">
+            <CardHeader className="bg-gradient-to-r from-amber-500 to-orange-600 text-white rounded-t-lg">
+              <CardTitle className="text-xl flex items-center">
+                <AlertCircle className="h-5 w-5 mr-2" />
+                No Facilities Available
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="p-8">
+              <div className="text-center space-y-6">
+                <Building2 className="h-16 w-16 text-amber-500 mx-auto" />
+                <div className="space-y-2">
+                  <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+                    Create a Bank Facility First
+                  </h3>
+                  <p className="text-gray-600 dark:text-gray-400">
+                    Before adding collateral, you need to create at least one bank facility. Collateral assets are used to secure specific facilities.
+                  </p>
+                </div>
+                <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
+                  <p className="text-sm text-blue-900 dark:text-blue-100">
+                    <strong>How it works:</strong> Collateral assets (like real estate or stocks) are pledged to secure your bank facilities. Each collateral must be linked to a facility.
+                  </p>
+                </div>
+                <div className="flex flex-col sm:flex-row gap-3 justify-center">
+                  <Link href="/banks">
+                    <Button className="bg-primary hover:bg-primary/90 text-primary-foreground" data-testid="button-create-facility">
+                      <Building2 className="mr-2 h-4 w-4" />
+                      Go to Banks & Facilities
+                    </Button>
+                  </Link>
+                  <Button
+                    variant="outline"
+                    onClick={() => setLocation("/collateral")}
+                    data-testid="button-back"
+                  >
+                    <ArrowLeft className="mr-2 h-4 w-4" />
+                    Back to Collateral
+                  </Button>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        ) : (
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Main Form */}
           <div className="lg:col-span-2">
@@ -544,6 +592,7 @@ export default function CollateralCreatePage() {
             )}
           </div>
         </div>
+        )}
       </div>
     </div>
   );
