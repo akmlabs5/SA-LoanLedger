@@ -147,7 +147,7 @@ export default function FeaturesTipsPage() {
                     <Target className="h-8 w-8 text-primary mb-3" />
                     <h3 className="font-semibold mb-2">Smart Loan Matcher</h3>
                     <p className="text-sm text-muted-foreground">
-                      AI-powered facility recommendations based on loan amount, duration, and current portfolio characteristics.
+                      Intelligent facility selection tool that scores all your available banking facilities using a 100-point algorithm. Analyzes available credit, utilization rates, interest costs, and facility terms to recommend the optimal facility for your next loan - saving you time and ensuring you get the best terms.
                     </p>
                   </div>
 
@@ -457,8 +457,8 @@ export default function FeaturesTipsPage() {
                   <div className="flex items-start gap-3" data-testid="pro-tip-matcher">
                     <Zap className="h-5 w-5 text-amber-500 mt-0.5 flex-shrink-0" />
                     <div>
-                      <h4 className="font-semibold text-sm">Leverage Smart Loan Matcher before new drawdowns</h4>
-                      <p className="text-sm text-muted-foreground">Use the AI-powered facility matcher to identify the best facility for new loans based on rates, limits, and portfolio balance optimization.</p>
+                      <h4 className="font-semibold text-sm">Use Smart Loan Matcher for optimal facility selection</h4>
+                      <p className="text-sm text-muted-foreground">When you need a new loan, click Smart Loan Matcher on your dashboard. Enter the amount needed and the AI analyzes all facilities using a 100-point scoring system: available credit (40pts), current utilization (20pts), interest rates (20pts), facility type match (10pts), and revolving period availability (10pts). You'll get the best recommendation with detailed reasons, plus 2 alternatives for comparison - ensuring you always choose the optimal facility.</p>
                     </div>
                   </div>
 

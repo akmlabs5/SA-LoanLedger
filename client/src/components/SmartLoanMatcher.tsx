@@ -51,15 +51,26 @@ export function SmartLoanMatcher({ onFacilitySelect }: LoanMatcherProps) {
 
     matchMutation.mutate({
       loanAmount: amount,
-      facilityType: facilityType || undefined,
+      facilityType: facilityType && facilityType !== 'any' ? facilityType : undefined,
       duration: duration ? parseInt(duration) : undefined
     });
+  };
+
+  const handleOpenChange = (isOpen: boolean) => {
+    setOpen(isOpen);
+    // Reset form state when dialog closes
+    if (!isOpen) {
+      setLoanAmount("");
+      setFacilityType("");
+      setDuration("");
+      setResults(null);
+    }
   };
 
   const handleSelectFacility = (facilityId: string) => {
     if (onFacilitySelect) {
       onFacilitySelect(facilityId);
-      setOpen(false);
+      handleOpenChange(false); // Use handleOpenChange to ensure form resets
     }
   };
 
@@ -76,7 +87,7 @@ export function SmartLoanMatcher({ onFacilitySelect }: LoanMatcherProps) {
   };
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogTrigger asChild>
         <Button variant="outline" data-testid="button-smart-matcher">
           <Sparkles className="h-4 w-4 mr-2" />
@@ -115,7 +126,7 @@ export function SmartLoanMatcher({ onFacilitySelect }: LoanMatcherProps) {
                   <SelectValue placeholder="Any Type" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Any Type</SelectItem>
+                  <SelectItem value="any">Any Type</SelectItem>
                   <SelectItem value="term">Term Loan</SelectItem>
                   <SelectItem value="revolving">Revolving</SelectItem>
                   <SelectItem value="working_capital">Working Capital</SelectItem>
