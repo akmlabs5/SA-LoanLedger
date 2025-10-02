@@ -39,7 +39,9 @@ import {
   Download,
   RefreshCw,
   Trash2,
-  Edit
+  Edit,
+  Banknote,
+  ChevronDown
 } from "lucide-react";
 import { Link, useLocation } from "wouter";
 import { isUnauthorizedError } from "@/lib/authUtils";
@@ -65,6 +67,14 @@ export default function Loans() {
   
   // Tab state management
   const [activeTab, setActiveTab] = useState<"active" | "settled">("active");
+  
+  // Load more state for active loans
+  const [visibleActiveLoans, setVisibleActiveLoans] = useState(8);
+
+  // Reset visible loans when filters change
+  useEffect(() => {
+    setVisibleActiveLoans(8);
+  }, [searchQuery, statusFilter, bankFilter, sortField, sortOrder]);
 
   // Redirect to login if not authenticated
   useEffect(() => {
@@ -565,8 +575,9 @@ export default function Loans() {
                 </CardContent>
               </Card>
             ) : (
-              <div className="grid gap-4">
-                {filteredAndSortedActiveLoans.map((loan: any) => {
+              <div className="space-y-4">
+                <div className="grid gap-4">
+                {filteredAndSortedActiveLoans.slice(0, visibleActiveLoans).map((loan: any) => {
                   const urgency = getLoanUrgency(loan.dueDate);
                   const loanAmount = Number(loan.amount) || 0;
                   const totalRate = (Number(loan.siborRate) || 0) + (Number(loan.bankRate) || 0);
@@ -730,7 +741,7 @@ export default function Loans() {
                               onClick={() => setLocation(`/loans/${loan.id}/payment`)}
                               data-testid={`button-payment-${loan.id}`}
                             >
-                              <span className="mr-2 font-bold">﷼</span>
+                              <Banknote className="mr-2 h-4 w-4" />
                               Payment
                             </Button>
                             <Button 
@@ -773,6 +784,21 @@ export default function Loans() {
                     </Card>
                   );
                 })}
+              </div>
+              
+              {/* Load More Button */}
+              {filteredAndSortedActiveLoans.length > visibleActiveLoans && (
+                <div className="mt-4 flex justify-center">
+                  <Button 
+                    variant="outline" 
+                    onClick={() => setVisibleActiveLoans(prev => prev + 8)}
+                    data-testid="button-load-more-loans"
+                  >
+                    <ChevronDown className="mr-2 h-4 w-4" />
+                    Load more ({filteredAndSortedActiveLoans.length - visibleActiveLoans} remaining)
+                  </Button>
+                </div>
+              )}
               </div>
             )}
           </TabsContent>
