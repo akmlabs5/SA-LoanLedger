@@ -3241,6 +3241,85 @@ ${portfolioContext}${fileContext}`;
       res.status(500).json({ message: 'Failed to delete conversation' });
     }
   });
+  
+  // Export conversation as PDF
+  app.get('/api/chat/conversations/:conversationId/export-pdf', isAuthenticated, async (req: any, res) => {
+    try {
+      const { conversationId } = req.params;
+      const userId = req.user.claims.sub;
+      
+      const conversation = await storage.getConversation(conversationId);
+      if (!conversation) {
+        return res.status(404).json({ message: 'Conversation not found' });
+      }
+      
+      if (conversation.userId !== userId) {
+        return res.status(403).json({ message: 'Access denied' });
+      }
+      
+      const messages = await storage.getConversationMessages(conversationId);
+      
+      const PDFDoc = (jsPDF as any).default || jsPDF;
+      const doc = new PDFDoc();
+      
+      // Title
+      doc.setFontSize(18);
+      doc.text('AI Portfolio Assistant - Conversation Export', 14, 20);
+      
+      doc.setFontSize(10);
+      doc.text(`Title: ${conversation.title || 'Untitled Conversation'}`, 14, 28);
+      doc.text(`Date: ${new Date(conversation.createdAt).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}`, 14, 34);
+      doc.text(`Messages: ${messages.length}`, 14, 40);
+      
+      // Messages
+      let yPos = 50;
+      const pageHeight = doc.internal.pageSize.height;
+      const margin = 14;
+      const maxWidth = doc.internal.pageSize.width - (margin * 2);
+      
+      messages.forEach((message, index) => {
+        const role = message.role === 'user' ? 'You' : 'AI Assistant';
+        const timestamp = new Date(message.createdAt).toLocaleTimeString('en-US');
+        
+        // Check if we need a new page
+        if (yPos > pageHeight - 40) {
+          doc.addPage();
+          yPos = 20;
+        }
+        
+        // Message header
+        doc.setFontSize(10);
+        doc.setFont(undefined, 'bold');
+        doc.text(`${role} - ${timestamp}`, margin, yPos);
+        yPos += 6;
+        
+        // Message content
+        doc.setFont(undefined, 'normal');
+        doc.setFontSize(9);
+        const lines = doc.splitTextToSize(message.content, maxWidth);
+        
+        lines.forEach((line: string) => {
+          if (yPos > pageHeight - 20) {
+            doc.addPage();
+            yPos = 20;
+          }
+          doc.text(line, margin, yPos);
+          yPos += 5;
+        });
+        
+        yPos += 5; // Space between messages
+      });
+      
+      const pdfBuffer = Buffer.from(doc.output('arraybuffer'));
+      
+      res.setHeader('Content-Type', 'application/pdf');
+      res.setHeader('Content-Disposition', `attachment; filename="conversation-${conversationId}-${new Date().toISOString().split('T')[0]}.pdf"`);
+      res.send(pdfBuffer);
+    } catch (error) {
+      console.error('Error exporting conversation:', error);
+      res.status(500).json({ message: 'Failed to export conversation' });
+    }
+  });
 
   const httpServer = createServer(app);
   return httpServer;

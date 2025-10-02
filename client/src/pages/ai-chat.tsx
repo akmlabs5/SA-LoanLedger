@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useToast } from "@/hooks/use-toast";
-import { MessageCircle, Send, Bot, User, Plus, Trash2, Loader2, Paperclip, X, FileText } from "lucide-react";
+import { MessageCircle, Send, Bot, User, Plus, Trash2, Loader2, Paperclip, X, FileText, Download } from "lucide-react";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import type { ChatConversation, ChatMessage } from "@shared/schema";
 
@@ -228,6 +228,11 @@ export default function AIChatPage() {
       deleteConversationMutation.mutate(conversationId);
     }
   };
+  
+  const handleExportPDF = () => {
+    if (!selectedConversationId) return;
+    window.open(`/api/chat/conversations/${selectedConversationId}/export-pdf`, '_blank');
+  };
 
   const messages = conversationData?.messages || [];
 
@@ -311,10 +316,23 @@ export default function AIChatPage() {
           {/* Chat Area */}
           <Card className="lg:col-span-3 flex flex-col">
             <CardHeader className="border-b">
-              <CardTitle className="flex items-center gap-2">
-                <MessageCircle className="h-5 w-5 text-saudi" />
-                {conversationData?.conversation.title || "Select a conversation"}
-              </CardTitle>
+              <div className="flex items-center justify-between">
+                <CardTitle className="flex items-center gap-2">
+                  <MessageCircle className="h-5 w-5 text-saudi" />
+                  {conversationData?.conversation.title || "Select a conversation"}
+                </CardTitle>
+                {selectedConversationId && messages.length > 0 && (
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={handleExportPDF}
+                    data-testid="button-export-pdf"
+                  >
+                    <Download className="h-4 w-4 mr-2" />
+                    Export PDF
+                  </Button>
+                )}
+              </div>
             </CardHeader>
 
             <CardContent className="flex-1 flex flex-col p-0">
