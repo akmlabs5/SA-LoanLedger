@@ -17,7 +17,10 @@ import {
   FileText,
   Menu,
   X,
-  Home
+  Home,
+  Boxes,
+  Lightbulb,
+  HelpCircle
 } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import {
@@ -102,6 +105,27 @@ const navigation = [
         title: "AI Assistant",
         url: "/ai-chat",
         icon: MessageCircle,
+      },
+    ],
+  },
+  {
+    title: "Help & Resources",
+    items: [
+      {
+        title: "Features",
+        url: "/features",
+        icon: Boxes,
+      },
+      {
+        title: "Tips",
+        url: "/tips",
+        icon: Lightbulb,
+      },
+      {
+        title: "Help Desk",
+        url: "/help-desk",
+        icon: HelpCircle,
+        comingSoon: true,
       },
     ],
   },
@@ -379,12 +403,24 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                           data-testid={`nav-${item.title.toLowerCase().replace(' ', '-')}`}
                           className={cn(
                             "font-medium text-sm hover:bg-accent/50 data-[state=open]:bg-accent/50 rounded-lg transition-all duration-200 active:scale-[0.98]",
-                            isMobile ? "h-12 px-4 text-base" : "h-10 px-3"
+                            isMobile ? "h-12 px-4 text-base" : "h-10 px-3",
+                            (item as any).comingSoon && "cursor-not-allowed opacity-60"
                           )}
                         >
-                          <Link href={item.url} className="flex items-center gap-3">
+                          <Link 
+                            href={(item as any).comingSoon ? "#" : item.url} 
+                            className="flex items-center gap-3 w-full"
+                            onClick={(e) => {
+                              if ((item as any).comingSoon) {
+                                e.preventDefault();
+                              }
+                            }}
+                          >
                             <item.icon className={cn(isMobile ? "h-5 w-5" : "h-4 w-4")} />
-                            <span className="font-medium tracking-tight">{item.title}</span>
+                            <span className="font-medium tracking-tight flex-1">{item.title}</span>
+                            {(item as any).comingSoon && (
+                              <Badge variant="secondary" className="text-xs">Coming Soon</Badge>
+                            )}
                           </Link>
                         </SidebarMenuButton>
                     </SidebarMenuItem>
