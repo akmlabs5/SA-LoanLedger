@@ -8,6 +8,7 @@ import { generateAIInsights } from "./aiInsights";
 import { sendLoanDueNotification, sendTemplateReminderEmail } from "./emailService";
 import { CalendarService } from "./calendarService";
 import { initializeDatabase } from "./db";
+import { NLQProcessor } from "./nlqProcessor";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import * as XLSX from "xlsx";
@@ -720,6 +721,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error deleting collateral assignment:", error);
       res.status(500).json({ message: "Failed to delete collateral assignment" });
+    }
+  });
+
+  // Natural Language Query
+  app.post('/api/ai/natural-query', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const { query } = req.body;
+      
+      if (!query || typeof query !== 'string') {
+        return res.status(400).json({ message: "Query is required" });
+      }
+      
+      const nlqProcessor = new NLQProcessor(storage);
+      const result = await nlqProcessor.processQuery(query, userId);
+      
+      res.json(result);
+    } catch (error) {
+      console.error("Error processing natural language query:", error);
+      res.status(500).json({ message: "Failed to process query" });
     }
   });
 

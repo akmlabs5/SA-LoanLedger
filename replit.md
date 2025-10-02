@@ -2,7 +2,15 @@
 
 This is a comprehensive loan management platform specifically designed for the Saudi Arabian market. The system is a full-stack web application that enables users to manage loan portfolios with SIBOR (Saudi Interbank Offered Rate) based calculations. It features intelligent Rules-Based AI insights for portfolio risk management, concentration alerts, and LTV (Loan-to-Value) monitoring. The platform is mobile-responsive and designed to handle complex financial data including bank facilities, collateral tracking, and loan lifecycle management.
 
-## Recent Updates - October 1, 2025
+## Recent Updates - October 2, 2025
+
+### Advanced AI Features Completed
+- **File Attachments for AI Chat**: Upload PDF, DOCX, TXT, XLSX files to AI conversations with automatic text extraction for context enrichment. Metadata stored in database with 10MB file size limit. Extracted text seamlessly included in AI chat context.
+- **PDF Export for Conversations**: One-click export of AI conversation history to professionally formatted PDF documents with proper pagination, metadata headers (title, date, message count), and timestamped message formatting. Export button appears in chat header for conversations with messages.
+- **Smart Loan Matcher**: AI-powered facility recommendation engine using 100-point scoring algorithm. Analyzes available credit (40pts), current utilization (20pts), interest rates (20pts), facility type match (10pts), and revolving period availability (10pts). Returns top recommendation with detailed reasons/warnings plus 2 alternatives for comparison. Integrated as quick action button on dashboard.
+- **What-If Scenario Analysis**: Comprehensive financial simulation tool for loan optimization. Three scenario types: (1) Refinancing - calculates savings from different interest rates, (2) Early Payment - models full/partial prepayment impact with timeline-aware calculations, (3) Term Change - explores extending/reducing loan duration. Results display color-coded savings/costs with percentage impact badges and plain-language recommendations. Includes input validation and zero-interest guards. Accessible from loan detail page for active loans.
+
+## Previous Updates - October 1, 2025
 
 ### Optional Facility Duration
 - **Flexible Term Toggle**: Added "Fixed Duration" toggle to facility creation - enables facilities without fixed expiry dates
