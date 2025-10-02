@@ -614,14 +614,11 @@ export default function LoanCreatePage() {
                               <Input 
                                 type="number" 
                                 step="0.01" 
-                                placeholder="Enter SIBOR Rate" 
+                                placeholder="Input SIBOR Rate based on Term" 
                                 {...field} 
                                 data-testid="input-sibor-rate"
                               />
                             </FormControl>
-                            <FormDescription>
-                              Input the SIBOR rate based on the loan duration and terms negotiated with the bank
-                            </FormDescription>
                             <FormMessage />
                           </FormItem>
                         )}

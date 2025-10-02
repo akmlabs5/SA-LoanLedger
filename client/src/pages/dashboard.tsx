@@ -34,7 +34,7 @@ import LoansTrendChart from "@/components/charts/LoansTrendChart";
 import UpcomingLoansByMonthChart from "@/components/charts/UpcomingLoansByMonthChart";
 import { SmartLoanMatcher } from "@/components/SmartLoanMatcher";
 import { isUnauthorizedError } from "@/lib/authUtils";
-import { PortfolioSummary, SiborRate, LoanWithDetails } from "@shared/types";
+import { PortfolioSummary, LoanWithDetails } from "@shared/types";
 import { SAUDI_CHART_COLORS } from "@/lib/chart-colors";
 import backgroundImage from "@assets/loan_management_background_excel_green_1759302449019.png";
 
@@ -67,11 +67,6 @@ export default function Dashboard() {
 
   const { data: activeLoans, isLoading: loansLoading } = useQuery<LoanWithDetails[]>({
     queryKey: ["/api/loans"],
-    enabled: isAuthenticated,
-  });
-
-  const { data: siborRate } = useQuery<SiborRate>({
-    queryKey: ["/api/sibor-rate"],
     enabled: isAuthenticated,
   });
 
@@ -429,43 +424,6 @@ export default function Dashboard() {
                     Export Portfolio Report
                   </Button>
                 </Link>
-              </div>
-              
-              <div className="mt-4">
-                <Separator className="mb-4" />
-                
-                {/* Enhanced SIBOR Rate Display */}
-                <div className="p-5 bg-secondary border border-border rounded-lg">
-                  <div className="flex items-center justify-between mb-2">
-                    <div className="flex items-center space-x-2">
-                      <div className="w-3 h-3 bg-blue-500 rounded-full animate-pulse"></div>
-                      <span className="text-sm text-foreground font-semibold">SIBOR Rate</span>
-                    </div>
-                    <span className="text-2xl font-bold text-foreground" data-testid="text-sibor-rate">
-                      {siborRate ? `${siborRate.rate}%` : '5.75%'}
-                    </span>
-                  </div>
-                  <div className="flex items-center justify-between text-xs">
-                    <span className="text-muted-foreground">Monthly Change</span>
-                    <div className="flex items-center space-x-1">
-                      {((siborRate?.monthlyChange || 0.25) > 0) ? (
-                        <ArrowUp className="h-3 w-3 text-green-600 dark:text-green-400" />
-                      ) : (
-                        <ArrowDown className="h-3 w-3 text-red-600 dark:text-red-400" />
-                      )}
-                      <span className={`font-medium ${
-                        (siborRate?.monthlyChange || 0.25) > 0 
-                          ? 'text-green-600 dark:text-green-400' 
-                          : 'text-red-600 dark:text-red-400'
-                      }`}>
-                        {siborRate ? `${siborRate.monthlyChange > 0 ? '+' : ''}${siborRate.monthlyChange}%` : '+0.25%'}
-                      </span>
-                    </div>
-                  </div>
-                  <p className="text-xs text-muted-foreground mt-2 opacity-75">
-                    Last updated: {new Date().toLocaleDateString()}
-                  </p>
-                </div>
               </div>
             </CardContent>
           </Card>
