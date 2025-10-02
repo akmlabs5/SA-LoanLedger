@@ -366,6 +366,25 @@ export const userPreferences = pgTable("user_preferences", {
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
+// Daily Alerts Preferences
+export const dailyAlertsPreferences = pgTable("daily_alerts_preferences", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").references(() => users.id).notNull().unique(),
+  enabled: boolean("enabled").default(false),
+  preferredTime: varchar("preferred_time", { length: 5 }).default('08:00'), // HH:MM format
+  timezone: varchar("timezone", { length: 50 }).default('Asia/Riyadh'),
+  enableCriticalAlerts: boolean("enable_critical_alerts").default(true),
+  enableHighAlerts: boolean("enable_high_alerts").default(true),
+  enableMediumAlerts: boolean("enable_medium_alerts").default(true),
+  enableLowAlerts: boolean("enable_low_alerts").default(false),
+  utilizationThreshold: decimal("utilization_threshold", { precision: 5, scale: 2 }).default('80.00'),
+  concentrationThreshold: decimal("concentration_threshold", { precision: 5, scale: 2 }).default('40.00'),
+  ltvThreshold: decimal("ltv_threshold", { precision: 5, scale: 2 }).default('70.00'),
+  revolvingThreshold: decimal("revolving_threshold", { precision: 5, scale: 2 }).default('80.00'),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
 // Chat Conversations for Multi-Turn AI Assistant
 export const chatConversations = pgTable("chat_conversations", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
@@ -1279,6 +1298,21 @@ export const updateUserPreferencesSchema = insertUserPreferencesSchema.partial()
 export type InsertUserPreferences = z.infer<typeof insertUserPreferencesSchema>;
 export type UpdateUserPreferences = z.infer<typeof updateUserPreferencesSchema>;
 export type UserPreferences = typeof userPreferences.$inferSelect;
+
+// Daily Alerts Preferences Schemas
+export const insertDailyAlertsPreferencesSchema = createInsertSchema(dailyAlertsPreferences).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const updateDailyAlertsPreferencesSchema = insertDailyAlertsPreferencesSchema.partial().extend({
+  id: z.string(),
+});
+
+export type InsertDailyAlertsPreferences = z.infer<typeof insertDailyAlertsPreferencesSchema>;
+export type UpdateDailyAlertsPreferences = z.infer<typeof updateDailyAlertsPreferencesSchema>;
+export type DailyAlertsPreferences = typeof dailyAlertsPreferences.$inferSelect;
 
 // Chat Conversation Types
 export type ChatConversation = typeof chatConversations.$inferSelect;
