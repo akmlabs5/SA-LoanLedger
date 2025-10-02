@@ -4,6 +4,8 @@ export interface PortfolioSummary {
   totalCreditLimit: number;
   availableCredit: number;
   portfolioLtv: number;
+  portfolioFacilityLtv: number;  // Collateral / Total Facility Limits (portfolio-wide)
+  portfolioOutstandingLtv: number;  // Collateral / Total Outstanding (portfolio-wide)
   activeLoansCount: number;
   bankExposures: BankExposure[];
 }
@@ -14,6 +16,8 @@ export interface BankExposure {
   outstanding: number;
   creditLimit: number;
   utilization: number;
+  facilityLtv: number;  // Collateral Value / Total Facility Limits
+  outstandingLtv: number;  // Collateral Value / Outstanding Loans
 }
 
 export interface SiborRate {

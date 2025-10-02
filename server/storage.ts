@@ -1063,6 +1063,8 @@ export class DatabaseStorage implements IStorage {
     totalCreditLimit: number;
     availableCredit: number;
     portfolioLtv: number;
+    portfolioFacilityLtv: number;
+    portfolioOutstandingLtv: number;
     activeLoansCount: number;
     bankExposures: Array<{
       bankId: string;
@@ -1070,6 +1072,8 @@ export class DatabaseStorage implements IStorage {
       outstanding: number;
       creditLimit: number;
       utilization: number;
+      facilityLtv: number;
+      outstandingLtv: number;
     }>;
   }> {
     // Get active loans with facilities and banks
@@ -1091,6 +1095,8 @@ export class DatabaseStorage implements IStorage {
     const userCollateralList = await this.getUserCollateral(userId);
     const totalCollateralValue = userCollateralList.reduce((sum, col) => sum + parseFloat(col.currentValue), 0);
     const portfolioLtv = totalCollateralValue > 0 ? (totalOutstanding / totalCollateralValue) * 100 : 0;
+    const portfolioFacilityLtv = totalCreditLimit > 0 ? (totalCollateralValue / totalCreditLimit) * 100 : 0;
+    const portfolioOutstandingLtv = totalOutstanding > 0 ? (totalCollateralValue / totalOutstanding) * 100 : 0;
 
     // Calculate bank exposures
     const bankExposuresMap = new Map<string, { bankId: string; bankName: string; outstanding: number; creditLimit: number; }>();
@@ -1136,6 +1142,8 @@ export class DatabaseStorage implements IStorage {
     const bankExposures = Array.from(bankExposuresMap.values()).map(exposure => ({
       ...exposure,
       utilization: exposure.creditLimit > 0 ? (exposure.outstanding / exposure.creditLimit) * 100 : 0,
+      facilityLtv: exposure.creditLimit > 0 ? (totalCollateralValue / exposure.creditLimit) * 100 : 0,
+      outstandingLtv: exposure.outstanding > 0 ? (totalCollateralValue / exposure.outstanding) * 100 : 0,
     }));
 
     return {
@@ -1143,6 +1151,8 @@ export class DatabaseStorage implements IStorage {
       totalCreditLimit,
       availableCredit,
       portfolioLtv,
+      portfolioFacilityLtv,
+      portfolioOutstandingLtv,
       activeLoansCount: activeLoans.length,
       bankExposures,
     };
@@ -1837,6 +1847,8 @@ export class MemoryStorage implements IStorage {
     totalCreditLimit: number;
     availableCredit: number;
     portfolioLtv: number;
+    portfolioFacilityLtv: number;
+    portfolioOutstandingLtv: number;
     activeLoansCount: number;
     bankExposures: Array<{
       bankId: string;
@@ -1844,6 +1856,8 @@ export class MemoryStorage implements IStorage {
       outstanding: number;
       creditLimit: number;
       utilization: number;
+      facilityLtv: number;
+      outstandingLtv: number;
     }>;
   }> {
     // Get user facilities
@@ -1870,6 +1884,13 @@ export class MemoryStorage implements IStorage {
       .filter(loan => loan.status === 'active')
       .reduce((sum, loan) => sum + Number(loan.amount || 0), 0);
     const activeLoansCount = userLoans.filter(loan => loan.status === 'active').length;
+    
+    // Get total collateral value for LTV calculation
+    const userCollateralList = Array.from(this.collateral.values()).filter(c => c.userId === userId);
+    const totalCollateralValue = userCollateralList.reduce((sum, col) => sum + Number(col.currentValue || 0), 0);
+    const portfolioLtv = totalCollateralValue > 0 ? (totalOutstanding / totalCollateralValue) * 100 : 0;
+    const portfolioFacilityLtv = totalCreditLimit > 0 ? (totalCollateralValue / totalCreditLimit) * 100 : 0;
+    const portfolioOutstandingLtv = totalOutstanding > 0 ? (totalCollateralValue / totalOutstanding) * 100 : 0;
     
     // Group by bank to create bank exposures
     const bankGroups = new Map<string, {
@@ -1908,17 +1929,21 @@ export class MemoryStorage implements IStorage {
       }
     });
     
-    // Create bank exposures array with utilization
+    // Create bank exposures array with utilization and LTV metrics
     const bankExposures = Array.from(bankGroups.values()).map(bank => ({
       ...bank,
       utilization: bank.creditLimit > 0 ? (bank.outstanding / bank.creditLimit) * 100 : 0,
+      facilityLtv: bank.creditLimit > 0 ? (totalCollateralValue / bank.creditLimit) * 100 : 0,
+      outstandingLtv: bank.outstanding > 0 ? (totalCollateralValue / bank.outstanding) * 100 : 0,
     }));
     
     return {
       totalOutstanding,
       totalCreditLimit,
       availableCredit: totalCreditLimit - totalOutstanding,
-      portfolioLtv: 0, // Would need collateral data for LTV calculation
+      portfolioLtv,
+      portfolioFacilityLtv,
+      portfolioOutstandingLtv,
       activeLoansCount,
       bankExposures,
     };
