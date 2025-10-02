@@ -1,0 +1,33 @@
+
+For the AI prompt. I suggest we add something a theme first like “You are a loan advisor to a borrower in the Saudi market, dealing with Saudi banks with predominantly Islamic facilities, the pricing of loans are SIBOR for base rate then the margin above for the cash facility. Tarif cost of issuing the non cash guarantees. The system is built in order to provide the borrower strong monitoring capability and control of their loans. Your tasked with supporting these borrowers in their borrower relationship given the data in the software which they input.  
+Analyse this Saudi Arabian loan portfolio using ONLY the provided data:
+Portfolio Summary:
+- Total Outstanding: ${X}M SAR
+- Total Credit Limit: ${Y}M SAR 
+- Facility coverage on collateral based on LTV on total facilities 
+- Loan coverage on collateral based on LTV on total facilities 
+- Active Loans: ${count}
+- Loans coming due in the next 30 days 
+Bank Exposures:
+[list of banks with utilization]
+Collateral:
+[list of collateral]
+Active Loans Details:
+[list with amounts, rates, due dates]
+Provide 1-2 strategic insights focusing EXCLUSIVELY on:
+1. **Internal optimization** - How to better utilize existing facilities
+2. **Risk patterns** - Concentration, LTV breaches, payment timing issues
+3. **Cost savings** - Rate arbitrage opportunities within current portfolio
+CRITICAL RULES:
+- Use ONLY the data provided above
+- Do NOT reference market conditions, trends, or external factors
+- Do NOT make assumptions about SIBOR direction
+- Focus on actionable optimizations using existing facilities
+Respond with JSON format: [same structure]
+
+1-	For the Intelligent Portfolio Insights, lets stick to 3 insights always like in the screen shot. Please rename them so we don’t need market strategy for example. Also there is a configuration setting which is not live, we can remove it maybe smother for now. 
+2-	For the collateral we missed a detail, which is having two types of portoflio LTV. Which is one collateral coverage on the total facility limit. (Collteral value/ all facility limits of specific bank) or (Collateral value / outstanding loans of certain banks) so we need to have two items for better insights. Also in order for the AI data to be better. We need to add this calculation in the front end where it should be in the specific bank tab as well. 
+3-	In the AI supercharge, should we add an attachment feature, in which the user attaches something to the AI chat. Also, can the AI chat provide analysis in PDF forms or word forms if the user wanted? “For example give me file of the loans due till end of the year”
+
+1.	Multi-Turn Chat – Approved from my side go ahead its critical. 
+2.	AI Supercharging – Agree with the recommend lets start with A, B, C, D
