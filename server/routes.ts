@@ -2880,6 +2880,259 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // ================== CHAT API ROUTES ==================
+  
+  // Get all conversations for a user
+  app.get('/api/chat/conversations', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const conversations = await storage.getUserConversations(userId);
+      res.json(conversations);
+    } catch (error) {
+      console.error('Error fetching conversations:', error);
+      res.status(500).json({ message: 'Failed to fetch conversations' });
+    }
+  });
+
+  // Create a new conversation
+  app.post('/api/chat/conversations', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const { title } = req.body;
+      
+      const conversation = await storage.createConversation({
+        userId,
+        title: title || 'New Conversation',
+        isActive: true,
+      });
+      
+      res.json(conversation);
+    } catch (error) {
+      console.error('Error creating conversation:', error);
+      res.status(500).json({ message: 'Failed to create conversation' });
+    }
+  });
+
+  // Get a conversation with all its messages
+  app.get('/api/chat/conversations/:conversationId', isAuthenticated, async (req: any, res) => {
+    try {
+      const { conversationId } = req.params;
+      const userId = req.user.claims.sub;
+      
+      const conversation = await storage.getConversation(conversationId);
+      if (!conversation) {
+        return res.status(404).json({ message: 'Conversation not found' });
+      }
+      
+      // Verify ownership
+      if (conversation.userId !== userId) {
+        return res.status(403).json({ message: 'Access denied' });
+      }
+      
+      const messages = await storage.getConversationMessages(conversationId);
+      
+      res.json({
+        conversation,
+        messages,
+      });
+    } catch (error) {
+      console.error('Error fetching conversation:', error);
+      res.status(500).json({ message: 'Failed to fetch conversation' });
+    }
+  });
+
+  // Send a message and get AI response
+  app.post('/api/chat/conversations/:conversationId/messages', isAuthenticated, async (req: any, res) => {
+    try {
+      const { conversationId } = req.params;
+      const userId = req.user.claims.sub;
+      const { content } = req.body;
+      
+      if (!content || typeof content !== 'string') {
+        return res.status(400).json({ message: 'Message content is required' });
+      }
+      
+      // Verify conversation ownership
+      const conversation = await storage.getConversation(conversationId);
+      if (!conversation) {
+        return res.status(404).json({ message: 'Conversation not found' });
+      }
+      
+      if (conversation.userId !== userId) {
+        return res.status(403).json({ message: 'Access denied' });
+      }
+      
+      // Save user message
+      const userMessage = await storage.addMessage({
+        conversationId,
+        role: 'user',
+        content,
+        metadata: {},
+      });
+      
+      // Get conversation history
+      const history = await storage.getConversationMessages(conversationId);
+      
+      // Get portfolio context
+      const portfolioSummary = await storage.getUserPortfolioSummary(userId);
+      const loans = await storage.getActiveLoansByUser(userId);
+      const facilities = await storage.getUserFacilities(userId);
+      const collateralList = await storage.getUserCollateral(userId);
+      
+      // Build context for AI
+      const portfolioContext = `
+PORTFOLIO OVERVIEW:
+- Total Outstanding: SAR ${portfolioSummary.totalOutstanding.toLocaleString()}
+- Total Credit Limit: SAR ${portfolioSummary.totalCreditLimit.toLocaleString()}
+- Available Credit: SAR ${portfolioSummary.availableCredit.toLocaleString()}
+- Active Loans: ${portfolioSummary.activeLoansCount}
+- Portfolio LTV: ${portfolioSummary.portfolioLtv.toFixed(2)}%
+- Facility Coverage: ${portfolioSummary.portfolioFacilityLtv.toFixed(2)}%
+- Exposure Coverage: ${portfolioSummary.portfolioOutstandingLtv.toFixed(2)}%
+
+BANK EXPOSURES:
+${portfolioSummary.bankExposures.map(exp => 
+  `- ${exp.bankName}: SAR ${exp.outstanding.toLocaleString()} / SAR ${exp.creditLimit.toLocaleString()} (${exp.utilization.toFixed(1)}% utilized)`
+).join('\n')}
+
+FACILITIES (${facilities.length}):
+${facilities.map((f: any) => 
+  `- ${f.bank.name}: ${f.facilityType} - SAR ${parseFloat(f.creditLimit).toLocaleString()}`
+).join('\n')}
+
+ACTIVE LOANS (${loans.length}):
+${loans.map(loan => 
+  `- ${loan.facility.bank.name}: SAR ${parseFloat(loan.amount).toLocaleString()} (${loan.referenceNumber})`
+).join('\n')}
+
+COLLATERAL (${collateralList.length}):
+${collateralList.map(col => 
+  `- ${col.name} (${col.type}): SAR ${parseFloat(col.currentValue).toLocaleString()}`
+).join('\n')}
+      `.trim();
+      
+      // Build conversation history for AI
+      const conversationHistory = history
+        .filter(msg => msg.role !== 'system')
+        .map(msg => ({
+          role: msg.role,
+          content: msg.content,
+        }));
+      
+      // Call DeepSeek API
+      const deepseekApiKey = process.env.DEEPSEEK_API_KEY;
+      if (!deepseekApiKey) {
+        return res.status(500).json({ message: 'DeepSeek API key not configured' });
+      }
+      
+      const systemPrompt = `You are a loan portfolio advisor for the Saudi Arabian market. You analyze loan portfolios, facilities, collateral, and bank relationships to provide strategic insights and recommendations.
+
+IMPORTANT RULES:
+1. ONLY use data from the portfolio context provided - NEVER make assumptions or use external data
+2. All financial figures are in SAR (Saudi Riyals)
+3. Be specific and reference actual numbers from the portfolio
+4. Focus on portfolio optimization, risk management, and cost efficiency
+5. When answering questions, cite specific loans, facilities, or banks from the context
+6. If the user asks about data not in the context, explain what data is available
+7. Keep responses concise and actionable
+
+${portfolioContext}`;
+      
+      try {
+        const response = await fetch('https://api.deepseek.com/v1/chat/completions', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${deepseekApiKey}`,
+          },
+          body: JSON.stringify({
+            model: 'deepseek-chat',
+            messages: [
+              { role: 'system', content: systemPrompt },
+              ...conversationHistory,
+            ],
+            temperature: 0.7,
+            max_tokens: 1000,
+          }),
+        });
+        
+        if (!response.ok) {
+          throw new Error(`DeepSeek API error: ${response.statusText}`);
+        }
+        
+        const aiResponse = await response.json();
+        const aiMessageContent = aiResponse.choices[0]?.message?.content || 'I apologize, but I was unable to generate a response.';
+        
+        // Save AI response
+        const aiMessage = await storage.addMessage({
+          conversationId,
+          role: 'assistant',
+          content: aiMessageContent,
+          metadata: {
+            model: 'deepseek-chat',
+            timestamp: new Date().toISOString(),
+          },
+        });
+        
+        // Update conversation title if it's the first exchange
+        if (history.length <= 2 && conversation.title === 'New Conversation') {
+          const newTitle = content.substring(0, 50) + (content.length > 50 ? '...' : '');
+          await storage.updateConversation(conversationId, { title: newTitle });
+        }
+        
+        res.json({
+          userMessage,
+          aiMessage,
+        });
+      } catch (aiError: any) {
+        console.error('Error calling DeepSeek API:', aiError);
+        
+        // Save error message
+        const errorMessage = await storage.addMessage({
+          conversationId,
+          role: 'assistant',
+          content: 'I apologize, but I encountered an error processing your request. Please try again.',
+          metadata: {
+            error: true,
+            timestamp: new Date().toISOString(),
+          },
+        });
+        
+        res.json({
+          userMessage,
+          aiMessage: errorMessage,
+        });
+      }
+    } catch (error) {
+      console.error('Error sending message:', error);
+      res.status(500).json({ message: 'Failed to send message' });
+    }
+  });
+
+  // Delete a conversation
+  app.delete('/api/chat/conversations/:conversationId', isAuthenticated, async (req: any, res) => {
+    try {
+      const { conversationId } = req.params;
+      const userId = req.user.claims.sub;
+      
+      // getConversation() already filters by isActive, so this returns undefined for deleted conversations
+      const conversation = await storage.getConversation(conversationId);
+      if (!conversation) {
+        return res.status(404).json({ message: 'Conversation not found or already deleted' });
+      }
+      
+      if (conversation.userId !== userId) {
+        return res.status(403).json({ message: 'Access denied' });
+      }
+      
+      await storage.deleteConversation(conversationId);
+      res.json({ message: 'Conversation deleted successfully' });
+    } catch (error) {
+      console.error('Error deleting conversation:', error);
+      res.status(500).json({ message: 'Failed to delete conversation' });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }

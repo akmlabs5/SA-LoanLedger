@@ -19,6 +19,8 @@ import {
   exposureSnapshots,
   transactions,
   auditLogs,
+  chatConversations,
+  chatMessages,
   type User,
   type UpsertUser,
   type Bank,
@@ -69,6 +71,10 @@ import {
   type UpdateUserReminderSettings,
   type UserPreferences,
   type InsertUserPreferences,
+  type ChatConversation,
+  type InsertChatConversation,
+  type ChatMessage,
+  type InsertChatMessage,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, desc, asc, sql, gte, lte, isNull, isNotNull } from "drizzle-orm";
@@ -236,6 +242,17 @@ export interface IStorage {
   // Attachment audit operations
   createAttachmentAudit(audit: InsertAttachmentAudit): Promise<AttachmentAudit>;
   getAttachmentAuditTrail(attachmentId: string): Promise<AttachmentAudit[]>;
+  
+  // Chat Conversation operations
+  getUserConversations(userId: string): Promise<ChatConversation[]>;
+  getConversation(conversationId: string): Promise<ChatConversation | undefined>;
+  createConversation(conversation: InsertChatConversation): Promise<ChatConversation>;
+  updateConversation(conversationId: string, updates: Partial<InsertChatConversation>): Promise<ChatConversation>;
+  deleteConversation(conversationId: string): Promise<void>;
+  
+  // Chat Message operations
+  getConversationMessages(conversationId: string): Promise<ChatMessage[]>;
+  addMessage(message: InsertChatMessage): Promise<ChatMessage>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -1388,6 +1405,71 @@ export class DatabaseStorage implements IStorage {
       .where(eq(attachmentAudit.attachmentId, attachmentId))
       .orderBy(desc(attachmentAudit.createdAt));
   }
+
+  // Chat Conversation operations
+  async getUserConversations(userId: string): Promise<ChatConversation[]> {
+    return await db
+      .select()
+      .from(chatConversations)
+      .where(and(
+        eq(chatConversations.userId, userId),
+        eq(chatConversations.isActive, true)
+      ))
+      .orderBy(desc(chatConversations.updatedAt));
+  }
+
+  async getConversation(conversationId: string): Promise<ChatConversation | undefined> {
+    const [result] = await db
+      .select()
+      .from(chatConversations)
+      .where(and(
+        eq(chatConversations.id, conversationId),
+        eq(chatConversations.isActive, true)
+      ))
+      .limit(1);
+    return result;
+  }
+
+  async createConversation(conversation: InsertChatConversation): Promise<ChatConversation> {
+    const [result] = await db
+      .insert(chatConversations)
+      .values(conversation)
+      .returning();
+    return result;
+  }
+
+  async updateConversation(conversationId: string, updates: Partial<InsertChatConversation>): Promise<ChatConversation> {
+    const [result] = await db
+      .update(chatConversations)
+      .set({ ...updates, updatedAt: new Date() })
+      .where(eq(chatConversations.id, conversationId))
+      .returning();
+    return result;
+  }
+
+  async deleteConversation(conversationId: string): Promise<void> {
+    await db
+      .update(chatConversations)
+      .set({ isActive: false, updatedAt: new Date() })
+      .where(eq(chatConversations.id, conversationId));
+  }
+
+  // Chat Message operations
+  async getConversationMessages(conversationId: string): Promise<ChatMessage[]> {
+    return await db
+      .select()
+      .from(chatMessages)
+      .where(eq(chatMessages.conversationId, conversationId))
+      .orderBy(asc(chatMessages.createdAt));
+  }
+
+  async addMessage(message: InsertChatMessage): Promise<ChatMessage> {
+    const [result] = await db
+      .insert(chatMessages)
+      .values(message)
+      .returning();
+    return result;
+  }
 }
 
 // In-memory storage fallback implementation
@@ -1411,6 +1493,8 @@ export class MemoryStorage implements IStorage {
   private transactions = new Map<string, Transaction>();
   private attachments = new Map<string, Attachment>();
   private attachmentAudits = new Map<string, AttachmentAudit>();
+  private chatConversations = new Map<string, ChatConversation>();
+  private chatMessages = new Map<string, ChatMessage>();
 
   constructor() {
     // Initialize with default Saudi banks
@@ -2239,6 +2323,77 @@ export class MemoryStorage implements IStorage {
     return Array.from(this.attachmentAudits.values())
       .filter(audit => audit.attachmentId === attachmentId)
       .sort((a, b) => (b.createdAt?.getTime() || 0) - (a.createdAt?.getTime() || 0));
+  }
+
+  // Chat Conversation operations
+  async getUserConversations(userId: string): Promise<ChatConversation[]> {
+    return Array.from(this.chatConversations.values())
+      .filter(conv => conv.userId === userId && conv.isActive)
+      .sort((a, b) => (b.updatedAt?.getTime() || 0) - (a.updatedAt?.getTime() || 0));
+  }
+
+  async getConversation(conversationId: string): Promise<ChatConversation | undefined> {
+    const conversation = this.chatConversations.get(conversationId);
+    if (conversation && conversation.isActive) {
+      return conversation;
+    }
+    return undefined;
+  }
+
+  async createConversation(conversation: InsertChatConversation): Promise<ChatConversation> {
+    const newConversation: ChatConversation = {
+      ...conversation,
+      id: this.generateId(),
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
+    this.chatConversations.set(newConversation.id, newConversation);
+    return newConversation;
+  }
+
+  async updateConversation(conversationId: string, updates: Partial<InsertChatConversation>): Promise<ChatConversation> {
+    const existing = this.chatConversations.get(conversationId);
+    if (!existing) throw new Error('Conversation not found');
+
+    const updated: ChatConversation = {
+      ...existing,
+      ...updates,
+      updatedAt: new Date(),
+    };
+    this.chatConversations.set(conversationId, updated);
+    return updated;
+  }
+
+  async deleteConversation(conversationId: string): Promise<void> {
+    const existing = this.chatConversations.get(conversationId);
+    if (existing) {
+      existing.isActive = false;
+      existing.updatedAt = new Date();
+    }
+  }
+
+  // Chat Message operations
+  async getConversationMessages(conversationId: string): Promise<ChatMessage[]> {
+    return Array.from(this.chatMessages.values())
+      .filter(msg => msg.conversationId === conversationId)
+      .sort((a, b) => (a.createdAt?.getTime() || 0) - (b.createdAt?.getTime() || 0));
+  }
+
+  async addMessage(message: InsertChatMessage): Promise<ChatMessage> {
+    const newMessage: ChatMessage = {
+      ...message,
+      id: this.generateId(),
+      createdAt: new Date(),
+    };
+    this.chatMessages.set(newMessage.id, newMessage);
+    
+    // Update conversation's updatedAt timestamp
+    const conversation = this.chatConversations.get(message.conversationId);
+    if (conversation) {
+      conversation.updatedAt = new Date();
+    }
+    
+    return newMessage;
   }
 
   // Reminder Template operations
