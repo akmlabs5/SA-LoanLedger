@@ -145,6 +145,8 @@ export default function BankDetail() {
     outstanding: bankExposure?.outstanding || fallbackOutstanding,
     utilization: bankExposure?.utilization || fallbackUtilization,
     activeLoansCount: fallbackActiveLoans,
+    facilityLtv: bankExposure?.facilityLtv || 0,
+    outstandingLtv: bankExposure?.outstandingLtv || 0,
   };
   
   // Filter collateral assignments for this bank's facilities
@@ -350,7 +352,7 @@ export default function BankDetail() {
         </div>
 
         {/* Bank Overview Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <Card className="border-0 shadow-lg bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-900/20 dark:to-blue-800/20">
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
@@ -410,6 +412,44 @@ export default function BankDetail() {
                 </div>
                 <div className="w-12 h-12 bg-purple-500 rounded-2xl flex items-center justify-center">
                   <FileText className="text-white text-xl" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="border-0 shadow-lg bg-gradient-to-br from-rose-50 to-rose-100 dark:from-rose-900/20 dark:to-rose-800/20">
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-rose-700 dark:text-rose-300">Facility Coverage</p>
+                  <p className="text-2xl font-bold text-rose-900 dark:text-rose-100">
+                    {`${displayMetrics.facilityLtv.toFixed(1)}%`}
+                  </p>
+                  <p className="text-xs text-rose-600 dark:text-rose-400 mt-1">
+                    {displayMetrics.facilityLtv >= 100 ? 'Fully Covered' : 'Under-Secured'}
+                  </p>
+                </div>
+                <div className="w-12 h-12 bg-rose-500 rounded-2xl flex items-center justify-center">
+                  <Shield className="text-white text-xl" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="border-0 shadow-lg bg-gradient-to-br from-cyan-50 to-cyan-100 dark:from-cyan-900/20 dark:to-cyan-800/20">
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-cyan-700 dark:text-cyan-300">Exposure Coverage</p>
+                  <p className="text-2xl font-bold text-cyan-900 dark:text-cyan-100">
+                    {`${displayMetrics.outstandingLtv.toFixed(1)}%`}
+                  </p>
+                  <p className="text-xs text-cyan-600 dark:text-cyan-400 mt-1">
+                    {displayMetrics.outstandingLtv >= 100 ? 'Fully Covered' : 'Under-Secured'}
+                  </p>
+                </div>
+                <div className="w-12 h-12 bg-cyan-500 rounded-2xl flex items-center justify-center">
+                  <Gem className="text-white text-xl" />
                 </div>
               </div>
             </CardContent>
