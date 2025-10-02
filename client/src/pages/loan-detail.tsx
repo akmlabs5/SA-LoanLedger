@@ -292,7 +292,7 @@ export default function LoanDetailPage() {
                     <p className="text-base">{new Date(loan.dueDate).toLocaleDateString()}</p>
                   </div>
                   <div>
-                    <label className="text-sm font-medium text-muted-foreground">SIBOR Rate</label>
+                    <label className="text-sm font-medium text-muted-foreground">Loan Rate</label>
                     <p className="text-base">{loan.siborRate}% + {loan.margin}% = {parseFloat(loan.siborRate) + parseFloat(loan.margin)}%</p>
                   </div>
                   <div>
