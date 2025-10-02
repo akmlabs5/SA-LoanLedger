@@ -124,6 +124,12 @@ export const securityTypeEnum = pgEnum('security_type', [
   'non_cash'
 ]);
 
+export const messageRoleEnum = pgEnum('message_role', [
+  'user',
+  'assistant',
+  'system'
+]);
+
 export const guaranteeTypeEnum = pgEnum('guarantee_type', [
   'bid_bond',
   'performance_bond',
@@ -357,6 +363,32 @@ export const userPreferences = pgTable("user_preferences", {
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
+
+// Chat Conversations for Multi-Turn AI Assistant
+export const chatConversations = pgTable("chat_conversations", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").references(() => users.id).notNull(),
+  title: varchar("title", { length: 255 }),
+  isActive: boolean("is_active").default(true),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+}, (table) => [
+  index("idx_chat_conversations_user").on(table.userId),
+  index("idx_chat_conversations_active").on(table.isActive),
+]);
+
+// Chat Messages for Conversation History
+export const chatMessages = pgTable("chat_messages", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  conversationId: varchar("conversation_id").references(() => chatConversations.id, { onDelete: 'cascade' }).notNull(),
+  role: messageRoleEnum("role").notNull(),
+  content: text("content").notNull(),
+  metadata: jsonb("metadata"), // Store additional context like file attachments, loan IDs, etc.
+  createdAt: timestamp("created_at").defaultNow(),
+}, (table) => [
+  index("idx_chat_messages_conversation").on(table.conversationId),
+  index("idx_chat_messages_created").on(table.createdAt),
+]);
 
 // Modern Attachment System
 export const attachments = pgTable("attachments", {
@@ -732,6 +764,22 @@ export const loanTemplatesRelations = relations(loanTemplates, ({ many }) => ({
   // No explicit foreign key relations as templates are standalone reference data
 }));
 
+// Chat Conversation Relations
+export const chatConversationsRelations = relations(chatConversations, ({ one, many }) => ({
+  user: one(users, {
+    fields: [chatConversations.userId],
+    references: [users.id],
+  }),
+  messages: many(chatMessages),
+}));
+
+export const chatMessagesRelations = relations(chatMessages, ({ one }) => ({
+  conversation: one(chatConversations, {
+    fields: [chatMessages.conversationId],
+    references: [chatConversations.id],
+  }),
+}));
+
 // Attachment Relations
 export const attachmentsRelations = relations(attachments, ({ one }) => ({
   user: one(users, {
@@ -794,6 +842,7 @@ export const loanTypeZodEnum = z.enum(['working_capital', 'term_loan', 'trade_fi
 export const repaymentStructureZodEnum = z.enum(['bullet', 'installments', 'revolving', 'quarterly', 'semi_annual', 'annual', 'on_demand']);
 export const collateralTypeZodEnum = z.enum(['real_estate', 'liquid_stocks', 'other']);
 export const loanStatusZodEnum = z.enum(['active', 'settled', 'overdue']);
+export const messageRoleZodEnum = z.enum(['user', 'assistant', 'system']);
 export const attachmentOwnerTypeZodEnum = z.enum(['bank', 'facility', 'loan', 'collateral']);
 export const attachmentCategoryZodEnum = z.enum([
   'facility_agreement',
@@ -1002,6 +1051,20 @@ export const insertAuditLogSchema = createInsertSchema(auditLogs)
     entityType: z.string().min(1, "Entity type is required"),
     entityId: z.string().min(1, "Entity ID is required"),
   });
+
+// Chat Conversation Schemas
+export const insertChatConversationSchema = createInsertSchema(chatConversations).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertChatMessageSchema = createInsertSchema(chatMessages).omit({
+  id: true,
+  createdAt: true,
+}).extend({
+  role: messageRoleZodEnum,
+});
 
 // Attachment Insert Schemas
 export const insertAttachmentSchema = createInsertSchema(attachments)
@@ -1214,3 +1277,10 @@ export const updateUserPreferencesSchema = insertUserPreferencesSchema.partial()
 export type InsertUserPreferences = z.infer<typeof insertUserPreferencesSchema>;
 export type UpdateUserPreferences = z.infer<typeof updateUserPreferencesSchema>;
 export type UserPreferences = typeof userPreferences.$inferSelect;
+
+// Chat Conversation Types
+export type ChatConversation = typeof chatConversations.$inferSelect;
+export type InsertChatConversation = z.infer<typeof insertChatConversationSchema>;
+export type ChatMessage = typeof chatMessages.$inferSelect;
+export type InsertChatMessage = z.infer<typeof insertChatMessageSchema>;
+export type MessageRole = z.infer<typeof messageRoleZodEnum>;
