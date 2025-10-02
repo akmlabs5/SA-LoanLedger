@@ -169,7 +169,7 @@ export default function Banks() {
         </div>
 
         {/* Enhanced Bank Exposure Tables */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
           {/* Total Outstanding & Limits Table */}
           <Card className="bg-card border border-border shadow-sm hover:shadow-md transition-shadow duration-200">
             <CardHeader>
