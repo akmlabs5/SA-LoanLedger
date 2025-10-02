@@ -631,7 +631,8 @@ export default function GeneralFacilityCreatePage() {
               </CardHeader>
               <CardContent className="space-y-3">
                 <div className="text-sm text-muted-foreground space-y-2">
-                  <p>• Cost of funding typically includes SIBOR + margin</p>
+                  <p>• <span className="font-semibold">Cost of Funding (*)</span> is the margin/spread above SIBOR</p>
+                  <p>• Total rate = SIBOR + Cost of Funding</p>
                   <p>• Current SIBOR rates are automatically factored into calculations</p>
                   <p>• Facility terms may include rate adjustment clauses</p>
                 </div>
