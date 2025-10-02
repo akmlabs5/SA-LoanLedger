@@ -15,13 +15,13 @@ interface OutstandingVsLimitsChartProps {
 }
 
 export default function OutstandingVsLimitsChart({ portfolioSummary }: OutstandingVsLimitsChartProps) {
-  if (!portfolioSummary?.bankExposures) {
+  if (!portfolioSummary?.bankExposures || portfolioSummary.bankExposures.length === 0) {
     return (
       <div className="h-full bg-gradient-to-br from-green-50 to-slate-100 dark:from-green-950 dark:to-slate-900 rounded-lg flex items-center justify-center">
         <div className="text-center">
           <TrendingUp className="h-12 w-12 text-primary mx-auto mb-4" />
-          <p className="text-muted-foreground">No data available</p>
-          <p className="text-sm text-muted-foreground mt-2">Add bank facilities to see chart</p>
+          <p className="text-muted-foreground">No banking relationships</p>
+          <p className="text-sm text-muted-foreground mt-2">Add facilities to compare limits</p>
         </div>
       </div>
     );
@@ -36,6 +36,21 @@ export default function OutstandingVsLimitsChart({ portfolioSummary }: Outstandi
     creditLimit: exposure.creditLimit / 1000000,
     utilization: exposure.utilization,
   }));
+
+  // Check if all data is zero
+  const hasData = barChartData.some(item => item.outstanding > 0 || item.creditLimit > 0);
+  
+  if (!hasData) {
+    return (
+      <div className="h-full bg-gradient-to-br from-green-50 to-slate-100 dark:from-green-950 dark:to-slate-900 rounded-lg flex items-center justify-center">
+        <div className="text-center">
+          <TrendingUp className="h-12 w-12 text-primary mx-auto mb-4" />
+          <p className="text-muted-foreground">No facility limits set</p>
+          <p className="text-sm text-muted-foreground mt-2">Configure credit limits to see comparison</p>
+        </div>
+      </div>
+    );
+  }
 
   const CustomTooltip = ({ active, payload, label }: any) => {
     if (active && payload && payload.length) {
