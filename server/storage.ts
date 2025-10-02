@@ -1825,24 +1825,54 @@ export class MemoryStorage implements IStorage {
     return Array.from(this.loans.values()).filter(loan => loan.userId === userId);
   }
 
-  async getActiveLoansByUser(userId: string): Promise<(Loan & { creditLine: CreditLine & { facility: Facility & { bank: Bank } } })[]> {
+  async getActiveLoansByUser(userId: string): Promise<(Loan & { facility: Facility & { bank: Bank } })[]> {
     const userLoans = Array.from(this.loans.values()).filter(loan => loan.userId === userId && loan.status === 'active');
     
-    // Return simple structure without creditLine for now to avoid complex joins
-    return userLoans.map(loan => ({
-      ...loan,
-      creditLine: undefined as any
-    }));
+    // Join with facility and bank data
+    return userLoans.map(loan => {
+      const facility = this.facilities.get(loan.facilityId);
+      if (!facility) {
+        throw new Error(`Facility not found for loan ${loan.id}`);
+      }
+      
+      const bank = this.banks.get(facility.bankId);
+      if (!bank) {
+        throw new Error(`Bank not found for facility ${facility.id}`);
+      }
+      
+      return {
+        ...loan,
+        facility: {
+          ...facility,
+          bank,
+        },
+      };
+    });
   }
 
-  async getSettledLoansByUser(userId: string): Promise<(Loan & { creditLine: CreditLine & { facility: Facility & { bank: Bank } } })[]> {
+  async getSettledLoansByUser(userId: string): Promise<(Loan & { facility: Facility & { bank: Bank } })[]> {
     const userLoans = Array.from(this.loans.values()).filter(loan => loan.userId === userId && loan.status === 'settled');
     
-    // Return simple structure without creditLine for now to avoid complex joins
-    return userLoans.map(loan => ({
-      ...loan,
-      creditLine: undefined as any
-    }));
+    // Join with facility and bank data
+    return userLoans.map(loan => {
+      const facility = this.facilities.get(loan.facilityId);
+      if (!facility) {
+        throw new Error(`Facility not found for loan ${loan.id}`);
+      }
+      
+      const bank = this.banks.get(facility.bankId);
+      if (!bank) {
+        throw new Error(`Bank not found for facility ${facility.id}`);
+      }
+      
+      return {
+        ...loan,
+        facility: {
+          ...facility,
+          bank,
+        },
+      };
+    });
   }
 
   async createLoan(loan: InsertLoan): Promise<Loan> {
@@ -2115,8 +2145,23 @@ export class MemoryStorage implements IStorage {
   }
 
   // New methods for loan lifecycle management
-  async getLoanById(loanId: string): Promise<Loan | undefined> {
-    return this.loans.get(loanId);
+  async getLoanById(loanId: string): Promise<(Loan & { facility: Facility & { bank: Bank } }) | undefined> {
+    const loan = this.loans.get(loanId);
+    if (!loan) return undefined;
+    
+    const facility = this.facilities.get(loan.facilityId);
+    if (!facility) return undefined;
+    
+    const bank = this.banks.get(facility.bankId);
+    if (!bank) return undefined;
+    
+    return {
+      ...loan,
+      facility: {
+        ...facility,
+        bank,
+      },
+    };
   }
 
   async createTransaction(transaction: InsertTransaction, userId: string): Promise<Transaction> {

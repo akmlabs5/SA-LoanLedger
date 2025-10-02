@@ -582,28 +582,28 @@ export default function Loans() {
                       }`}
                       data-testid={`card-active-loan-${loan.id}`}
                     >
-                      <CardContent className="p-6">
+                      <CardContent className="p-4">
                         {/* Header */}
-                        <div className="flex items-center justify-between mb-6">
-                          <div className="flex items-center space-x-4">
-                            <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center shadow-lg">
-                              <span className="text-white font-bold text-sm">
+                        <div className="flex items-center justify-between mb-4">
+                          <div className="flex items-center space-x-3">
+                            <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg flex items-center justify-center shadow-md">
+                              <span className="text-white font-bold text-xs">
                                 {loan.facility?.bank?.name?.substring(0, 3) || 'BNK'}
                               </span>
                             </div>
                             <div>
-                              <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100" data-testid={`text-loan-bank-${loan.id}`}>
+                              <h3 className="text-base font-semibold text-gray-900 dark:text-gray-100" data-testid={`text-loan-bank-${loan.id}`}>
                                 {loan.facility?.bank?.name || 'Unknown Bank'}
                               </h3>
-                              <p className="text-sm text-gray-600 dark:text-gray-400" data-testid={`text-loan-reference-${loan.id}`}>
+                              <p className="text-xs text-gray-600 dark:text-gray-400" data-testid={`text-loan-reference-${loan.id}`}>
                                 Reference: {loan.referenceNumber}
                               </p>
                             </div>
                           </div>
-                          <div className="flex items-center space-x-3">
+                          <div className="flex items-center space-x-2">
                             <Badge 
                               variant={urgency.variant} 
-                              className={`${
+                              className={`text-xs ${
                                 urgency.status === 'critical' ? 'bg-red-100 text-red-800 hover:bg-red-200 dark:bg-red-900/20 dark:text-red-400' :
                                 urgency.status === 'warning' ? 'bg-amber-100 text-amber-800 hover:bg-amber-200 dark:bg-amber-900/20 dark:text-amber-400' :
                                 'bg-emerald-100 text-emerald-800 hover:bg-emerald-200 dark:bg-emerald-900/20 dark:text-emerald-400'
@@ -614,7 +614,7 @@ export default function Loans() {
                             </Badge>
                             <DropdownMenu>
                               <DropdownMenuTrigger asChild>
-                                <Button variant="ghost" size="sm">
+                                <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
                                   <MoreVertical className="h-4 w-4" />
                                 </Button>
                               </DropdownMenuTrigger>
@@ -652,25 +652,25 @@ export default function Loans() {
                         </div>
 
                         {/* Amount and Interest */}
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                           <div>
-                            <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">Loan Amount</p>
-                            <p className="text-3xl font-bold text-gray-900 dark:text-gray-100" data-testid={`text-loan-amount-${loan.id}`}>
+                            <p className="text-xs text-gray-600 dark:text-gray-400 mb-1">Loan Amount</p>
+                            <p className="text-2xl font-bold text-gray-900 dark:text-gray-100" data-testid={`text-loan-amount-${loan.id}`}>
                               {formatCurrency(Number(loan.amount) || 0)}
                             </p>
-                            <p className="text-sm text-gray-600 dark:text-gray-400">
+                            <p className="text-xs text-gray-600 dark:text-gray-400">
                               Interest: SIBOR + {loan.bankRate}% = {((Number(loan.siborRate) || 0) + (Number(loan.bankRate) || 0)).toFixed(2)}%
                             </p>
                           </div>
                           <div>
-                            <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">Daily Interest Cost</p>
-                            <p className="text-2xl font-bold text-red-600 dark:text-red-400">
+                            <p className="text-xs text-gray-600 dark:text-gray-400 mb-1">Daily Interest Cost</p>
+                            <p className="text-xl font-bold text-red-600 dark:text-red-400">
                               {dailyInterest.toLocaleString('en-SA', { 
                                 minimumFractionDigits: 0, 
                                 maximumFractionDigits: 0 
                               })} SAR
                             </p>
-                            <p className="text-sm text-gray-600 dark:text-gray-400">
+                            <p className="text-xs text-gray-600 dark:text-gray-400">
                               Monthly: {(dailyInterest * 30).toLocaleString('en-SA', { 
                                 minimumFractionDigits: 0, 
                                 maximumFractionDigits: 0 
@@ -680,36 +680,36 @@ export default function Loans() {
                         </div>
                         
                         {/* Dates and Details */}
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-3">
                           <div>
-                            <p className="text-sm text-gray-600 dark:text-gray-400">Start Date</p>
-                            <p className="font-semibold text-gray-900 dark:text-gray-100">
+                            <p className="text-xs text-gray-600 dark:text-gray-400">Start Date</p>
+                            <p className="text-sm font-semibold text-gray-900 dark:text-gray-100">
                               {new Date(loan.startDate).toLocaleDateString()}
                             </p>
                           </div>
                           <div>
-                            <p className="text-sm text-gray-600 dark:text-gray-400">Due Date</p>
-                            <p className="font-semibold text-gray-900 dark:text-gray-100">
+                            <p className="text-xs text-gray-600 dark:text-gray-400">Due Date</p>
+                            <p className="text-sm font-semibold text-gray-900 dark:text-gray-100">
                               {new Date(loan.dueDate).toLocaleDateString()}
                             </p>
                           </div>
                           <div>
-                            <p className="text-sm text-gray-600 dark:text-gray-400">Duration</p>
-                            <p className="font-semibold text-gray-900 dark:text-gray-100">
+                            <p className="text-xs text-gray-600 dark:text-gray-400">Duration</p>
+                            <p className="text-sm font-semibold text-gray-900 dark:text-gray-100">
                               {Math.ceil((new Date(loan.dueDate).getTime() - new Date(loan.startDate).getTime()) / (1000 * 3600 * 24))} days
                             </p>
                           </div>
                         </div>
 
                         {loan.notes && (
-                          <div className="mb-4 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
-                            <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">Notes</p>
-                            <p className="text-sm text-gray-900 dark:text-gray-100">{loan.notes}</p>
+                          <div className="mb-3 p-2 bg-gray-50 dark:bg-gray-800 rounded">
+                            <p className="text-xs text-gray-600 dark:text-gray-400 mb-1">Notes</p>
+                            <p className="text-xs text-gray-900 dark:text-gray-100">{loan.notes}</p>
                           </div>
                         )}
 
                         {/* Actions */}
-                        <div className="flex items-center justify-between pt-4 border-t border-gray-200 dark:border-gray-700">
+                        <div className="flex items-center justify-between pt-3 border-t border-gray-200 dark:border-gray-700">
                           <div className="flex space-x-2">
                             <Button 
                               variant="outline" 
