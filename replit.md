@@ -4,6 +4,11 @@ This is a comprehensive loan management platform specifically designed for the S
 
 ## Recent Updates - October 2, 2025
 
+### User Settings Enhancements
+- **Daily Alerts Settings Tab**: Complete configuration interface for personalized email alerts. Features enable/disable toggle, time picker (08:00-20:00), priority-based category selection (Critical/High/Medium/Low with color-coded badges), and customizable thresholds for concentration (40%), LTV (70%), utilization (80%), and revolving period (80%). Includes "Send Test Email" button for immediate digest preview. Form rehydrates with saved preferences and shows loading skeleton during data fetch. Database table `dailyAlertsPreferences` stores user-specific settings.
+- **Feature Showcase Tab**: Comprehensive platform capabilities overview organized into 4 sections: (1) Core Features - Bank Management, Facility Tracking, Loan Lifecycle, Collateral Tracking, Document Management, Reminder System, (2) AI-Powered Features - AI Chat Assistant, Smart Loan Matcher, What-If Scenarios, Natural Language Queries, Daily Alerts, PDF Export, (3) Analytics & Insights - Portfolio Dashboard, Bank Performance, Exposure Tracking, LTV Monitoring, SIBOR Integration, Mobile-First Design, (4) Coming Soon - Arabic Language Support, Advanced Reporting, Multi-Currency, API Integration. Features 22 total cards with lucide-react icons, responsive grid layout (1/2/3 columns), and "Coming Soon" badges.
+- **API Endpoints**: GET/POST `/api/user/daily-alerts-preferences` for loading and saving user alert preferences with proper authentication and validation.
+
 ### Advanced AI Features Completed
 - **File Attachments for AI Chat**: Upload PDF, DOCX, TXT, XLSX files to AI conversations with automatic text extraction for context enrichment. Metadata stored in database with 10MB file size limit. Extracted text seamlessly included in AI chat context.
 - **PDF Export for Conversations**: One-click export of AI conversation history to professionally formatted PDF documents with proper pagination, metadata headers (title, date, message count), and timestamped message formatting. Export button appears in chat header for conversations with messages.
