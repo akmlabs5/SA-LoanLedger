@@ -27,12 +27,28 @@ export default function PortfolioDistributionChart({ portfolioSummary }: Portfol
     );
   }
 
+  // Calculate total outstanding
+  const totalOutstanding = portfolioSummary.bankExposures.reduce((sum, exp) => sum + exp.outstanding, 0);
+
+  // Show empty state if no outstanding amounts
+  if (totalOutstanding === 0 || portfolioSummary.bankExposures.length === 0) {
+    return (
+      <div className="h-full bg-gradient-to-br from-green-50 to-slate-100 dark:from-green-950 dark:to-slate-900 rounded-lg flex items-center justify-center">
+        <div className="text-center">
+          <TrendingUp className="h-12 w-12 text-primary mx-auto mb-4" />
+          <p className="text-muted-foreground">No outstanding loans</p>
+          <p className="text-sm text-muted-foreground mt-2">Add loans to see portfolio distribution</p>
+        </div>
+      </div>
+    );
+  }
+
   const pieChartData = portfolioSummary.bankExposures.map((exposure, index) => ({
     name: exposure.bankName.length > 20 
       ? exposure.bankName.substring(0, 17) + '...' 
       : exposure.bankName,
     value: exposure.outstanding / 1000000,
-    percentage: ((exposure.outstanding / portfolioSummary.bankExposures.reduce((sum, exp) => sum + exp.outstanding, 0)) * 100).toFixed(1),
+    percentage: ((exposure.outstanding / totalOutstanding) * 100).toFixed(1),
     color: getBankColor(index),
   }));
 
