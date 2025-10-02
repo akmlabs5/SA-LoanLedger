@@ -387,7 +387,7 @@ export default function Dashboard() {
           
           {/* Sticky Quick Actions Panel */}
           <div className="lg:sticky lg:top-6 lg:self-start">
-            <Card className="bg-card border border-border shadow-sm hover:shadow-md transition-shadow duration-200 h-full flex flex-col">
+            <Card className="bg-card border border-border shadow-sm hover:shadow-md transition-shadow duration-200 h-full flex flex-col min-h-[600px]">
               <CardHeader className="pb-4 shrink-0">
               <CardTitle className="text-xl font-semibold flex items-center space-x-2">
                 <TrendingUp className="h-5 w-5 text-primary" />
@@ -395,7 +395,7 @@ export default function Dashboard() {
               </CardTitle>
               <p className="text-sm text-muted-foreground">Streamline your portfolio management</p>
             </CardHeader>
-            <CardContent className="flex-1 flex flex-col justify-between">
+            <CardContent className="flex-1 flex flex-col justify-between min-h-[450px]">
               <div className="space-y-4">
                 <Link href="/loans">
                   <Button className="w-full justify-start bg-primary hover:bg-primary/90 text-primary-foreground" data-testid="button-quick-add-loan">

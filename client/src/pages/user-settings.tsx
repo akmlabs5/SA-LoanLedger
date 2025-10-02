@@ -535,8 +535,7 @@ export default function UserSettingsPage() {
                         name="currency"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel className="flex items-center gap-2">
-                              <DollarSign className="h-4 w-4" />
+                            <FormLabel>
                               Currency
                             </FormLabel>
                             <Select onValueChange={field.onChange} value={field.value}>
