@@ -27,6 +27,7 @@ import DocumentUpload from "@/components/DocumentUpload";
 import DocumentList from "@/components/DocumentList";
 import ReminderModal from "@/components/ReminderModal";
 import { RevolvingPeriodTracker } from "@/components/RevolvingPeriodTracker";
+import { WhatIfAnalysis } from "@/components/WhatIfAnalysis";
 
 export default function LoanDetailPage() {
   const { id: loanId } = useParams<{ id: string }>();
@@ -228,6 +229,12 @@ export default function LoanDetailPage() {
               </Badge>
               {loan.status === 'active' && (
                 <div className="flex space-x-2">
+                  <WhatIfAnalysis 
+                    loanId={loan.id}
+                    loanAmount={parseFloat(loan.amount)}
+                    currentRate={parseFloat(loan.interestRate)}
+                    durationDays={Math.ceil((new Date(loan.dueDate).getTime() - new Date(loan.drawdownDate).getTime()) / (1000 * 60 * 60 * 24))}
+                  />
                   <Button 
                     variant="outline" 
                     size="sm"

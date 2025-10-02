@@ -723,6 +723,176 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // What-If Scenario Analysis
+  app.post('/api/ai/what-if-analysis', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const { loanId, scenarios } = req.body;
+      
+      if (!loanId) {
+        return res.status(400).json({ message: "Loan ID is required" });
+      }
+      
+      // Validate scenario inputs
+      if (scenarios?.refinance?.newRate !== undefined) {
+        if (scenarios.refinance.newRate < 0 || scenarios.refinance.newRate > 100) {
+          return res.status(400).json({ message: "Interest rate must be between 0 and 100" });
+        }
+      }
+      if (scenarios?.earlyPayment?.paymentAmount !== undefined) {
+        if (scenarios.earlyPayment.paymentAmount <= 0) {
+          return res.status(400).json({ message: "Payment amount must be positive" });
+        }
+      }
+      if (scenarios?.termChange?.newDurationDays !== undefined) {
+        if (scenarios.termChange.newDurationDays <= 0) {
+          return res.status(400).json({ message: "Duration must be positive" });
+        }
+      }
+      
+      // Get the loan
+      const loan = await storage.getLoanById(loanId);
+      if (!loan || loan.userId !== userId) {
+        return res.status(404).json({ message: "Loan not found" });
+      }
+      
+      const currentAmount = parseFloat(loan.amount.toString());
+      const currentRate = parseFloat(loan.interestRate.toString());
+      const currentDueDate = new Date(loan.dueDate);
+      const drawdownDate = new Date(loan.drawdownDate);
+      const currentDurationDays = Math.ceil((currentDueDate.getTime() - drawdownDate.getTime()) / (1000 * 60 * 60 * 24));
+      
+      // Calculate current loan cost
+      const currentDailyRate = currentRate / 365 / 100;
+      const currentInterest = currentAmount * currentDailyRate * currentDurationDays;
+      const currentTotalCost = currentAmount + currentInterest;
+      
+      const results: any = {
+        current: {
+          amount: currentAmount,
+          rate: currentRate,
+          durationDays: currentDurationDays,
+          interest: currentInterest,
+          totalCost: currentTotalCost,
+          dueDate: loan.dueDate
+        },
+        scenarios: []
+      };
+      
+      // Refinancing Scenario
+      if (scenarios?.refinance) {
+        const newRate = scenarios.refinance.newRate;
+        const newDailyRate = newRate / 365 / 100;
+        const refinanceInterest = currentAmount * newDailyRate * currentDurationDays;
+        const refinanceTotalCost = currentAmount + refinanceInterest;
+        const savings = currentInterest - refinanceInterest;
+        const savingsPercent = currentInterest > 0 ? (savings / currentInterest) * 100 : 0;
+        
+        results.scenarios.push({
+          type: 'refinance',
+          name: 'Refinance at Different Rate',
+          newRate,
+          interest: refinanceInterest,
+          totalCost: refinanceTotalCost,
+          savings,
+          savingsPercent,
+          recommendation: savings > 0 
+            ? `Refinancing would save SAR ${savings.toFixed(2)} (${savingsPercent.toFixed(1)}% reduction in interest)`
+            : `Refinancing would increase cost by SAR ${Math.abs(savings).toFixed(2)}`
+        });
+      }
+      
+      // Early Payment Scenario
+      if (scenarios?.earlyPayment) {
+        const paymentAmount = scenarios.earlyPayment.paymentAmount;
+        const paymentDate = scenarios.earlyPayment.paymentDate ? new Date(scenarios.earlyPayment.paymentDate) : new Date();
+        let daysElapsed = Math.ceil((paymentDate.getTime() - drawdownDate.getTime()) / (1000 * 60 * 60 * 24));
+        
+        // Clamp days elapsed to loan duration
+        daysElapsed = Math.max(0, Math.min(daysElapsed, currentDurationDays));
+        
+        if (paymentAmount >= currentAmount) {
+          // Full early payment
+          const interestPaid = currentAmount * currentDailyRate * daysElapsed;
+          const totalPaid = currentAmount + interestPaid;
+          const savings = currentInterest - interestPaid;
+          const savingsPercent = currentInterest > 0 ? (savings / currentInterest) * 100 : 0;
+          
+          results.scenarios.push({
+            type: 'earlyPayment',
+            name: 'Full Early Payment',
+            paymentAmount,
+            paymentDate,
+            daysElapsed,
+            interestPaid,
+            totalPaid,
+            savings,
+            savingsPercent,
+            recommendation: `Paying off the loan early would save SAR ${savings.toFixed(2)} (${savingsPercent.toFixed(1)}% of total interest)`
+          });
+        } else {
+          // Partial early payment
+          const remainingPrincipal = currentAmount - paymentAmount;
+          const interestToDate = currentAmount * currentDailyRate * daysElapsed;
+          const remainingDays = currentDurationDays - daysElapsed;
+          const futureInterest = remainingPrincipal * currentDailyRate * remainingDays;
+          const totalInterest = interestToDate + futureInterest;
+          const totalCost = currentAmount + totalInterest;
+          const savings = currentInterest - totalInterest;
+          const savingsPercent = currentInterest > 0 ? (savings / currentInterest) * 100 : 0;
+          
+          results.scenarios.push({
+            type: 'partialPayment',
+            name: 'Partial Early Payment',
+            paymentAmount,
+            paymentDate,
+            daysElapsed,
+            remainingPrincipal,
+            interestToDate,
+            futureInterest,
+            totalInterest,
+            totalCost,
+            savings,
+            savingsPercent,
+            recommendation: `Partial payment of SAR ${paymentAmount.toFixed(2)} would save SAR ${savings.toFixed(2)} (${savingsPercent.toFixed(1)}% reduction in interest)`
+          });
+        }
+      }
+      
+      // Term Extension/Reduction Scenario
+      if (scenarios?.termChange) {
+        const newDurationDays = scenarios.termChange.newDurationDays;
+        const newInterest = currentAmount * currentDailyRate * newDurationDays;
+        const newTotalCost = currentAmount + newInterest;
+        const difference = newInterest - currentInterest;
+        const differencePercent = currentInterest > 0 ? (difference / currentInterest) * 100 : 0;
+        
+        const newDueDate = new Date(drawdownDate);
+        newDueDate.setDate(newDueDate.getDate() + newDurationDays);
+        
+        results.scenarios.push({
+          type: 'termChange',
+          name: newDurationDays > currentDurationDays ? 'Extend Loan Term' : 'Reduce Loan Term',
+          newDurationDays,
+          newDueDate: newDueDate.toISOString(),
+          interest: newInterest,
+          totalCost: newTotalCost,
+          difference,
+          differencePercent,
+          recommendation: newDurationDays > currentDurationDays
+            ? `Extending the term by ${newDurationDays - currentDurationDays} days would cost an additional SAR ${difference.toFixed(2)} in interest`
+            : `Reducing the term by ${currentDurationDays - newDurationDays} days would save SAR ${Math.abs(difference).toFixed(2)} in interest`
+        });
+      }
+      
+      res.json(results);
+      
+    } catch (error) {
+      console.error("Error in what-if analysis:", error);
+      res.status(500).json({ message: "Failed to perform what-if analysis" });
+    }
+  });
+
   // Smart Loan Matcher - recommend optimal facility for new loan
   app.post('/api/ai/loan-matcher', isAuthenticated, async (req: any, res) => {
     try {
