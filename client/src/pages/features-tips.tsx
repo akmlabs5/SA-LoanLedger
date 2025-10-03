@@ -36,7 +36,7 @@ export default function FeaturesTipsPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-green-50 via-white to-emerald-50 dark:from-gray-900 dark:via-gray-900 dark:to-gray-800">
-      <div className="container mx-auto p-6 max-w-6xl">
+      <div className="container mx-auto px-4 sm:px-6 py-6 max-w-6xl">
         {/* Page Header */}
         <div className="mb-8">
           <div className="flex items-center gap-3 mb-3">
@@ -50,11 +50,11 @@ export default function FeaturesTipsPage() {
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
           <TabsList className="grid w-full grid-cols-2" data-testid="tabs-features-tips">
-            <TabsTrigger value="features" className="flex items-center gap-2" data-testid="tab-features">
+            <TabsTrigger value="features" className="flex items-center gap-2 h-12" data-testid="tab-features">
               <Boxes className="h-4 w-4" />
               <span>Platform Features</span>
             </TabsTrigger>
-            <TabsTrigger value="tips" className="flex items-center gap-2" data-testid="tab-tips">
+            <TabsTrigger value="tips" className="flex items-center gap-2 h-12" data-testid="tab-tips">
               <Lightbulb className="h-4 w-4" />
               <span>User Tips</span>
             </TabsTrigger>

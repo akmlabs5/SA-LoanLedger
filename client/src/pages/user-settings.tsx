@@ -364,7 +364,7 @@ export default function UserSettingsPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-green-50 via-white to-emerald-50 dark:from-gray-900 dark:via-gray-900 dark:to-gray-800">
-      <div className="container mx-auto p-6 max-w-6xl">
+      <div className="container mx-auto px-4 sm:px-6 py-6 max-w-6xl">
         <div className="flex items-center gap-3 mb-6">
           <Settings className="h-8 w-8 text-primary" />
           <div>
@@ -374,28 +374,28 @@ export default function UserSettingsPage() {
         </div>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="grid w-full grid-cols-6" data-testid="tabs-settings">
-            <TabsTrigger value="profile" className="flex items-center gap-2" data-testid="tab-profile">
+          <TabsList className="grid w-full grid-cols-2 sm:grid-cols-3 md:grid-cols-6" data-testid="tabs-settings">
+            <TabsTrigger value="profile" className="flex items-center gap-2 h-12" data-testid="tab-profile">
               <User className="h-4 w-4" />
               <span className="hidden sm:inline">Profile</span>
             </TabsTrigger>
-            <TabsTrigger value="preferences" className="flex items-center gap-2" data-testid="tab-preferences">
+            <TabsTrigger value="preferences" className="flex items-center gap-2 h-12" data-testid="tab-preferences">
               <Palette className="h-4 w-4" />
               <span className="hidden sm:inline">Preferences</span>
             </TabsTrigger>
-            <TabsTrigger value="notifications" className="flex items-center gap-2" data-testid="tab-notifications">
+            <TabsTrigger value="notifications" className="flex items-center gap-2 h-12" data-testid="tab-notifications">
               <Bell className="h-4 w-4" />
               <span className="hidden sm:inline">Notifications</span>
             </TabsTrigger>
-            <TabsTrigger value="daily-alerts" className="flex items-center gap-2" data-testid="tab-daily-alerts">
+            <TabsTrigger value="daily-alerts" className="flex items-center gap-2 h-12" data-testid="tab-daily-alerts">
               <Mail className="h-4 w-4" />
               <span className="hidden sm:inline">Daily Alerts</span>
             </TabsTrigger>
-            <TabsTrigger value="ai-insights" className="flex items-center gap-2" data-testid="tab-ai-insights">
+            <TabsTrigger value="ai-insights" className="flex items-center gap-2 h-12" data-testid="tab-ai-insights">
               <Brain className="h-4 w-4" />
               <span className="hidden sm:inline">AI Insights</span>
             </TabsTrigger>
-            <TabsTrigger value="security" className="flex items-center gap-2" data-testid="tab-security">
+            <TabsTrigger value="security" className="flex items-center gap-2 h-12" data-testid="tab-security">
               <Shield className="h-4 w-4" />
               <span className="hidden sm:inline">Security</span>
             </TabsTrigger>
@@ -418,7 +418,7 @@ export default function UserSettingsPage() {
                         <FormItem>
                           <FormLabel>First Name</FormLabel>
                           <FormControl>
-                            <Input {...field} data-testid="input-first-name" />
+                            <Input {...field} className="h-12" data-testid="input-first-name" />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -432,7 +432,7 @@ export default function UserSettingsPage() {
                         <FormItem>
                           <FormLabel>Last Name</FormLabel>
                           <FormControl>
-                            <Input {...field} data-testid="input-last-name" />
+                            <Input {...field} className="h-12" data-testid="input-last-name" />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -446,7 +446,7 @@ export default function UserSettingsPage() {
                         <FormItem>
                           <FormLabel>Email Address</FormLabel>
                           <FormControl>
-                            <Input {...field} type="email" data-testid="input-email" />
+                            <Input {...field} type="email" className="h-12" data-testid="input-email" />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -457,7 +457,7 @@ export default function UserSettingsPage() {
                       <Button
                         type="submit"
                         disabled={profileMutation.isPending}
-                        className="flex items-center gap-2"
+                        className="flex items-center gap-2 h-12"
                         data-testid="button-save-profile"
                       >
                         <Save className="h-4 w-4" />
@@ -492,7 +492,7 @@ export default function UserSettingsPage() {
                             <FormLabel>Timezone</FormLabel>
                             <Select onValueChange={field.onChange} value={field.value}>
                               <FormControl>
-                                <SelectTrigger data-testid="select-timezone">
+                                <SelectTrigger className="h-12" data-testid="select-timezone">
                                   <SelectValue />
                                 </SelectTrigger>
                               </FormControl>
@@ -516,7 +516,7 @@ export default function UserSettingsPage() {
                             <FormLabel>Language</FormLabel>
                             <Select onValueChange={field.onChange} value={field.value}>
                               <FormControl>
-                                <SelectTrigger data-testid="select-language">
+                                <SelectTrigger className="h-12" data-testid="select-language">
                                   <SelectValue />
                                 </SelectTrigger>
                               </FormControl>
@@ -540,7 +540,7 @@ export default function UserSettingsPage() {
                             </FormLabel>
                             <Select onValueChange={field.onChange} value={field.value}>
                               <FormControl>
-                                <SelectTrigger data-testid="select-currency">
+                                <SelectTrigger className="h-12" data-testid="select-currency">
                                   <SelectValue />
                                 </SelectTrigger>
                               </FormControl>
@@ -564,7 +564,7 @@ export default function UserSettingsPage() {
                             <FormLabel>Date Format</FormLabel>
                             <Select onValueChange={field.onChange} value={field.value}>
                               <FormControl>
-                                <SelectTrigger data-testid="select-date-format">
+                                <SelectTrigger className="h-12" data-testid="select-date-format">
                                   <SelectValue />
                                 </SelectTrigger>
                               </FormControl>
@@ -593,7 +593,7 @@ export default function UserSettingsPage() {
                               <FormLabel>Theme</FormLabel>
                               <Select onValueChange={field.onChange} value={field.value}>
                                 <FormControl>
-                                  <SelectTrigger data-testid="select-theme">
+                                  <SelectTrigger className="h-12" data-testid="select-theme">
                                     <SelectValue />
                                   </SelectTrigger>
                                 </FormControl>
@@ -616,7 +616,7 @@ export default function UserSettingsPage() {
                               <FormLabel>Dashboard Layout</FormLabel>
                               <Select onValueChange={field.onChange} value={field.value}>
                                 <FormControl>
-                                  <SelectTrigger data-testid="select-dashboard-layout">
+                                  <SelectTrigger className="h-12" data-testid="select-dashboard-layout">
                                     <SelectValue />
                                   </SelectTrigger>
                                 </FormControl>
@@ -643,6 +643,7 @@ export default function UserSettingsPage() {
                                   min="5"
                                   max="100"
                                   {...field}
+                                  className="h-12"
                                   onChange={(e) => field.onChange(parseInt(e.target.value) || 10)}
                                   data-testid="input-items-per-page"
                                 />
@@ -719,7 +720,7 @@ export default function UserSettingsPage() {
                       <Button
                         type="submit"
                         disabled={preferencesMutation.isPending}
-                        className="flex items-center gap-2"
+                        className="flex items-center gap-2 h-12"
                         data-testid="button-save-preferences"
                       >
                         <Save className="h-4 w-4" />
@@ -754,7 +755,7 @@ export default function UserSettingsPage() {
                             max="365"
                             value={interval}
                             onChange={(e) => updateInterval(index, parseInt(e.target.value) || 1)}
-                            className="w-24"
+                            className="w-24 h-12"
                             data-testid={`input-interval-${index}`}
                           />
                           <span className="text-sm text-muted-foreground">days before due date</span>
@@ -763,6 +764,7 @@ export default function UserSettingsPage() {
                               type="button"
                               variant="outline"
                               size="sm"
+                              className="h-12"
                               onClick={() => removeInterval(index)}
                               data-testid={`button-remove-interval-${index}`}
                             >
@@ -777,6 +779,7 @@ export default function UserSettingsPage() {
                       <Button
                         type="button"
                         variant="outline"
+                        className="h-12"
                         onClick={addInterval}
                         data-testid="button-add-interval"
                       >
@@ -852,7 +855,7 @@ export default function UserSettingsPage() {
                       <Button
                         type="submit"
                         disabled={notificationMutation.isPending}
-                        className="flex items-center gap-2"
+                        className="flex items-center gap-2 h-12"
                         data-testid="button-save-notifications"
                       >
                         <Save className="h-4 w-4" />
@@ -917,7 +920,7 @@ export default function UserSettingsPage() {
                           </FormLabel>
                           <Select onValueChange={field.onChange} value={field.value}>
                             <FormControl>
-                              <SelectTrigger data-testid="select-preferred-time">
+                              <SelectTrigger className="h-12" data-testid="select-preferred-time">
                                 <SelectValue />
                               </SelectTrigger>
                             </FormControl>
@@ -1065,6 +1068,7 @@ export default function UserSettingsPage() {
                                   type="number"
                                   step="0.01"
                                   placeholder="40.00"
+                                  className="h-12"
                                   data-testid="input-concentration-threshold"
                                 />
                               </FormControl>
@@ -1089,6 +1093,7 @@ export default function UserSettingsPage() {
                                   type="number"
                                   step="0.01"
                                   placeholder="70.00"
+                                  className="h-12"
                                   data-testid="input-ltv-threshold"
                                 />
                               </FormControl>
@@ -1113,6 +1118,7 @@ export default function UserSettingsPage() {
                                   type="number"
                                   step="0.01"
                                   placeholder="80.00"
+                                  className="h-12"
                                   data-testid="input-utilization-threshold"
                                 />
                               </FormControl>
@@ -1137,6 +1143,7 @@ export default function UserSettingsPage() {
                                   type="number"
                                   step="0.01"
                                   placeholder="80.00"
+                                  className="h-12"
                                   data-testid="input-revolving-threshold"
                                 />
                               </FormControl>
@@ -1154,7 +1161,7 @@ export default function UserSettingsPage() {
                         variant="outline"
                         onClick={() => sendTestEmailMutation.mutate()}
                         disabled={sendTestEmailMutation.isPending}
-                        className="flex items-center gap-2"
+                        className="flex items-center gap-2 h-12"
                         data-testid="button-send-test-email"
                       >
                         <Mail className="h-4 w-4" />
@@ -1163,7 +1170,7 @@ export default function UserSettingsPage() {
                       <Button
                         type="submit"
                         disabled={dailyAlertsMutation.isPending}
-                        className="flex items-center gap-2"
+                        className="flex items-center gap-2 h-12"
                         data-testid="button-save-daily-alerts"
                       >
                         <Save className="h-4 w-4" />
@@ -1197,7 +1204,7 @@ export default function UserSettingsPage() {
                         <FormItem>
                           <FormLabel>Concentration Risk Threshold (%)</FormLabel>
                           <FormControl>
-                            <Input {...field} type="number" step="0.01" data-testid="input-concentration-risk" />
+                            <Input {...field} type="number" step="0.01" className="h-12" data-testid="input-concentration-risk" />
                           </FormControl>
                           <FormDescription>Alert when a single bank exceeds this percentage of total exposure</FormDescription>
                           <FormMessage />
@@ -1212,7 +1219,7 @@ export default function UserSettingsPage() {
                         <FormItem>
                           <FormLabel>LTV Outstanding Threshold (%)</FormLabel>
                           <FormControl>
-                            <Input {...field} type="number" step="0.01" data-testid="input-ltv-outstanding" />
+                            <Input {...field} type="number" step="0.01" className="h-12" data-testid="input-ltv-outstanding" />
                           </FormControl>
                           <FormDescription>Alert when loan-to-value ratio against outstanding exceeds this percentage</FormDescription>
                           <FormMessage />
@@ -1227,7 +1234,7 @@ export default function UserSettingsPage() {
                         <FormItem>
                           <FormLabel>LTV Limit Threshold (%)</FormLabel>
                           <FormControl>
-                            <Input {...field} type="number" step="0.01" data-testid="input-ltv-limit" />
+                            <Input {...field} type="number" step="0.01" className="h-12" data-testid="input-ltv-limit" />
                           </FormControl>
                           <FormDescription>Alert when loan-to-value ratio against credit limit exceeds this percentage</FormDescription>
                           <FormMessage />
@@ -1242,7 +1249,7 @@ export default function UserSettingsPage() {
                         <FormItem>
                           <FormLabel>Cash Flow Strain Threshold (%)</FormLabel>
                           <FormControl>
-                            <Input {...field} type="number" step="0.01" data-testid="input-cash-flow-strain" />
+                            <Input {...field} type="number" step="0.01" className="h-12" data-testid="input-cash-flow-strain" />
                           </FormControl>
                           <FormDescription>Alert when debt service exceeds this percentage of projected cash flow</FormDescription>
                           <FormMessage />
@@ -1257,7 +1264,7 @@ export default function UserSettingsPage() {
                         <FormItem>
                           <FormLabel>Rate Differential Threshold (%)</FormLabel>
                           <FormControl>
-                            <Input {...field} type="number" step="0.01" data-testid="input-rate-differential" />
+                            <Input {...field} type="number" step="0.01" className="h-12" data-testid="input-rate-differential" />
                           </FormControl>
                           <FormDescription>Alert when rate difference between facilities exceeds this percentage</FormDescription>
                           <FormMessage />
@@ -1277,6 +1284,7 @@ export default function UserSettingsPage() {
                               min="1"
                               max="365"
                               {...field}
+                              className="h-12"
                               onChange={(e) => field.onChange(parseInt(e.target.value) || 30)}
                               data-testid="input-due-date-alert-days"
                             />
@@ -1291,7 +1299,7 @@ export default function UserSettingsPage() {
                       <Button
                         type="submit"
                         disabled={aiInsightsMutation.isPending}
-                        className="flex items-center gap-2"
+                        className="flex items-center gap-2 h-12"
                         data-testid="button-save-ai-insights"
                       >
                         <Save className="h-4 w-4" />
@@ -1321,7 +1329,7 @@ export default function UserSettingsPage() {
                     Your account is secured using Replit Authentication. Password management and two-factor authentication
                     are handled through your Replit account settings.
                   </p>
-                  <Button variant="outline" asChild data-testid="button-replit-security">
+                  <Button variant="outline" asChild className="h-12" data-testid="button-replit-security">
                     <a href="https://replit.com/account" target="_blank" rel="noopener noreferrer">
                       Manage Replit Security Settings
                     </a>
@@ -1340,7 +1348,7 @@ export default function UserSettingsPage() {
                       <p className="font-medium">Current Session</p>
                       <p className="text-sm text-muted-foreground">Active now</p>
                     </div>
-                    <Button variant="outline" data-testid="button-logout">
+                    <Button variant="outline" className="h-12" data-testid="button-logout">
                       Sign Out
                     </Button>
                   </div>
