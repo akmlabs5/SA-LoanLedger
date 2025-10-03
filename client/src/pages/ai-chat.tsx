@@ -5,8 +5,10 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useToast } from "@/hooks/use-toast";
-import { MessageCircle, Send, Bot, User, Plus, Trash2, Loader2, Paperclip, X, FileText, Download } from "lucide-react";
+import { useIsMobile } from "@/hooks/use-mobile";
+import { MessageCircle, Send, Bot, User, Plus, Trash2, Loader2, Paperclip, X, FileText, Download, Menu } from "lucide-react";
 import { apiRequest, queryClient } from "@/lib/queryClient";
+import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import type { ChatConversation, ChatMessage } from "@shared/schema";
 
 interface ConversationWithMessages {
@@ -24,9 +26,11 @@ export default function AIChatPage() {
   const [selectedConversationId, setSelectedConversationId] = useState<string | null>(null);
   const [inputMessage, setInputMessage] = useState("");
   const [uploadedFiles, setUploadedFiles] = useState<UploadedFile[]>([]);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
+  const isMobile = useIsMobile();
 
   // Fetch all conversations
   const { data: conversations = [], isLoading: conversationsLoading } = useQuery<ChatConversation[]>({
@@ -60,6 +64,7 @@ export default function AIChatPage() {
     onSuccess: (newConversation: ChatConversation) => {
       queryClient.invalidateQueries({ queryKey: ['/api/chat/conversations'] });
       setSelectedConversationId(newConversation.id);
+      setIsSidebarOpen(false);
       toast({
         title: "New conversation created",
         description: "Start chatting with your AI assistant",
@@ -85,7 +90,6 @@ export default function AIChatPage() {
       queryClient.invalidateQueries({ queryKey: ['/api/chat/conversations'] });
     },
     onError: (_, variables) => {
-      // Remove optimistic message on error by refetching
       queryClient.invalidateQueries({ queryKey: ['/api/chat/conversations', variables.conversationId] });
       toast({
         title: "Error",
@@ -102,7 +106,6 @@ export default function AIChatPage() {
       return await response.json();
     },
     onSuccess: (_, deletedId) => {
-      // Auto-select next available conversation after deleting active one
       const remaining = conversations.filter(c => c.id !== deletedId);
       if (remaining.length > 0 && selectedConversationId === deletedId) {
         setSelectedConversationId(remaining[0].id);
@@ -167,12 +170,11 @@ export default function AIChatPage() {
   const handleSendMessage = () => {
     if (!inputMessage.trim() || !selectedConversationId) return;
     const messageToSend = inputMessage;
-    const conversationId = selectedConversationId; // Snapshot the ID
-    const filesToSend = [...uploadedFiles]; // Snapshot files
-    setInputMessage(""); // Clear input immediately for better UX
-    setUploadedFiles([]); // Clear uploaded files
+    const conversationId = selectedConversationId;
+    const filesToSend = [...uploadedFiles];
+    setInputMessage("");
+    setUploadedFiles([]);
     
-    // Optimistically add user message to UI
     const optimisticUserMessage: ChatMessage = {
       id: `temp-${Date.now()}`,
       conversationId,
@@ -193,7 +195,6 @@ export default function AIChatPage() {
       }
     );
     
-    // Include attachment data in the request
     const requestBody: any = { content: messageToSend };
     if (filesToSend.length > 0) {
       requestBody.attachmentIds = filesToSend.map(f => f.attachmentId);
@@ -210,10 +211,9 @@ export default function AIChatPage() {
     const files = e.target.files;
     if (!files || files.length === 0 || !selectedConversationId) return;
     
-    const file = files[0]; // Process one file at a time
+    const file = files[0];
     uploadFileMutation.mutate({ conversationId: selectedConversationId, file });
     
-    // Reset file input
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
     }
@@ -236,107 +236,203 @@ export default function AIChatPage() {
 
   const messages = conversationData?.messages || [];
 
-  return (
-    <div className="min-h-screen bg-gradient-to-br from-green-50 via-white to-emerald-50 dark:from-gray-900 dark:via-gray-900 dark:to-gray-800">
-      <div className="p-6 max-w-7xl mx-auto">
-        <div className="mb-6">
-          <h1 className="text-3xl font-bold text-foreground mb-2">AI Portfolio Assistant</h1>
-          <p className="text-muted-foreground">
-            Ask questions about your loans, bank exposures, and portfolio analytics
-          </p>
+  // Conversations sidebar component
+  const ConversationsSidebar = () => (
+    <div className="flex flex-col h-full">
+      <div className="border-b p-4">
+        <div className="flex items-center justify-between">
+          <h3 className="text-lg font-semibold">Conversations</h3>
+          <Button
+            size="sm"
+            onClick={() => createConversationMutation.mutate()}
+            disabled={createConversationMutation.isPending}
+            data-testid="button-new-conversation"
+          >
+            <Plus className="h-4 w-4" />
+          </Button>
         </div>
-
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 h-[calc(100vh-200px)]">
-          {/* Conversations Sidebar */}
-          <Card className="lg:col-span-1">
-            <CardHeader className="border-b">
-              <div className="flex items-center justify-between">
-                <CardTitle className="text-lg">Conversations</CardTitle>
-                <Button
-                  size="sm"
-                  onClick={() => createConversationMutation.mutate()}
-                  disabled={createConversationMutation.isPending}
-                  data-testid="button-new-conversation"
-                >
-                  <Plus className="h-4 w-4" />
-                </Button>
-              </div>
-            </CardHeader>
-            <CardContent className="p-0">
-              <ScrollArea className="h-[calc(100vh-320px)]">
-                {conversationsLoading ? (
-                  <div className="flex items-center justify-center p-8">
-                    <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+      </div>
+      <ScrollArea className="flex-1">
+        {conversationsLoading ? (
+          <div className="flex items-center justify-center p-8">
+            <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+          </div>
+        ) : conversations.length === 0 ? (
+          <div className="p-4 text-center text-sm text-muted-foreground">
+            No conversations yet.
+            <br />
+            Click + to start chatting!
+          </div>
+        ) : (
+          <div className="divide-y divide-border">
+            {conversations.map((conv) => (
+              <div
+                key={conv.id}
+                className={`p-4 cursor-pointer hover:bg-accent transition-colors group ${
+                  selectedConversationId === conv.id ? "bg-accent" : ""
+                }`}
+                onClick={() => {
+                  setSelectedConversationId(conv.id);
+                  setIsSidebarOpen(false);
+                }}
+                data-testid={`conversation-${conv.id}`}
+              >
+                <div className="flex items-start justify-between">
+                  <div className="flex-1 min-w-0">
+                    <h4 className="text-sm font-medium truncate">{conv.title}</h4>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      {conv.updatedAt ? new Date(conv.updatedAt).toLocaleDateString() : 'N/A'}
+                    </p>
                   </div>
-                ) : conversations.length === 0 ? (
-                  <div className="p-4 text-center text-sm text-muted-foreground">
-                    No conversations yet.
-                    <br />
-                    Click + to start chatting!
-                  </div>
-                ) : (
-                  <div className="divide-y divide-border">
-                    {conversations.map((conv) => (
-                      <div
-                        key={conv.id}
-                        className={`p-4 cursor-pointer hover:bg-accent transition-colors group ${
-                          selectedConversationId === conv.id ? "bg-accent" : ""
-                        }`}
-                        onClick={() => setSelectedConversationId(conv.id)}
-                        data-testid={`conversation-${conv.id}`}
-                      >
-                        <div className="flex items-start justify-between">
-                          <div className="flex-1 min-w-0">
-                            <h4 className="text-sm font-medium truncate">{conv.title}</h4>
-                            <p className="text-xs text-muted-foreground mt-1">
-                              {conv.updatedAt ? new Date(conv.updatedAt).toLocaleDateString() : 'N/A'}
-                            </p>
-                          </div>
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            className="opacity-0 group-hover:opacity-100 transition-opacity h-6 w-6 p-0 ml-2"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleDeleteConversation(conv.id);
-                            }}
-                            data-testid={`button-delete-${conv.id}`}
-                          >
-                            <Trash2 className="h-3 w-3 text-destructive" />
-                          </Button>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </ScrollArea>
-            </CardContent>
-          </Card>
-
-          {/* Chat Area */}
-          <Card className="lg:col-span-3 flex flex-col">
-            <CardHeader className="border-b">
-              <div className="flex items-center justify-between">
-                <CardTitle className="flex items-center gap-2">
-                  <MessageCircle className="h-5 w-5 text-saudi" />
-                  {conversationData?.conversation.title || "Select a conversation"}
-                </CardTitle>
-                {selectedConversationId && messages.length > 0 && (
                   <Button
                     size="sm"
+                    variant="ghost"
+                    className="opacity-0 group-hover:opacity-100 transition-opacity h-6 w-6 p-0 ml-2"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleDeleteConversation(conv.id);
+                    }}
+                    data-testid={`button-delete-${conv.id}`}
+                  >
+                    <Trash2 className="h-3 w-3 text-destructive" />
+                  </Button>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </ScrollArea>
+    </div>
+  );
+
+  return (
+    <div className={`bg-gradient-to-br from-green-50 via-white to-emerald-50 dark:from-gray-900 dark:via-gray-900 dark:to-gray-800 ${
+      isMobile ? 'h-[calc(100vh-56px)]' : 'min-h-screen'
+    }`}>
+      <div className={isMobile ? '' : 'p-6 max-w-7xl mx-auto'}>
+        {/* Header - Hidden on mobile */}
+        {!isMobile && (
+          <div className="mb-6">
+            <h1 className="text-3xl font-bold text-foreground mb-2">AI Portfolio Assistant</h1>
+            <p className="text-muted-foreground">
+              Ask questions about your loans, bank exposures, and portfolio analytics
+            </p>
+          </div>
+        )}
+
+        <div className={`grid grid-cols-1 lg:grid-cols-4 gap-6 ${
+          isMobile ? 'h-full' : 'h-[calc(100vh-200px)]'
+        }`}>
+          {/* Conversations Sidebar - Desktop */}
+          {!isMobile && (
+            <Card className="lg:col-span-1">
+              <CardHeader className="border-b">
+                <div className="flex items-center justify-between">
+                  <CardTitle className="text-lg">Conversations</CardTitle>
+                  <Button
+                    size="sm"
+                    onClick={() => createConversationMutation.mutate()}
+                    disabled={createConversationMutation.isPending}
+                    data-testid="button-new-conversation"
+                  >
+                    <Plus className="h-4 w-4" />
+                  </Button>
+                </div>
+              </CardHeader>
+              <CardContent className="p-0">
+                <ScrollArea className="h-[calc(100vh-320px)]">
+                  {conversationsLoading ? (
+                    <div className="flex items-center justify-center p-8">
+                      <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+                    </div>
+                  ) : conversations.length === 0 ? (
+                    <div className="p-4 text-center text-sm text-muted-foreground">
+                      No conversations yet.
+                      <br />
+                      Click + to start chatting!
+                    </div>
+                  ) : (
+                    <div className="divide-y divide-border">
+                      {conversations.map((conv) => (
+                        <div
+                          key={conv.id}
+                          className={`p-4 cursor-pointer hover:bg-accent transition-colors group ${
+                            selectedConversationId === conv.id ? "bg-accent" : ""
+                          }`}
+                          onClick={() => setSelectedConversationId(conv.id)}
+                          data-testid={`conversation-${conv.id}`}
+                        >
+                          <div className="flex items-start justify-between">
+                            <div className="flex-1 min-w-0">
+                              <h4 className="text-sm font-medium truncate">{conv.title}</h4>
+                              <p className="text-xs text-muted-foreground mt-1">
+                                {conv.updatedAt ? new Date(conv.updatedAt).toLocaleDateString() : 'N/A'}
+                              </p>
+                            </div>
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              className="opacity-0 group-hover:opacity-100 transition-opacity h-6 w-6 p-0 ml-2"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleDeleteConversation(conv.id);
+                              }}
+                              data-testid={`button-delete-${conv.id}`}
+                            >
+                              <Trash2 className="h-3 w-3 text-destructive" />
+                            </Button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </ScrollArea>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Chat Area */}
+          <Card className={`lg:col-span-3 flex flex-col ${
+            isMobile ? 'h-full rounded-none border-0' : ''
+          }`}>
+            <CardHeader className={`border-b ${isMobile ? 'py-3 px-4' : ''}`}>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  {isMobile && (
+                    <Sheet open={isSidebarOpen} onOpenChange={setIsSidebarOpen}>
+                      <SheetTrigger asChild>
+                        <Button size="icon" variant="ghost" data-testid="button-menu">
+                          <Menu className="h-5 w-5" />
+                        </Button>
+                      </SheetTrigger>
+                      <SheetContent side="left" className="p-0 w-[280px]">
+                        <ConversationsSidebar />
+                      </SheetContent>
+                    </Sheet>
+                  )}
+                  <CardTitle className={`flex items-center gap-2 ${isMobile ? 'text-base' : ''}`}>
+                    <MessageCircle className="h-5 w-5 text-saudi" />
+                    <span className="truncate">
+                      {conversationData?.conversation.title || "Select a conversation"}
+                    </span>
+                  </CardTitle>
+                </div>
+                {selectedConversationId && messages.length > 0 && (
+                  <Button
+                    size={isMobile ? "icon" : "sm"}
                     variant="outline"
                     onClick={handleExportPDF}
                     data-testid="button-export-pdf"
                   >
-                    <Download className="h-4 w-4 mr-2" />
-                    Export PDF
+                    <Download className={`h-4 w-4 ${!isMobile && 'mr-2'}`} />
+                    {!isMobile && "Export PDF"}
                   </Button>
                 )}
               </div>
             </CardHeader>
 
-            <CardContent className="flex-1 flex flex-col p-0">
-              <ScrollArea className="flex-1 p-4">
+            <CardContent className="flex-1 flex flex-col p-0 overflow-hidden">
+              <ScrollArea className={`flex-1 ${isMobile ? 'p-3 pb-24' : 'p-4'}`}>
                 {!selectedConversationId ? (
                   <div className="flex flex-col items-center justify-center h-full text-center p-8">
                     <MessageCircle className="h-16 w-16 text-muted-foreground mb-4" />
@@ -408,8 +504,10 @@ export default function AIChatPage() {
                 )}
               </ScrollArea>
 
-              <div className="border-t p-4">
-                {/* Uploaded Files Display */}
+              {/* Input Area - Fixed to bottom on mobile */}
+              <div className={`border-t bg-background ${
+                isMobile ? 'fixed bottom-0 left-0 right-0 p-3 safe-bottom' : 'p-4'
+              }`}>
                 {uploadedFiles.length > 0 && (
                   <div className="mb-3 space-y-2">
                     {uploadedFiles.map((file) => (
@@ -451,6 +549,7 @@ export default function AIChatPage() {
                     disabled={uploadFileMutation.isPending || !selectedConversationId}
                     data-testid="button-attach-file"
                     title="Upload file (PDF, DOCX, XLSX, TXT, CSV)"
+                    className={isMobile ? 'h-12 w-12' : ''}
                   >
                     {uploadFileMutation.isPending ? (
                       <Loader2 className="h-4 w-4 animate-spin" />
@@ -461,16 +560,18 @@ export default function AIChatPage() {
                   <Input
                     value={inputMessage}
                     onChange={(e) => setInputMessage(e.target.value)}
-                    placeholder="Ask about your loans, facilities, bank exposures..."
+                    placeholder={isMobile ? "Ask about your loans..." : "Ask about your loans, facilities, bank exposures..."}
                     onKeyPress={(e) => e.key === "Enter" && !e.shiftKey && handleSendMessage()}
                     disabled={sendMessageMutation.isPending || !selectedConversationId}
                     data-testid="input-ai-chat"
-                    className="flex-1"
+                    className={`flex-1 ${isMobile ? 'h-12' : ''}`}
                   />
                   <Button
                     onClick={handleSendMessage}
                     disabled={sendMessageMutation.isPending || !inputMessage.trim() || !selectedConversationId}
                     data-testid="button-send-message"
+                    className={isMobile ? 'h-12 w-12' : ''}
+                    size={isMobile ? 'icon' : 'default'}
                   >
                     {sendMessageMutation.isPending ? (
                       <Loader2 className="h-4 w-4 animate-spin" />
@@ -479,49 +580,53 @@ export default function AIChatPage() {
                     )}
                   </Button>
                 </div>
-                <p className="text-xs text-muted-foreground mt-2">
-                  Powered by DeepSeek AI • Analyzes your portfolio data only • Supports PDF, DOCX, XLSX, TXT, CSV
-                </p>
+                {!isMobile && (
+                  <p className="text-xs text-muted-foreground mt-2">
+                    Powered by DeepSeek AI • Analyzes your portfolio data only • Supports PDF, DOCX, XLSX, TXT, CSV
+                  </p>
+                )}
               </div>
             </CardContent>
           </Card>
         </div>
 
-        {/* Sample Questions */}
-        <div className="mt-6 grid grid-cols-1 md:grid-cols-3 gap-4">
-          <Card>
-            <CardContent className="p-4">
-              <h3 className="font-semibold mb-2">Portfolio Questions</h3>
-              <ul className="text-sm text-muted-foreground space-y-1">
-                <li>• What is my total exposure by bank?</li>
-                <li>• Show me my portfolio LTV ratio</li>
-                <li>• Which facilities have the highest utilization?</li>
-              </ul>
-            </CardContent>
-          </Card>
+        {/* Sample Questions - Hidden on mobile */}
+        {!isMobile && (
+          <div className="mt-6 grid grid-cols-1 md:grid-cols-3 gap-4">
+            <Card>
+              <CardContent className="p-4">
+                <h3 className="font-semibold mb-2">Portfolio Questions</h3>
+                <ul className="text-sm text-muted-foreground space-y-1">
+                  <li>• What is my total exposure by bank?</li>
+                  <li>• Show me my portfolio LTV ratio</li>
+                  <li>• Which facilities have the highest utilization?</li>
+                </ul>
+              </CardContent>
+            </Card>
 
-          <Card>
-            <CardContent className="p-4">
-              <h3 className="font-semibold mb-2">Risk Analysis</h3>
-              <ul className="text-sm text-muted-foreground space-y-1">
-                <li>• What are my concentration risks?</li>
-                <li>• Am I under-secured on any facilities?</li>
-                <li>• Which banks am I most exposed to?</li>
-              </ul>
-            </CardContent>
-          </Card>
+            <Card>
+              <CardContent className="p-4">
+                <h3 className="font-semibold mb-2">Risk Analysis</h3>
+                <ul className="text-sm text-muted-foreground space-y-1">
+                  <li>• What are my concentration risks?</li>
+                  <li>• Am I under-secured on any facilities?</li>
+                  <li>• Which banks am I most exposed to?</li>
+                </ul>
+              </CardContent>
+            </Card>
 
-          <Card>
-            <CardContent className="p-4">
-              <h3 className="font-semibold mb-2">Optimization</h3>
-              <ul className="text-sm text-muted-foreground space-y-1">
-                <li>• How can I optimize my facility mix?</li>
-                <li>• Show me cost savings opportunities</li>
-                <li>• Suggest better collateral allocation</li>
-              </ul>
-            </CardContent>
-          </Card>
-        </div>
+            <Card>
+              <CardContent className="p-4">
+                <h3 className="font-semibold mb-2">Optimization</h3>
+                <ul className="text-sm text-muted-foreground space-y-1">
+                  <li>• How can I optimize my facility mix?</li>
+                  <li>• Show me cost savings opportunities</li>
+                  <li>• Suggest better collateral allocation</li>
+                </ul>
+              </CardContent>
+            </Card>
+          </div>
+        )}
       </div>
     </div>
   );
