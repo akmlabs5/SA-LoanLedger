@@ -142,7 +142,7 @@ export default function Dashboard() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-green-50 via-white to-emerald-50 dark:from-gray-900 dark:via-gray-900 dark:to-gray-800">
-      <div className="max-w-7xl mx-auto px-6 py-6 space-y-6">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6 space-y-6">
         {/* Welcome Header */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
           <div>
@@ -449,7 +449,7 @@ export default function Dashboard() {
           
           <CardContent>
             <div className="overflow-x-auto">
-              <table className="w-full">
+              <table className="w-full min-w-[720px]">
                 <thead>
                   <tr className="border-b border-gray-200 dark:border-gray-700">
                     <th className="text-left py-4 px-6 font-semibold text-foreground">Bank Name</th>
@@ -627,7 +627,7 @@ export default function Dashboard() {
         {/* Enhanced Interactive Charts Section */}
         <div className="space-y-6 mb-8">
           {/* Row 1: Upcoming Loans by Month */}
-          <Card className="h-[600px] bg-card border border-border shadow-sm hover:shadow-md transition-all duration-200 flex flex-col">
+          <Card className="h-[280px] sm:h-[360px] lg:h-[600px] bg-card border border-border shadow-sm hover:shadow-md transition-all duration-200 flex flex-col">
             <CardHeader className="pb-4 shrink-0">
               <CardTitle className="text-lg font-semibold flex items-center space-x-2">
                 <BarChart3 className="h-5 w-5" style={{ color: SAUDI_CHART_COLORS.status.error }} />
@@ -646,7 +646,7 @@ export default function Dashboard() {
           
           {/* Row 2: Three Main Charts - Symmetric Layout */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            <Card className="h-[560px] bg-card border border-border shadow-sm hover:shadow-md transition-all duration-200 flex flex-col">
+            <Card className="h-[280px] sm:h-[360px] lg:h-[560px] bg-card border border-border shadow-sm hover:shadow-md transition-all duration-200 flex flex-col">
               <CardHeader className="pb-4 shrink-0">
                 <CardTitle className="text-lg font-semibold flex items-center space-x-2">
                   <BarChart3 className="h-5 w-5" style={{ color: SAUDI_CHART_COLORS.saudiGreen }} />
@@ -658,7 +658,7 @@ export default function Dashboard() {
               </CardContent>
             </Card>
             
-            <Card className="h-[560px] bg-card border border-border shadow-sm hover:shadow-md transition-all duration-200 flex flex-col">
+            <Card className="h-[280px] sm:h-[360px] lg:h-[560px] bg-card border border-border shadow-sm hover:shadow-md transition-all duration-200 flex flex-col">
               <CardHeader className="pb-4 shrink-0">
                 <CardTitle className="text-lg font-semibold flex items-center space-x-2">
                   <Target className="h-5 w-5" style={{ color: SAUDI_CHART_COLORS.saudiGreen }} />
@@ -670,7 +670,7 @@ export default function Dashboard() {
               </CardContent>
             </Card>
 
-            <Card className="h-[560px] bg-card border border-border shadow-sm hover:shadow-md transition-all duration-200 flex flex-col">
+            <Card className="h-[280px] sm:h-[360px] lg:h-[560px] bg-card border border-border shadow-sm hover:shadow-md transition-all duration-200 flex flex-col">
               <CardHeader className="pb-4 shrink-0">
                 <CardTitle className="text-lg font-semibold flex items-center space-x-2">
                   <Activity className="h-5 w-5" style={{ color: SAUDI_CHART_COLORS.saudiGreen }} />
