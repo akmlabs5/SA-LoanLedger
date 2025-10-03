@@ -94,7 +94,7 @@ export function SmartLoanMatcher({ onFacilitySelect }: LoanMatcherProps) {
           Smart Loan Matcher
         </Button>
       </DialogTrigger>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="sm:max-w-4xl w-full max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Sparkles className="h-5 w-5 text-purple-600" />
@@ -117,12 +117,13 @@ export function SmartLoanMatcher({ onFacilitySelect }: LoanMatcherProps) {
                 value={loanAmount}
                 onChange={(e) => setLoanAmount(e.target.value)}
                 data-testid="input-loan-amount"
+                className="h-12"
               />
             </div>
             <div className="space-y-2">
               <Label htmlFor="facility-type">Facility Type (Optional)</Label>
               <Select value={facilityType} onValueChange={setFacilityType}>
-                <SelectTrigger data-testid="select-facility-type">
+                <SelectTrigger data-testid="select-facility-type" className="h-12">
                   <SelectValue placeholder="Any Type" />
                 </SelectTrigger>
                 <SelectContent>
@@ -143,6 +144,7 @@ export function SmartLoanMatcher({ onFacilitySelect }: LoanMatcherProps) {
                 value={duration}
                 onChange={(e) => setDuration(e.target.value)}
                 data-testid="input-duration"
+                className="h-12"
               />
             </div>
           </div>
@@ -150,7 +152,7 @@ export function SmartLoanMatcher({ onFacilitySelect }: LoanMatcherProps) {
           <Button 
             onClick={handleAnalyze} 
             disabled={!loanAmount || matchMutation.isPending}
-            className="w-full"
+            className="w-full h-12"
             data-testid="button-analyze"
           >
             {matchMutation.isPending ? (
@@ -240,7 +242,7 @@ export function SmartLoanMatcher({ onFacilitySelect }: LoanMatcherProps) {
 
                       {onFacilitySelect && (
                         <Button 
-                          className="w-full"
+                          className="w-full h-12"
                           onClick={() => handleSelectFacility(results.recommendation.facilityId)}
                           data-testid="button-select-recommended"
                         >
@@ -277,8 +279,7 @@ export function SmartLoanMatcher({ onFacilitySelect }: LoanMatcherProps) {
                             {onFacilitySelect && (
                               <Button 
                                 variant="outline" 
-                                size="sm"
-                                className="w-full mt-2"
+                                className="w-full mt-2 h-12"
                                 onClick={() => handleSelectFacility(alt.facilityId)}
                                 data-testid={`button-select-alt-${alt.facilityId}`}
                               >

@@ -91,7 +91,7 @@ export function WhatIfAnalysis({ loanId, loanAmount, currentRate, durationDays }
           What-If Analysis
         </Button>
       </DialogTrigger>
-      <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="sm:max-w-5xl w-full max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Calculator className="h-5 w-5 text-blue-600" />
@@ -138,16 +138,16 @@ export function WhatIfAnalysis({ loanId, loanAmount, currentRate, durationDays }
 
             {/* Scenario Tabs */}
             <Tabs value={activeTab} onValueChange={setActiveTab}>
-              <TabsList className="grid w-full grid-cols-3">
-                <TabsTrigger value="refinance" data-testid="tab-refinance">
+              <TabsList className="grid w-full grid-cols-3 h-12">
+                <TabsTrigger value="refinance" data-testid="tab-refinance" className="h-12">
                   <Percent className="h-3 w-3 mr-1" />
                   Refinance
                 </TabsTrigger>
-                <TabsTrigger value="earlyPayment" data-testid="tab-early-payment">
+                <TabsTrigger value="earlyPayment" data-testid="tab-early-payment" className="h-12">
                   <DollarSign className="h-3 w-3 mr-1" />
                   Early Pay
                 </TabsTrigger>
-                <TabsTrigger value="termChange" data-testid="tab-term-change">
+                <TabsTrigger value="termChange" data-testid="tab-term-change" className="h-12">
                   <Calendar className="h-3 w-3 mr-1" />
                   Term
                 </TabsTrigger>
@@ -164,6 +164,7 @@ export function WhatIfAnalysis({ loanId, loanAmount, currentRate, durationDays }
                     value={newRate}
                     onChange={(e) => setNewRate(e.target.value)}
                     data-testid="input-new-rate"
+                    className="h-12"
                   />
                   <p className="text-xs text-muted-foreground">
                     Current rate: {currentRate}%
@@ -172,7 +173,7 @@ export function WhatIfAnalysis({ loanId, loanAmount, currentRate, durationDays }
                 <Button 
                   onClick={handleRunScenario}
                   disabled={!newRate || analysisMutation.isPending}
-                  className="w-full"
+                  className="w-full h-12"
                   data-testid="button-run-refinance"
                 >
                   {analysisMutation.isPending ? (
@@ -193,6 +194,7 @@ export function WhatIfAnalysis({ loanId, loanAmount, currentRate, durationDays }
                     value={paymentAmount}
                     onChange={(e) => setPaymentAmount(e.target.value)}
                     data-testid="input-payment-amount"
+                    className="h-12"
                   />
                   <p className="text-xs text-muted-foreground">
                     Full amount: {formatCurrency(loanAmount)}
@@ -206,12 +208,13 @@ export function WhatIfAnalysis({ loanId, loanAmount, currentRate, durationDays }
                     value={paymentDate}
                     onChange={(e) => setPaymentDate(e.target.value)}
                     data-testid="input-payment-date"
+                    className="h-12"
                   />
                 </div>
                 <Button 
                   onClick={handleRunScenario}
                   disabled={!paymentAmount || analysisMutation.isPending}
-                  className="w-full"
+                  className="w-full h-12"
                   data-testid="button-run-early-payment"
                 >
                   {analysisMutation.isPending ? (
@@ -232,6 +235,7 @@ export function WhatIfAnalysis({ loanId, loanAmount, currentRate, durationDays }
                     value={newDuration}
                     onChange={(e) => setNewDuration(e.target.value)}
                     data-testid="input-new-duration"
+                    className="h-12"
                   />
                   <p className="text-xs text-muted-foreground">
                     Current duration: {durationDays} days
@@ -240,7 +244,7 @@ export function WhatIfAnalysis({ loanId, loanAmount, currentRate, durationDays }
                 <Button 
                   onClick={handleRunScenario}
                   disabled={!newDuration || analysisMutation.isPending}
-                  className="w-full"
+                  className="w-full h-12"
                   data-testid="button-run-term-change"
                 >
                   {analysisMutation.isPending ? (
