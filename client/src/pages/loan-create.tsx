@@ -266,7 +266,7 @@ export default function LoanCreatePage() {
 
   return (
     <div className="min-h-screen bg-background">
-      <div className="max-w-5xl mx-auto px-6 py-6 space-y-6">
+      <div className="max-w-5xl mx-auto px-4 sm:px-6 py-6 space-y-6">
         {/* Header with Breadcrumbs */}
         <div className="flex items-center space-x-4">
           <Link href={`/banks/${bankId}`}>
@@ -312,7 +312,7 @@ export default function LoanCreatePage() {
                           <FormLabel>Bank Facility *</FormLabel>
                           <Select onValueChange={field.onChange} value={field.value} disabled={facilitiesLoading}>
                             <FormControl>
-                              <SelectTrigger data-testid="select-facility">
+                              <SelectTrigger className="h-12" data-testid="select-facility">
                                 <SelectValue placeholder="Select a bank facility" />
                               </SelectTrigger>
                             </FormControl>
@@ -344,7 +344,7 @@ export default function LoanCreatePage() {
                           <FormItem>
                             <FormLabel>Reference Number *</FormLabel>
                             <FormControl>
-                              <Input placeholder="Enter loan reference" {...field} data-testid="input-reference" />
+                              <Input className="h-12" placeholder="Enter loan reference" {...field} data-testid="input-reference" />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
@@ -359,6 +359,7 @@ export default function LoanCreatePage() {
                             <FormLabel>Loan Amount (SAR) *</FormLabel>
                             <FormControl>
                               <Input 
+                                className="h-12"
                                 type="number" 
                                 placeholder="0.00" 
                                 {...field} 
@@ -520,6 +521,7 @@ export default function LoanCreatePage() {
                                     <FormLabel>Custom Term (Months)</FormLabel>
                                     <FormControl>
                                       <Input 
+                                        className="h-12"
                                         type="number" 
                                         min="1" 
                                         max="60" 
@@ -600,6 +602,7 @@ export default function LoanCreatePage() {
                             <FormLabel>SIBOR Rate (%) *</FormLabel>
                             <FormControl>
                               <Input 
+                                className="h-12"
                                 type="number" 
                                 step="0.01" 
                                 placeholder="Input SIBOR Rate based on Term" 
@@ -620,7 +623,7 @@ export default function LoanCreatePage() {
                             <FormLabel>SIBOR Term</FormLabel>
                             <Select onValueChange={field.onChange} value={field.value}>
                               <FormControl>
-                                <SelectTrigger data-testid="select-sibor-term">
+                                <SelectTrigger className="h-12" data-testid="select-sibor-term">
                                   <SelectValue placeholder="Select term" />
                                 </SelectTrigger>
                               </FormControl>
@@ -666,11 +669,12 @@ export default function LoanCreatePage() {
                     />
 
                     {/* Action Buttons */}
-                    <div className="flex items-center justify-end space-x-3 pt-6">
+                    <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-end gap-3 pt-6">
                       <Link href={`/banks/${bankId}`}>
                         <Button 
                           type="button" 
                           variant="outline"
+                          className="h-12 w-full sm:w-auto"
                           data-testid="button-cancel"
                         >
                           Cancel
@@ -679,7 +683,7 @@ export default function LoanCreatePage() {
                       <Button 
                         type="submit" 
                         disabled={createLoanMutation.isPending}
-                        className="bg-gradient-to-r from-emerald-600 to-blue-600 hover:from-emerald-700 hover:to-blue-700 text-white shadow-lg"
+                        className="h-12 bg-gradient-to-r from-emerald-600 to-blue-600 hover:from-emerald-700 hover:to-blue-700 text-white shadow-lg"
                         data-testid="button-create-loan"
                       >
                         {createLoanMutation.isPending ? "Creating..." : "Create Loan"}

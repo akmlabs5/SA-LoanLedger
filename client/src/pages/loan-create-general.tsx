@@ -302,7 +302,7 @@ export default function GeneralLoanCreatePage() {
                               <FormLabel>Bank Facility *</FormLabel>
                               <Select onValueChange={field.onChange} value={field.value} disabled={facilitiesLoading}>
                                 <FormControl>
-                                  <SelectTrigger data-testid="select-facility">
+                                  <SelectTrigger className="h-12" data-testid="select-facility">
                                     <SelectValue placeholder="Select a bank facility" />
                                   </SelectTrigger>
                                 </FormControl>
@@ -332,7 +332,7 @@ export default function GeneralLoanCreatePage() {
                               <FormLabel>Credit Line (Optional)</FormLabel>
                               <Select onValueChange={field.onChange} value={field.value || "auto-assign"}>
                                 <FormControl>
-                                  <SelectTrigger data-testid="select-credit-line">
+                                  <SelectTrigger className="h-12" data-testid="select-credit-line">
                                     <SelectValue placeholder="Auto-assign or select specific line" />
                                   </SelectTrigger>
                                 </FormControl>
@@ -398,6 +398,7 @@ export default function GeneralLoanCreatePage() {
                               <FormLabel>Loan Amount (SAR) *</FormLabel>
                               <FormControl>
                                 <Input 
+                                  className="h-12"
                                   data-testid="input-amount" 
                                   type="number" 
                                   placeholder="e.g., 500000" 
@@ -417,6 +418,7 @@ export default function GeneralLoanCreatePage() {
                               <FormLabel>Reference Number</FormLabel>
                               <FormControl>
                                 <Input 
+                                  className="h-12"
                                   data-testid="input-reference" 
                                   placeholder="Optional loan reference" 
                                   {...field} 
@@ -435,6 +437,7 @@ export default function GeneralLoanCreatePage() {
                               <FormLabel>SIBOR Rate (%) *</FormLabel>
                               <FormControl>
                                 <Input 
+                                  className="h-12"
                                   data-testid="input-sibor-rate" 
                                   type="number" 
                                   step="0.01"
@@ -455,7 +458,7 @@ export default function GeneralLoanCreatePage() {
                               <FormLabel>SIBOR Term</FormLabel>
                               <Select onValueChange={field.onChange} value={field.value || "3M"}>
                                 <FormControl>
-                                  <SelectTrigger data-testid="select-sibor-term">
+                                  <SelectTrigger className="h-12" data-testid="select-sibor-term">
                                     <SelectValue placeholder="Select SIBOR term" />
                                   </SelectTrigger>
                                 </FormControl>
@@ -571,6 +574,7 @@ export default function GeneralLoanCreatePage() {
                                     <FormLabel>Custom Term (Months)</FormLabel>
                                     <FormControl>
                                       <Input 
+                                        className="h-12"
                                         type="number" 
                                         min="1" 
                                         max="60" 
@@ -657,6 +661,7 @@ export default function GeneralLoanCreatePage() {
                               <FormLabel>Start Date *</FormLabel>
                               <FormControl>
                                 <Input 
+                                  className="h-12"
                                   data-testid="input-start-date" 
                                   type="date" 
                                   {...field} 
@@ -675,6 +680,7 @@ export default function GeneralLoanCreatePage() {
                               <FormLabel>Due Date *</FormLabel>
                               <FormControl>
                                 <Input 
+                                  className="h-12"
                                   data-testid="input-due-date" 
                                   type="date" 
                                   {...field} 
@@ -693,6 +699,7 @@ export default function GeneralLoanCreatePage() {
                               <FormLabel>Charges Due Date</FormLabel>
                               <FormControl>
                                 <Input 
+                                  className="h-12"
                                   data-testid="input-charges-due-date" 
                                   type="date" 
                                   {...field} 
@@ -731,10 +738,11 @@ export default function GeneralLoanCreatePage() {
                     </div>
 
                     {/* Submit Buttons */}
-                    <div className="flex items-center justify-end space-x-4 pt-6 border-t">
+                    <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-end gap-3 pt-6 border-t">
                       <Button 
                         type="button" 
                         variant="outline"
+                        className="h-12 w-full sm:w-auto"
                         onClick={() => setLocation("/loans")}
                         data-testid="button-cancel-loan"
                       >
@@ -744,7 +752,7 @@ export default function GeneralLoanCreatePage() {
                       <Button 
                         type="submit" 
                         disabled={createLoanMutation.isPending}
-                        className="bg-gradient-to-r from-emerald-600 to-blue-600 hover:from-emerald-700 hover:to-blue-700"
+                        className="h-12 bg-gradient-to-r from-emerald-600 to-blue-600 hover:from-emerald-700 hover:to-blue-700"
                         data-testid="button-save-loan"
                       >
                         {createLoanMutation.isPending ? (

@@ -153,7 +153,7 @@ export default function LoanEditPage() {
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-gray-100 dark:from-gray-900 dark:to-slate-900">
       {/* Navigation Header */}
       <header className="bg-card border-b border-border sticky top-0 z-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6">
           <div className="flex items-center h-16">
             <div className="flex items-center space-x-4">
               <Button 
@@ -178,7 +178,7 @@ export default function LoanEditPage() {
         </div>
       </header>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Main Form */}
           <div className="lg:col-span-2">
@@ -204,6 +204,7 @@ export default function LoanEditPage() {
                               <FormLabel>Reference Number *</FormLabel>
                               <FormControl>
                                 <Input 
+                                  className="h-12"
                                   data-testid="input-reference-number" 
                                   placeholder="e.g., LOAN-2024-001" 
                                   {...field} 
@@ -225,7 +226,7 @@ export default function LoanEditPage() {
                                 value={field.value}
                               >
                                 <FormControl>
-                                  <SelectTrigger data-testid="select-loan-status">
+                                  <SelectTrigger className="h-12" data-testid="select-loan-status">
                                     <SelectValue placeholder="Select status" />
                                   </SelectTrigger>
                                 </FormControl>
@@ -256,6 +257,7 @@ export default function LoanEditPage() {
                               <FormLabel>Loan Amount (SAR) *</FormLabel>
                               <FormControl>
                                 <Input 
+                                  className="h-12"
                                   data-testid="input-loan-amount" 
                                   placeholder="e.g., 1000000" 
                                   {...field} 
@@ -274,6 +276,7 @@ export default function LoanEditPage() {
                               <FormLabel>Bank Margin (%) *</FormLabel>
                               <FormControl>
                                 <Input 
+                                  className="h-12"
                                   data-testid="input-bank-rate" 
                                   placeholder="e.g., 2.5" 
                                   {...field} 
@@ -344,6 +347,7 @@ export default function LoanEditPage() {
                             <FormLabel>Purpose</FormLabel>
                             <FormControl>
                               <Input 
+                                className="h-12"
                                 data-testid="input-purpose"
                                 placeholder="e.g., Working Capital, Equipment Purchase"
                                 {...field} 
@@ -377,10 +381,11 @@ export default function LoanEditPage() {
                     </div>
 
                     {/* Submit Buttons */}
-                    <div className="flex items-center justify-end space-x-4 pt-6 border-t">
+                    <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-end gap-3 pt-6 border-t">
                       <Button 
                         type="button" 
                         variant="outline"
+                        className="h-12 w-full sm:w-auto"
                         onClick={() => setLocation('/loans')}
                         data-testid="button-cancel-loan"
                       >
@@ -390,7 +395,7 @@ export default function LoanEditPage() {
                       <Button 
                         type="submit" 
                         disabled={updateLoanMutation.isPending}
-                        className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700"
+                        className="h-12 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700"
                         data-testid="button-save-loan"
                       >
                         {updateLoanMutation.isPending ? (
