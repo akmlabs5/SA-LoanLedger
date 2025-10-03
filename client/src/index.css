@@ -123,6 +123,18 @@
     line-height: 1.2;
   }
   
+  /* Fix Sheet overlay blocking mobile interactions */
+  @media (max-width: 1023px) {
+    /* Disable pointer events on Sheet overlays to prevent blocking touches */
+    [data-radix-portal] [data-radix-dialog-overlay] {
+      pointer-events: none !important;
+    }
+    /* Re-enable pointer events on the Sheet content itself */
+    [data-radix-portal] [data-radix-dialog-content] {
+      pointer-events: auto !important;
+    }
+  }
+  
   h1 {
     font-weight: 700;
     font-size: 2.25rem;
