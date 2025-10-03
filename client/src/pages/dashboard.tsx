@@ -340,7 +340,7 @@ export default function Dashboard() {
                                   <div className="flex items-center space-x-4 text-xs text-muted-foreground mt-1">
                                     <span>Due {new Date(loan.dueDate).toLocaleDateString()}</span>
                                     <span>•</span>
-                                    <span>SIBOR + {loan.bankRate}%</span>
+                                    <span>SIBOR {loan.siborRate}% + Margin {loan.bankRate}% = {(loan.siborRate + loan.bankRate).toFixed(1)}%</span>
                                   </div>
                                 </div>
                               </div>
