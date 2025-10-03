@@ -87,11 +87,11 @@ export default function AdminDashboardPage() {
   return (
     <RequireAdminAuth>
       <AdminLayout>
-      <div className="container mx-auto space-y-6" data-testid="page-admin-dashboard">
+      <div className="container mx-auto px-4 sm:px-6 space-y-6" data-testid="page-admin-dashboard">
         {/* Header */}
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900 dark:text-white">System Dashboard</h1>
+            <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white">System Dashboard</h1>
             <p className="text-gray-600 dark:text-gray-400 mt-1">Real-time system monitoring and control</p>
           </div>
           <Button 
@@ -99,7 +99,7 @@ export default function AdminDashboardPage() {
             disabled={isRefreshing}
             variant="outline"
             data-testid="button-refresh-dashboard"
-            className="border-red-200 text-red-700 hover:bg-red-50 dark:border-red-800 dark:text-red-300 dark:hover:bg-red-900/20"
+            className="h-12 w-full sm:w-auto border-red-200 text-red-700 hover:bg-red-50 dark:border-red-800 dark:text-red-300 dark:hover:bg-red-900/20"
           >
             <RefreshCw className={`w-4 h-4 mr-2 ${isRefreshing ? 'animate-spin' : ''}`} />
             Refresh Data
@@ -306,24 +306,24 @@ export default function AdminDashboardPage() {
                   ))}
                 </div>
               ) : activities && activities.length > 0 ? (
-                <div className="space-y-4 max-h-64 overflow-y-auto">
+                <div className="space-y-4 max-h-64 overflow-y-auto overflow-x-auto">
                   {activities.slice(0, 5).map((activity) => (
                     <div 
                       key={activity.id} 
-                      className="flex items-start space-x-3 p-3 rounded-lg bg-gray-50 dark:bg-gray-800/50"
+                      className="flex items-start space-x-3 p-3 rounded-lg bg-gray-50 dark:bg-gray-800/50 min-w-[300px]"
                       data-testid={`activity-${activity.id}`}
                     >
                       <div className="w-8 h-8 bg-red-100 dark:bg-red-900/20 rounded-full flex items-center justify-center flex-shrink-0">
                         <UserCheck className="w-4 h-4 text-red-600 dark:text-red-400" />
                       </div>
                       <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium text-gray-900 dark:text-white">
+                        <p className="text-sm font-medium text-gray-900 dark:text-white break-words">
                           {activity.action}
                         </p>
-                        <p className="text-xs text-muted-foreground">
+                        <p className="text-xs text-muted-foreground break-words">
                           {activity.userEmail} • {new Date(activity.timestamp).toLocaleString()}
                         </p>
-                        <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">
+                        <p className="text-xs text-gray-600 dark:text-gray-400 mt-1 break-words">
                           {activity.details}
                         </p>
                       </div>
@@ -352,27 +352,27 @@ export default function AdminDashboardPage() {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <Button 
                 variant="outline" 
-                className="h-16 flex-col gap-2 border-green-200 text-green-700 hover:bg-green-50 dark:border-green-800 dark:text-green-300 dark:hover:bg-green-900/20"
+                className="h-12 justify-start gap-2 border-green-200 text-green-700 hover:bg-green-50 dark:border-green-800 dark:text-green-300 dark:hover:bg-green-900/20"
                 data-testid="button-system-backup"
               >
                 <Database className="w-5 h-5" />
-                <span className="text-xs">Create System Backup</span>
+                <span className="text-sm">Create System Backup</span>
               </Button>
               <Button 
                 variant="outline" 
-                className="h-16 flex-col gap-2 border-blue-200 text-blue-700 hover:bg-blue-50 dark:border-blue-800 dark:text-blue-300 dark:hover:bg-blue-900/20"
+                className="h-12 justify-start gap-2 border-blue-200 text-blue-700 hover:bg-blue-50 dark:border-blue-800 dark:text-blue-300 dark:hover:bg-blue-900/20"
                 data-testid="button-clear-cache"
               >
                 <RefreshCw className="w-5 h-5" />
-                <span className="text-xs">Clear System Cache</span>
+                <span className="text-sm">Clear System Cache</span>
               </Button>
               <Button 
                 variant="outline" 
-                className="h-16 flex-col gap-2 border-red-200 text-red-700 hover:bg-red-50 dark:border-red-800 dark:text-red-300 dark:hover:bg-red-900/20"
+                className="h-12 justify-start gap-2 border-red-200 text-red-700 hover:bg-red-50 dark:border-red-800 dark:text-red-300 dark:hover:bg-red-900/20"
                 data-testid="button-maintenance-mode"
               >
                 <AlertTriangle className="w-5 h-5" />
-                <span className="text-xs">Maintenance Mode</span>
+                <span className="text-sm">Maintenance Mode</span>
               </Button>
             </div>
           </CardContent>

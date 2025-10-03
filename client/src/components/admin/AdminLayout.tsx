@@ -137,7 +137,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
               <Search className="absolute left-3 h-4 w-4 text-muted-foreground top-1/2 -translate-y-1/2" />
               <Input 
                 placeholder="Search admin..." 
-                className="pl-10 h-10 bg-background/50 border-border text-sm font-normal rounded-lg"
+                className="pl-10 h-12 bg-background/50 border-border text-sm font-normal rounded-lg"
                 data-testid="input-admin-search"
               />
             </div>
@@ -156,7 +156,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
                         asChild 
                         isActive={location === item.url}
                         data-testid={`nav-admin-${item.title.toLowerCase().replace(' ', '-')}`}
-                        className="h-10 px-3 font-medium text-sm hover:bg-red-100 dark:hover:bg-red-900/20 data-[state=open]:bg-red-100 dark:data-[state=open]:bg-red-900/20 rounded-lg transition-all duration-200"
+                        className="h-12 px-3 font-medium text-sm hover:bg-red-100 dark:hover:bg-red-900/20 data-[state=open]:bg-red-100 dark:data-[state=open]:bg-red-900/20 rounded-lg transition-all duration-200"
                       >
                         <Link href={item.url} className="flex items-center gap-3 w-full">
                           <item.icon className="h-4 w-4 flex-shrink-0" />
@@ -191,7 +191,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
               variant="ghost" 
               size="sm" 
               onClick={() => {/* notification center */}} 
-              className="h-8 w-8 p-0 hover:bg-red-100 dark:hover:bg-red-900/20"
+              className="h-12 w-12 p-0 hover:bg-red-100 dark:hover:bg-red-900/20"
               data-testid="button-admin-notifications"
             >
               <Bell className="h-4 w-4 text-red-600 dark:text-red-400" />
@@ -202,7 +202,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
             variant="outline" 
             size="sm" 
             onClick={handleSignOut}
-            className="w-full justify-start gap-2 border-red-200 dark:border-red-800 text-red-700 dark:text-red-300 hover:bg-red-50 dark:hover:bg-red-900/20"
+            className="w-full h-12 justify-start gap-2 border-red-200 dark:border-red-800 text-red-700 dark:text-red-300 hover:bg-red-50 dark:hover:bg-red-900/20"
             data-testid="button-admin-signout"
           >
             <LogOut className="h-4 w-4" />
@@ -224,7 +224,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
           </div>
         </header>
         
-        <main className="flex-1 overflow-auto p-6 bg-gradient-to-br from-gray-50 to-red-50/30 dark:from-gray-950 dark:to-red-950/10">
+        <main className="flex-1 overflow-auto px-4 sm:px-6 py-6 bg-gradient-to-br from-gray-50 to-red-50/30 dark:from-gray-950 dark:to-red-950/10">
           {children}
         </main>
       </SidebarInset>

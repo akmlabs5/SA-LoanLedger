@@ -347,7 +347,7 @@ export function AdminAuthCard({ onSubmit, isLoading = false, error }: AdminAuthC
                         onChange={(e) => setUsername(e.target.value)}
                         onFocus={() => setFocusedInput("username")}
                         onBlur={() => setFocusedInput(null)}
-                        className="w-full bg-white/5 border-transparent focus:border-white/20 text-white placeholder:text-white/30 h-10 transition-all duration-300 pl-10 pr-3 focus:bg-white/10"
+                        className="w-full bg-white/5 border-transparent focus:border-white/20 text-white placeholder:text-white/30 h-12 transition-all duration-300 pl-10 pr-3 focus:bg-white/10"
                         data-testid="input-admin-username"
                         required
                         autoComplete="username"
@@ -374,7 +374,7 @@ export function AdminAuthCard({ onSubmit, isLoading = false, error }: AdminAuthC
                         onChange={(e) => setPassword(e.target.value)}
                         onFocus={() => setFocusedInput("password")}
                         onBlur={() => setFocusedInput(null)}
-                        className="w-full bg-white/5 border-transparent focus:border-white/20 text-white placeholder:text-white/30 h-10 transition-all duration-300 pl-10 pr-10 focus:bg-white/10"
+                        className="w-full bg-white/5 border-transparent focus:border-white/20 text-white placeholder:text-white/30 h-12 transition-all duration-300 pl-10 pr-10 focus:bg-white/10"
                         data-testid="input-admin-password"
                         required
                         autoComplete="current-password"
@@ -408,7 +408,7 @@ export function AdminAuthCard({ onSubmit, isLoading = false, error }: AdminAuthC
                   {/* Button glow effect */}
                   <div className={`absolute inset-0 bg-red-500/20 rounded-lg blur-lg opacity-0 transition-opacity duration-300 ${canSubmit ? 'group-hover/button:opacity-70' : ''}`} />
                   
-                  <div className="relative overflow-hidden bg-gradient-to-r from-red-600 to-orange-600 text-white font-medium h-11 rounded-lg transition-all duration-300 flex items-center justify-center">
+                  <div className="relative overflow-hidden bg-gradient-to-r from-red-600 to-orange-600 text-white font-medium h-12 rounded-lg transition-all duration-300 flex items-center justify-center">
                     {/* Button background animation */}
                     <motion.div 
                       className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/30 to-white/0 -z-10"
