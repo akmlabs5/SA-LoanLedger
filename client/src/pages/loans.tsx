@@ -372,7 +372,7 @@ export default function Loans() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-green-50 via-white to-emerald-50 dark:from-gray-900 dark:via-gray-900 dark:to-gray-800">
-      <div className="p-6 space-y-6">
+      <div className="px-4 sm:px-6 py-6 space-y-6">
         {/* Enhanced Header */}
         <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between space-y-4 lg:space-y-0">
           <div>
@@ -389,14 +389,14 @@ export default function Loans() {
               )}
             </div>
           </div>
-          <div className="flex items-center space-x-3">
-            <Button variant="outline" onClick={exportLoans}>
+          <div className="flex flex-col sm:flex-row gap-2">
+            <Button variant="outline" onClick={exportLoans} className="h-10 w-full sm:w-auto">
               <Download className="mr-2 h-4 w-4" />
               Export
             </Button>
             <Button 
               onClick={() => setLocation("/loans/create")}
-              className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white shadow-lg hover:shadow-xl transition-all duration-300"
+              className="h-10 w-full sm:w-auto bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white shadow-lg hover:shadow-xl transition-all duration-300"
               data-testid="button-add-loan"
             >
               <Plus className="mr-2 h-4 w-4" />
@@ -407,7 +407,7 @@ export default function Loans() {
 
         {/* Enhanced Filters and Search */}
         <Card className="border-0 shadow-lg bg-white/50 dark:bg-gray-800/50 backdrop-blur-sm">
-          <CardContent className="p-6">
+          <CardContent className="p-4 sm:p-6">
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
               {/* Search */}
               <div className="lg:col-span-2">
@@ -417,7 +417,7 @@ export default function Loans() {
                     placeholder="Search loans, banks, or reference numbers..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    className="pl-10"
+                    className="pl-10 h-10"
                     data-testid="input-loan-search"
                   />
                 </div>
@@ -425,7 +425,7 @@ export default function Loans() {
 
               {/* Status Filter */}
               <Select value={statusFilter} onValueChange={(value: StatusFilter) => setStatusFilter(value)}>
-                <SelectTrigger>
+                <SelectTrigger className="h-10">
                   <SelectValue placeholder="Filter by Status" />
                 </SelectTrigger>
                 <SelectContent>
@@ -438,7 +438,7 @@ export default function Loans() {
 
               {/* Bank Filter */}
               <Select value={bankFilter} onValueChange={setBankFilter}>
-                <SelectTrigger>
+                <SelectTrigger className="h-10">
                   <SelectValue placeholder="Filter by Bank" />
                 </SelectTrigger>
                 <SelectContent>
@@ -454,7 +454,7 @@ export default function Loans() {
               {/* Sort Options */}
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="outline" className="justify-between">
+                  <Button variant="outline" className="justify-between h-10 w-full">
                     <div className="flex items-center">
                       {sortOrder === 'asc' ? <SortAsc className="mr-2 h-4 w-4" /> : <SortDesc className="mr-2 h-4 w-4" />}
                       Sort
@@ -515,7 +515,7 @@ export default function Loans() {
                     setStatusFilter('all');
                     setBankFilter('all');
                   }}
-                  className="text-xs h-6"
+                  className="text-xs h-8"
                 >
                   Clear All
                 </Button>
@@ -526,11 +526,11 @@ export default function Loans() {
 
         {/* Enhanced Tabs */}
         <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as "active" | "settled")} className="space-y-6">
-          <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="active" className="data-[state=active]:bg-blue-600 data-[state=active]:text-white">
+          <TabsList className="grid w-full grid-cols-2 h-12">
+            <TabsTrigger value="active" className="h-10 data-[state=active]:bg-blue-600 data-[state=active]:text-white">
               Active Loans ({filteredAndSortedActiveLoans.length})
             </TabsTrigger>
-            <TabsTrigger value="settled" className="data-[state=active]:bg-emerald-600 data-[state=active]:text-white">
+            <TabsTrigger value="settled" className="h-10 data-[state=active]:bg-emerald-600 data-[state=active]:text-white">
               Settled Loans ({filteredSettledLoans.length})
             </TabsTrigger>
           </TabsList>
@@ -554,7 +554,7 @@ export default function Loans() {
                   {(activeLoans as any[])?.length === 0 ? (
                     <Button 
                       onClick={() => setLocation("/loans/create")}
-                      className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white"
+                      className="h-10 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white"
                       data-testid="button-add-first-loan"
                     >
                       <Plus className="mr-2 h-4 w-4" />
@@ -563,6 +563,7 @@ export default function Loans() {
                   ) : (
                     <Button 
                       variant="outline"
+                      className="h-10"
                       onClick={() => {
                         setSearchQuery("");
                         setStatusFilter('all');
@@ -720,18 +721,19 @@ export default function Loans() {
                         )}
 
                         {/* Actions */}
-                        <div className="flex items-center justify-between pt-3 border-t border-gray-200 dark:border-gray-700">
-                          <div className="flex space-x-2">
+                        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 pt-3 border-t border-gray-200 dark:border-gray-700">
+                          <div className="flex flex-wrap gap-2">
                             <Button 
                               variant="outline" 
                               size="sm" 
                               onClick={() => setLocation(`/loans/${loan.id}`)}
                               data-testid={`button-view-details-${loan.id}`}
+                              className="h-10 flex-1 sm:flex-initial"
                             >
                               <Eye className="mr-2 h-4 w-4" />
                               View Details
                             </Button>
-                            <Button variant="outline" size="sm" data-testid={`button-documents-${loan.id}`}>
+                            <Button variant="outline" size="sm" data-testid={`button-documents-${loan.id}`} className="h-10 flex-1 sm:flex-initial">
                               <FileText className="mr-2 h-4 w-4" />
                               Documents
                             </Button>
@@ -740,6 +742,7 @@ export default function Loans() {
                               size="sm" 
                               onClick={() => setLocation(`/loans/${loan.id}/payment`)}
                               data-testid={`button-payment-${loan.id}`}
+                              className="h-10 flex-1 sm:flex-initial"
                             >
                               <Banknote className="mr-2 h-4 w-4" />
                               Payment
@@ -749,36 +752,39 @@ export default function Loans() {
                               size="sm" 
                               onClick={() => setLocation(`/history?loanId=${loan.id}`)}
                               data-testid={`button-history-${loan.id}`}
+                              className="h-10 flex-1 sm:flex-initial"
                             >
                               <Clock className="mr-2 h-4 w-4" />
                               History
                             </Button>
                           </div>
-                          <Button 
-                            className={`${
-                              urgency.status === 'critical' 
-                                ? 'bg-red-600 hover:bg-red-700' 
-                                : 'bg-emerald-600 hover:bg-emerald-700'
-                            } text-white shadow-lg hover:shadow-xl transition-all duration-300`}
-                            size="sm"
-                            onClick={() => handleSettleLoan(loan.id, loan.amount)}
-                            disabled={settleLoanMutation.isPending}
-                            data-testid={`button-settle-${loan.id}`}
-                          >
-                            <CheckCircle className="mr-2 h-4 w-4" />
-                            {settleLoanMutation.isPending ? 'Settling...' : 'Settle Loan'}
-                          </Button>
-                          <Button 
-                            variant="outline"
-                            size="sm"
-                            onClick={() => handleDeleteLoan(loan.id)}
-                            disabled={deleteLoanMutation.isPending}
-                            data-testid={`button-delete-loan-${loan.id}`}
-                            className="ml-2"
-                          >
-                            <Trash2 className="mr-2 h-4 w-4" />
-                            {deleteLoanMutation.isPending ? 'Cancelling...' : 'Cancel'}
-                          </Button>
+                          <div className="flex gap-2">
+                            <Button 
+                              className={`${
+                                urgency.status === 'critical' 
+                                  ? 'bg-red-600 hover:bg-red-700' 
+                                  : 'bg-emerald-600 hover:bg-emerald-700'
+                              } text-white shadow-lg hover:shadow-xl transition-all duration-300 h-10 flex-1 sm:flex-initial`}
+                              size="sm"
+                              onClick={() => handleSettleLoan(loan.id, loan.amount)}
+                              disabled={settleLoanMutation.isPending}
+                              data-testid={`button-settle-${loan.id}`}
+                            >
+                              <CheckCircle className="mr-2 h-4 w-4" />
+                              {settleLoanMutation.isPending ? 'Settling...' : 'Settle Loan'}
+                            </Button>
+                            <Button 
+                              variant="outline"
+                              size="sm"
+                              onClick={() => handleDeleteLoan(loan.id)}
+                              disabled={deleteLoanMutation.isPending}
+                              data-testid={`button-delete-loan-${loan.id}`}
+                              className="h-10 flex-1 sm:flex-initial"
+                            >
+                              <Trash2 className="mr-2 h-4 w-4" />
+                              {deleteLoanMutation.isPending ? 'Cancelling...' : 'Cancel'}
+                            </Button>
+                          </div>
                         </div>
                       </CardContent>
                     </Card>
@@ -793,6 +799,7 @@ export default function Loans() {
                     variant="outline" 
                     onClick={() => setVisibleActiveLoans(prev => prev + 8)}
                     data-testid="button-load-more-loans"
+                    className="h-10"
                   >
                     <ChevronDown className="mr-2 h-4 w-4" />
                     Load more ({filteredAndSortedActiveLoans.length - visibleActiveLoans} remaining)
