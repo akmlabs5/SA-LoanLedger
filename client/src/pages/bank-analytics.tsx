@@ -297,10 +297,10 @@ export default function BankAnalyticsPage() {
           <CardHeader>
             <CardTitle>Facility Details</CardTitle>
           </CardHeader>
-          <CardContent>
+          <CardContent className="px-4 sm:px-6">
             {analyticsData.facilityUtilization.length > 0 ? (
               <div className="overflow-x-auto">
-                <table className="w-full">
+                <table className="w-full min-w-[720px]">
                   <thead>
                     <tr className="border-b">
                       <th className="text-left py-3 px-4">Facility</th>

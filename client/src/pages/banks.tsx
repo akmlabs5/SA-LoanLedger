@@ -179,9 +179,9 @@ export default function Banks() {
               </CardTitle>
               <p className="text-sm text-muted-foreground">Current exposure by banking partner (SAR Millions)</p>
             </CardHeader>
-            <CardContent>
+            <CardContent className="px-4 sm:px-6">
               <div className="overflow-x-auto">
-                <table className="w-full">
+                <table className="w-full min-w-[720px]">
                   <thead>
                     <tr className="border-b border-border">
                       <th className="text-left py-4 px-4 font-semibold text-foreground">Banks</th>
@@ -246,9 +246,9 @@ export default function Banks() {
               </CardTitle>
               <p className="text-sm text-muted-foreground">Remaining credit capacity by bank (SAR Millions)</p>
             </CardHeader>
-            <CardContent>
+            <CardContent className="px-4 sm:px-6">
               <div className="overflow-x-auto">
-                <table className="w-full">
+                <table className="w-full min-w-[720px]">
                   <thead>
                     <tr className="border-b border-border">
                       <th className="text-left py-4 px-4 font-semibold text-foreground">Banks</th>

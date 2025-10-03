@@ -873,8 +873,8 @@ export default function HistoryPage() {
               </div>
             ) : transactions.length > 0 ? (
               <>
-                <div className="rounded-md border" data-testid="table-transactions">
-                  <Table>
+                <div className="overflow-x-auto rounded-md border" data-testid="table-transactions">
+                  <Table className="min-w-[720px]">
                     <TableHeader>
                       <TableRow>
                         <TableHead className="w-[100px]">Date</TableHead>
