@@ -119,7 +119,7 @@ export default function Banks() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-green-50 via-white to-emerald-50 dark:from-gray-900 dark:via-gray-900 dark:to-gray-800">
-      <div className="max-w-7xl mx-auto px-6 py-6 space-y-6">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6 space-y-6">
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
           <div>
@@ -128,16 +128,16 @@ export default function Banks() {
               Manage your banking relationships and credit facilities • <span className="font-semibold text-primary">All amounts in SAR Millions</span>
             </p>
           </div>
-          <div className="flex items-center space-x-3 mt-4 sm:mt-0">
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 mt-4 sm:mt-0">
             {/* Quick Bank Access */}
             {banks && Array.isArray(banks) && banks.length > 0 && (
-              <div className="flex items-center space-x-2">
-                <span className="text-sm text-muted-foreground">Quick Access:</span>
+              <div className="flex items-center space-x-2 w-full sm:w-auto">
+                <span className="text-sm text-muted-foreground hidden sm:inline">Quick Access:</span>
                 <Select onValueChange={(bankId) => {
                   setLocation(`/banks/${bankId}`);
                 }}>
                   <SelectTrigger 
-                    className="w-48 bg-background border-border hover:border-primary transition-colors focus:ring-2 focus:ring-primary focus:border-primary" 
+                    className="h-12 w-full sm:w-48 bg-background border-border hover:border-primary transition-colors focus:ring-2 focus:ring-primary focus:border-primary" 
                     data-testid="select-bank-quick-access"
                     aria-label="Quick access to bank details"
                   >
@@ -159,7 +159,7 @@ export default function Banks() {
             )}
             <Button 
               onClick={() => setLocation("/facility/create-general")}
-              className="bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white shadow-lg"
+              className="h-12 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white shadow-lg w-full sm:w-auto"
               data-testid="button-add-facility"
             >
               <Plus className="mr-2 h-4 w-4" />
