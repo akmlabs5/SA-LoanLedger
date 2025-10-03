@@ -190,7 +190,7 @@ export default function FacilityEditPage() {
         </div>
       </header>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Main Form */}
           <div className="lg:col-span-2">
@@ -216,7 +216,7 @@ export default function FacilityEditPage() {
                             value={field.value}
                           >
                             <FormControl>
-                              <SelectTrigger data-testid="select-facility-type">
+                              <SelectTrigger data-testid="select-facility-type" className="h-12">
                                 <SelectValue placeholder="Select facility type" />
                               </SelectTrigger>
                             </FormControl>
@@ -244,7 +244,8 @@ export default function FacilityEditPage() {
                             <FormControl>
                               <Input 
                                 data-testid="input-credit-limit" 
-                                placeholder="e.g., 1000000" 
+                                placeholder="e.g., 1000000"
+                                className="h-12"
                                 {...field} 
                               />
                             </FormControl>
@@ -262,7 +263,8 @@ export default function FacilityEditPage() {
                             <FormControl>
                               <Input 
                                 data-testid="input-cost-of-funding" 
-                                placeholder="e.g., 2.5" 
+                                placeholder="e.g., 2.5"
+                                className="h-12"
                                 {...field} 
                               />
                             </FormControl>
@@ -283,7 +285,8 @@ export default function FacilityEditPage() {
                             <FormControl>
                               <Input 
                                 data-testid="input-start-date" 
-                                type="date" 
+                                type="date"
+                                className="h-12"
                                 {...field} 
                               />
                             </FormControl>
@@ -301,7 +304,8 @@ export default function FacilityEditPage() {
                             <FormControl>
                               <Input 
                                 data-testid="input-expiry-date" 
-                                type="date" 
+                                type="date"
+                                className="h-12"
                                 {...field} 
                               />
                             </FormControl>
@@ -357,12 +361,13 @@ export default function FacilityEditPage() {
                     />
 
                     {/* Submit Buttons */}
-                    <div className="flex items-center justify-end space-x-4 pt-6 border-t">
+                    <div className="flex flex-col sm:flex-row items-stretch sm:items-center sm:justify-end gap-3 pt-6 border-t">
                       <Button 
                         type="button" 
                         variant="outline"
                         onClick={() => setLocation(`/banks/${bankId}`)}
                         data-testid="button-cancel-facility"
+                        className="h-12"
                       >
                         <X className="mr-2 h-4 w-4" />
                         Cancel
@@ -370,7 +375,7 @@ export default function FacilityEditPage() {
                       <Button 
                         type="submit" 
                         disabled={updateFacilityMutation.isPending}
-                        className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700"
+                        className="h-12 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700"
                         data-testid="button-save-facility"
                       >
                         {updateFacilityMutation.isPending ? (

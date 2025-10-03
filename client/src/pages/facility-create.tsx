@@ -163,7 +163,7 @@ export default function FacilityCreatePage() {
       </div>
 
       {/* Main Content */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-8">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Main Form */}
           <div className="lg:col-span-2">
@@ -186,7 +186,7 @@ export default function FacilityCreatePage() {
                           <FormLabel>Facility Type *</FormLabel>
                           <Select onValueChange={field.onChange} value={field.value}>
                             <FormControl>
-                              <SelectTrigger data-testid="select-facility-type">
+                              <SelectTrigger data-testid="select-facility-type" className="h-12">
                                 <SelectValue placeholder="Select facility type" />
                               </SelectTrigger>
                             </FormControl>
@@ -209,7 +209,7 @@ export default function FacilityCreatePage() {
                     />
 
                     {/* Financial Details */}
-                    <div className="grid grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <FormField
                         control={form.control}
                         name="creditLimit"
@@ -224,6 +224,7 @@ export default function FacilityCreatePage() {
                                 min="0"
                                 placeholder="e.g., 1000000"
                                 data-testid="input-credit-limit"
+                                className="h-12"
                               />
                             </FormControl>
                             <FormMessage />
@@ -246,6 +247,7 @@ export default function FacilityCreatePage() {
                                 max="100"
                                 placeholder="e.g., 2.5"
                                 data-testid="input-cost-of-funding"
+                                className="h-12"
                               />
                             </FormControl>
                             <FormMessage />
@@ -255,7 +257,7 @@ export default function FacilityCreatePage() {
                     </div>
 
                     {/* Start Date */}
-                    <div className="grid grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <FormField
                         control={form.control}
                         name="startDate"
@@ -267,6 +269,7 @@ export default function FacilityCreatePage() {
                                 {...field}
                                 type="date"
                                 data-testid="input-start-date"
+                                className="h-12"
                               />
                             </FormControl>
                             <FormMessage />
@@ -286,6 +289,7 @@ export default function FacilityCreatePage() {
                                 {...field}
                                 type="date"
                                 data-testid="input-expiry-date"
+                                className="h-12"
                               />
                             </FormControl>
                             <FormMessage />
@@ -378,6 +382,7 @@ export default function FacilityCreatePage() {
                                     min="1"
                                     placeholder="e.g., 360"
                                     data-testid="input-max-revolving-period"
+                                    className="h-12"
                                   />
                                 </FormControl>
                                 <div className="text-xs text-muted-foreground">
@@ -399,6 +404,7 @@ export default function FacilityCreatePage() {
                                     {...field}
                                     type="date"
                                     data-testid="input-initial-drawdown-date"
+                                    className="h-12"
                                   />
                                 </FormControl>
                                 <div className="text-xs text-muted-foreground">
@@ -415,12 +421,13 @@ export default function FacilityCreatePage() {
                     <Separator />
 
                     {/* Form Actions */}
-                    <div className="flex gap-3">
+                    <div className="flex flex-col sm:flex-row gap-3">
                       <Button
                         type="button"
                         variant="outline"
                         onClick={() => setLocation(`/banks/${bankId}`)}
                         data-testid="button-cancel"
+                        className="h-12"
                       >
                         Cancel
                       </Button>
@@ -428,7 +435,7 @@ export default function FacilityCreatePage() {
                         type="submit"
                         disabled={createFacilityMutation.isPending}
                         data-testid="button-create-facility"
-                        className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700"
+                        className="h-12 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700"
                       >
                         {createFacilityMutation.isPending ? "Creating..." : "Create Facility"}
                       </Button>
