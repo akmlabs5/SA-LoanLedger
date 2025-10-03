@@ -239,11 +239,16 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   
   // Handle scroll locking when mobile menu is open
   useEffect(() => {
-    if (!isMobile) return;
+    if (!isMobile) {
+      // Ensure classes are removed on desktop
+      document.body.classList.remove('overflow-hidden', 'touch-none');
+      return;
+    }
     
     if (mobileMenuOpen) {
       // Lock scroll when drawer is open
-      document.body.classList.add('overflow-hidden', 'touch-none');
+      document.body.classList.add('overflow-hidden');
+      // Note: removed touch-none to allow tab interactions
     } else {
       // Restore scroll when drawer is closed
       document.body.classList.remove('overflow-hidden', 'touch-none');
