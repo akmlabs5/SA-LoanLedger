@@ -532,13 +532,13 @@ export default function Dashboard() {
                             className="hidden group-hover:flex bg-white dark:bg-gray-800 border-indigo-300 dark:border-indigo-700 text-indigo-700 dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 focus:ring-2 focus:ring-indigo-500"
                             onClick={(e) => {
                               e.stopPropagation();
-                              setLocation(`/banks/${exposure.bankId}#facilities`);
+                              setLocation(`/banks/${exposure.bankId}?tab=facilities`);
                             }}
                             onKeyDown={(e) => {
                               if (e.key === 'Enter' || e.key === ' ') {
                                 e.preventDefault();
                                 e.stopPropagation();
-                                setLocation(`/banks/${exposure.bankId}#facilities`);
+                                setLocation(`/banks/${exposure.bankId}?tab=facilities`);
                               }
                             }}
                             aria-label={`View facilities for ${exposure.bankName}`}

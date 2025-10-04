@@ -123,7 +123,6 @@ const navigation = [
         title: "Help Desk",
         url: "/help-desk",
         icon: HelpCircle,
-        comingSoon: true,
       },
     ],
   },

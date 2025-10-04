@@ -41,6 +41,7 @@ import AdminUsersPage from "@/pages/admin-portal/users";
 import AdminTemplatesPage from "@/pages/admin-portal/templates";
 import UserSettingsPage from "@/pages/user-settings";
 import FeaturesTipsPage from "@/pages/features-tips";
+import HelpDeskPage from "@/pages/help-desk";
 
 import AppLayout from "@/components/AppLayout";
 import { useAuth } from "@/hooks/useAuth";
@@ -137,6 +138,7 @@ function App() {
         <Route path="/ai-chat" component={AIChatPage} />
         <Route path="/user-settings" component={UserSettingsPage} />
         <Route path="/features-tips" component={FeaturesTipsPage} />
+        <Route path="/help-desk" component={HelpDeskPage} />
         <Route component={NotFoundPage} />
       </Switch>
     </AppLayout>

@@ -2,7 +2,7 @@ import { useParams, useLocation } from "wouter";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import { useQuery, useMutation } from "@tanstack/react-query";
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { apiRequest, queryClient } from "@/lib/queryClient";
@@ -65,9 +65,10 @@ import { formatFacilityType } from "@/lib/formatters";
 
 export default function BankDetail() {
   const { id: bankId } = useParams();
-  const [, setLocation] = useLocation();
+  const [location, setLocation] = useLocation();
   const { isAuthenticated } = useAuth();
   const { toast } = useToast();
+  const facilitiesRef = useRef<HTMLDivElement>(null);
   
   // Dialog states for loan actions
   const [selectedLoan, setSelectedLoan] = useState<any>(null);
@@ -162,6 +163,17 @@ export default function BankDetail() {
     return asset ? { ...asset, assignment, facility } : null;
   }).filter(Boolean);
 
+  // Handle tab query parameter for navigation
+  useEffect(() => {
+    const params = new URLSearchParams(location.split('?')[1] || '');
+    const tab = params.get('tab');
+    
+    if (tab === 'facilities' && facilitiesRef.current) {
+      setTimeout(() => {
+        facilitiesRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }, 100);
+    }
+  }, [location]);
   
   const deleteFacilityMutation = useMutation({
     mutationFn: async (facilityId: string) => {
@@ -460,7 +472,7 @@ export default function BankDetail() {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Bank Facilities */}
           <div className="lg:col-span-2 space-y-6">
-            <Card className="border-0 shadow-lg bg-white/50 dark:bg-gray-800/50 backdrop-blur-sm">
+            <Card ref={facilitiesRef} className="border-0 shadow-lg bg-white/50 dark:bg-gray-800/50 backdrop-blur-sm">
               <CardHeader>
                 <CardTitle className="text-xl font-semibold flex items-center justify-between">
                   <div className="flex items-center space-x-2">
