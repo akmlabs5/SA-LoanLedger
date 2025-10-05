@@ -50,9 +50,23 @@ const collateralFormSchema = z.object({
   valuationSource: z.string().optional(),
   notes: z.string().optional(),
   isActive: z.boolean().default(true),
-  facilityId: z.string().min(1, "Facility selection is required"),
+  assignmentType: z.enum(["facility", "bank"]).default("facility"),
+  facilityId: z.string().optional(),
+  bankId: z.string().optional(),
   pledgeType: z.enum(["first_lien", "second_lien", "blanket"]).default("first_lien"),
-});
+}).refine(
+  (data) => {
+    if (data.assignmentType === "facility") {
+      return !!data.facilityId;
+    } else {
+      return !!data.bankId;
+    }
+  },
+  {
+    message: "Please select a facility or bank",
+    path: ["facilityId"],
+  }
+);
 
 type CollateralFormData = z.infer<typeof collateralFormSchema>;
 
@@ -60,9 +74,13 @@ export default function CollateralCreatePage() {
   const [, setLocation] = useLocation();
   const { toast } = useToast();
 
-  // Fetch facilities for selection
+  // Fetch facilities and banks for selection
   const { data: facilities, isLoading: facilitiesLoading } = useQuery({
     queryKey: ["/api/facilities"],
+  });
+  
+  const { data: banks, isLoading: banksLoading } = useQuery({
+    queryKey: ["/api/banks"],
   });
 
   const form = useForm<CollateralFormData>({
@@ -76,7 +94,9 @@ export default function CollateralCreatePage() {
       valuationSource: "",
       notes: "",
       isActive: true,
+      assignmentType: "facility",
       facilityId: "",
+      bankId: "",
       pledgeType: "first_lien",
     },
   });
@@ -84,7 +104,7 @@ export default function CollateralCreatePage() {
   const createCollateralMutation = useMutation({
     mutationFn: async (data: CollateralFormData) => {
       // Single atomic call - backend handles both collateral creation and assignment
-      return await apiRequest("POST", "/api/collateral", {
+      const payload: any = {
         type: data.type,
         name: data.name,
         description: data.description,
@@ -93,9 +113,17 @@ export default function CollateralCreatePage() {
         valuationSource: data.valuationSource,
         notes: data.notes,
         isActive: data.isActive,
-        facilityId: data.facilityId,
         pledgeType: data.pledgeType,
-      });
+      };
+      
+      // Add either facilityId or bankId based on assignment type
+      if (data.assignmentType === "facility") {
+        payload.facilityId = data.facilityId;
+      } else {
+        payload.bankId = data.bankId;
+      }
+      
+      return await apiRequest("POST", "/api/collateral", payload);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/collateral"] });
@@ -121,6 +149,7 @@ export default function CollateralCreatePage() {
   };
 
   const selectedType = form.watch("type");
+  const assignmentType = form.watch("assignmentType");
   const selectedTypeDetails = collateralTypes.find(type => type.value === selectedType);
 
   const getTypeDescription = (type: string) => {
@@ -226,39 +255,109 @@ export default function CollateralCreatePage() {
               <CardContent className="p-6">
                 <Form {...form}>
                   <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-                    {/* Facility Selection */}
+                    {/* Assignment Type Selection */}
                     <FormField
                       control={form.control}
-                      name="facilityId"
+                      name="assignmentType"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Bank Facility *</FormLabel>
-                          <Select onValueChange={field.onChange} value={field.value} disabled={facilitiesLoading}>
+                          <FormLabel>Assignment Level *</FormLabel>
+                          <Select onValueChange={field.onChange} value={field.value}>
                             <FormControl>
-                              <SelectTrigger data-testid="select-facility">
-                                <SelectValue placeholder="Select facility to secure with this collateral" />
+                              <SelectTrigger data-testid="select-assignment-type">
+                                <SelectValue placeholder="Select assignment level" />
                               </SelectTrigger>
                             </FormControl>
                             <SelectContent>
-                              {facilities?.map((facility: any) => (
-                                <SelectItem key={facility.id} value={facility.id}>
-                                  <div className="flex flex-col">
-                                    <span>{formatFacilityType(facility.facilityType).toUpperCase()}</span>
-                                    <span className="text-xs text-muted-foreground">
-                                      {facility.bank?.name} - {parseFloat(facility.creditLimit).toLocaleString()} SAR
-                                    </span>
-                                  </div>
-                                </SelectItem>
-                              ))}
+                              <SelectItem value="facility">
+                                <div className="flex flex-col">
+                                  <span>Specific Facility</span>
+                                  <span className="text-xs text-muted-foreground">
+                                    Secure a specific credit line or facility
+                                  </span>
+                                </div>
+                              </SelectItem>
+                              <SelectItem value="bank">
+                                <div className="flex flex-col">
+                                  <span>Total Bank Exposure</span>
+                                  <span className="text-xs text-muted-foreground">
+                                    Secure entire banking relationship
+                                  </span>
+                                </div>
+                              </SelectItem>
                             </SelectContent>
                           </Select>
-                          <p className="text-sm text-muted-foreground">
-                            This collateral will be assigned to secure the selected facility
-                          </p>
                           <FormMessage />
                         </FormItem>
                       )}
                     />
+
+                    {/* Conditional: Facility Selection */}
+                    {assignmentType === "facility" && (
+                      <FormField
+                        control={form.control}
+                        name="facilityId"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Bank Facility *</FormLabel>
+                            <Select onValueChange={field.onChange} value={field.value} disabled={facilitiesLoading}>
+                              <FormControl>
+                                <SelectTrigger data-testid="select-facility">
+                                  <SelectValue placeholder="Select facility to secure with this collateral" />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                {facilities?.map((facility: any) => (
+                                  <SelectItem key={facility.id} value={facility.id}>
+                                    <div className="flex flex-col">
+                                      <span>{formatFacilityType(facility.facilityType).toUpperCase()}</span>
+                                      <span className="text-xs text-muted-foreground">
+                                        {facility.bank?.name} - {parseFloat(facility.creditLimit).toLocaleString()} SAR
+                                      </span>
+                                    </div>
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                            <p className="text-sm text-muted-foreground">
+                              This collateral will be assigned to secure the selected facility
+                            </p>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    )}
+
+                    {/* Conditional: Bank Selection */}
+                    {assignmentType === "bank" && (
+                      <FormField
+                        control={form.control}
+                        name="bankId"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Bank *</FormLabel>
+                            <Select onValueChange={field.onChange} value={field.value} disabled={banksLoading}>
+                              <FormControl>
+                                <SelectTrigger data-testid="select-bank">
+                                  <SelectValue placeholder="Select bank for total exposure coverage" />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                {banks?.map((bank: any) => (
+                                  <SelectItem key={bank.id} value={bank.id}>
+                                    {bank.name}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                            <p className="text-sm text-muted-foreground">
+                              This collateral will secure your entire relationship with this bank
+                            </p>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    )}
 
                     {/* Pledge Type Selection */}
                     <FormField
