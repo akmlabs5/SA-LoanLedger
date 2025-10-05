@@ -150,8 +150,12 @@ export default function BankDetail() {
     outstandingLtv: bankExposure?.outstandingLtv || 0,
   };
   
-  // Filter collateral assignments for this bank's facilities
+  // Filter collateral assignments for this bank (both facility-level and bank-level)
   const bankCollateralAssignments = (collateralAssignments as any[])?.filter((assignment: any) => {
+    // Include if assigned directly to this bank
+    if (assignment.bankId === bankId) return true;
+    
+    // Include if assigned to a facility of this bank
     const facility = bankFacilities.find(f => f.id === assignment.facilityId);
     return !!facility;
   }) || [];
@@ -160,7 +164,12 @@ export default function BankDetail() {
   const bankCollateral = bankCollateralAssignments.map((assignment: any) => {
     const asset = (collateral as any[])?.find((c: any) => c.id === assignment.collateralId);
     const facility = bankFacilities.find(f => f.id === assignment.facilityId);
-    return asset ? { ...asset, assignment, facility } : null;
+    return asset ? { 
+      ...asset, 
+      assignment, 
+      facility,
+      assignmentLevel: assignment.bankId ? 'bank' : 'facility'
+    } : null;
   }).filter(Boolean);
 
   // Handle tab query parameter for navigation
@@ -734,16 +743,16 @@ export default function BankDetail() {
                   </Button>
                 </CardTitle>
                 <p className="text-sm text-gray-600 dark:text-gray-400">
-                  Assets securing facilities with this bank
+                  Assets securing facilities or total bank exposure
                 </p>
               </CardHeader>
               <CardContent>
                 {bankCollateral.length === 0 ? (
                   <div className="text-center py-12">
                     <Gem className="h-12 w-12 text-gray-300 dark:text-gray-600 mx-auto mb-4" />
-                    <p className="text-gray-600 dark:text-gray-400 mb-4">No collateral assigned to this bank's facilities</p>
+                    <p className="text-gray-600 dark:text-gray-400 mb-4">No collateral assigned to this bank</p>
                     <p className="text-sm text-gray-500 dark:text-gray-400">
-                      Click "Add Collateral" above to assign collateral to this bank's facilities.
+                      Click "Add Collateral" above to assign collateral at facility or bank level.
                     </p>
                   </div>
                 ) : (
@@ -771,15 +780,36 @@ export default function BankDetail() {
                         
                         <div className="grid grid-cols-2 gap-4 mb-3">
                           <div>
-                            <p className="text-xs text-gray-500 dark:text-gray-400">Assigned to Facility</p>
-                            <p className="font-semibold text-gray-900 dark:text-gray-100 capitalize">
-                              {formatFacilityType(asset.facility?.facilityType || '')} Facility
-                            </p>
+                            <p className="text-xs text-gray-500 dark:text-gray-400">Assignment Level</p>
+                            {asset.assignmentLevel === 'bank' ? (
+                              <div className="flex items-center gap-2">
+                                <p className="font-semibold text-gray-900 dark:text-gray-100">
+                                  Total Bank Exposure
+                                </p>
+                                <Badge className="bg-amber-100 text-amber-800 dark:bg-amber-900/20 dark:text-amber-400">
+                                  Bank-Level
+                                </Badge>
+                              </div>
+                            ) : (
+                              <div className="flex items-center gap-2">
+                                <p className="font-semibold text-gray-900 dark:text-gray-100 capitalize">
+                                  {formatFacilityType(asset.facility?.facilityType || '')} Facility
+                                </p>
+                                <Badge className="bg-blue-100 text-blue-800 dark:bg-blue-900/20 dark:text-blue-400">
+                                  Facility-Level
+                                </Badge>
+                              </div>
+                            )}
                           </div>
                           <div>
-                            <p className="text-xs text-gray-500 dark:text-gray-400">Facility Credit Limit</p>
+                            <p className="text-xs text-gray-500 dark:text-gray-400">
+                              {asset.assignmentLevel === 'bank' ? 'Total Bank Credit' : 'Facility Credit Limit'}
+                            </p>
                             <p className="font-semibold text-gray-900 dark:text-gray-100">
-                              {asset.facility ? formatCurrency(parseFloat(asset.facility.creditLimit)) : 'N/A'}
+                              {asset.assignmentLevel === 'bank' 
+                                ? formatCurrency(displayMetrics.creditLimit)
+                                : (asset.facility ? formatCurrency(parseFloat(asset.facility.creditLimit)) : 'N/A')
+                              }
                             </p>
                           </div>
                         </div>
