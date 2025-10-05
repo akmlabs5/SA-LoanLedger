@@ -169,7 +169,7 @@ export default function Banks() {
         </div>
 
         {/* Enhanced Bank Exposure Tables */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
+        <div className="grid grid-cols-1 gap-8">
           {/* Total Outstanding & Limits Table */}
           <Card className="bg-card border border-border shadow-sm hover:shadow-md transition-shadow duration-200">
             <CardHeader>
@@ -180,8 +180,8 @@ export default function Banks() {
               <p className="text-sm text-muted-foreground">Current exposure by banking partner (SAR Millions)</p>
             </CardHeader>
             <CardContent className="px-4 sm:px-6">
-              <div className="overflow-x-auto">
-                <table className="w-full min-w-[720px]">
+              <div>
+                <table className="w-full">
                   <thead>
                     <tr className="border-b border-border">
                       <th className="text-left py-4 px-4 font-semibold text-foreground">Banks</th>
@@ -247,8 +247,8 @@ export default function Banks() {
               <p className="text-sm text-muted-foreground">Remaining credit capacity by bank (SAR Millions)</p>
             </CardHeader>
             <CardContent className="px-4 sm:px-6">
-              <div className="overflow-x-auto">
-                <table className="w-full min-w-[720px]">
+              <div>
+                <table className="w-full">
                   <thead>
                     <tr className="border-b border-border">
                       <th className="text-left py-4 px-4 font-semibold text-foreground">Banks</th>
