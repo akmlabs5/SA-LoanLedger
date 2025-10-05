@@ -114,6 +114,15 @@ export default function LoanCreatePage() {
   const selectedFacilityId = form.watch("facilityId");
   const selectedFacility = bankFacilities.find(f => f.id === selectedFacilityId);
   
+  // Watch loan amount for formatted display
+  const loanAmount = form.watch("amount");
+  
+  // Format currency for display
+  const formatCurrency = (amount: string) => {
+    if (!amount || isNaN(Number(amount))) return "0 SAR";
+    return Number(amount).toLocaleString() + " SAR";
+  };
+  
   // Redirect to guarantee form if non-cash guarantee facility is selected
   if (selectedFacility?.facilityType === "non_cash_guarantee") {
     setLocation("/guarantees/create");
@@ -376,6 +385,11 @@ export default function LoanCreatePage() {
                                 data-testid="input-amount"
                               />
                             </FormControl>
+                            {loanAmount && (
+                              <p className="text-xs text-green-600 dark:text-green-400 font-medium">
+                                {formatCurrency(loanAmount)}
+                              </p>
+                            )}
                             <FormMessage />
                           </FormItem>
                         )}

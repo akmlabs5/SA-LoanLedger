@@ -114,6 +114,15 @@ export default function GeneralFacilityCreatePage() {
     },
   });
 
+  // Watch credit limit for formatted display
+  const creditLimit = form.watch("creditLimit");
+  
+  // Format currency for display
+  const formatCurrency = (amount: string) => {
+    if (!amount || isNaN(Number(amount))) return "0 SAR";
+    return Number(amount).toLocaleString() + " SAR";
+  };
+
   const createFacilityMutation = useMutation({
     mutationFn: async (data: z.infer<typeof facilityFormSchema>) => {
       const facilityData = {
@@ -355,6 +364,11 @@ export default function GeneralFacilityCreatePage() {
                                   {...field} 
                                 />
                               </FormControl>
+                              {creditLimit && (
+                                <p className="text-xs text-green-600 dark:text-green-400 font-medium">
+                                  {formatCurrency(creditLimit)}
+                                </p>
+                              )}
                               <FormMessage />
                             </FormItem>
                           )}
