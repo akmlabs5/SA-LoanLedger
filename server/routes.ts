@@ -580,11 +580,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const userId = req.user.claims.sub;
       
       // Extract assignment fields from request
-      const { facilityId, pledgeType, ...collateralFields } = req.body;
+      const { facilityId, bankId, pledgeType, ...collateralFields } = req.body;
       
-      // Validate required assignment fields
-      if (!facilityId) {
-        return res.status(400).json({ message: "Facility selection is required for collateral creation" });
+      // Validate that exactly one of facilityId or bankId is provided
+      if (!facilityId && !bankId) {
+        return res.status(400).json({ message: "Either facility or bank selection is required for collateral creation" });
+      }
+      
+      if (facilityId && bankId) {
+        return res.status(400).json({ message: "Cannot assign to both facility and bank. Choose one." });
       }
       
       if (!pledgeType) {
@@ -594,11 +598,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Validate collateral data
       const collateralData = insertCollateralSchema.parse({ ...collateralFields, userId });
       
-      // Validate user owns the facility
-      const userFacilities = await storage.getUserFacilities(userId);
-      const facility = userFacilities.find((f: any) => f.id === facilityId);
-      if (!facility) {
-        return res.status(403).json({ message: "Facility not found or access denied" });
+      // Validate user owns the facility or has relationship with bank
+      if (facilityId) {
+        const userFacilities = await storage.getUserFacilities(userId);
+        const facility = userFacilities.find((f: any) => f.id === facilityId);
+        if (!facility) {
+          return res.status(403).json({ message: "Facility not found or access denied" });
+        }
+      }
+      
+      if (bankId) {
+        // Validate bank exists - user can assign to any bank they have facilities with
+        const userFacilities = await storage.getUserFacilities(userId);
+        const hasRelationship = userFacilities.some((f: any) => f.bankId === bankId);
+        if (!hasRelationship) {
+          return res.status(403).json({ message: "No relationship found with this bank" });
+        }
       }
       
       // Create collateral first
@@ -606,14 +621,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Then immediately create the assignment (atomically)
       try {
-        const assignmentData = {
+        const assignmentData: any = {
           collateralId: collateral.id,
-          facilityId,
           pledgeType,
           effectiveDate: new Date().toISOString().split('T')[0],
           isActive: true,
           userId
         };
+        
+        // Add either facilityId or bankId
+        if (facilityId) {
+          assignmentData.facilityId = facilityId;
+        } else {
+          assignmentData.bankId = bankId;
+        }
         
         await storage.createCollateralAssignment(assignmentData);
         
