@@ -170,6 +170,7 @@ export const banks = pgTable("banks", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   name: varchar("name", { length: 100 }).notNull(),
   code: varchar("code", { length: 10 }).notNull().unique(),
+  targetLtv: decimal("target_ltv", { precision: 5, scale: 2 }).default('70.00'),
   isActive: boolean("is_active").default(true),
   createdAt: timestamp("created_at").defaultNow(),
 });

@@ -162,6 +162,22 @@ export default function CollateralCreatePage() {
   };
 
   const currentValue = form.watch("currentValue");
+  const selectedBankId = form.watch("bankId");
+  const selectedFacilityId = form.watch("facilityId");
+
+  // Get the relevant bank for LTV calculation
+  const relevantBank = (() => {
+    if (assignmentType === "bank" && selectedBankId) {
+      return banks?.find((b: any) => b.id === selectedBankId);
+    } else if (assignmentType === "facility" && selectedFacilityId) {
+      const facility = facilities?.find((f: any) => f.id === selectedFacilityId);
+      return banks?.find((b: any) => b.id === facility?.bankId);
+    }
+    return null;
+  })();
+
+  const bankTargetLtv = relevantBank?.targetLtv ? parseFloat(relevantBank.targetLtv) : 70;
+  const bankName = relevantBank?.name || "Bank";
 
   // Check if there are no facilities
   const noFacilities = !facilitiesLoading && (!facilities || facilities.length === 0);
@@ -679,8 +695,12 @@ export default function CollateralCreatePage() {
                       <span className="text-sm font-bold text-blue-900 dark:text-blue-100">{formatCurrency(currentValue)}</span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-sm font-medium text-gray-600 dark:text-gray-400">Estimated LTV (70%):</span>
-                      <span className="text-sm font-semibold text-green-900 dark:text-green-100">{formatCurrency((Number(currentValue) * 0.7).toString())}</span>
+                      <span className="text-sm font-medium text-gray-600 dark:text-gray-400">
+                        Estimated LTV ({bankName} Target: {bankTargetLtv}%):
+                      </span>
+                      <span className="text-sm font-semibold text-green-900 dark:text-green-100">
+                        {formatCurrency((Number(currentValue) * (bankTargetLtv / 100)).toString())}
+                      </span>
                     </div>
                     <div className="text-xs text-gray-500 dark:text-gray-400 italic mt-2">
                       *Actual loan-to-value ratios may vary based on asset type and bank policies
