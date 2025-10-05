@@ -487,7 +487,6 @@ export default function Loans() {
                     Due Date {sortField === 'dueDate' && (sortOrder === 'asc' ? '↑' : '↓')}
                   </DropdownMenuItem>
                   <DropdownMenuItem onClick={() => handleSort('amount')}>
-                    <span className="mr-2 font-bold">﷼</span>
                     Amount {sortField === 'amount' && (sortOrder === 'asc' ? '↑' : '↓')}
                   </DropdownMenuItem>
                   <DropdownMenuItem onClick={() => handleSort('bank')}>

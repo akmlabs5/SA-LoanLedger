@@ -63,7 +63,7 @@ export default function AIInsightsPanel() {
       case 'alert':
         return <TrendingUp className="h-5 w-5" />;
       case 'savings':
-        return <span className="text-xl font-bold">﷼</span>;
+        return <TrendingUp className="h-5 w-5" />;
       default:
         return <Bot className="h-5 w-5" />;
     }

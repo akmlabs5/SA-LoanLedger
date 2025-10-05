@@ -84,7 +84,7 @@ export default function PriorityStatusChart({ loans, isLoading = false }: Priori
             {data.urgency} Priority
           </p>
           <p className="text-sm text-muted-foreground">
-            {data.count} loans • ﷼{(data.amount / 1000000).toFixed(1)}M SAR
+            {data.count} loans • {(data.amount / 1000000).toFixed(1)}M SAR
           </p>
         </div>
       );

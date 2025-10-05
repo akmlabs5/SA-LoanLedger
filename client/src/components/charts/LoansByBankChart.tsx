@@ -65,7 +65,7 @@ export default function LoansByBankChart({ loans, isLoading = false }: LoansByBa
         <div className="bg-white dark:bg-gray-800 p-3 border border-border rounded-lg shadow-lg">
           <p className="font-semibold text-foreground">{data.fullName}</p>
           <p className="text-sm" style={{ color: SAUDI_CHART_COLORS.saudiGreen }}>
-            {data.count} loans • ﷼{data.amount.toFixed(1)}M SAR
+            {data.count} loans • {data.amount.toFixed(1)}M SAR
           </p>
         </div>
       );

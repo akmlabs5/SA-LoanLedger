@@ -442,7 +442,6 @@ export default function LoanDetailPage() {
                           </div>
                           <div className="p-4 border rounded-lg">
                             <div className="flex items-center space-x-2 mb-2">
-                              <span className="text-blue-500 font-bold">﷼</span>
                               <span className="font-medium">Current Balance</span>
                             </div>
                             <p className="text-2xl font-bold">

@@ -178,7 +178,7 @@ export default function LoanDistributionChart({ loans = [], showTimeDistribution
             {data.urgency} Priority
           </p>
           <p className="text-sm text-muted-foreground">
-            {data.count} loans • ﷼{(data.amount / 1000000).toFixed(1)}M SAR
+            {data.count} loans • {(data.amount / 1000000).toFixed(1)}M SAR
           </p>
         </div>
       );
@@ -299,7 +299,6 @@ export default function LoanDistributionChart({ loans = [], showTimeDistribution
       <Card className="border-0 shadow-lg bg-white/50 dark:bg-gray-800/50 backdrop-blur-sm">
         <CardHeader>
           <CardTitle className="flex items-center space-x-2">
-            <span className="text-green-600 dark:text-green-400 font-bold text-lg">﷼</span>
             <span>Loans by Bank</span>
           </CardTitle>
         </CardHeader>
