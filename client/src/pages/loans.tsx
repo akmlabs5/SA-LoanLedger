@@ -22,6 +22,16 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { 
   Plus, 
   Search, 
@@ -70,6 +80,9 @@ export default function Loans() {
   
   // Load more state for active loans
   const [visibleActiveLoans, setVisibleActiveLoans] = useState(8);
+  
+  // Delete confirmation dialog state
+  const [loanToDelete, setLoanToDelete] = useState<string | null>(null);
 
   // Reset visible loans when filters change
   useEffect(() => {
@@ -334,8 +347,13 @@ export default function Loans() {
   };
 
   const handleDeleteLoan = (loanId: string) => {
-    if (window.confirm("Are you sure you want to cancel this loan? This action cannot be undone.")) {
-      deleteLoanMutation.mutate(loanId);
+    setLoanToDelete(loanId);
+  };
+  
+  const confirmDeleteLoan = () => {
+    if (loanToDelete) {
+      deleteLoanMutation.mutate(loanToDelete);
+      setLoanToDelete(null);
     }
   };
 
@@ -733,14 +751,20 @@ export default function Loans() {
                               <Eye className="mr-2 h-4 w-4" />
                               View Details
                             </Button>
-                            <Button variant="outline" size="sm" data-testid={`button-documents-${loan.id}`} className="h-10 flex-1 sm:flex-initial">
+                            <Button 
+                              variant="outline" 
+                              size="sm" 
+                              onClick={() => setLocation(`/loans/${loan.id}?tab=documents`)}
+                              data-testid={`button-documents-${loan.id}`} 
+                              className="h-10 flex-1 sm:flex-initial"
+                            >
                               <FileText className="mr-2 h-4 w-4" />
                               Documents
                             </Button>
                             <Button 
                               variant="outline" 
                               size="sm" 
-                              onClick={() => setLocation(`/loans/${loan.id}/payment`)}
+                              onClick={() => setLocation(`/loans/${loan.id}/payment/create`)}
                               data-testid={`button-payment-${loan.id}`}
                               className="h-10 flex-1 sm:flex-initial"
                             >
@@ -779,10 +803,10 @@ export default function Loans() {
                               onClick={() => handleDeleteLoan(loan.id)}
                               disabled={deleteLoanMutation.isPending}
                               data-testid={`button-delete-loan-${loan.id}`}
-                              className="h-10 flex-1 sm:flex-initial"
+                              className="h-10 flex-1 sm:flex-initial text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-950"
                             >
                               <Trash2 className="mr-2 h-4 w-4" />
-                              {deleteLoanMutation.isPending ? 'Cancelling...' : 'Cancel'}
+                              {deleteLoanMutation.isPending ? 'Deleting...' : 'Delete Loan'}
                             </Button>
                           </div>
                         </div>
@@ -890,6 +914,27 @@ export default function Loans() {
           </TabsContent>
         </Tabs>
       </div>
+
+      {/* Delete Loan Confirmation Dialog */}
+      <AlertDialog open={!!loanToDelete} onOpenChange={(open) => !open && setLoanToDelete(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Loan</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete this loan? This action cannot be undone and will permanently remove the loan from your records.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => setLoanToDelete(null)}>Cancel</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={confirmDeleteLoan}
+              className="bg-red-600 hover:bg-red-700 text-white"
+            >
+              Delete Loan
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
     </div>
   );

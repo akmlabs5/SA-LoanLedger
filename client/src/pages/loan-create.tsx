@@ -269,17 +269,27 @@ export default function LoanCreatePage() {
       <div className="max-w-5xl mx-auto px-4 sm:px-6 py-6 space-y-6">
         {/* Header with Breadcrumbs */}
         <div className="flex items-center space-x-4">
-          <Link href={`/banks/${bankId}`}>
+          <Link href={bankId ? `/banks/${bankId}` : '/loans'}>
             <Button variant="ghost" size="sm" className="text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100">
               <ArrowLeft className="h-4 w-4 mr-2" />
-              Back to {currentBank?.name || 'Bank'}
+              Back to {bankId && currentBank ? currentBank.name : 'Loans'}
             </Button>
           </Link>
           <Separator orientation="vertical" className="h-6" />
           <div className="flex items-center space-x-2 text-sm text-gray-500 dark:text-gray-400">
-            <Building className="h-4 w-4" />
-            <span>{currentBank?.name}</span>
-            <span>/</span>
+            {bankId && currentBank ? (
+              <>
+                <Building className="h-4 w-4" />
+                <span>{currentBank.name}</span>
+                <span>/</span>
+              </>
+            ) : (
+              <>
+                <FileText className="h-4 w-4" />
+                <span>Loans</span>
+                <span>/</span>
+              </>
+            )}
             <span className="text-gray-900 dark:text-gray-100 font-medium">New Loan</span>
           </div>
         </div>
