@@ -689,7 +689,7 @@ export default function Loans() {
                               {formatCurrency(Number(loan.amount) || 0)}
                             </p>
                             <p className="text-xs text-gray-600 dark:text-gray-400">
-                              Interest: SIBOR + {loan.bankRate}% = {((Number(loan.siborRate) || 0) + (Number(loan.bankRate) || 0)).toFixed(2)}%
+                              Interest: SIBOR {loan.siborRate}% + Margin {(loan as any).margin}% = {loan.bankRate}%
                             </p>
                           </div>
                           <div>
