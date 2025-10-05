@@ -42,6 +42,21 @@ export default function CollateralPage() {
     enabled: isAuthenticated,
   });
 
+  const { data: collateralAssignments } = useQuery<any[]>({
+    queryKey: ["/api/collateral-assignments"],
+    enabled: isAuthenticated,
+  });
+
+  const { data: facilities } = useQuery<any[]>({
+    queryKey: ["/api/facilities"],
+    enabled: isAuthenticated,
+  });
+
+  const { data: banks } = useQuery<any[]>({
+    queryKey: ["/api/banks"],
+    enabled: isAuthenticated,
+  });
+
   const deleteCollateralMutation = useMutation({
     mutationFn: async (collateralId: string) => {
       return apiRequest('DELETE', `/api/collateral/${collateralId}`);
@@ -123,6 +138,34 @@ export default function CollateralPage() {
 
   const handleEdit = (asset: any) => {
     setLocation(`/collateral/${asset.id}/edit`);
+  };
+
+  const getAssignmentInfo = (collateralId: string) => {
+    const assignment = collateralAssignments?.find((a: any) => a.collateralId === collateralId);
+    if (!assignment) return null;
+
+    if (assignment.bankId) {
+      const bank = banks?.find((b: any) => b.id === assignment.bankId);
+      return {
+        level: 'bank',
+        name: bank?.name || 'Unknown Bank',
+        badge: 'Bank-Level',
+        badgeColor: 'bg-amber-100 text-amber-800 dark:bg-amber-900/20 dark:text-amber-400'
+      };
+    }
+
+    if (assignment.facilityId) {
+      const facility = facilities?.find((f: any) => f.id === assignment.facilityId);
+      const bank = banks?.find((b: any) => b.id === facility?.bankId);
+      return {
+        level: 'facility',
+        name: `${bank?.name || 'Unknown Bank'} - ${facility?.facilityType?.toUpperCase() || 'Facility'}`,
+        badge: 'Facility-Level',
+        badgeColor: 'bg-blue-100 text-blue-800 dark:bg-blue-900/20 dark:text-blue-400'
+      };
+    }
+
+    return null;
   };
 
   return (
@@ -300,6 +343,25 @@ export default function CollateralPage() {
                             <p className="font-medium">{asset.valuationSource || 'Not specified'}</p>
                           </div>
                         </div>
+
+                        {(() => {
+                          const assignmentInfo = getAssignmentInfo(asset.id);
+                          if (!assignmentInfo) return null;
+
+                          return (
+                            <div className="mb-4 p-3 bg-muted/30 rounded-lg border border-border">
+                              <div className="flex items-center justify-between">
+                                <div>
+                                  <p className="text-sm text-muted-foreground mb-1">Assignment</p>
+                                  <p className="font-medium">{assignmentInfo.name}</p>
+                                </div>
+                                <Badge className={assignmentInfo.badgeColor}>
+                                  {assignmentInfo.badge}
+                                </Badge>
+                              </div>
+                            </div>
+                          );
+                        })()}
 
                         {asset.description && (
                           <div className="mb-4">
