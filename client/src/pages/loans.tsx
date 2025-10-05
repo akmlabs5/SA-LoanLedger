@@ -662,7 +662,7 @@ export default function Loans() {
                                   Edit Details
                                 </DropdownMenuItem>
                                 <DropdownMenuSeparator />
-                                <DropdownMenuItem onClick={() => setLocation(`/loans/${loan.id}/payment`)}>
+                                <DropdownMenuItem onClick={() => setLocation(`/loans/${loan.id}/payment/create`)}>
                                   Process Payment
                                 </DropdownMenuItem>
                                 <DropdownMenuItem onClick={() => setLocation(`/history?loanId=${loan.id}`)}>
