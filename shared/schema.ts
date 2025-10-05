@@ -252,12 +252,13 @@ export const collateral = pgTable("collateral", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
-// Collateral Assignments (Links collateral to facilities or credit lines)
+// Collateral Assignments (Links collateral to facilities, credit lines, or banks)
 export const collateralAssignments = pgTable("collateral_assignments", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   collateralId: varchar("collateral_id").references(() => collateral.id, { onDelete: "restrict" }).notNull(),
   facilityId: varchar("facility_id").references(() => facilities.id, { onDelete: "cascade" }),
   creditLineId: varchar("credit_line_id").references(() => creditLines.id, { onDelete: "cascade" }),
+  bankId: varchar("bank_id").references(() => banks.id, { onDelete: "cascade" }),
   userId: varchar("user_id").references(() => users.id).notNull(),
   pledgeType: pledgeTypeEnum("pledge_type").notNull(),
   pledgedValue: decimal("pledged_value", { precision: 15, scale: 2 }),
@@ -267,10 +268,11 @@ export const collateralAssignments = pgTable("collateral_assignments", {
   isActive: boolean("is_active").default(true),
   createdAt: timestamp("created_at").defaultNow(),
 }, (table) => [
-  // XOR constraint: exactly one of facilityId or creditLineId must be set
+  // XOR constraint: exactly one of facilityId, creditLineId, or bankId must be set
   index("idx_collateral_assignments_collateral").on(table.collateralId),
   index("idx_collateral_assignments_facility").on(table.facilityId),
   index("idx_collateral_assignments_credit_line").on(table.creditLineId),
+  index("idx_collateral_assignments_bank").on(table.bankId),
   index("idx_collateral_assignments_user").on(table.userId),
 ]);
 
@@ -1014,7 +1016,14 @@ export const insertCollateralAssignmentSchema = createInsertSchema(collateralAss
       .optional(),
     effectiveDate: z.string().refine((val) => !isNaN(Date.parse(val)), "Must be a valid date"),
     releaseDate: z.string().refine((val) => !isNaN(Date.parse(val)), "Must be a valid date").optional(),
-  });
+  })
+  .refine(
+    (data) => {
+      const hasExactlyOne = [data.facilityId, data.creditLineId, data.bankId].filter(Boolean).length === 1;
+      return hasExactlyOne;
+    },
+    { message: "Must assign to exactly one of: facility, credit line, or bank" }
+  );
 
 export const insertDocumentSchema = createInsertSchema(documents)
   .omit({ id: true, createdAt: true })
