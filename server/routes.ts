@@ -302,6 +302,61 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Bank data migration endpoint (admin use only - updates bank names and codes)
+  app.post('/api/banks/migrate-names', isAuthenticated, async (req: any, res) => {
+    try {
+      const updated: string[] = [];
+      
+      // Mapping of old bank identifiers to new official names and codes
+      const bankMigrations = [
+        { oldPattern: 'Arab National Bank', newName: 'Arab National Bank', newCode: 'ANB' },
+        { oldPattern: 'Al Rajhi', newName: 'Al Rajhi Bank', newCode: 'RJH' },
+        { oldPattern: 'Alinma', newName: 'Alinma Bank', newCode: 'INMA' },
+        { oldPattern: 'Albilad', newName: 'Bank Albilad', newCode: 'ALB' },
+        { oldPattern: 'AlJazira', newName: 'Bank AlJazira', newCode: 'BJA' },
+        { oldPattern: 'Banque Saudi Fransi', newName: 'Banque Saudi Fransi', newCode: 'BSF' },
+        { oldPattern: 'Riyad Bank', newName: 'Riyad Bank', newCode: 'RIB' },
+        { oldPattern: 'Saudi British Bank', newName: 'Saudi Awwal Bank', newCode: 'SAB' },
+        { oldPattern: 'SABB', newName: 'Saudi Awwal Bank', newCode: 'SAB' },
+        { oldPattern: 'Saudi Investment Bank', newName: 'Saudi Investment Bank', newCode: 'SAIB' },
+        { oldPattern: 'Saudi National Bank', newName: 'Saudi National Bank', newCode: 'SNB' },
+      ];
+
+      const allBanks = await storage.getAllBanks();
+      
+      for (const bank of allBanks) {
+        const migration = bankMigrations.find(m => 
+          bank.name.includes(m.oldPattern) || bank.code === m.newCode
+        );
+        
+        if (migration) {
+          // Only update if the name or code is different
+          if (bank.name !== migration.newName || bank.code !== migration.newCode) {
+            // Since there's no updateBank method, we'll use direct database access
+            // This is acceptable for one-time migration endpoints
+            const db = (storage as any).db;
+            if (db) {
+              await db.update({ name: migration.newName, code: migration.newCode })
+                .from('banks')
+                .where('id', bank.id);
+              
+              updated.push(`${bank.name} (${bank.code}) → ${migration.newName} (${migration.newCode})`);
+            }
+          }
+        }
+      }
+      
+      res.json({ 
+        message: 'Bank migration completed', 
+        updated,
+        count: updated.length 
+      });
+    } catch (error) {
+      console.error("Error migrating bank names:", error);
+      res.status(500).json({ message: "Failed to migrate bank names" });
+    }
+  });
+
   // Facility routes
   app.get('/api/facilities', isAuthenticated, async (req: any, res) => {
     try {
