@@ -705,7 +705,7 @@ export default function BankDetail() {
                             </div>
                           </div>
                           <div className="text-sm text-gray-600 dark:text-gray-400">
-                            Interest: SIBOR + {loan.bankRate}% | Status: {loan.status}
+                            Interest: SIBOR {loan.siborRate}% + Margin {(loan as any).margin}% = {loan.bankRate}% | Status: {loan.status}
                           </div>
                         </div>
                       );
