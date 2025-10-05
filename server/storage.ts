@@ -1535,15 +1535,15 @@ export class MemoryStorage implements IStorage {
   private initializeDefaultBanks() {
     const defaultBanks = [
       { id: 'ANB', code: 'ANB', name: 'Arab National Bank', isActive: true, createdAt: new Date(), updatedAt: new Date() },
-      { id: 'SABB', code: 'SABB', name: 'Saudi British Bank', isActive: true, createdAt: new Date(), updatedAt: new Date() },
-      { id: 'RAJHI', code: 'RAJHI', name: 'Al Rajhi Bank', isActive: true, createdAt: new Date(), updatedAt: new Date() },
-      { id: 'NCB', code: 'NCB', name: 'National Commercial Bank', isActive: true, createdAt: new Date(), updatedAt: new Date() },
-      { id: 'RIYADBANK', code: 'RIYADBANK', name: 'Riyad Bank', isActive: true, createdAt: new Date(), updatedAt: new Date() },
-      { id: 'SAMBABANK', code: 'SAMBABANK', name: 'Samba Financial Group', isActive: true, createdAt: new Date(), updatedAt: new Date() },
-      { id: 'BANQUE', code: 'BANQUE', name: 'Banque Saudi Fransi', isActive: true, createdAt: new Date(), updatedAt: new Date() },
-      { id: 'ALBILAD', code: 'ALBILAD', name: 'Bank AlBilad', isActive: true, createdAt: new Date(), updatedAt: new Date() },
-      { id: 'ALJAZIRA', code: 'ALJAZIRA', name: 'Bank AlJazira', isActive: true, createdAt: new Date(), updatedAt: new Date() },
-      { id: 'ALINMA', code: 'ALINMA', name: 'Alinma Bank', isActive: true, createdAt: new Date(), updatedAt: new Date() }
+      { id: 'RJH', code: 'RJH', name: 'Al Rajhi Bank', isActive: true, createdAt: new Date(), updatedAt: new Date() },
+      { id: 'INMA', code: 'INMA', name: 'Alinma Bank', isActive: true, createdAt: new Date(), updatedAt: new Date() },
+      { id: 'ALB', code: 'ALB', name: 'Bank Albilad', isActive: true, createdAt: new Date(), updatedAt: new Date() },
+      { id: 'BJA', code: 'BJA', name: 'Bank AlJazira', isActive: true, createdAt: new Date(), updatedAt: new Date() },
+      { id: 'BSF', code: 'BSF', name: 'Banque Saudi Fransi', isActive: true, createdAt: new Date(), updatedAt: new Date() },
+      { id: 'RIB', code: 'RIB', name: 'Riyad Bank', isActive: true, createdAt: new Date(), updatedAt: new Date() },
+      { id: 'SAB', code: 'SAB', name: 'Saudi Awwal Bank', isActive: true, createdAt: new Date(), updatedAt: new Date() },
+      { id: 'SAIB', code: 'SAIB', name: 'Saudi Investment Bank', isActive: true, createdAt: new Date(), updatedAt: new Date() },
+      { id: 'SNB', code: 'SNB', name: 'Saudi National Bank', isActive: true, createdAt: new Date(), updatedAt: new Date() }
     ];
 
     defaultBanks.forEach(bank => this.banks.set(bank.id, bank));

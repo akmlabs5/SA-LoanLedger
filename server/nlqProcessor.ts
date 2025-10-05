@@ -63,17 +63,15 @@ export class NLQProcessor {
   private extractBankName(query: string): string | null {
     const bankPatterns = [
       'anb', 'arab national bank',
-      'sabb', 'saudi british bank',
-      'rajhi', 'al rajhi',
-      'snb', 'saudi national bank',
-      'riyad', 'riyad bank',
-      'bsf', 'banque saudi fransi',
-      'alinma', 'alinma bank',
-      'jaz', 'jazira', 'aljazira',
-      'bilad', 'albilad',
-      'saib', 'saudi investment bank',
-      'ncb', 'national commercial bank',
-      'fab', 'first abu dhabi bank'
+      'rjh', 'al rajhi', 'rajhi',
+      'inma', 'alinma', 'alinma bank',
+      'alb', 'albilad', 'bank albilad',
+      'bja', 'jazira', 'aljazira', 'bank aljazira',
+      'bsf', 'banque saudi fransi', 'banque',
+      'rib', 'riyad', 'riyad bank',
+      'sab', 'saudi awwal', 'awwal', 'awwal bank',
+      'saib', 'saudi investment bank', 'investment bank',
+      'snb', 'saudi national bank', 'national bank'
     ];
 
     for (const pattern of bankPatterns) {

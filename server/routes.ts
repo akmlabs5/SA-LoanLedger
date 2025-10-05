@@ -3756,18 +3756,16 @@ async function initializeDefaultBanks() {
     
     if (existingBanks.length === 0) {
       const saudiBanks = [
-        { name: "Arab National Bank (ANB)", code: "ANB" },
-        { name: "Saudi British Bank (SABB)", code: "SABB" },
-        { name: "Al Rajhi Bank", code: "ARB" },
-        { name: "Saudi National Bank (SNB)", code: "SNB" },
-        { name: "Riyad Bank", code: "RB" },
-        { name: "Banque Saudi Fransi (BSF)", code: "BSF" },
-        { name: "Alinma Bank", code: "ALINMA" },
-        { name: "Bank AlJazira", code: "JAZ" },
-        { name: "Bank Albilad", code: "BILAD" },
-        { name: "Saudi Investment Bank (SAIB)", code: "SAIB" },
-        { name: "National Commercial Bank (NCB)", code: "NCB" },
-        { name: "First Abu Dhabi Bank (FAB)", code: "FAB" },
+        { name: "Arab National Bank", code: "ANB" },
+        { name: "Al Rajhi Bank", code: "RJH" },
+        { name: "Alinma Bank", code: "INMA" },
+        { name: "Bank Albilad", code: "ALB" },
+        { name: "Bank AlJazira", code: "BJA" },
+        { name: "Banque Saudi Fransi", code: "BSF" },
+        { name: "Riyad Bank", code: "RIB" },
+        { name: "Saudi Awwal Bank", code: "SAB" },
+        { name: "Saudi Investment Bank", code: "SAIB" },
+        { name: "Saudi National Bank", code: "SNB" },
       ];
 
       for (const bank of saudiBanks) {
