@@ -11,6 +11,7 @@ export function useAdminAuth() {
   const [isAdminAuthenticated, setIsAdminAuthenticated] = useState(false);
   const [adminUser, setAdminUser] = useState<AdminUser | null>(null);
   const [authCheckTrigger, setAuthCheckTrigger] = useState(0);
+  const [isInitializing, setIsInitializing] = useState(true);
 
   // Check for stored admin token
   useEffect(() => {
@@ -24,6 +25,7 @@ export function useAdminAuth() {
       setIsAdminAuthenticated(false);
       setAdminUser(null);
     }
+    setIsInitializing(false);
   }, [authCheckTrigger]); // Re-run when authCheckTrigger changes
 
   // Query to validate admin session
@@ -41,17 +43,13 @@ export function useAdminAuth() {
       });
       
       if (!response.ok) {
-        // Clear invalid tokens and redirect to login
-        localStorage.removeItem('admin_token');
-        localStorage.removeItem('admin_user');
-        setIsAdminAuthenticated(false);
-        setAdminUser(null);
         throw new Error('Admin session invalid');
       }
       return response.json();
     },
     enabled: isAdminAuthenticated,
-    retry: false,
+    retry: 1, // Retry once in case of server restart
+    retryDelay: 1000, // Wait 1 second before retry
     staleTime: 5 * 60 * 1000, // 5 minutes
   });
 
@@ -75,13 +73,14 @@ export function useAdminAuth() {
   };
 
   const refreshAuth = () => {
+    setIsInitializing(true);
     setAuthCheckTrigger(prev => prev + 1);
   };
 
   return {
     isAdminAuthenticated: isAdminAuthenticated && (sessionValid !== undefined ? !!sessionValid : true),
     adminUser,
-    isLoading,
+    isLoading: isInitializing || isLoading,
     signOut,
     refreshAuth
   };

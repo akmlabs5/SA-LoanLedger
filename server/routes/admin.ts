@@ -8,10 +8,12 @@ import {
 
 // Admin session storage (in production, use proper session store)
 // Using global to persist sessions during development hot reloads
-if (!(global as any).adminSessions) {
-  (global as any).adminSessions = new Map<string, { username: string; role: string; loginTime: string }>();
+const globalAny = global as any;
+if (!globalAny.adminSessions) {
+  globalAny.adminSessions = new Map<string, { username: string; role: string; loginTime: string }>();
+  console.log('🔐 Admin session store initialized');
 }
-const adminSessions = (global as any).adminSessions;
+const adminSessions = globalAny.adminSessions;
 
 // Admin middleware for protecting admin routes
 const isAdminAuthenticated = (req: any, res: any, next: any) => {
@@ -21,18 +23,19 @@ const isAdminAuthenticated = (req: any, res: any, next: any) => {
     return res.status(401).json({ message: "Admin token required" });
   }
   
-  // Check if token exists in our session store
   const session = adminSessions.get(token);
   if (!session) {
     return res.status(401).json({ message: "Invalid admin token" });
   }
   
-  // Check if session is still valid (24 hours)
+  // In development mode, extend session timeout to reduce logout frequency
+  const sessionTimeout = process.env.NODE_ENV === 'development' ? 168 : 24; // 7 days in dev, 24 hours in prod
+  
   const loginTime = new Date(session.loginTime);
   const now = new Date();
   const hoursDiff = (now.getTime() - loginTime.getTime()) / (1000 * 60 * 60);
   
-  if (hoursDiff > 24) {
+  if (hoursDiff > sessionTimeout) {
     adminSessions.delete(token);
     return res.status(401).json({ message: "Admin session expired" });
   }
@@ -96,12 +99,14 @@ export function registerAdminRoutes(app: Express, deps: AppDependencies) {
       return res.status(401).json({ message: "Invalid admin token" });
     }
     
-    // Check if session is still valid (24 hours)
+    // In development mode, extend session timeout to reduce logout frequency
+    const sessionTimeout = process.env.NODE_ENV === 'development' ? 168 : 24; // 7 days in dev, 24 hours in prod
+    
     const loginTime = new Date(session.loginTime);
     const now = new Date();
     const hoursDiff = (now.getTime() - loginTime.getTime()) / (1000 * 60 * 60);
     
-    if (hoursDiff > 24) {
+    if (hoursDiff > sessionTimeout) {
       adminSessions.delete(token);
       return res.status(401).json({ message: "Admin session expired" });
     }
