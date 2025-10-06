@@ -218,7 +218,7 @@ export function registerAdminRoutes(app: Express, deps: AppDependencies) {
   // Admin user activities
   app.get('/api/admin/system/activities', isAdminAuthenticated, async (req: any, res) => {
     try {
-      // Mock recent activities
+      // Mock recent activities with privacy-respecting details
       const activities = [
         {
           id: "act_1",
@@ -226,7 +226,7 @@ export function registerAdminRoutes(app: Express, deps: AppDependencies) {
           userEmail: "user@example.com",
           action: "Created new loan",
           timestamp: new Date(Date.now() - 1000 * 60 * 15).toISOString(), // 15 mins ago
-          details: "SAR 500,000 loan with SABB"
+          details: "New loan record created"
         },
         {
           id: "act_2",
@@ -234,7 +234,7 @@ export function registerAdminRoutes(app: Express, deps: AppDependencies) {
           userEmail: "manager@example.com",
           action: "Updated bank facility",
           timestamp: new Date(Date.now() - 1000 * 60 * 45).toISOString(), // 45 mins ago
-          details: "Increased ANB credit limit"
+          details: "Facility credit limit modified"
         },
         {
           id: "act_3",
@@ -242,7 +242,23 @@ export function registerAdminRoutes(app: Express, deps: AppDependencies) {
           userEmail: "user@example.com", 
           action: "Added collateral",
           timestamp: new Date(Date.now() - 1000 * 60 * 90).toISOString(), // 1.5 hours ago
-          details: "Real estate collateral worth SAR 2M"
+          details: "New collateral record added"
+        },
+        {
+          id: "act_4",
+          userId: "user_2",
+          userEmail: "manager@example.com", 
+          action: "Viewed reports",
+          timestamp: new Date(Date.now() - 1000 * 60 * 120).toISOString(), // 2 hours ago
+          details: "Generated portfolio report"
+        },
+        {
+          id: "act_5",
+          userId: "user_1",
+          userEmail: "user@example.com", 
+          action: "Updated loan payment",
+          timestamp: new Date(Date.now() - 1000 * 60 * 180).toISOString(), // 3 hours ago
+          details: "Loan payment status updated"
         }
       ];
 
