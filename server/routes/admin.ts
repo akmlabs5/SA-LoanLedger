@@ -415,14 +415,21 @@ export function registerAdminRoutes(app: Express, deps: AppDependencies) {
     try {
       const { page = 1, limit = 50, userId, action, startDate, endDate } = req.query;
       
-      // Generate sample activities with filtering support
+      // Generate sample activities with filtering support and privacy-safe descriptions
       const allActivities = Array.from({ length: 100 }, (_, i) => ({
         id: `activity_${i + 1}`,
         userId: `user_${(i % 3) + 1}`,
         userEmail: ['user@example.com', 'manager@company.com', 'analyst@company.com'][i % 3],
         action: ['Created new loan', 'Updated facility', 'Added collateral', 'Viewed reports', 'Generated analysis'][i % 5],
         timestamp: new Date(Date.now() - i * 1000 * 60 * 30).toISOString(),
-        details: ['New record created', 'Record modified', 'Data updated', 'Report generated', 'Analysis completed'][i % 5],
+        // Privacy-safe descriptions that don't expose sensitive loan/bank details
+        details: [
+          'Loan record successfully created in the system',
+          'Facility information updated by user',
+          'Collateral entry added to portfolio',
+          'Financial reports accessed by user',
+          'AI-powered portfolio analysis completed'
+        ][i % 5],
         ipAddress: `192.168.1.${(i % 254) + 1}`,
         userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
       }));

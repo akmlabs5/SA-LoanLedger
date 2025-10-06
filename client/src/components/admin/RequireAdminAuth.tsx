@@ -12,7 +12,13 @@ export function RequireAdminAuth({ children }: RequireAdminAuthProps) {
 
   useEffect(() => {
     if (!isLoading && !isAdminAuthenticated) {
-      setLocation('/admin-portal/login');
+      // Use try-catch to handle iframe security restrictions during development
+      try {
+        setLocation('/admin-portal/login');
+      } catch (error) {
+        // Fallback to window.location for iframe environments
+        window.location.href = '/admin-portal/login';
+      }
     }
   }, [isAdminAuthenticated, isLoading, setLocation]);
 
