@@ -75,14 +75,16 @@ export default function AdminAnalyticsPage() {
                 <TrendingUp className="h-4 w-4 text-green-600 dark:text-green-400" />
               </CardHeader>
               <CardContent>
-                {isLoading ? (
-                  <Skeleton className="h-8 w-20" />
-                ) : (
-                  <div className="text-2xl font-bold text-green-700 dark:text-green-300">
-                    +{analytics?.platformGrowth.toFixed(1)}%
-                  </div>
-                )}
-                <p className="text-xs text-muted-foreground mt-1">vs last quarter</p>
+                <div>
+                  {isLoading ? (
+                    <Skeleton className="h-8 w-20" />
+                  ) : (
+                    <div className="text-2xl font-bold text-green-700 dark:text-green-300">
+                      +{analytics?.platformGrowth.toFixed(1)}%
+                    </div>
+                  )}
+                  <p className="text-xs text-muted-foreground mt-1">vs last quarter</p>
+                </div>
               </CardContent>
             </Card>
 
@@ -92,14 +94,16 @@ export default function AdminAnalyticsPage() {
                 <Users className="h-4 w-4 text-blue-600 dark:text-blue-400" />
               </CardHeader>
               <CardContent>
-                {isLoading ? (
-                  <Skeleton className="h-8 w-20" />
-                ) : (
-                  <div className="text-2xl font-bold text-blue-700 dark:text-blue-300">
-                    {analytics?.userEngagement.toFixed(1)}%
-                  </div>
-                )}
-                <p className="text-xs text-muted-foreground mt-1">active users</p>
+                <div>
+                  {isLoading ? (
+                    <Skeleton className="h-8 w-20" />
+                  ) : (
+                    <div className="text-2xl font-bold text-blue-700 dark:text-blue-300">
+                      {analytics?.userEngagement.toFixed(1)}%
+                    </div>
+                  )}
+                  <p className="text-xs text-muted-foreground mt-1">active users</p>
+                </div>
               </CardContent>
             </Card>
 
@@ -109,14 +113,16 @@ export default function AdminAnalyticsPage() {
                 <BarChart3 className="h-4 w-4 text-orange-600 dark:text-orange-400" />
               </CardHeader>
               <CardContent>
-                {isLoading ? (
-                  <Skeleton className="h-8 w-20" />
-                ) : (
-                  <div className="text-2xl font-bold text-orange-700 dark:text-orange-300">
-                    {analytics?.totalLoansCreated || 0}
-                  </div>
-                )}
-                <p className="text-xs text-muted-foreground mt-1">loans created</p>
+                <div>
+                  {isLoading ? (
+                    <Skeleton className="h-8 w-20" />
+                  ) : (
+                    <div className="text-2xl font-bold text-orange-700 dark:text-orange-300">
+                      {analytics?.totalLoansCreated || 0}
+                    </div>
+                  )}
+                  <p className="text-xs text-muted-foreground mt-1">loans created</p>
+                </div>
               </CardContent>
             </Card>
 
@@ -126,14 +132,16 @@ export default function AdminAnalyticsPage() {
                 <DollarSign className="h-4 w-4 text-red-600 dark:text-red-400" />
               </CardHeader>
               <CardContent>
-                {isLoading ? (
-                  <Skeleton className="h-8 w-24" />
-                ) : (
-                  <div className="text-2xl font-bold text-red-700 dark:text-red-300">
-                    {formatCurrency(analytics?.averageLoanSize || 0)}
-                  </div>
-                )}
-                <p className="text-xs text-muted-foreground mt-1">per loan</p>
+                <div>
+                  {isLoading ? (
+                    <Skeleton className="h-8 w-24" />
+                  ) : (
+                    <div className="text-2xl font-bold text-red-700 dark:text-red-300">
+                      {formatCurrency(analytics?.averageLoanSize || 0)}
+                    </div>
+                  )}
+                  <p className="text-xs text-muted-foreground mt-1">per loan</p>
+                </div>
               </CardContent>
             </Card>
           </div>
