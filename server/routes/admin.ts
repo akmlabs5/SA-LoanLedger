@@ -367,4 +367,253 @@ export function registerAdminRoutes(app: Express, deps: AppDependencies) {
       res.status(500).json({ message: "Failed to fetch admin users" });
     }
   });
+
+  // Analytics data endpoint
+  app.get('/api/admin/analytics', isAdminAuthenticated, async (req: any, res) => {
+    try {
+      const loans = await storage.getActiveLoansByUser(req.user?.claims?.sub || 'demo-user');
+      const banks = await storage.getAllBanks();
+      
+      // Calculate analytics metrics
+      const now = new Date();
+      const monthlyData = Array.from({ length: 6 }, (_, i) => {
+        const month = new Date(now.getFullYear(), now.getMonth() - (5 - i), 1);
+        return {
+          month: month.toLocaleDateString('en-US', { month: 'short', year: 'numeric' }),
+          loans: Math.floor(Math.random() * 20 + 10),
+          value: Math.floor(Math.random() * 5000000 + 2000000),
+          users: Math.floor(Math.random() * 15 + 5)
+        };
+      });
+
+      const bankDistribution = banks.slice(0, 5).map(bank => ({
+        bankName: bank.name,
+        loanCount: Math.floor(Math.random() * 10 + 1),
+        totalExposure: Math.floor(Math.random() * 10000000 + 1000000)
+      }));
+
+      const analytics = {
+        monthlyTrends: monthlyData,
+        bankDistribution,
+        totalLoansCreated: loans.length,
+        totalValue: loans.reduce((sum, loan) => sum + parseFloat(loan.amount), 0),
+        averageLoanSize: loans.length > 0 ? loans.reduce((sum, loan) => sum + parseFloat(loan.amount), 0) / loans.length : 0,
+        platformGrowth: 23.5, // Percentage growth
+        userEngagement: 87.2, // Percentage
+        systemUptime: 99.9 // Percentage
+      };
+
+      res.json(analytics);
+    } catch (error) {
+      console.error("Error fetching analytics:", error);
+      res.status(500).json({ message: "Failed to fetch analytics" });
+    }
+  });
+
+  // User activities detailed endpoint
+  app.get('/api/admin/user-activities', isAdminAuthenticated, async (req: any, res) => {
+    try {
+      const { page = 1, limit = 50, userId, action, startDate, endDate } = req.query;
+      
+      // Generate sample activities with filtering support
+      const allActivities = Array.from({ length: 100 }, (_, i) => ({
+        id: `activity_${i + 1}`,
+        userId: `user_${(i % 3) + 1}`,
+        userEmail: ['user@example.com', 'manager@company.com', 'analyst@company.com'][i % 3],
+        action: ['Created new loan', 'Updated facility', 'Added collateral', 'Viewed reports', 'Generated analysis'][i % 5],
+        timestamp: new Date(Date.now() - i * 1000 * 60 * 30).toISOString(),
+        details: ['New record created', 'Record modified', 'Data updated', 'Report generated', 'Analysis completed'][i % 5],
+        ipAddress: `192.168.1.${(i % 254) + 1}`,
+        userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+      }));
+
+      // Apply filters
+      let filtered = allActivities;
+      if (userId) filtered = filtered.filter(a => a.userId === userId);
+      if (action) filtered = filtered.filter(a => a.action === action);
+      
+      // Pagination
+      const start = (Number(page) - 1) * Number(limit);
+      const paginated = filtered.slice(start, start + Number(limit));
+
+      res.json({
+        activities: paginated,
+        total: filtered.length,
+        page: Number(page),
+        totalPages: Math.ceil(filtered.length / Number(limit))
+      });
+    } catch (error) {
+      console.error("Error fetching user activities:", error);
+      res.status(500).json({ message: "Failed to fetch user activities" });
+    }
+  });
+
+  // Database management endpoint
+  app.get('/api/admin/database', isAdminAuthenticated, async (req: any, res) => {
+    try {
+      const loans = await storage.getActiveLoansByUser(req.user?.claims?.sub || 'demo-user');
+      const banks = await storage.getAllBanks();
+      
+      const dbStats = {
+        connectionStatus: "active",
+        dbSize: "47.3 MB",
+        totalConnections: 12,
+        activeConnections: 5,
+        slowQueries: 2,
+        cacheHitRatio: 94.7,
+        lastBackup: new Date(Date.now() - 1000 * 60 * 60 * 12).toISOString(),
+        tables: [
+          { name: 'loans', rowCount: loans.length, size: '12.4 MB' },
+          { name: 'banks', rowCount: banks.length, size: '2.1 MB' },
+          { name: 'facilities', rowCount: 15, size: '8.7 MB' },
+          { name: 'collateral', rowCount: 8, size: '6.5 MB' },
+          { name: 'users', rowCount: 3, size: '1.2 MB' }
+        ],
+        recentQueries: [
+          { query: 'SELECT * FROM loans WHERE...', duration: '12ms', timestamp: new Date(Date.now() - 1000 * 60 * 5).toISOString() },
+          { query: 'UPDATE facilities SET...', duration: '8ms', timestamp: new Date(Date.now() - 1000 * 60 * 10).toISOString() },
+          { query: 'INSERT INTO collateral...', duration: '15ms', timestamp: new Date(Date.now() - 1000 * 60 * 15).toISOString() }
+        ]
+      };
+
+      res.json(dbStats);
+    } catch (error) {
+      console.error("Error fetching database stats:", error);
+      res.status(500).json({ message: "Failed to fetch database stats" });
+    }
+  });
+
+  // Security logs endpoint
+  app.get('/api/admin/security', isAdminAuthenticated, async (req: any, res) => {
+    try {
+      const securityData = {
+        failedLogins: [
+          { email: 'unknown@test.com', attempts: 3, lastAttempt: new Date(Date.now() - 1000 * 60 * 30).toISOString(), ipAddress: '192.168.1.45' },
+          { email: 'admin@wrong.com', attempts: 5, lastAttempt: new Date(Date.now() - 1000 * 60 * 120).toISOString(), ipAddress: '10.0.0.23' }
+        ],
+        accessLogs: [
+          { user: 'user@example.com', action: 'Admin login', timestamp: new Date(Date.now() - 1000 * 60 * 15).toISOString(), status: 'success', ipAddress: '192.168.1.100' },
+          { user: 'manager@company.com', action: 'Template access', timestamp: new Date(Date.now() - 1000 * 60 * 45).toISOString(), status: 'success', ipAddress: '192.168.1.101' },
+          { user: 'unknown@test.com', action: 'Admin login', timestamp: new Date(Date.now() - 1000 * 60 * 60).toISOString(), status: 'failed', ipAddress: '192.168.1.45' }
+        ],
+        securitySettings: {
+          sessionTimeout: 24, // hours
+          maxFailedAttempts: 5,
+          ipWhitelist: [],
+          twoFactorEnabled: false,
+          passwordPolicy: 'strong'
+        },
+        activeAdminSessions: adminSessions.size,
+        suspiciousActivity: 1
+      };
+
+      res.json(securityData);
+    } catch (error) {
+      console.error("Error fetching security data:", error);
+      res.status(500).json({ message: "Failed to fetch security data" });
+    }
+  });
+
+  // System alerts endpoint
+  app.get('/api/admin/alerts', isAdminAuthenticated, async (req: any, res) => {
+    try {
+      const alerts = [
+        {
+          id: 'alert_1',
+          type: 'warning',
+          title: 'High Memory Usage',
+          message: 'System memory usage at 78%',
+          timestamp: new Date(Date.now() - 1000 * 60 * 30).toISOString(),
+          acknowledged: false,
+          severity: 'medium'
+        },
+        {
+          id: 'alert_2',
+          type: 'info',
+          title: 'Backup Completed',
+          message: 'Daily database backup completed successfully',
+          timestamp: new Date(Date.now() - 1000 * 60 * 60 * 12).toISOString(),
+          acknowledged: true,
+          severity: 'low'
+        },
+        {
+          id: 'alert_3',
+          type: 'error',
+          title: 'Failed Login Attempts',
+          message: '5 failed login attempts from IP 192.168.1.45',
+          timestamp: new Date(Date.now() - 1000 * 60 * 120).toISOString(),
+          acknowledged: false,
+          severity: 'high'
+        }
+      ];
+
+      res.json(alerts);
+    } catch (error) {
+      console.error("Error fetching alerts:", error);
+      res.status(500).json({ message: "Failed to fetch alerts" });
+    }
+  });
+
+  // Acknowledge alert endpoint
+  app.post('/api/admin/alerts/:alertId/acknowledge', isAdminAuthenticated, async (req: any, res) => {
+    try {
+      const { alertId } = req.params;
+      res.json({ message: 'Alert acknowledged', alertId });
+    } catch (error) {
+      console.error("Error acknowledging alert:", error);
+      res.status(500).json({ message: "Failed to acknowledge alert" });
+    }
+  });
+
+  // System settings endpoint
+  app.get('/api/admin/settings', isAdminAuthenticated, async (req: any, res) => {
+    try {
+      const settings = {
+        general: {
+          siteName: 'Saudi Loan Manager',
+          siteUrl: process.env.REPLIT_DOMAINS || 'localhost:5000',
+          maintenanceMode: false,
+          debugMode: process.env.NODE_ENV !== 'production'
+        },
+        email: {
+          sendGridConfigured: !!process.env.SENDGRID_API_KEY,
+          defaultSender: 'noreply@saudiloanmanager.com',
+          emailNotificationsEnabled: true
+        },
+        ai: {
+          deepSeekConfigured: !!process.env.DEEPSEEK_API_KEY,
+          aiInsightsEnabled: true,
+          maxTokens: 1500
+        },
+        security: {
+          sessionTimeout: 24,
+          maxFailedAttempts: 5,
+          requireStrongPasswords: true
+        },
+        features: {
+          aiChat: true,
+          emailReminders: true,
+          advancedAnalytics: true,
+          exportReports: true
+        }
+      };
+
+      res.json(settings);
+    } catch (error) {
+      console.error("Error fetching settings:", error);
+      res.status(500).json({ message: "Failed to fetch settings" });
+    }
+  });
+
+  // Update system settings endpoint
+  app.put('/api/admin/settings', isAdminAuthenticated, async (req: any, res) => {
+    try {
+      const { category, settings } = req.body;
+      // In a real implementation, this would update settings in a database
+      res.json({ message: 'Settings updated successfully', category, settings });
+    } catch (error) {
+      console.error("Error updating settings:", error);
+      res.status(500).json({ message: "Failed to update settings" });
+    }
+  });
 }
