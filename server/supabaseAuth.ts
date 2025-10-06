@@ -2,6 +2,9 @@
 import type { Express, RequestHandler } from "express";
 import { supabase, verifySupabaseToken } from "./supabaseClient";
 import { storage } from "./storage";
+import { sendEmail } from "./emailService";
+
+const otpStore = new Map<string, { code: string; expiry: Date; password: string }>();
 
 export async function setupSupabaseAuth(app: Express, databaseAvailable = true) {
   console.log("🔧 Supabase Auth setup initialized");
@@ -72,15 +75,32 @@ export async function setupSupabaseAuth(app: Express, databaseAvailable = true) 
         user = await storage.getUser(data.user.id);
         
         if (user && user.twoFactorEnabled) {
-          const { error: otpError } = await supabase.auth.signInWithOtp({
-            email,
-            options: {
-              shouldCreateUser: false,
-            }
-          });
+          await supabase.auth.signOut();
           
-          if (otpError) {
-            console.error("OTP send error:", otpError);
+          const otp = Math.floor(100000 + Math.random() * 900000).toString();
+          
+          const otpExpiry = new Date(Date.now() + 10 * 60 * 1000);
+          otpStore.set(email, { code: otp, expiry: otpExpiry, password });
+          
+          try {
+            await sendEmail({
+              to: email,
+              subject: "Your Verification Code",
+              text: `Your verification code is: ${otp}\n\nThis code will expire in 10 minutes.\n\nIf you didn't request this code, please ignore this email.`,
+              html: `
+                <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+                  <h2 style="color: #2563eb;">Your Verification Code</h2>
+                  <p>Your verification code is:</p>
+                  <div style="background: #f3f4f6; padding: 20px; border-radius: 8px; margin: 20px 0;">
+                    <h1 style="color: #1f2937; font-size: 36px; letter-spacing: 8px; text-align: center; margin: 0;">${otp}</h1>
+                  </div>
+                  <p style="color: #6b7280;">This code will expire in 10 minutes.</p>
+                  <p style="color: #6b7280; font-size: 14px;">If you didn't request this code, please ignore this email.</p>
+                </div>
+              `
+            });
+          } catch (emailError) {
+            console.error("Failed to send OTP email:", emailError);
           }
           
           return res.json({ 
@@ -111,18 +131,27 @@ export async function setupSupabaseAuth(app: Express, databaseAvailable = true) 
     try {
       const { email, token } = req.body;
       
-      const { data, error } = await supabase.auth.verifyOtp({
-        email,
-        token,
-        type: 'email'
-      });
+      const storedOTP = otpStore.get(email);
       
-      if (error) throw error;
-      
-      if (!data.session || !data.user) {
+      if (!storedOTP || storedOTP.code !== token || new Date() > storedOTP.expiry) {
         return res.status(401).json({ 
           success: false,
           message: "Invalid or expired code" 
+        });
+      }
+      
+      const password = storedOTP.password;
+      otpStore.delete(email);
+      
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password
+      });
+      
+      if (error || !data.user) {
+        return res.status(401).json({ 
+          success: false,
+          message: "Failed to authenticate after OTP verification" 
         });
       }
       

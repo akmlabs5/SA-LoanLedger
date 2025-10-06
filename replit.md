@@ -12,7 +12,7 @@ Preferred communication style: Simple, everyday language.
 The client-side is a React TypeScript single-page application, using Wouter for routing, TanStack Query for state management, and Shadcn/ui (built on Radix UI) for components. Styling is handled by Tailwind CSS with a Saudi-themed color scheme and mobile-first design. Forms use React Hook Form with Zod validation, and Recharts is used for data visualization.
 
 ## Backend Architecture
-The server is built with Express.js, utilizing Drizzle ORM with Neon (PostgreSQL) for type-safe database operations. Authentication is managed via Replit Auth (OpenID Connect) and Passport.js, with PostgreSQL-backed sessions. It follows a REST API pattern, organizing endpoints by resource, and includes a storage abstraction layer for maintainability.
+The server is built with Express.js, utilizing Drizzle ORM with Neon (PostgreSQL) for type-safe database operations. Authentication is managed via dual systems: Replit Auth (OpenID Connect) with Passport.js for standard authentication, and Supabase Auth for enhanced security with email-based Two-Factor Authentication (2FA). PostgreSQL-backed sessions ensure scalability. It follows a REST API pattern, organizing endpoints by resource, and includes a storage abstraction layer for maintainability.
 
 ## AI Intelligence System
 The platform incorporates a rules-based AI for intelligent insights, including portfolio risk analysis (bank concentration, LTV monitoring), and email notifications for loan due dates via SendGrid. It integrates with DeepSeek API for advanced insights and operates on user-configurable thresholds to provide actionable recommendations. Key AI features include a Smart Loan Matcher, What-If Scenario Analysis, a Natural Language Query System, Auto-Categorized Daily Alerts, and the ability to attach files to AI chat for context enrichment.
@@ -63,9 +63,16 @@ A comprehensive admin portal with its own authentication system provides complet
 - **REPLIT_DOMAINS**: Replit authentication domain
 - **REPL_ID**: Replit application ID
 
+## Supabase Authentication (2FA Service) - CONFIGURED ✓
+- **SUPABASE_URL**: Supabase project URL (configured)
+- **SUPABASE_ANON_KEY**: Supabase anonymous key for client-side auth (configured)
+- **SUPABASE_SERVICE_ROLE_KEY**: Server-side admin key (configured)
+- **Status**: Full 2FA implementation with email-based OTP verification
+- **Features**: Sign-up, sign-in with 2FA, OTP verification, 2FA toggle in user settings
+- **Email Service**: Uses SendGrid via noreply@akm-labs.com for OTP delivery
+- **Database Integration**: User 2FA preferences stored in PostgreSQL users table
+
 ## Optional Services (Not Configured)
-- **SUPABASE_URL**: Supabase authentication service (optional alternative auth)
-- **SUPABASE_ANON_KEY**: Supabase anonymous key for client-side auth
 - **DEEPSEEK_API_KEY**: Advanced AI insights and natural language queries
 - **ADMIN_USERNAME**: Admin portal username (defaults to 'admin')
 - **ADMIN_PASSWORD**: Admin portal password (defaults to 'admin123')
@@ -92,7 +99,8 @@ A comprehensive admin portal with its own authentication system provides complet
 - **Drizzle Kit**: Database migration and schema management.
 
 ## Authentication & Session Management
-- **Replit Auth**: OpenID Connect provider.
+- **Replit Auth**: OpenID Connect provider for main app authentication.
+- **Supabase Auth**: Email-based authentication with built-in 2FA OTP support.
 - **Passport.js**: Authentication middleware.
 - **connect-pg-simple**: PostgreSQL session store.
 
