@@ -33,6 +33,12 @@ The database schema is designed for the Saudi banking context, storing informati
 ## Mobile-First Design
 The application is optimized for mobile devices with responsive breakpoints, touch-friendly elements, mobile-specific navigation, and optimized form layouts, ensuring a seamless experience across devices.
 
+### Mobile Touch Optimizations (October 2025)
+- **Fixed Sticky Hover Issue**: Resolved the double-click problem on mobile where buttons and tabs showed hover states on first tap
+- **Solution**: Implemented `@media (hover: none)` CSS rule to disable hover effects on touch-only devices
+- **Touch Feedback**: Added `active:scale-[0.98]` for visual feedback on tap
+- **Enhanced Responsiveness**: All interactive elements use `touch-action: manipulation` to prevent double-tap zoom delays
+
 ## Admin Portal
 A comprehensive admin portal with its own authentication system provides complete system oversight and management. Features include:
 
