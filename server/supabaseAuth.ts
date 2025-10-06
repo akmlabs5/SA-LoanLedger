@@ -4,14 +4,32 @@ import { supabase, verifySupabaseToken } from "./supabaseClient";
 import { storage } from "./storage";
 import { sendEmail } from "./emailService";
 
-const otpStore = new Map<string, { code: string; expiry: Date; password: string }>();
+const otpStore = new Map<string, { code: string; expiry: Date; password: string; attempts: number }>();
+const otpRequestTracker = new Map<string, { count: number; lastRequest: Date; lockoutUntil?: Date }>();
+
+setInterval(() => {
+  const now = new Date();
+  for (const [email, data] of otpStore.entries()) {
+    if (now > data.expiry) {
+      otpStore.delete(email);
+    }
+  }
+  for (const [email, tracker] of otpRequestTracker.entries()) {
+    if (tracker.lockoutUntil && now > tracker.lockoutUntil) {
+      otpRequestTracker.delete(email);
+    } else if (!tracker.lockoutUntil && now.getTime() - tracker.lastRequest.getTime() > 300000) {
+      otpRequestTracker.delete(email);
+    }
+  }
+}, 60000);
 
 export async function setupSupabaseAuth(app: Express, databaseAvailable = true) {
   console.log("🔧 Supabase Auth setup initialized");
   
   app.post('/api/auth/supabase/signup', async (req, res) => {
     try {
-      const { email, password, firstName, lastName } = req.body;
+      const { email: rawEmail, password, firstName, lastName } = req.body;
+      const email = rawEmail.trim().toLowerCase();
       
       const { data, error } = await supabase.auth.signUp({
         email,
@@ -57,7 +75,8 @@ export async function setupSupabaseAuth(app: Express, databaseAvailable = true) 
 
   app.post('/api/auth/supabase/signin', async (req, res) => {
     try {
-      const { email, password } = req.body;
+      const { email: rawEmail, password } = req.body;
+      const email = rawEmail.trim().toLowerCase();
       
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
@@ -75,12 +94,41 @@ export async function setupSupabaseAuth(app: Express, databaseAvailable = true) 
         user = await storage.getUser(data.user.id);
         
         if (user && user.twoFactorEnabled) {
+          const tracker = otpRequestTracker.get(email) || { count: 0, lastRequest: new Date() };
+          const now = new Date();
+          
+          if (tracker.lockoutUntil && now < tracker.lockoutUntil) {
+            const minutesLeft = Math.ceil((tracker.lockoutUntil.getTime() - now.getTime()) / 60000);
+            return res.status(429).json({ 
+              success: false,
+              message: `Too many OTP requests. Please wait ${minutesLeft} minute(s) before trying again.` 
+            });
+          }
+          
+          if (now.getTime() - tracker.lastRequest.getTime() < 60000) {
+            tracker.count++;
+          } else {
+            tracker.count = 1;
+          }
+          
+          tracker.lastRequest = now;
+          
+          if (tracker.count > 5) {
+            tracker.lockoutUntil = new Date(now.getTime() + 15 * 60 * 1000);
+            otpRequestTracker.set(email, tracker);
+            return res.status(429).json({ 
+              success: false,
+              message: "Too many OTP requests. Your account has been temporarily locked for 15 minutes." 
+            });
+          }
+          
+          otpRequestTracker.set(email, tracker);
+          
           await supabase.auth.signOut();
           
           const otp = Math.floor(100000 + Math.random() * 900000).toString();
           
           const otpExpiry = new Date(Date.now() + 10 * 60 * 1000);
-          otpStore.set(email, { code: otp, expiry: otpExpiry, password });
           
           try {
             await sendEmail({
@@ -99,8 +147,14 @@ export async function setupSupabaseAuth(app: Express, databaseAvailable = true) 
                 </div>
               `
             });
+            
+            otpStore.set(email, { code: otp, expiry: otpExpiry, password, attempts: 0 });
           } catch (emailError) {
             console.error("Failed to send OTP email:", emailError);
+            return res.status(500).json({ 
+              success: false,
+              message: "Failed to send verification code. Please try again later."
+            });
           }
           
           return res.json({ 
@@ -129,14 +183,39 @@ export async function setupSupabaseAuth(app: Express, databaseAvailable = true) 
 
   app.post('/api/auth/supabase/verify-otp', async (req, res) => {
     try {
-      const { email, token } = req.body;
+      const { email: rawEmail, token } = req.body;
+      const email = rawEmail.trim().toLowerCase();
       
       const storedOTP = otpStore.get(email);
       
-      if (!storedOTP || storedOTP.code !== token || new Date() > storedOTP.expiry) {
+      if (!storedOTP) {
         return res.status(401).json({ 
           success: false,
-          message: "Invalid or expired code" 
+          message: "No verification code found. Please request a new code." 
+        });
+      }
+      
+      if (new Date() > storedOTP.expiry) {
+        otpStore.delete(email);
+        return res.status(401).json({ 
+          success: false,
+          message: "Verification code has expired. Please request a new code." 
+        });
+      }
+      
+      if (storedOTP.attempts >= 3) {
+        otpStore.delete(email);
+        return res.status(429).json({ 
+          success: false,
+          message: "Too many failed attempts. Please request a new verification code." 
+        });
+      }
+      
+      if (storedOTP.code !== token) {
+        storedOTP.attempts++;
+        return res.status(401).json({ 
+          success: false,
+          message: `Invalid verification code. ${3 - storedOTP.attempts} attempts remaining.` 
         });
       }
       
