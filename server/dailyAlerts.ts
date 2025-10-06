@@ -1,11 +1,15 @@
 // Auto-Categorized Daily Alerts System
 import { IStorage } from './storage';
 import { MailService } from '@sendgrid/mail';
+import { config } from './config';
 
 const mailService = new MailService();
-if (process.env.SENDGRID_API_KEY && process.env.SENDGRID_API_KEY !== "default_key") {
-  mailService.setApiKey(process.env.SENDGRID_API_KEY);
+const sendgridKey = config.get('SENDGRID_API_KEY');
+if (sendgridKey) {
+  mailService.setApiKey(sendgridKey);
 }
+
+const FROM_EMAIL = config.get('SENDGRID_FROM_EMAIL');
 
 export interface Alert {
   id: string;
@@ -438,7 +442,7 @@ export class DailyAlertsService {
     try {
       await mailService.send({
         to: summary.userEmail,
-        from: 'alerts@saudiloanmanager.com',
+        from: FROM_EMAIL,
         subject: 'Daily Portfolio Alert Digest',
         html: emailHtml,
       });

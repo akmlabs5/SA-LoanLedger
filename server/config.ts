@@ -20,6 +20,7 @@ const configSchema = z.object({
   
   // Email configuration (optional)
   SENDGRID_API_KEY: z.string().optional(),
+  SENDGRID_FROM_EMAIL: z.string().default('reminders@aim-labs.com'),
   
   // AI configuration (optional)
   DEEPSEEK_API_KEY: z.string().optional(),

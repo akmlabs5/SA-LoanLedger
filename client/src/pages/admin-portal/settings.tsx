@@ -251,6 +251,61 @@ export default function AdminSettingsPage() {
                       data-testid="switch-email-notifications"
                     />
                   </div>
+                  
+                  {currentSettings?.email.sendGridConfigured && (
+                    <div className="mt-6 p-4 bg-blue-50 dark:bg-blue-900/10 border border-blue-200 dark:border-blue-800 rounded-lg">
+                      <h4 className="font-semibold text-blue-900 dark:text-blue-100 mb-2 flex items-center gap-2">
+                        <CheckCircle2 className="w-4 h-4" />
+                        SendGrid Live Configuration
+                      </h4>
+                      <div className="space-y-3 text-sm text-blue-800 dark:text-blue-200">
+                        <div>
+                          <p className="font-medium mb-1">✓ Current Configuration:</p>
+                          <ul className="list-disc list-inside ml-2 space-y-1">
+                            <li>Sender Email: <code className="bg-white dark:bg-gray-800 px-2 py-0.5 rounded">{currentSettings?.email.defaultSender}</code></li>
+                            <li>Status: Email reminders are ready to send live</li>
+                          </ul>
+                        </div>
+                        
+                        <div>
+                          <p className="font-medium mb-1">📋 For Production Deployment:</p>
+                          <ol className="list-decimal list-inside ml-2 space-y-1">
+                            <li>Verify Domain Authentication in SendGrid (recommended for deliverability)</li>
+                            <li>Add DNS CNAME records from SendGrid to your domain provider</li>
+                            <li>Wait for verification (usually 24-48 hours)</li>
+                            <li>Single Sender Verification is already active</li>
+                          </ol>
+                        </div>
+                        
+                        <div>
+                          <p className="font-medium mb-1">🔗 Quick Links:</p>
+                          <ul className="list-disc list-inside ml-2 space-y-1">
+                            <li>
+                              <a 
+                                href="https://app.sendgrid.com/settings/sender_auth" 
+                                target="_blank" 
+                                rel="noopener noreferrer"
+                                className="underline hover:text-blue-600 dark:hover:text-blue-300"
+                              >
+                                SendGrid Sender Authentication
+                              </a>
+                            </li>
+                            <li>
+                              <a 
+                                href="https://app.sendgrid.com/guide/integrate" 
+                                target="_blank" 
+                                rel="noopener noreferrer"
+                                className="underline hover:text-blue-600 dark:hover:text-blue-300"
+                              >
+                                SendGrid Integration Guide
+                              </a>
+                            </li>
+                          </ul>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                  
                   <Button 
                     onClick={() => handleSave('email')} 
                     disabled={!currentSettings?.email.sendGridConfigured}

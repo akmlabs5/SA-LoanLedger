@@ -66,10 +66,18 @@ A comprehensive admin portal with its own authentication system provides complet
 ## Optional Services (Not Configured)
 - **SUPABASE_URL**: Supabase authentication service (optional alternative auth)
 - **SUPABASE_ANON_KEY**: Supabase anonymous key for client-side auth
-- **SENDGRID_API_KEY**: Email notifications for loan due dates and alerts
 - **DEEPSEEK_API_KEY**: Advanced AI insights and natural language queries
 - **ADMIN_USERNAME**: Admin portal username (defaults to 'admin')
 - **ADMIN_PASSWORD**: Admin portal password (defaults to 'admin123')
+
+## Email Service (SendGrid) - CONFIGURED ✓
+- **SENDGRID_API_KEY**: Email service API key (configured)
+- **SENDGRID_FROM_EMAIL**: Sender email address (defaults to 'reminders@aim-labs.com')
+- **Status**: Live email reminders ready to send
+- **Verified Sender**: reminders@aim-labs.com (Single Sender Verification complete)
+- **Domain Authentication**: Recommended for production (DNS CNAME records required)
+- **Email Templates**: 4 default templates available in admin portal
+- **Features Enabled**: Loan due date reminders, AI alerts, daily alert digest
 
 ## Infrastructure Improvements (Completed)
 - **Centralized Configuration**: All environment variables validated on startup with clear error messages

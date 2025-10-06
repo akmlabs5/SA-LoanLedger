@@ -1,15 +1,19 @@
 import { MailService } from '@sendgrid/mail';
 import { TemplateService } from './templateService';
 import { Loan, LoanReminder, ReminderTemplate, User, Bank, Facility } from '@shared/schema';
+import { config } from './config';
 
-if (!process.env.SENDGRID_API_KEY) {
+if (!config.has('SENDGRID_API_KEY')) {
   console.warn("SENDGRID_API_KEY environment variable not set - email notifications disabled");
 }
 
 const mailService = new MailService();
-if (process.env.SENDGRID_API_KEY && process.env.SENDGRID_API_KEY !== "default_key") {
-  mailService.setApiKey(process.env.SENDGRID_API_KEY);
+const sendgridKey = config.get('SENDGRID_API_KEY');
+if (sendgridKey) {
+  mailService.setApiKey(sendgridKey);
 }
+
+const FROM_EMAIL = config.get('SENDGRID_FROM_EMAIL');
 
 interface LoanDueNotification {
   id: string;
@@ -27,7 +31,7 @@ export async function sendLoanDueNotification(
   userEmail: string,
   dueLoans: LoanDueNotification[]
 ): Promise<boolean> {
-  if (!process.env.SENDGRID_API_KEY || process.env.SENDGRID_API_KEY === "default_key") {
+  if (!config.has('SENDGRID_API_KEY')) {
     console.log('Email notification would be sent to:', userEmail);
     console.log('Due loans:', dueLoans.length);
     return true; // Simulate success when API key not available
@@ -67,7 +71,7 @@ export async function sendLoanDueNotification(
 
     await mailService.send({
       to: userEmail,
-      from: 'noreply@saudiloanmanager.com', // This should be a verified sender in SendGrid
+      from: FROM_EMAIL,
       subject: `Loan Payment Due Alert - ${dueLoans.length} loan(s) due soon`,
       html: emailHtml,
     });
@@ -85,7 +89,7 @@ export async function sendAIAlertNotification(
   alertType: string,
   alertMessage: string
 ): Promise<boolean> {
-  if (!process.env.SENDGRID_API_KEY || process.env.SENDGRID_API_KEY === "default_key") {
+  if (!config.has('SENDGRID_API_KEY')) {
     console.log('AI Alert notification would be sent to:', userEmail);
     console.log('Alert:', alertType, alertMessage);
     return true;
@@ -117,7 +121,7 @@ export async function sendAIAlertNotification(
 
     await mailService.send({
       to: userEmail,
-      from: 'ai-alerts@saudiloanmanager.com', // This should be a verified sender in SendGrid
+      from: FROM_EMAIL,
       subject: `AI Portfolio Alert - ${alertType}`,
       html: emailHtml,
     });
@@ -141,7 +145,7 @@ export async function sendTemplateReminderEmail(
   bank?: Bank,
   facility?: Facility
 ): Promise<boolean> {
-  if (!process.env.SENDGRID_API_KEY || process.env.SENDGRID_API_KEY === "default_key") {
+  if (!config.has('SENDGRID_API_KEY')) {
     console.log('Template reminder email would be sent to:', user.email);
     console.log('Loan:', loan.referenceNumber);
     console.log('Template:', template?.name || 'Default');
@@ -209,7 +213,7 @@ Note: This is an automated reminder generated on {currentDate}`,
 
     const emailData = {
       to: user.email,
-      from: 'reminders@saudiloanmanager.com', // This should be a verified sender in SendGrid
+      from: FROM_EMAIL,
       subject: renderedEmail.subject || 'Loan Payment Reminder',
       html: htmlBody as string,
     };
@@ -235,7 +239,7 @@ export async function sendSimpleReminderEmail(
   reminderMessage: string,
   loanReference?: string
 ): Promise<boolean> {
-  if (!process.env.SENDGRID_API_KEY || process.env.SENDGRID_API_KEY === "default_key") {
+  if (!config.has('SENDGRID_API_KEY')) {
     console.log('Simple reminder email would be sent to:', userEmail);
     console.log('Title:', reminderTitle);
     return true;
@@ -267,7 +271,7 @@ export async function sendSimpleReminderEmail(
 
     await mailService.send({
       to: userEmail,
-      from: 'reminders@saudiloanmanager.com',
+      from: FROM_EMAIL,
       subject: reminderTitle,
       html: emailHtml,
     });
