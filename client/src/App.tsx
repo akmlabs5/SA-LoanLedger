@@ -35,6 +35,7 @@ import SignupPage from "@/pages/auth/signup";
 import ForgotPasswordPage from "@/pages/auth/forgot-password";
 import SupabaseSignupPage from "@/pages/supabase-signup";
 import SupabaseSigninPage from "@/pages/supabase-signin";
+import UnifiedLoginPage from "@/pages/unified-login";
 
 // Admin portal pages
 import AdminLoginPage from "@/pages/admin-portal/login";
@@ -86,17 +87,17 @@ function App() {
     );
   }
 
-  // If loading timed out, show error and redirect to login hub
+  // If loading timed out, show error and redirect to unified login
   if (loadingTimeout) {
     console.error("Authentication loading timed out");
-    return <LoginHub />;
+    return <UnifiedLoginPage />;
   }
 
   // Handle admin portal routing (separate from user auth)
   if (location && typeof location === 'string' && location.startsWith("/admin-portal")) {
     return (
       <Switch>
-        <Route path="/admin-portal/login" component={AdminLoginPage} />
+        <Route path="/admin-portal/login" component={UnifiedLoginPage} />
         <Route path="/admin-portal/dashboard" component={AdminDashboardPage} />
         <Route path="/admin-portal/analytics" component={AdminAnalyticsPage} />
         <Route path="/admin-portal/users" component={AdminUsersPage} />
@@ -121,7 +122,8 @@ function App() {
         <Route path="/supabase-signup" component={SupabaseSignupPage} />
         <Route path="/supabase-signin" component={SupabaseSigninPage} />
         <Route path="/landing" component={LandingPage} />
-        <Route component={LoginHub} />
+        <Route path="/login-hub" component={LoginHub} />
+        <Route component={UnifiedLoginPage} />
       </Switch>
     );
   }
