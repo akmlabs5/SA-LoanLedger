@@ -119,27 +119,19 @@
   button, a, [role="button"], [role="tab"], [role="menuitem"] {
     /* Prevent double-tap zoom delay on mobile */
     touch-action: manipulation;
+    /* Remove tap highlight color on mobile */
+    -webkit-tap-highlight-color: transparent;
   }
 
-  /* Fix sticky hover on touch devices - only apply hover effects on devices that can actually hover */
-  @media (hover: none) {
-    button:hover,
-    a:hover,
-    [role="button"]:hover,
-    [role="tab"]:hover,
-    [role="menuitem"]:hover,
-    .hover\:bg-primary\/90:hover,
-    .hover\:bg-destructive\/90:hover,
-    .hover\:bg-accent:hover,
-    .hover\:text-accent-foreground:hover,
-    .hover\:bg-secondary\/80:hover,
-    .hover\:underline:hover {
-      /* Remove all hover effects on touch-only devices */
-      background-color: inherit !important;
-      color: inherit !important;
-      text-decoration: inherit !important;
-      opacity: inherit !important;
-    }
+  /* CRITICAL FIX: Completely disable hover effects on touch devices */
+  html.touch-device button:hover,
+  html.touch-device a:hover,
+  html.touch-device [role="button"]:hover,
+  html.touch-device [role="tab"]:hover,
+  html.touch-device [role="menuitem"]:hover,
+  html.touch-device *:hover {
+    /* Force all hover effects to be disabled */
+    pointer-events: auto !important;
   }
   
   /* Improved typography hierarchy */
