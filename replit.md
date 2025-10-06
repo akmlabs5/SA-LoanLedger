@@ -24,7 +24,30 @@ The database schema is designed for the Saudi banking context, storing informati
 The application is optimized for mobile devices with responsive breakpoints, touch-friendly elements, mobile-specific navigation, and optimized form layouts, ensuring a seamless experience across devices.
 
 ## Admin Portal
-A separate, isolated admin portal with its own authentication system provides system stats, user management, and maintenance controls. It features a 3D animated authentication interface and robust security architecture.
+A comprehensive admin portal with its own authentication system provides complete system oversight and management. Features include:
+
+### Core Functionality (Phase 1 & 2 Complete)
+- **Dashboard**: Real-time system statistics, activity feed, and health monitoring
+- **Analytics**: Platform usage metrics, loan trends, bank distribution charts with Recharts visualizations
+- **User Management**: All users overview and detailed activity logs with filtering, pagination, and CSV export
+- **Database Management**: Health monitoring, connection status, table statistics, recent queries, and backup controls
+- **Security Monitor**: Failed login tracking, access logs, active admin sessions, and security settings
+- **System Alerts**: Alert dashboard with error/warning/info notifications and acknowledgment functionality
+- **System Settings**: Global configuration for email, AI, features, and maintenance mode
+- **Email Templates**: Custom template management for notifications and reminders
+
+### Security & Privacy
+- Separate authentication system with Bearer token-based API protection
+- All admin endpoints secured with `isAdminAuthenticated` middleware
+- Privacy-safe activity logging that excludes sensitive loan/bank details
+- Try-catch fallback for iframe navigation during development
+- 3D animated authentication interface with gradient design
+
+### Navigation & UX
+- Organized sidebar with grouped navigation (Dashboard, User Management, System Control)
+- Responsive mobile-first design matching the main application
+- Real-time data updates with TanStack Query
+- Loading states and skeletons for better UX
 
 ## Key Features
 - **Bank-Level Collateral Assignment**: Collateral can be assigned to specific facilities or total bank exposure for flexible risk management.
