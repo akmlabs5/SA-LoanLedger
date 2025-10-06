@@ -177,13 +177,13 @@ export default function UnifiedLoginPage() {
   if (requires2FA) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-emerald-400 via-green-500 to-teal-600 p-4">
-        <Card className="w-full max-w-md shadow-2xl">
+        <Card className="w-full max-w-md shadow-2xl bg-white/10 backdrop-blur-xl border border-white/20">
           <CardHeader>
-            <div className="mx-auto w-16 h-16 bg-blue-100 dark:bg-blue-900/20 rounded-full flex items-center justify-center mb-4">
-              <Shield className="w-10 h-10 text-blue-600 dark:text-blue-400" />
+            <div className="mx-auto w-16 h-16 bg-white/10 backdrop-blur-sm rounded-full flex items-center justify-center mb-4">
+              <Shield className="w-10 h-10 text-white" />
             </div>
-            <CardTitle className="text-2xl font-bold text-center">Two-Factor Authentication</CardTitle>
-            <CardDescription className="text-center">
+            <CardTitle className="text-2xl font-bold text-center text-white">Two-Factor Authentication</CardTitle>
+            <CardDescription className="text-center text-white/80">
               Enter the 6-digit code sent to {userEmail}
             </CardDescription>
           </CardHeader>
@@ -208,7 +208,7 @@ export default function UnifiedLoginPage() {
 
             <Button 
               onClick={verifyOTP} 
-              className="w-full bg-cyan-500 hover:bg-cyan-600" 
+              className="w-full bg-cyan-500 hover:bg-cyan-600 text-white" 
               disabled={isVerifying || otpValue.length !== 6}
               data-testid="button-verify-otp"
             >
@@ -218,6 +218,7 @@ export default function UnifiedLoginPage() {
             <div className="text-center">
               <Button
                 variant="link"
+                className="text-white/90 hover:text-white"
                 onClick={() => {
                   setRequires2FA(false);
                   setOtpValue("");
@@ -245,10 +246,10 @@ export default function UnifiedLoginPage() {
       </div>
 
       {/* Login Card */}
-      <Card className="w-full max-w-md shadow-2xl bg-white/95 backdrop-blur-sm">
+      <Card className="w-full max-w-md shadow-2xl bg-white/10 backdrop-blur-xl border border-white/20">
         <CardHeader className="text-center pb-4">
-          <CardTitle className="text-2xl font-bold text-gray-800">Welcome Back</CardTitle>
-          <CardDescription className="text-gray-600">
+          <CardTitle className="text-2xl font-bold text-white">Welcome Back</CardTitle>
+          <CardDescription className="text-white/90">
             Sign in to continue your financial journey
           </CardDescription>
         </CardHeader>
@@ -260,20 +261,20 @@ export default function UnifiedLoginPage() {
                 name="identifier"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="text-gray-700 font-medium">Email Address</FormLabel>
+                    <FormLabel className="text-white font-medium">Email Address</FormLabel>
                     <FormControl>
                       <div className="relative">
-                        <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                        <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-white/60" />
                         <Input 
                           type="text" 
                           placeholder="name@example.com" 
-                          className="pl-11 h-12 rounded-xl border-gray-300 focus:border-cyan-500 focus:ring-cyan-500" 
+                          className="pl-11 h-12 rounded-xl bg-white/20 border-white/30 text-white placeholder:text-white/50 focus:border-white/50 focus:ring-white/30 focus:bg-white/25" 
                           {...field} 
                           data-testid="input-identifier"
                         />
                       </div>
                     </FormControl>
-                    <FormMessage />
+                    <FormMessage className="text-white/90" />
                   </FormItem>
                 )}
               />
@@ -283,38 +284,38 @@ export default function UnifiedLoginPage() {
                 name="password"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="text-gray-700 font-medium">Password</FormLabel>
+                    <FormLabel className="text-white font-medium">Password</FormLabel>
                     <FormControl>
                       <div className="relative">
-                        <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                        <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-white/60" />
                         <Input 
                           type="password" 
                           placeholder="••••••••" 
-                          className="pl-11 h-12 rounded-xl border-gray-300 focus:border-cyan-500 focus:ring-cyan-500" 
+                          className="pl-11 h-12 rounded-xl bg-white/20 border-white/30 text-white placeholder:text-white/50 focus:border-white/50 focus:ring-white/30 focus:bg-white/25" 
                           {...field} 
                           data-testid="input-password"
                         />
                       </div>
                     </FormControl>
-                    <FormMessage />
+                    <FormMessage className="text-white/90" />
                   </FormItem>
                 )}
               />
 
               <Button 
                 type="submit" 
-                className="w-full h-12 text-lg font-semibold bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-600 hover:to-blue-600 rounded-xl shadow-lg hover:shadow-xl transition-all duration-200" 
+                className="w-full h-12 text-lg font-semibold bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-600 hover:to-blue-600 rounded-xl shadow-lg hover:shadow-xl transition-all duration-200 text-white" 
                 disabled={isLoading}
                 data-testid="button-signin"
               >
                 {isLoading ? "Signing in..." : "Sign In"}
               </Button>
 
-              <div className="text-center text-sm text-gray-600 pt-2">
+              <div className="text-center text-sm text-white/80 pt-2">
                 Don't have an account?{" "}
                 <Button
                   variant="link"
-                  className="p-0 h-auto font-semibold text-cyan-600 hover:text-cyan-700"
+                  className="p-0 h-auto font-semibold text-white hover:text-white/90"
                   onClick={() => setLocation('/supabase-signup')}
                   data-testid="link-signup"
                 >
