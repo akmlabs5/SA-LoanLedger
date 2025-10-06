@@ -248,7 +248,7 @@ export default function SupabaseSignupPage() {
 
               <Button 
                 type="submit" 
-                className="w-full h-12 text-lg font-semibold bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-600 hover:to-blue-600 rounded-xl shadow-lg hover:shadow-xl transition-all duration-200 text-white" 
+                className="w-full h-12 text-lg font-semibold bg-cyan-500 hover:bg-cyan-600 rounded-xl shadow-lg hover:shadow-xl transition-all duration-200 text-white" 
                 disabled={isLoading}
                 data-testid="button-signup"
               >
