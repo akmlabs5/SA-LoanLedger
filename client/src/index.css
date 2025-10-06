@@ -123,14 +123,14 @@
     line-height: 1.2;
   }
   
-  /* Fix Sheet overlay blocking mobile interactions */
+  /* Fix Sheet overlay blocking mobile interactions - targeted to Sheets only */
   @media (max-width: 1023px) {
-    /* Disable pointer events on Sheet overlays to prevent blocking touches */
-    [data-radix-portal] [data-radix-dialog-overlay] {
+    /* Disable pointer events ONLY on Sheet overlays to prevent blocking touches */
+    .sheet-overlay {
       pointer-events: none !important;
     }
-    /* Re-enable pointer events on the Sheet content itself */
-    [data-radix-portal] [data-radix-dialog-content] {
+    /* Re-enable pointer events on Sheet content itself */
+    .sheet-overlay ~ [data-radix-dialog-content] {
       pointer-events: auto !important;
     }
   }
