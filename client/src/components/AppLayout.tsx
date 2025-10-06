@@ -266,8 +266,19 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
     } else {
       // Clear authentication cache before logout
       clearAuthCache();
-      // Replit Auth sign out - force logout by redirecting directly
-      window.location.href = "/api/logout";
+      
+      // Call logout endpoint to clear server session
+      try {
+        await fetch("/api/logout", { 
+          method: "GET",
+          credentials: "include"
+        });
+      } catch (error) {
+        console.error("Logout error:", error);
+      }
+      
+      // Redirect to unified login page
+      setLocation("/unified-login");
     }
   };
 

@@ -2,7 +2,7 @@
 
 ## Status: ✅ COMPLETE (Backend-Driven Implementation)
 
-This document describes the complete Supabase Two-Factor Authentication (2FA) implementation for the Saudi Loan Manager platform.
+This document describes the complete Supabase Two-Factor Authentication (2FA) implementation for the Morouna Loans platform.
 
 ## Architecture Overview
 

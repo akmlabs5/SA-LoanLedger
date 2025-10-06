@@ -195,7 +195,7 @@ export default function SupabaseSigninPage() {
         <CardHeader>
           <CardTitle className="text-2xl font-bold text-center">Welcome Back</CardTitle>
           <CardDescription className="text-center">
-            Sign in to Saudi Loan Manager
+            Sign in to Morouna Loans
           </CardDescription>
         </CardHeader>
         <CardContent>

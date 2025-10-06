@@ -582,14 +582,14 @@ export function registerAdminRoutes(app: Express, deps: AppDependencies) {
     try {
       const settings = {
         general: {
-          siteName: 'Saudi Loan Manager',
+          siteName: 'Morouna Loans',
           siteUrl: process.env.REPLIT_DOMAINS || 'localhost:5000',
           maintenanceMode: false,
           debugMode: process.env.NODE_ENV !== 'production'
         },
         email: {
           sendGridConfigured: !!process.env.SENDGRID_API_KEY,
-          defaultSender: 'noreply@saudiloanmanager.com',
+          defaultSender: 'noreply@morounaloans.com',
           emailNotificationsEnabled: true
         },
         ai: {
