@@ -113,6 +113,7 @@
     font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11';
     font-weight: 400;
     letter-spacing: -0.011em;
+    overflow-x: hidden;
   }
 
   /* Improve mobile tap responsiveness */

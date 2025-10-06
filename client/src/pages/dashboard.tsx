@@ -144,18 +144,18 @@ export default function Dashboard() {
     <div className="min-h-screen bg-gradient-to-br from-green-50 via-white to-emerald-50 dark:from-gray-900 dark:via-gray-900 dark:to-gray-800">
       <div className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-6 py-4 sm:py-6 space-y-4 sm:space-y-6">
         {/* Welcome Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4">
           <div>
             <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Dashboard</h1>
             <p className="text-gray-600 dark:text-gray-300 mt-1">
               Welcome back, {String((user as any)?.displayName || (user as any)?.firstName || 'User')}. Here's your portfolio overview.
             </p>
           </div>
-          <div className="flex items-center space-x-3 mt-4 sm:mt-0">
+          <div className="flex flex-wrap items-center gap-2 sm:gap-3">
             {/* Quick Bank Access */}
             {allBanks && Array.isArray(allBanks) && allBanks.length > 0 && (
-              <div className="flex items-center space-x-2">
-                <span className="text-sm text-gray-600 dark:text-gray-400">Quick Access:</span>
+              <div className="flex items-center gap-2">
+                <span className="text-sm text-gray-600 dark:text-gray-400 whitespace-nowrap">Quick Access:</span>
                 <Select onValueChange={(bankId) => {
                   const bank = allBanks.find((b: any) => b.id === bankId);
                   if (bank) {
@@ -163,7 +163,7 @@ export default function Dashboard() {
                   }
                 }}>
                   <SelectTrigger 
-                    className="w-48 bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 hover:border-blue-400 dark:hover:border-blue-500 transition-colors focus:ring-2 focus:ring-blue-500 focus:border-blue-500" 
+                    className="w-40 sm:w-48 bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 hover:border-blue-400 dark:hover:border-blue-500 transition-colors focus:ring-2 focus:ring-blue-500 focus:border-blue-500" 
                     data-testid="select-bank-switcher"
                     aria-label="Quick access to bank details"
                   >
@@ -183,11 +183,11 @@ export default function Dashboard() {
                 </Select>
               </div>
             )}
-            <Badge variant="outline" className="flex items-center space-x-1">
+            <Badge variant="outline" className="flex items-center gap-1 whitespace-nowrap">
               <Activity className="h-3 w-3" />
               <span>Live</span>
             </Badge>
-            <span className="text-sm text-gray-500 dark:text-gray-400">
+            <span className="text-sm text-gray-500 dark:text-gray-400 whitespace-nowrap">
               Last updated: {new Date().toLocaleTimeString()}
             </span>
           </div>
