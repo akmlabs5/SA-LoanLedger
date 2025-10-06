@@ -1,13 +1,19 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
+import cookieParser from "cookie-parser";
+import multer from "multer";
 import { createStorage, type IStorage, initializeStorage } from "./storage";
 import { setupAuth, isAuthenticated } from "./replitAuth";
 import { generateAIInsights } from "./aiInsights";
-import { sendLoanDueNotification } from "./emailService";
+import { sendLoanDueNotification, sendTemplateReminderEmail } from "./emailService";
+import { CalendarService } from "./calendarService";
 import { initializeDatabase } from "./db";
+import { NLQProcessor } from "./nlqProcessor";
+import { DailyAlertsService } from "./dailyAlerts";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import * as XLSX from "xlsx";
+import { extractTextFromFile, getSupportedFileTypes, getMaxFileSize } from "./fileExtractor";
 import {
   insertBankSchema,
   insertBankContactSchema,
@@ -17,6 +23,11 @@ import {
   insertLoanSchema,
   insertLoanReminderSchema,
   updateLoanReminderSchema,
+  insertReminderTemplateSchema,
+  updateReminderTemplateSchema,
+  insertUserReminderSettingsSchema,
+  insertUserPreferencesSchema,
+  insertDailyAlertsPreferencesSchema,
   insertGuaranteeSchema,
   updateGuaranteeSchema,
   insertAiInsightConfigSchema,
@@ -48,6 +59,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   // Initialize the global storage instance for auth system
   initializeStorage(databaseAvailable);
+  
+  // Setup cookie parsing for logout detection
+  app.use(cookieParser());
   
   // Setup auth with database availability flag
   await setupAuth(app, databaseAvailable);
@@ -179,6 +193,170 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Bank analytics endpoint
+  app.get('/api/banks/:bankId/analytics', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const { bankId } = req.params;
+
+      // Get all facilities for this bank and user
+      const allFacilities = await storage.getUserFacilities(userId);
+      const facilities = allFacilities.filter(f => f.bankId === bankId);
+
+      // Get all loans for this bank
+      const allLoans = await storage.getUserLoans(userId);
+      const loans = allLoans.filter(loan => 
+        facilities.some(f => f.id === loan.facilityId)
+      );
+
+      const activeLoans = loans.filter(l => l.status === 'active').length;
+      const settledLoans = loans.filter(l => l.status === 'settled').length;
+      const cancelledLoans = loans.filter(l => l.status === 'cancelled').length;
+
+      // Get balances for all active loans in parallel
+      const activeLoansList = loans.filter(l => l.status === 'active');
+      const balancePromises = activeLoansList.map(loan => storage.getLoanBalance(loan.id));
+      const balances = await Promise.all(balancePromises);
+
+      // Calculate total outstanding using real balances
+      const totalOutstanding = balances.reduce((sum, balance) => {
+        return sum + (balance ? parseFloat(balance.total) : 0);
+      }, 0);
+
+      const totalCreditLimit = facilities.reduce((sum, f) => sum + parseFloat(f.limit), 0);
+      const utilizationRate = totalCreditLimit > 0 ? (totalOutstanding / totalCreditLimit) * 100 : 0;
+
+      // Get transactions for all loans in parallel
+      const loanIds = loans.map(l => l.id);
+      const transactionPromises = loanIds.map(loanId => storage.getLoanTransactions(loanId));
+      const transactionArrays = await Promise.all(transactionPromises);
+      const transactions = transactionArrays.flat();
+
+      // Group transactions by month for trends
+      const paymentsByMonth: Record<string, number> = {};
+      const interestByMonth: Record<string, number> = {};
+
+      transactions.forEach(t => {
+        const date = new Date(t.date);
+        const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+        
+        if (t.transactionType === 'payment' || t.transactionType === 'settlement') {
+          paymentsByMonth[monthKey] = (paymentsByMonth[monthKey] || 0) + parseFloat(t.amount);
+        }
+        
+        if (t.transactionType === 'interest_accrual') {
+          interestByMonth[monthKey] = (interestByMonth[monthKey] || 0) + parseFloat(t.amount);
+        }
+      });
+
+      // Calculate facility utilization breakdown using real balances
+      const facilityUtilization = await Promise.all(
+        facilities.map(async facility => {
+          const facilityLoans = loans.filter(l => l.facilityId === facility.id && l.status === 'active');
+          
+          // Get balances for facility loans
+          const facilityBalancePromises = facilityLoans.map(loan => storage.getLoanBalance(loan.id));
+          const facilityBalances = await Promise.all(facilityBalancePromises);
+          
+          const facilityOutstanding = facilityBalances.reduce((sum, balance) => {
+            return sum + (balance ? parseFloat(balance.total) : 0);
+          }, 0);
+          
+          const utilization = parseFloat(facility.limit) > 0 
+            ? (facilityOutstanding / parseFloat(facility.limit)) * 100 
+            : 0;
+
+          return {
+            facilityId: facility.id,
+            facilityName: `${(facility.type || 'facility').replace('_', ' ').toUpperCase()} - ${parseFloat(facility.limit).toLocaleString('en-SA')} SAR`,
+            limit: parseFloat(facility.limit),
+            outstanding: facilityOutstanding,
+            utilization: Math.round(utilization * 10) / 10,
+            activeLoans: facilityLoans.length
+          };
+        })
+      );
+
+      res.json({
+        summary: {
+          totalOutstanding,
+          totalCreditLimit,
+          utilizationRate: Math.round(utilizationRate * 10) / 10,
+          activeLoans,
+          settledLoans,
+          cancelledLoans,
+          facilitiesCount: facilities.length
+        },
+        facilityUtilization,
+        paymentsByMonth,
+        interestByMonth,
+        loanStatusBreakdown: {
+          active: activeLoans,
+          settled: settledLoans,
+          cancelled: cancelledLoans
+        }
+      });
+    } catch (error) {
+      console.error("Error fetching bank analytics:", error);
+      res.status(500).json({ message: "Failed to fetch bank analytics" });
+    }
+  });
+
+  // Bank data migration endpoint (admin use only - updates bank names and codes)
+  app.post('/api/banks/migrate-names', isAuthenticated, async (req: any, res) => {
+    try {
+      const updated: string[] = [];
+      
+      // Mapping of old bank identifiers to new official names and codes
+      const bankMigrations = [
+        { oldPattern: 'Arab National Bank', newName: 'Arab National Bank', newCode: 'ANB' },
+        { oldPattern: 'Al Rajhi', newName: 'Al Rajhi Bank', newCode: 'RJH' },
+        { oldPattern: 'Alinma', newName: 'Alinma Bank', newCode: 'INMA' },
+        { oldPattern: 'Albilad', newName: 'Bank Albilad', newCode: 'ALB' },
+        { oldPattern: 'AlJazira', newName: 'Bank AlJazira', newCode: 'BJA' },
+        { oldPattern: 'Banque Saudi Fransi', newName: 'Banque Saudi Fransi', newCode: 'BSF' },
+        { oldPattern: 'Riyad Bank', newName: 'Riyad Bank', newCode: 'RIB' },
+        { oldPattern: 'Saudi British Bank', newName: 'Saudi Awwal Bank', newCode: 'SAB' },
+        { oldPattern: 'SABB', newName: 'Saudi Awwal Bank', newCode: 'SAB' },
+        { oldPattern: 'Saudi Investment Bank', newName: 'Saudi Investment Bank', newCode: 'SAIB' },
+        { oldPattern: 'Saudi National Bank', newName: 'Saudi National Bank', newCode: 'SNB' },
+      ];
+
+      const allBanks = await storage.getAllBanks();
+      
+      for (const bank of allBanks) {
+        const migration = bankMigrations.find(m => 
+          bank.name.includes(m.oldPattern) || bank.code === m.newCode
+        );
+        
+        if (migration) {
+          // Only update if the name or code is different
+          if (bank.name !== migration.newName || bank.code !== migration.newCode) {
+            // Since there's no updateBank method, we'll use direct database access
+            // This is acceptable for one-time migration endpoints
+            const db = (storage as any).db;
+            if (db) {
+              await db.update({ name: migration.newName, code: migration.newCode })
+                .from('banks')
+                .where('id', bank.id);
+              
+              updated.push(`${bank.name} (${bank.code}) → ${migration.newName} (${migration.newCode})`);
+            }
+          }
+        }
+      }
+      
+      res.json({ 
+        message: 'Bank migration completed', 
+        updated,
+        count: updated.length 
+      });
+    } catch (error) {
+      console.error("Error migrating bank names:", error);
+      res.status(500).json({ message: "Failed to migrate bank names" });
+    }
+  });
+
   // Facility routes
   app.get('/api/facilities', isAuthenticated, async (req: any, res) => {
     try {
@@ -229,6 +407,116 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error fetching facility:", error);
       res.status(500).json({ message: "Failed to fetch facility" });
+    }
+  });
+
+  // Get revolving period usage for a facility
+  app.get('/api/facilities/:facilityId/revolving-usage', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const { facilityId } = req.params;
+      
+      // Get facility with bank information  
+      const facility = await storage.getFacilityWithBank(facilityId);
+      
+      if (!facility) {
+        return res.status(404).json({ message: "Facility not found" });
+      }
+
+      // Verify user has access to this facility
+      if (facility.userId !== userId) {
+        return res.status(403).json({ message: "Access denied" });
+      }
+
+      // Check if revolving tracking is enabled
+      if (!facility.enableRevolvingTracking || !facility.maxRevolvingPeriod) {
+        return res.status(400).json({ message: "Revolving period tracking is not enabled for this facility" });
+      }
+      
+      // Get all loans for this facility
+      const allLoans = await storage.getUserLoans(userId);
+      const facilityLoans = allLoans.filter((loan: any) => loan.facilityId === facilityId);
+      
+      // Calculate cumulative days used across all loans
+      let totalDaysUsed = 0;
+      let activeLoansCount = 0;
+      
+      for (const loan of facilityLoans) {
+        try {
+          const startDate = new Date(loan.startDate);
+          
+          // Determine end date: use settledDate if available and earlier than dueDate, otherwise use dueDate
+          let endDate: Date;
+          if (loan.settledDate) {
+            const settled = new Date(loan.settledDate);
+            const due = new Date(loan.dueDate);
+            endDate = settled < due ? settled : due;
+          } else {
+            endDate = new Date(loan.dueDate);
+          }
+          
+          // Validate dates
+          if (isNaN(startDate.getTime()) || isNaN(endDate.getTime())) {
+            console.warn(`Invalid dates for loan ${loan.id}, skipping duration calculation`);
+            continue;
+          }
+          
+          const loanDays = Math.ceil((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24));
+          
+          // Only add positive days
+          if (loanDays > 0) {
+            totalDaysUsed += loanDays;
+          }
+          
+          if (loan.status === 'active') {
+            activeLoansCount++;
+          }
+        } catch (error) {
+          console.error(`Error calculating days for loan ${loan.id}:`, error);
+          continue;
+        }
+      }
+      
+      // Calculate remaining days
+      const maxPeriod = facility.maxRevolvingPeriod;
+      const daysRemaining = Math.max(0, Math.round(maxPeriod - totalDaysUsed));
+      
+      // Calculate percentage (guard against NaN and ensure finite)
+      let percentageUsed = (totalDaysUsed / maxPeriod) * 100;
+      if (!isFinite(percentageUsed)) {
+        percentageUsed = 0;
+      }
+      percentageUsed = Math.min(100, Math.max(0, Math.round(percentageUsed * 10) / 10)); // Round to 1 decimal
+      
+      // Determine status based on usage
+      let status: 'available' | 'warning' | 'critical' | 'expired';
+      if (percentageUsed >= 100) {
+        status = 'expired';
+      } else if (percentageUsed >= 90) {
+        status = 'critical';
+      } else if (percentageUsed >= 70) {
+        status = 'warning';
+      } else {
+        status = 'available';
+      }
+      
+      const canRevolve = daysRemaining > 0;
+      
+      const usageData = {
+        daysUsed: Math.round(totalDaysUsed),
+        daysRemaining,
+        percentageUsed,
+        status,
+        canRevolve,
+        activeLoans: activeLoansCount,
+        totalLoans: facilityLoans.length,
+        maxRevolvingPeriod: maxPeriod,
+      };
+      
+      res.json(usageData);
+    } catch (error) {
+      console.error("Error calculating revolving usage:", error);
+      res.status(500).json({ message: "Failed to calculate revolving usage" });
     }
   });
 
@@ -292,11 +580,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const userId = req.user.claims.sub;
       
       // Extract assignment fields from request
-      const { facilityId, pledgeType, ...collateralFields } = req.body;
+      const { facilityId, bankId, pledgeType, ...collateralFields } = req.body;
       
-      // Validate required assignment fields
-      if (!facilityId) {
-        return res.status(400).json({ message: "Facility selection is required for collateral creation" });
+      // Validate that exactly one of facilityId or bankId is provided
+      if (!facilityId && !bankId) {
+        return res.status(400).json({ message: "Either facility or bank selection is required for collateral creation" });
+      }
+      
+      if (facilityId && bankId) {
+        return res.status(400).json({ message: "Cannot assign to both facility and bank. Choose one." });
       }
       
       if (!pledgeType) {
@@ -306,11 +598,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Validate collateral data
       const collateralData = insertCollateralSchema.parse({ ...collateralFields, userId });
       
-      // Validate user owns the facility
-      const userFacilities = await storage.getUserFacilities(userId);
-      const facility = userFacilities.find((f: any) => f.id === facilityId);
-      if (!facility) {
-        return res.status(403).json({ message: "Facility not found or access denied" });
+      // Validate user owns the facility or has relationship with bank
+      if (facilityId) {
+        const userFacilities = await storage.getUserFacilities(userId);
+        const facility = userFacilities.find((f: any) => f.id === facilityId);
+        if (!facility) {
+          return res.status(403).json({ message: "Facility not found or access denied" });
+        }
+      }
+      
+      if (bankId) {
+        // Validate bank exists - user can assign to any bank they have facilities with
+        const userFacilities = await storage.getUserFacilities(userId);
+        const hasRelationship = userFacilities.some((f: any) => f.bankId === bankId);
+        if (!hasRelationship) {
+          return res.status(403).json({ message: "No relationship found with this bank" });
+        }
       }
       
       // Create collateral first
@@ -318,14 +621,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Then immediately create the assignment (atomically)
       try {
-        const assignmentData = {
+        const assignmentData: any = {
           collateralId: collateral.id,
-          facilityId,
           pledgeType,
           effectiveDate: new Date().toISOString().split('T')[0],
           isActive: true,
           userId
         };
+        
+        // Add either facilityId or bankId
+        if (facilityId) {
+          assignmentData.facilityId = facilityId;
+        } else {
+          assignmentData.bankId = bankId;
+        }
         
         await storage.createCollateralAssignment(assignmentData);
         
@@ -493,6 +802,393 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Natural Language Query
+  app.post('/api/ai/natural-query', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const { query } = req.body;
+      
+      if (!query || typeof query !== 'string') {
+        return res.status(400).json({ message: "Query is required" });
+      }
+      
+      const nlqProcessor = new NLQProcessor(storage);
+      const result = await nlqProcessor.processQuery(query, userId);
+      
+      res.json(result);
+    } catch (error) {
+      console.error("Error processing natural language query:", error);
+      res.status(500).json({ message: "Failed to process query" });
+    }
+  });
+
+  // Daily Alerts - Generate alerts for current user
+  app.get('/api/ai/daily-alerts', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      
+      const alertsService = new DailyAlertsService(storage);
+      const alerts = await alertsService.generateDailyAlerts(userId);
+      
+      res.json({ alerts, count: alerts.length });
+    } catch (error) {
+      console.error("Error generating daily alerts:", error);
+      res.status(500).json({ message: "Failed to generate alerts" });
+    }
+  });
+
+  // Daily Alerts - Send digest email
+  app.post('/api/ai/daily-alerts/send', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const userEmail = req.user.claims.email || req.body.email;
+      
+      if (!userEmail) {
+        return res.status(400).json({ message: "Email address is required" });
+      }
+      
+      const alertsService = new DailyAlertsService(storage);
+      await alertsService.generateAndSendDailyDigest(userId, userEmail);
+      
+      res.json({ message: "Daily digest sent successfully" });
+    } catch (error) {
+      console.error("Error sending daily digest:", error);
+      res.status(500).json({ message: "Failed to send daily digest" });
+    }
+  });
+
+  // What-If Scenario Analysis
+  app.post('/api/ai/what-if-analysis', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const { loanId, scenarios } = req.body;
+      
+      if (!loanId) {
+        return res.status(400).json({ message: "Loan ID is required" });
+      }
+      
+      // Validate scenario inputs
+      if (scenarios?.refinance?.newRate !== undefined) {
+        if (scenarios.refinance.newRate < 0 || scenarios.refinance.newRate > 100) {
+          return res.status(400).json({ message: "Interest rate must be between 0 and 100" });
+        }
+      }
+      if (scenarios?.earlyPayment?.paymentAmount !== undefined) {
+        if (scenarios.earlyPayment.paymentAmount <= 0) {
+          return res.status(400).json({ message: "Payment amount must be positive" });
+        }
+      }
+      if (scenarios?.termChange?.newDurationDays !== undefined) {
+        if (scenarios.termChange.newDurationDays <= 0) {
+          return res.status(400).json({ message: "Duration must be positive" });
+        }
+      }
+      
+      // Get the loan
+      const loan = await storage.getLoanById(loanId);
+      if (!loan || loan.userId !== userId) {
+        return res.status(404).json({ message: "Loan not found" });
+      }
+      
+      const currentAmount = parseFloat(loan.amount.toString());
+      const currentRate = parseFloat(loan.interestRate.toString());
+      const currentDueDate = new Date(loan.dueDate);
+      const drawdownDate = new Date(loan.drawdownDate);
+      const currentDurationDays = Math.ceil((currentDueDate.getTime() - drawdownDate.getTime()) / (1000 * 60 * 60 * 24));
+      
+      // Calculate current loan cost
+      const currentDailyRate = currentRate / 365 / 100;
+      const currentInterest = currentAmount * currentDailyRate * currentDurationDays;
+      const currentTotalCost = currentAmount + currentInterest;
+      
+      const results: any = {
+        current: {
+          amount: currentAmount,
+          rate: currentRate,
+          durationDays: currentDurationDays,
+          interest: currentInterest,
+          totalCost: currentTotalCost,
+          dueDate: loan.dueDate
+        },
+        scenarios: []
+      };
+      
+      // Refinancing Scenario
+      if (scenarios?.refinance) {
+        const newRate = scenarios.refinance.newRate;
+        const newDailyRate = newRate / 365 / 100;
+        const refinanceInterest = currentAmount * newDailyRate * currentDurationDays;
+        const refinanceTotalCost = currentAmount + refinanceInterest;
+        const savings = currentInterest - refinanceInterest;
+        const savingsPercent = currentInterest > 0 ? (savings / currentInterest) * 100 : 0;
+        
+        results.scenarios.push({
+          type: 'refinance',
+          name: 'Refinance at Different Rate',
+          newRate,
+          interest: refinanceInterest,
+          totalCost: refinanceTotalCost,
+          savings,
+          savingsPercent,
+          recommendation: savings > 0 
+            ? `Refinancing would save SAR ${savings.toFixed(2)} (${savingsPercent.toFixed(1)}% reduction in interest)`
+            : `Refinancing would increase cost by SAR ${Math.abs(savings).toFixed(2)}`
+        });
+      }
+      
+      // Early Payment Scenario
+      if (scenarios?.earlyPayment) {
+        const paymentAmount = scenarios.earlyPayment.paymentAmount;
+        const paymentDate = scenarios.earlyPayment.paymentDate ? new Date(scenarios.earlyPayment.paymentDate) : new Date();
+        let daysElapsed = Math.ceil((paymentDate.getTime() - drawdownDate.getTime()) / (1000 * 60 * 60 * 24));
+        
+        // Clamp days elapsed to loan duration
+        daysElapsed = Math.max(0, Math.min(daysElapsed, currentDurationDays));
+        
+        if (paymentAmount >= currentAmount) {
+          // Full early payment
+          const interestPaid = currentAmount * currentDailyRate * daysElapsed;
+          const totalPaid = currentAmount + interestPaid;
+          const savings = currentInterest - interestPaid;
+          const savingsPercent = currentInterest > 0 ? (savings / currentInterest) * 100 : 0;
+          
+          results.scenarios.push({
+            type: 'earlyPayment',
+            name: 'Full Early Payment',
+            paymentAmount,
+            paymentDate,
+            daysElapsed,
+            interestPaid,
+            totalPaid,
+            savings,
+            savingsPercent,
+            recommendation: `Paying off the loan early would save SAR ${savings.toFixed(2)} (${savingsPercent.toFixed(1)}% of total interest)`
+          });
+        } else {
+          // Partial early payment
+          const remainingPrincipal = currentAmount - paymentAmount;
+          const interestToDate = currentAmount * currentDailyRate * daysElapsed;
+          const remainingDays = currentDurationDays - daysElapsed;
+          const futureInterest = remainingPrincipal * currentDailyRate * remainingDays;
+          const totalInterest = interestToDate + futureInterest;
+          const totalCost = currentAmount + totalInterest;
+          const savings = currentInterest - totalInterest;
+          const savingsPercent = currentInterest > 0 ? (savings / currentInterest) * 100 : 0;
+          
+          results.scenarios.push({
+            type: 'partialPayment',
+            name: 'Partial Early Payment',
+            paymentAmount,
+            paymentDate,
+            daysElapsed,
+            remainingPrincipal,
+            interestToDate,
+            futureInterest,
+            totalInterest,
+            totalCost,
+            savings,
+            savingsPercent,
+            recommendation: `Partial payment of SAR ${paymentAmount.toFixed(2)} would save SAR ${savings.toFixed(2)} (${savingsPercent.toFixed(1)}% reduction in interest)`
+          });
+        }
+      }
+      
+      // Term Extension/Reduction Scenario
+      if (scenarios?.termChange) {
+        const newDurationDays = scenarios.termChange.newDurationDays;
+        const newInterest = currentAmount * currentDailyRate * newDurationDays;
+        const newTotalCost = currentAmount + newInterest;
+        const difference = newInterest - currentInterest;
+        const differencePercent = currentInterest > 0 ? (difference / currentInterest) * 100 : 0;
+        
+        const newDueDate = new Date(drawdownDate);
+        newDueDate.setDate(newDueDate.getDate() + newDurationDays);
+        
+        results.scenarios.push({
+          type: 'termChange',
+          name: newDurationDays > currentDurationDays ? 'Extend Loan Term' : 'Reduce Loan Term',
+          newDurationDays,
+          newDueDate: newDueDate.toISOString(),
+          interest: newInterest,
+          totalCost: newTotalCost,
+          difference,
+          differencePercent,
+          recommendation: newDurationDays > currentDurationDays
+            ? `Extending the term by ${newDurationDays - currentDurationDays} days would cost an additional SAR ${difference.toFixed(2)} in interest`
+            : `Reducing the term by ${currentDurationDays - newDurationDays} days would save SAR ${Math.abs(difference).toFixed(2)} in interest`
+        });
+      }
+      
+      res.json(results);
+      
+    } catch (error) {
+      console.error("Error in what-if analysis:", error);
+      res.status(500).json({ message: "Failed to perform what-if analysis" });
+    }
+  });
+
+  // Smart Loan Matcher - recommend optimal facility for new loan
+  app.post('/api/ai/loan-matcher', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const { loanAmount, facilityType, duration } = req.body;
+      
+      if (!loanAmount || loanAmount <= 0) {
+        return res.status(400).json({ message: "Valid loan amount is required" });
+      }
+      
+      // Get all user facilities with their loans
+      const facilities = await storage.getUserFacilities(userId);
+      const loans = await storage.getActiveLoansByUser(userId);
+      
+      if (facilities.length === 0) {
+        return res.json({
+          recommendation: null,
+          message: "No facilities available. Please create a facility first."
+        });
+      }
+      
+      // Analyze each facility
+      const facilityScores = await Promise.all(facilities.map(async (facility: any) => {
+        // Calculate current utilization
+        const facilityLoans = loans.filter((l: any) => l.facilityId === facility.id);
+        const currentOutstanding = facilityLoans.reduce((sum: number, l: any) => 
+          sum + parseFloat(l.amount.toString()), 0);
+        const creditLimit = parseFloat(facility.limit.toString());
+        const availableCredit = creditLimit - currentOutstanding;
+        const utilizationPercent = (currentOutstanding / creditLimit) * 100;
+        
+        let score = 0;
+        const reasons: string[] = [];
+        const warnings: string[] = [];
+        
+        // 1. Available Credit (40 points)
+        if (availableCredit < loanAmount) {
+          score = 0;
+          warnings.push(`Insufficient credit: SAR ${availableCredit.toFixed(2)} available, SAR ${loanAmount.toFixed(2)} needed`);
+        } else {
+          const creditRatio = availableCredit / loanAmount;
+          if (creditRatio >= 3) {
+            score += 40;
+            reasons.push("Excellent available credit");
+          } else if (creditRatio >= 1.5) {
+            score += 30;
+            reasons.push("Good available credit");
+          } else {
+            score += 20;
+            warnings.push("Limited available credit after drawdown");
+          }
+        }
+        
+        // 2. Current Utilization (20 points) - lower is better
+        if (utilizationPercent < 30) {
+          score += 20;
+          reasons.push("Low utilization");
+        } else if (utilizationPercent < 60) {
+          score += 15;
+        } else if (utilizationPercent < 80) {
+          score += 10;
+          warnings.push("High utilization");
+        } else {
+          score += 5;
+          warnings.push("Very high utilization");
+        }
+        
+        // 3. Interest Rate (20 points) - lower is better
+        const rate = parseFloat(facility.costOfFunding.toString());
+        const minRate = Math.min(...facilities.map((f: any) => parseFloat(f.costOfFunding.toString())));
+        if (rate === minRate) {
+          score += 20;
+          reasons.push(`Best interest rate: ${rate}%`);
+        } else {
+          const rateDiff = rate - minRate;
+          if (rateDiff < 0.5) {
+            score += 15;
+          } else if (rateDiff < 1.0) {
+            score += 10;
+          } else {
+            score += 5;
+            warnings.push(`Higher interest rate: ${rate}% vs ${minRate}%`);
+          }
+        }
+        
+        // 4. Facility Type Match (10 points)
+        if (facilityType && facility.facilityType === facilityType) {
+          score += 10;
+          reasons.push("Facility type matches requirement");
+        } else if (facilityType) {
+          score += 5;
+        }
+        
+        // 5. Revolving Period Check (10 points)
+        if (facility.enableRevolvingTracking && duration) {
+          try {
+            const response = await fetch(`http://localhost:${process.env.PORT || 5000}/api/facilities/${facility.id}/revolving-usage`, {
+              headers: { 'Authorization': req.headers.authorization || '' }
+            });
+            const usage = await response.json();
+            
+            const remainingDays = usage.remainingDays || 0;
+            if (remainingDays >= duration) {
+              score += 10;
+              reasons.push(`Sufficient revolving period: ${remainingDays} days available`);
+            } else {
+              score += 0;
+              warnings.push(`Insufficient revolving period: ${remainingDays} days available, ${duration} needed`);
+            }
+          } catch {
+            score += 5; // Give partial credit if check fails
+          }
+        } else {
+          score += 5; // Not applicable
+        }
+        
+        return {
+          facilityId: facility.id,
+          facilityName: `${facility.bank?.name || 'Unknown Bank'} - ${facility.facilityType}`,
+          bankName: facility.bank?.name || 'Unknown Bank',
+          score,
+          availableCredit,
+          utilizationPercent: utilizationPercent.toFixed(2),
+          interestRate: rate,
+          creditLimit,
+          currentOutstanding,
+          reasons,
+          warnings,
+          isEligible: availableCredit >= loanAmount
+        };
+      }));
+      
+      // Sort by score (highest first)
+      facilityScores.sort((a, b) => b.score - a.score);
+      
+      // Filter eligible facilities
+      const eligibleFacilities = facilityScores.filter(f => f.isEligible);
+      
+      if (eligibleFacilities.length === 0) {
+        return res.json({
+          recommendation: null,
+          message: "No facilities have sufficient available credit for this loan amount.",
+          allFacilities: facilityScores
+        });
+      }
+      
+      const topRecommendation = eligibleFacilities[0];
+      const alternatives = eligibleFacilities.slice(1, 3); // Top 2 alternatives
+      
+      res.json({
+        recommendation: topRecommendation,
+        alternatives,
+        allFacilities: facilityScores,
+        message: `Recommended: ${topRecommendation.facilityName} (Score: ${topRecommendation.score}/100)`
+      });
+      
+    } catch (error) {
+      console.error("Error in loan matcher:", error);
+      res.status(500).json({ message: "Failed to analyze facilities" });
+    }
+  });
+
   // Loan routes
   app.get('/api/loans', isAuthenticated, async (req: any, res) => {
     try {
@@ -589,6 +1285,133 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Ensure creditLineId is set before creating the loan
       const finalLoanData = { ...loanData, creditLineId: finalCreditLineId };
       const loan = await storage.createLoan(finalLoanData);
+
+      // Auto-generate reminders based on user default settings
+      try {
+        const userSettings = await storage.getUserReminderSettings(userId);
+        
+        if (userSettings && userSettings.autoApplyDefaults && Array.isArray(userSettings.defaultIntervals) && userSettings.defaultIntervals.length > 0) {
+          // Validate and deduplicate intervals
+          const validIntervals = Array.from(new Set(
+            userSettings.defaultIntervals.filter(interval => 
+              Number.isInteger(interval) && interval > 0
+            )
+          ));
+
+          if (validIntervals.length === 0) {
+            console.warn("No valid intervals found for loan:", loan.id, "- skipping auto-reminder generation");
+          } else {
+            // Validate loan due date
+            const loanDueDate = new Date(loan.dueDate);
+            if (isNaN(loanDueDate.getTime())) {
+              console.warn("Invalid due date for loan:", loan.id, "- skipping auto-reminder generation");
+            } else {
+              // Get today's date in KSA timezone (Asia/Riyadh) for accurate comparison
+              const today = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Riyadh' });
+              
+              // Get existing reminders for this loan to prevent duplicates
+              const existingReminders = await storage.getLoanReminders(loan.id);
+              const existingDates = new Set(existingReminders.map(r => r.reminderDate));
+              
+              // Generate reminders based on validated intervals
+              const reminderPromises = validIntervals.map(async (interval) => {
+                const reminderDate = new Date(loanDueDate);
+                reminderDate.setDate(reminderDate.getDate() - interval);
+                const reminderDateStr = reminderDate.toLocaleDateString('en-CA', { timeZone: 'Asia/Riyadh' });
+                
+                // Skip if reminder date is in the past or already exists
+                if (reminderDateStr <= today) {
+                  return { success: false, reason: 'past_date', interval };
+                }
+                
+                if (existingDates.has(reminderDateStr)) {
+                  return { success: false, reason: 'duplicate_date', interval };
+                }
+
+                const reminderData = {
+                  loanId: loan.id,
+                  userId,
+                  reminderDate: reminderDateStr,
+                  message: `Automated reminder: Payment due in ${interval} days`,
+                  isEmailEnabled: userSettings.emailNotifications,
+                  isCalendarEnabled: userSettings.calendarEvents,
+                  templateId: userSettings.defaultTemplateId || null
+                };
+
+                try {
+                  const createdReminder = await storage.createLoanReminder(reminderData);
+                  
+                  // Send email notification if email is enabled for auto-generated reminder
+                  if (createdReminder.emailEnabled) {
+                    try {
+                      // Get user data for email
+                      const user = await storage.getUser(userId);
+                      if (!user) {
+                        console.error(`User not found for auto-reminder email: ${userId}`);
+                      } else {
+                        // Get bank and facility data for template context
+                        const facility = await storage.getFacilityById(loan.facilityId);
+                        let bank = null;
+                        if (facility?.bankId) {
+                          bank = await storage.getBankById(facility.bankId);
+                        }
+                        
+                        // Get template if specified
+                        let template = null;
+                        if (createdReminder.templateId) {
+                          try {
+                            const templates = await storage.getReminderTemplates();
+                            template = templates.find(t => t.id === createdReminder.templateId) || null;
+                          } catch (error) {
+                            console.log('Template not found for auto-reminder, using default:', error);
+                          }
+                        }
+                        
+                        // Send template-based email
+                        const emailSent = await sendTemplateReminderEmail(
+                          user, 
+                          loan, 
+                          createdReminder, 
+                          template, 
+                          bank, 
+                          facility
+                        );
+                        
+                        if (emailSent) {
+                          console.log(`Email sent for auto-generated reminder ${createdReminder.id}`);
+                        } else {
+                          console.error(`Failed to send email for auto-generated reminder ${createdReminder.id}`);
+                        }
+                      }
+                    } catch (emailError) {
+                      console.error('Error sending auto-reminder email:', emailError);
+                      // Don't fail the reminder creation if email sending fails
+                    }
+                  }
+                  
+                  return { success: true, reminder: createdReminder, interval };
+                } catch (error) {
+                  console.warn(`Failed to create reminder for interval ${interval} days:`, error);
+                  return { success: false, reason: 'creation_failed', interval, error };
+                }
+              });
+
+              // Wait for all reminders and handle individual failures
+              const results = await Promise.allSettled(reminderPromises);
+              const successCount = results.filter(r => r.status === 'fulfilled' && r.value.success).length;
+              const skippedCount = results.filter(r => r.status === 'fulfilled' && !r.value.success).length;
+              
+              if (successCount > 0) {
+                console.log(`Successfully created ${successCount} auto-generated reminders for loan ${loan.id}${skippedCount > 0 ? ` (${skippedCount} skipped)` : ''}`);
+              }
+            }
+          }
+        }
+      } catch (reminderError) {
+        // Log error but don't fail loan creation
+        console.warn("Failed to auto-generate reminders for loan:", loan.id, reminderError);
+      }
+
       res.json(loan);
     } catch (error) {
       console.error("Error creating loan:", error);
@@ -752,9 +1575,60 @@ export async function registerRoutes(app: Express): Promise<Server> {
         ...req.body,
         loanId,
         userId,
+        reminderDate: new Date(req.body.reminderDate),
       });
       
       const reminder = await storage.createLoanReminder(reminderData);
+      
+      // Send email notification if email is enabled for the reminder
+      if (reminder.emailEnabled) {
+        try {
+          // Get user data for email
+          const user = await storage.getUser(userId);
+          if (!user) {
+            console.error(`User not found for reminder email: ${userId}`);
+            return;
+          }
+          
+          // Get bank and facility data for template context
+          const facility = await storage.getFacilityById(loan.facilityId);
+          let bank = null;
+          if (facility?.bankId) {
+            bank = await storage.getBankById(facility.bankId);
+          }
+          
+          // Get template if specified
+          let template = null;
+          if (reminderData.templateId) {
+            try {
+              const templates = await storage.getReminderTemplates();
+              template = templates.find(t => t.id === reminderData.templateId) || null;
+            } catch (error) {
+              console.log('Template not found, using default:', error);
+            }
+          }
+          
+          // Send template-based email
+          const emailSent = await sendTemplateReminderEmail(
+            user, 
+            loan, 
+            reminder, 
+            template, 
+            bank, 
+            facility
+          );
+          
+          if (emailSent) {
+            console.log(`Email notification sent for reminder ${reminder.id}`);
+          } else {
+            console.error(`Failed to send email notification for reminder ${reminder.id}`);
+          }
+        } catch (emailError) {
+          console.error('Error sending reminder email:', emailError);
+          // Don't fail the reminder creation if email sending fails
+        }
+      }
+      
       res.status(201).json(reminder);
     } catch (error) {
       console.error("Error creating reminder:", error);
@@ -819,6 +1693,179 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ message: "Failed to fetch user reminders" });
     }
   });
+
+  // User reminder settings endpoints
+  app.get('/api/user/reminder-settings', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const settings = await storage.getUserReminderSettings(userId);
+      res.json(settings);
+    } catch (error) {
+      console.error("Error fetching user reminder settings:", error);
+      res.status(500).json({ message: "Failed to fetch reminder settings" });
+    }
+  });
+
+  app.post('/api/user/reminder-settings', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      
+      const settingsData = insertUserReminderSettingsSchema.parse({
+        ...req.body,
+        userId,
+      });
+      
+      const settings = await storage.upsertUserReminderSettings(settingsData);
+      res.json(settings);
+    } catch (error) {
+      console.error("Error saving user reminder settings:", error);
+      
+      // Return 400 for validation errors
+      if (error instanceof Error && error.message.includes('ZodError')) {
+        return res.status(400).json({ message: "Invalid settings data", details: error.message });
+      }
+      
+      res.status(500).json({ message: "Failed to save reminder settings" });
+    }
+  });
+
+  // User preferences endpoints
+  app.get('/api/user/preferences', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const preferences = await storage.getUserPreferences(userId);
+      res.json(preferences);
+    } catch (error) {
+      console.error("Error fetching user preferences:", error);
+      res.status(500).json({ message: "Failed to fetch user preferences" });
+    }
+  });
+
+  app.post('/api/user/preferences', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      
+      const preferencesData = insertUserPreferencesSchema.parse({
+        ...req.body,
+        userId,
+      });
+      
+      const preferences = await storage.upsertUserPreferences(preferencesData);
+      res.json(preferences);
+    } catch (error) {
+      console.error("Error saving user preferences:", error);
+      
+      // Return 400 for validation errors
+      if (error instanceof Error && error.message.includes('ZodError')) {
+        return res.status(400).json({ message: "Invalid preferences data", details: error.message });
+      }
+      
+      res.status(500).json({ message: "Failed to save user preferences" });
+    }
+  });
+
+  // Daily Alerts Preferences endpoints
+  app.get('/api/user/daily-alerts-preferences', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const preferences = await storage.getDailyAlertsPreferences(userId);
+      res.json(preferences);
+    } catch (error) {
+      console.error("Error fetching daily alerts preferences:", error);
+      res.status(500).json({ message: "Failed to fetch daily alerts preferences" });
+    }
+  });
+
+  app.post('/api/user/daily-alerts-preferences', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      
+      const preferencesData = insertDailyAlertsPreferencesSchema.parse({
+        ...req.body,
+        userId,
+      });
+      
+      const preferences = await storage.upsertDailyAlertsPreferences(preferencesData);
+      res.json(preferences);
+    } catch (error) {
+      console.error("Error saving daily alerts preferences:", error);
+      
+      // Return 400 for validation errors
+      if (error instanceof Error && error.message.includes('ZodError')) {
+        return res.status(400).json({ message: "Invalid daily alerts preferences data", details: error.message });
+      }
+      
+      res.status(500).json({ message: "Failed to save daily alerts preferences" });
+    }
+  });
+
+  // AI insights configuration endpoints
+  app.get('/api/user/ai-insights', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const config = await storage.getUserAiConfig(userId);
+      res.json(config);
+    } catch (error) {
+      console.error("Error fetching AI insights config:", error);
+      res.status(500).json({ message: "Failed to fetch AI insights configuration" });
+    }
+  });
+
+  app.post('/api/user/ai-insights', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      
+      const configData = insertAiInsightConfigSchema.parse({
+        ...req.body,
+        userId,
+      });
+      
+      const config = await storage.upsertAiConfig(configData);
+      res.json(config);
+    } catch (error) {
+      console.error("Error saving AI insights config:", error);
+      
+      // Return 400 for validation errors
+      if (error instanceof Error && error.message.includes('ZodError')) {
+        return res.status(400).json({ message: "Invalid AI insights data", details: error.message });
+      }
+      
+      res.status(500).json({ message: "Failed to save AI insights configuration" });
+    }
+  });
+
+  // Update user profile endpoint
+  app.patch('/api/auth/user', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      
+      // Only allow updating certain fields
+      const allowedFields = ['firstName', 'lastName', 'email', 'profileImageUrl'];
+      const updateData: any = {};
+      
+      for (const field of allowedFields) {
+        if (req.body[field] !== undefined) {
+          updateData[field] = req.body[field];
+        }
+      }
+      
+      if (Object.keys(updateData).length === 0) {
+        return res.status(400).json({ message: "No valid fields provided for update" });
+      }
+      
+      const updatedUser = await storage.upsertUser({
+        id: userId,
+        ...updateData,
+      });
+      
+      res.json(updatedUser);
+    } catch (error) {
+      console.error("Error updating user profile:", error);
+      res.status(500).json({ message: "Failed to update user profile" });
+    }
+  });
+
+  // NOTE: Admin template routes moved to after isAdminAuthenticated middleware definition
 
   // Calendar invite endpoints
   app.get('/api/reminders/:reminderId/calendar', isAuthenticated, async (req: any, res) => {
@@ -1061,6 +2108,64 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Upcoming loans by month for dashboard chart
+  app.get('/api/dashboard/upcoming-loans-by-month', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const bankId = req.query.bankId as string | undefined;
+      const facilityType = req.query.facilityType as string | undefined;
+      
+      // Get all active loans for the user
+      const allLoans = await storage.getActiveLoansByUser(userId);
+      const facilities = await storage.getUserFacilities(userId);
+      
+      // Filter loans based on query params
+      let filteredLoans = allLoans.filter((loan: any) => loan.status === 'active');
+      
+      if (bankId) {
+        const bankFacilityIds = facilities.filter((f: any) => f.bankId === bankId).map((f: any) => f.id);
+        filteredLoans = filteredLoans.filter((loan: any) => bankFacilityIds.includes(loan.facilityId));
+      }
+      
+      if (facilityType) {
+        const typeFacilityIds = facilities.filter((f: any) => f.facilityType === facilityType).map((f: any) => f.id);
+        filteredLoans = filteredLoans.filter((loan: any) => typeFacilityIds.includes(loan.facilityId));
+      }
+      
+      // Generate next 12 months
+      const now = new Date();
+      const months: any[] = [];
+      for (let i = 0; i < 12; i++) {
+        const monthDate = new Date(now.getFullYear(), now.getMonth() + i, 1);
+        months.push({
+          month: monthDate.toLocaleDateString('en-US', { year: 'numeric', month: 'short' }),
+          monthKey: `${monthDate.getFullYear()}-${String(monthDate.getMonth() + 1).padStart(2, '0')}`,
+          count: 0,
+          amount: 0
+        });
+      }
+      
+      // Group loans by month
+      filteredLoans.forEach((loan: any) => {
+        if (!loan.dueDate) return;
+        
+        const dueDate = new Date(loan.dueDate);
+        const monthKey = `${dueDate.getFullYear()}-${String(dueDate.getMonth() + 1).padStart(2, '0')}`;
+        
+        const monthData = months.find(m => m.monthKey === monthKey);
+        if (monthData) {
+          monthData.count += 1;
+          monthData.amount += parseFloat(loan.amount.toString());
+        }
+      });
+      
+      res.json(months);
+    } catch (error) {
+      console.error("Error fetching upcoming loans by month:", error);
+      res.status(500).json({ message: "Failed to fetch upcoming loans by month" });
+    }
+  });
+
   // AI Insights
   app.get('/api/ai-insights', isAuthenticated, async (req: any, res) => {
     try {
@@ -1140,7 +2245,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
 
       if (dueLoans.length > 0) {
-        await sendLoanDueNotification(user.email, dueLoans);
+        // Transform loans to match LoanDueNotification interface
+        const dueLoanNotifications = dueLoans.map(loan => ({
+          id: loan.id,
+          referenceNumber: loan.referenceNumber,
+          amount: loan.amount,
+          dueDate: loan.dueDate,
+          facility: {
+            bank: {
+              name: 'Bank' // Simplified for notification - could be enhanced with actual bank lookup
+            }
+          }
+        }));
+        
+        await sendLoanDueNotification(user.email, dueLoanNotifications);
       }
 
       res.json({ message: "Notifications sent", count: dueLoans.length });
@@ -1343,8 +2461,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
           return {
             loanId: loan.id,
             referenceNumber: loan.referenceNumber,
-            bankName: loan.creditLine.facility.bank.name,
-            facilityId: loan.creditLine.facilityId,
+            bankName: loan.facility.bank.name,
+            facilityId: loan.facilityId,
             amount: parseFloat(loan.amount),
             totalDrawn,
             totalRepaid,
@@ -1384,7 +2502,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       if (queryResult.data.bankId) {
         filteredData = filteredData.filter(loan => 
-          allLoans.find(l => l.id === loan.loanId)?.creditLine.facility.bank.id === queryResult.data.bankId
+          allLoans.find(l => l.id === loan.loanId)?.facility.bank.id === queryResult.data.bankId
         );
       }
       
@@ -1622,7 +2740,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Admin session storage (in production, use proper session store)
-  const adminSessions = new Map<string, { username: string; role: string; loginTime: string }>();
+  // Using global to persist sessions during development hot reloads
+  if (!(global as any).adminSessions) {
+    (global as any).adminSessions = new Map<string, { username: string; role: string; loginTime: string }>();
+  }
+  const adminSessions = (global as any).adminSessions;
 
   // Admin authentication routes
   app.post('/api/admin/auth/login', async (req, res) => {
@@ -1723,11 +2845,81 @@ export async function registerRoutes(app: Express): Promise<Server> {
     return next();
   };
 
+  // Admin Template Management Routes (Protected)
+  app.get('/api/admin/templates', isAdminAuthenticated, async (req: any, res) => {
+    try {
+      const templates = await storage.getAllReminderTemplates();
+      res.json(templates);
+    } catch (error) {
+      console.error("Error fetching templates:", error);
+      res.status(500).json({ message: "Failed to fetch templates" });
+    }
+  });
+
+  app.get('/api/admin/templates/:templateId', isAdminAuthenticated, async (req: any, res) => {
+    try {
+      const { templateId } = req.params;
+      const template = await storage.getReminderTemplate(templateId);
+      
+      if (!template) {
+        return res.status(404).json({ message: "Template not found" });
+      }
+      
+      res.json(template);
+    } catch (error) {
+      console.error("Error fetching template:", error);
+      res.status(500).json({ message: "Failed to fetch template" });
+    }
+  });
+
+  app.post('/api/admin/templates', isAdminAuthenticated, async (req: any, res) => {
+    try {
+      const templateData = insertReminderTemplateSchema.parse(req.body);
+      const template = await storage.createReminderTemplate(templateData);
+      res.status(201).json(template);
+    } catch (error) {
+      console.error("Error creating template:", error);
+      res.status(500).json({ message: "Failed to create template" });
+    }
+  });
+
+  app.put('/api/admin/templates/:templateId', isAdminAuthenticated, async (req: any, res) => {
+    try {
+      const { templateId } = req.params;
+      const templateData = updateReminderTemplateSchema.parse({
+        ...req.body,
+        id: templateId,
+      });
+      
+      const template = await storage.updateReminderTemplate(templateId, templateData);
+      
+      if (!template) {
+        return res.status(404).json({ message: "Template not found" });
+      }
+      
+      res.json(template);
+    } catch (error) {
+      console.error("Error updating template:", error);
+      res.status(500).json({ message: "Failed to update template" });
+    }
+  });
+
+  app.delete('/api/admin/templates/:templateId', isAdminAuthenticated, async (req: any, res) => {
+    try {
+      const { templateId } = req.params;
+      await storage.deleteReminderTemplate(templateId);
+      res.json({ message: "Template deleted successfully" });
+    } catch (error) {
+      console.error("Error deleting template:", error);
+      res.status(500).json({ message: "Failed to delete template" });
+    }
+  });
+
   // Admin system stats
   app.get('/api/admin/system/stats', isAdminAuthenticated, async (req: any, res) => {
     try {
       // Get real system stats
-      const loans = await storage.getAllLoans(req.user?.claims?.sub || 'demo-user');
+      const loans = await storage.getActiveLoansByUser(req.user?.claims?.sub || 'demo-user');
       const banks = await storage.getAllBanks();
       
       const stats = {
@@ -1848,7 +3040,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get('/api/admin/stats', isAuthenticated, async (req: any, res) => {
     try {
       // Get aggregate stats for admin dashboard
-      const loans = await storage.getAllLoans(req.user.claims.sub);
+      const loans = await storage.getActiveLoansByUser(req.user.claims.sub);
       const banks = await storage.getAllBanks();
       
       const stats = {
@@ -1890,6 +3082,746 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Report Generation Routes
+  app.get('/api/reports/facility-summary', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const format = req.query.format || 'pdf';
+      const startDate = req.query.startDate;
+      const endDate = req.query.endDate;
+
+      // Fetch data for the report
+      const facilities = await storage.getUserFacilities(userId);
+      const banks = await storage.getAllBanks();
+      const loans = await storage.getActiveLoansByUser(userId);
+
+      // Calculate totals and summaries
+      const bankSummaries = banks.map(bank => {
+        const bankFacilities = facilities.filter((f: any) => f.bankId === bank.id);
+        const bankLoans = loans.filter(l => {
+          const facility = facilities.find((f: any) => f.id === l.facilityId);
+          return facility?.bankId === bank.id;
+        });
+        
+        const totalCreditLimit = bankFacilities.reduce((sum: number, f: any) => 
+          sum + parseFloat(f.creditLimit.toString()), 0);
+        const totalOutstanding = bankLoans.reduce((sum: number, l: any) => 
+          sum + parseFloat(l.amount.toString()), 0);
+        const utilization = totalCreditLimit > 0 
+          ? (totalOutstanding / totalCreditLimit * 100).toFixed(2) 
+          : '0.00';
+
+        return {
+          bankName: bank.name,
+          bankCode: bank.code,
+          facilitiesCount: bankFacilities.length,
+          totalCreditLimit,
+          totalOutstanding,
+          utilization,
+          facilities: bankFacilities.map((f: any) => ({
+            type: f.facilityType,
+            creditLimit: parseFloat(f.creditLimit.toString()),
+            costOfFunding: parseFloat(f.costOfFunding.toString()),
+            expiryDate: f.expiryDate
+          }))
+        };
+      }).filter(summary => summary.facilitiesCount > 0);
+
+      if (format === 'excel') {
+        // Generate Excel report
+        const workbook = XLSX.utils.book_new();
+        
+        // Summary sheet
+        const summaryData = [
+          ['Facility Report'],
+          ['Generated:', new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })],
+          startDate && endDate ? ['Period:', `${startDate} to ${endDate}`] : [],
+          [],
+          ['Bank', 'Code', 'Facilities', 'Credit Limit (SAR)', 'Outstanding (SAR)', 'Utilization %']
+        ];
+
+        bankSummaries.forEach(summary => {
+          summaryData.push([
+            summary.bankName,
+            summary.bankCode,
+            summary.facilitiesCount.toString(),
+            summary.totalCreditLimit.toLocaleString('en-US', { minimumFractionDigits: 2 }),
+            summary.totalOutstanding.toLocaleString('en-US', { minimumFractionDigits: 2 }),
+            summary.utilization + '%'
+          ]);
+        });
+
+        const ws = XLSX.utils.aoa_to_sheet(summaryData);
+        XLSX.utils.book_append_sheet(workbook, ws, 'Summary');
+
+        // Detailed facilities sheet
+        const detailData = [
+          ['Bank', 'Facility Type', 'Credit Limit (SAR)', 'Cost of Funding %', 'Expiry Date']
+        ];
+
+        bankSummaries.forEach(summary => {
+          summary.facilities.forEach((facility: any) => {
+            detailData.push([
+              summary.bankName,
+              facility.type,
+              facility.creditLimit.toLocaleString('en-US', { minimumFractionDigits: 2 }),
+              facility.costOfFunding.toFixed(2) + '%',
+              facility.expiryDate || 'N/A'
+            ]);
+          });
+        });
+
+        const wsDetail = XLSX.utils.aoa_to_sheet(detailData);
+        XLSX.utils.book_append_sheet(workbook, wsDetail, 'Facility Details');
+
+        const buffer = XLSX.write(workbook, { type: 'buffer', bookType: 'xlsx' });
+        
+        res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+        res.setHeader('Content-Disposition', `attachment; filename="facility-report-${new Date().toISOString().split('T')[0]}.xlsx"`);
+        res.send(buffer);
+      } else {
+        // Generate PDF report
+        const PDFDoc = (jsPDF as any).default || jsPDF;
+        const doc = new PDFDoc();
+        
+        // Title
+        doc.setFontSize(18);
+        doc.text('Facility Report', 14, 20);
+        
+        doc.setFontSize(10);
+        doc.text(`Generated: ${new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}`, 14, 28);
+        if (startDate && endDate) {
+          doc.text(`Period: ${startDate} to ${endDate}`, 14, 34);
+        }
+
+        // Summary table
+        const tableData = bankSummaries.map(summary => [
+          summary.bankName,
+          summary.bankCode,
+          summary.facilitiesCount.toString(),
+          `SAR ${summary.totalCreditLimit.toLocaleString('en-US', { minimumFractionDigits: 2 })}`,
+          `SAR ${summary.totalOutstanding.toLocaleString('en-US', { minimumFractionDigits: 2 })}`,
+          `${summary.utilization}%`
+        ]);
+
+        autoTable(doc, {
+          startY: startDate && endDate ? 40 : 34,
+          head: [['Bank', 'Code', 'Facilities', 'Credit Limit', 'Outstanding', 'Utilization']],
+          body: tableData,
+          theme: 'grid',
+          headStyles: { fillColor: [183, 28, 28] }, // Saudi red color
+          styles: { fontSize: 9 }
+        });
+
+        // Add facility details
+        let yPos = (doc as any).lastAutoTable.finalY + 10;
+        doc.setFontSize(14);
+        doc.text('Facility Details', 14, yPos);
+        
+        const detailTableData: any[] = [];
+        bankSummaries.forEach(summary => {
+          summary.facilities.forEach((facility: any) => {
+            detailTableData.push([
+              summary.bankName,
+              facility.type,
+              `SAR ${facility.creditLimit.toLocaleString('en-US', { minimumFractionDigits: 2 })}`,
+              `${facility.costOfFunding.toFixed(2)}%`,
+              facility.expiryDate || 'N/A'
+            ]);
+          });
+        });
+
+        autoTable(doc, {
+          startY: yPos + 5,
+          head: [['Bank', 'Facility Type', 'Credit Limit', 'Cost of Funding', 'Expiry Date']],
+          body: detailTableData,
+          theme: 'grid',
+          headStyles: { fillColor: [183, 28, 28] },
+          styles: { fontSize: 8 }
+        });
+
+        const pdfBuffer = Buffer.from(doc.output('arraybuffer'));
+        
+        res.setHeader('Content-Type', 'application/pdf');
+        res.setHeader('Content-Disposition', `attachment; filename="facility-report-${new Date().toISOString().split('T')[0]}.pdf"`);
+        res.send(pdfBuffer);
+      }
+    } catch (error) {
+      console.error('Error generating facility summary report:', error);
+      res.status(500).json({ message: 'Failed to generate facility summary report' });
+    }
+  });
+
+  app.get('/api/reports/bank-exposures', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const format = req.query.format || 'pdf';
+      const startDate = req.query.startDate;
+      const endDate = req.query.endDate;
+
+      // Fetch exposure data
+      const facilities = await storage.getUserFacilities(userId);
+      const banks = await storage.getAllBanks();
+      const loans = await storage.getActiveLoansByUser(userId);
+
+      // Calculate bank exposures
+      const exposures = banks.map(bank => {
+        const bankFacilities = facilities.filter((f: any) => f.bankId === bank.id);
+        const bankLoans = loans.filter(l => {
+          const facility = facilities.find((f: any) => f.id === l.facilityId);
+          return facility?.bankId === bank.id;
+        });
+
+        const totalCreditLimit = bankFacilities.reduce((sum: number, f: any) => 
+          sum + parseFloat(f.creditLimit.toString()), 0);
+        const totalOutstanding = bankLoans.reduce((sum: number, l: any) => 
+          sum + parseFloat(l.amount.toString()), 0);
+        const availableCredit = totalCreditLimit - totalOutstanding;
+        const utilization = totalCreditLimit > 0 
+          ? (totalOutstanding / totalCreditLimit * 100).toFixed(2) 
+          : '0.00';
+
+        return {
+          bankName: bank.name,
+          bankCode: bank.code,
+          totalCreditLimit,
+          totalOutstanding,
+          availableCredit,
+          utilization,
+          activeLoans: bankLoans.length
+        };
+      }).filter(exp => exp.totalCreditLimit > 0);
+
+      const totalExposure = exposures.reduce((sum, exp) => sum + exp.totalOutstanding, 0);
+      const totalCreditLimit = exposures.reduce((sum, exp) => sum + exp.totalCreditLimit, 0);
+
+      if (format === 'excel') {
+        // Generate Excel report
+        const workbook = XLSX.utils.book_new();
+        
+        const exposureData = [
+          ['Bank Exposure Analysis'],
+          ['Generated:', new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })],
+          startDate && endDate ? ['Period:', `${startDate} to ${endDate}`] : [],
+          [],
+          ['Total Exposure:', `SAR ${totalExposure.toLocaleString('en-US', { minimumFractionDigits: 2 })}`],
+          ['Total Credit Limit:', `SAR ${totalCreditLimit.toLocaleString('en-US', { minimumFractionDigits: 2 })}`],
+          [],
+          ['Bank', 'Code', 'Credit Limit (SAR)', 'Outstanding (SAR)', 'Available (SAR)', 'Utilization %', 'Active Loans']
+        ];
+
+        exposures.forEach(exp => {
+          exposureData.push([
+            exp.bankName,
+            exp.bankCode,
+            exp.totalCreditLimit.toLocaleString('en-US', { minimumFractionDigits: 2 }),
+            exp.totalOutstanding.toLocaleString('en-US', { minimumFractionDigits: 2 }),
+            exp.availableCredit.toLocaleString('en-US', { minimumFractionDigits: 2 }),
+            exp.utilization + '%',
+            exp.activeLoans.toString()
+          ]);
+        });
+
+        const ws = XLSX.utils.aoa_to_sheet(exposureData);
+        XLSX.utils.book_append_sheet(workbook, ws, 'Exposure Analysis');
+
+        const buffer = XLSX.write(workbook, { type: 'buffer', bookType: 'xlsx' });
+        
+        res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+        res.setHeader('Content-Disposition', `attachment; filename="bank-exposure-${new Date().toISOString().split('T')[0]}.xlsx"`);
+        res.send(buffer);
+      } else {
+        // Generate PDF report
+        const PDFDoc = (jsPDF as any).default || jsPDF;
+        const doc = new PDFDoc();
+        
+        // Title
+        doc.setFontSize(18);
+        doc.text('Bank Exposure Analysis', 14, 20);
+        
+        doc.setFontSize(10);
+        doc.text(`Generated: ${new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}`, 14, 28);
+        if (startDate && endDate) {
+          doc.text(`Period: ${startDate} to ${endDate}`, 14, 34);
+        }
+
+        // Summary
+        const yStart = startDate && endDate ? 42 : 36;
+        doc.setFontSize(12);
+        doc.text(`Total Exposure: SAR ${totalExposure.toLocaleString('en-US', { minimumFractionDigits: 2 })}`, 14, yStart);
+        doc.text(`Total Credit Limit: SAR ${totalCreditLimit.toLocaleString('en-US', { minimumFractionDigits: 2 })}`, 14, yStart + 6);
+
+        // Exposure table
+        const tableData = exposures.map(exp => [
+          exp.bankName,
+          exp.bankCode,
+          `SAR ${exp.totalCreditLimit.toLocaleString('en-US', { minimumFractionDigits: 2 })}`,
+          `SAR ${exp.totalOutstanding.toLocaleString('en-US', { minimumFractionDigits: 2 })}`,
+          `SAR ${exp.availableCredit.toLocaleString('en-US', { minimumFractionDigits: 2 })}`,
+          `${exp.utilization}%`,
+          exp.activeLoans.toString()
+        ]);
+
+        autoTable(doc, {
+          startY: yStart + 14,
+          head: [['Bank', 'Code', 'Credit Limit', 'Outstanding', 'Available', 'Utilization', 'Loans']],
+          body: tableData,
+          theme: 'grid',
+          headStyles: { fillColor: [183, 28, 28] }, // Saudi red color
+          styles: { fontSize: 8 }
+        });
+
+        const pdfBuffer = Buffer.from(doc.output('arraybuffer'));
+        
+        res.setHeader('Content-Type', 'application/pdf');
+        res.setHeader('Content-Disposition', `attachment; filename="bank-exposure-${new Date().toISOString().split('T')[0]}.pdf"`);
+        res.send(pdfBuffer);
+      }
+    } catch (error) {
+      console.error('Error generating bank exposure report:', error);
+      res.status(500).json({ message: 'Failed to generate bank exposure report' });
+    }
+  });
+
+  // ================== CHAT API ROUTES ==================
+  
+  // Configure multer for file uploads (store in memory for text extraction)
+  const upload = multer({
+    storage: multer.memoryStorage(),
+    limits: {
+      fileSize: getMaxFileSize(),
+    },
+    fileFilter: (req, file, cb) => {
+      const supportedTypes = getSupportedFileTypes();
+      if (supportedTypes.includes(file.mimetype)) {
+        cb(null, true);
+      } else {
+        cb(new Error(`Unsupported file type: ${file.mimetype}. Supported: PDF, DOCX, XLSX, TXT, CSV`));
+      }
+    },
+  });
+  
+  // Upload file to chat conversation
+  app.post('/api/chat/conversations/:conversationId/upload', 
+    isAuthenticated, 
+    upload.single('file'), 
+    async (req: any, res) => {
+      try {
+        const { conversationId } = req.params;
+        const userId = req.user.claims.sub;
+        const file = req.file;
+        
+        if (!file) {
+          return res.status(400).json({ message: 'No file uploaded' });
+        }
+        
+        // Verify conversation ownership
+        const conversation = await storage.getConversation(conversationId);
+        if (!conversation) {
+          return res.status(404).json({ message: 'Conversation not found' });
+        }
+        if (conversation.userId !== userId) {
+          return res.status(403).json({ message: 'Access denied' });
+        }
+        
+        // Extract text from file for AI context
+        const extractedText = await extractTextFromFile(file.buffer, file.mimetype, file.originalname);
+        
+        // Generate storage key
+        const timestamp = new Date().toISOString().slice(0, 7);
+        const fileId = crypto.randomUUID();
+        const sanitizedFileName = file.originalname.replace(/[^a-zA-Z0-9.-]/g, '_');
+        const storageKey = `chat-attachments/${conversationId}/${timestamp}/${fileId}_${sanitizedFileName}`;
+        
+        // NOTE: For AI chat attachments, the primary value is the extracted text for AI context
+        // Binary file storage to object storage is intentionally deferred to keep implementation simple
+        // The attachment metadata provides an audit trail of uploads
+        // If binary file retrieval/download is needed later, object storage integration can be added
+        const attachment = await storage.createAttachment({
+          ownerType: 'chat_message',
+          ownerId: conversationId, // Using conversation ID as owner for now
+          userId,
+          fileName: file.originalname,
+          contentType: file.mimetype,
+          fileSize: file.size,
+          storageKey, // Storage key for future object storage integration
+          category: 'chat_attachment',
+          uploadedBy: userId,
+        });
+        
+        // Log audit trail
+        await storage.createAttachmentAudit({
+          attachmentId: attachment.id,
+          userId,
+          action: 'upload',
+          ipAddress: req.ip,
+          userAgent: req.get('User-Agent'),
+          metadata: { 
+            fileName: file.originalname, 
+            fileSize: file.size,
+            conversationId,
+            extractedTextLength: extractedText.length,
+          },
+        });
+        
+        res.json({
+          attachment,
+          extractedText,
+        });
+      } catch (error) {
+        console.error('Error uploading chat file:', error);
+        res.status(500).json({ 
+          message: error instanceof Error ? error.message : 'Failed to upload file' 
+        });
+      }
+    }
+  );
+  
+  // Get all conversations for a user
+  app.get('/api/chat/conversations', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const conversations = await storage.getUserConversations(userId);
+      res.json(conversations);
+    } catch (error) {
+      console.error('Error fetching conversations:', error);
+      res.status(500).json({ message: 'Failed to fetch conversations' });
+    }
+  });
+
+  // Create a new conversation
+  app.post('/api/chat/conversations', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const { title } = req.body;
+      
+      const conversation = await storage.createConversation({
+        userId,
+        title: title || 'New Conversation',
+        isActive: true,
+      });
+      
+      res.json(conversation);
+    } catch (error) {
+      console.error('Error creating conversation:', error);
+      res.status(500).json({ message: 'Failed to create conversation' });
+    }
+  });
+
+  // Get a conversation with all its messages
+  app.get('/api/chat/conversations/:conversationId', isAuthenticated, async (req: any, res) => {
+    try {
+      const { conversationId } = req.params;
+      const userId = req.user.claims.sub;
+      
+      const conversation = await storage.getConversation(conversationId);
+      if (!conversation) {
+        return res.status(404).json({ message: 'Conversation not found' });
+      }
+      
+      // Verify ownership
+      if (conversation.userId !== userId) {
+        return res.status(403).json({ message: 'Access denied' });
+      }
+      
+      const messages = await storage.getConversationMessages(conversationId);
+      
+      res.json({
+        conversation,
+        messages,
+      });
+    } catch (error) {
+      console.error('Error fetching conversation:', error);
+      res.status(500).json({ message: 'Failed to fetch conversation' });
+    }
+  });
+
+  // Send a message and get AI response
+  app.post('/api/chat/conversations/:conversationId/messages', isAuthenticated, async (req: any, res) => {
+    try {
+      const { conversationId } = req.params;
+      const userId = req.user.claims.sub;
+      const { content, attachmentIds, attachmentTexts } = req.body;
+      
+      if (!content || typeof content !== 'string') {
+        return res.status(400).json({ message: 'Message content is required' });
+      }
+      
+      // Verify conversation ownership
+      const conversation = await storage.getConversation(conversationId);
+      if (!conversation) {
+        return res.status(404).json({ message: 'Conversation not found' });
+      }
+      
+      if (conversation.userId !== userId) {
+        return res.status(403).json({ message: 'Access denied' });
+      }
+      
+      // Build metadata with attachment info
+      const metadata: any = {};
+      if (attachmentIds && Array.isArray(attachmentIds) && attachmentIds.length > 0) {
+        metadata.attachmentIds = attachmentIds;
+      }
+      
+      // Save user message
+      const userMessage = await storage.addMessage({
+        conversationId,
+        role: 'user',
+        content,
+        metadata,
+      });
+      
+      // Get conversation history
+      const history = await storage.getConversationMessages(conversationId);
+      
+      // Get portfolio context
+      const portfolioSummary = await storage.getUserPortfolioSummary(userId);
+      const loans = await storage.getActiveLoansByUser(userId);
+      const facilities = await storage.getUserFacilities(userId);
+      const collateralList = await storage.getUserCollateral(userId);
+      
+      // Build context for AI
+      const portfolioContext = `
+PORTFOLIO OVERVIEW:
+- Total Outstanding: SAR ${portfolioSummary.totalOutstanding.toLocaleString()}
+- Total Credit Limit: SAR ${portfolioSummary.totalCreditLimit.toLocaleString()}
+- Available Credit: SAR ${portfolioSummary.availableCredit.toLocaleString()}
+- Active Loans: ${portfolioSummary.activeLoansCount}
+- Portfolio LTV: ${portfolioSummary.portfolioLtv.toFixed(2)}%
+- Facility Coverage: ${portfolioSummary.portfolioFacilityLtv.toFixed(2)}%
+- Exposure Coverage: ${portfolioSummary.portfolioOutstandingLtv.toFixed(2)}%
+
+BANK EXPOSURES:
+${portfolioSummary.bankExposures.map(exp => 
+  `- ${exp.bankName}: SAR ${exp.outstanding.toLocaleString()} / SAR ${exp.creditLimit.toLocaleString()} (${exp.utilization.toFixed(1)}% utilized)`
+).join('\n')}
+
+FACILITIES (${facilities.length}):
+${facilities.map((f: any) => 
+  `- ${f.bank.name}: ${f.facilityType} - SAR ${parseFloat(f.creditLimit).toLocaleString()}`
+).join('\n')}
+
+ACTIVE LOANS (${loans.length}):
+${loans.map(loan => 
+  `- ${loan.facility.bank.name}: SAR ${parseFloat(loan.amount).toLocaleString()} (${loan.referenceNumber})`
+).join('\n')}
+
+COLLATERAL (${collateralList.length}):
+${collateralList.map(col => 
+  `- ${col.name} (${col.type}): SAR ${parseFloat(col.currentValue).toLocaleString()}`
+).join('\n')}
+      `.trim();
+      
+      // Build conversation history for AI
+      const conversationHistory = history
+        .filter(msg => msg.role !== 'system')
+        .map(msg => ({
+          role: msg.role,
+          content: msg.content,
+        }));
+      
+      // Build file attachment context
+      let fileContext = '';
+      if (attachmentTexts && Array.isArray(attachmentTexts) && attachmentTexts.length > 0) {
+        fileContext = '\n\nATTACHED FILES:\n' + attachmentTexts.map((fileData: any, index: number) => 
+          `\n--- File ${index + 1}: ${fileData.fileName} ---\n${fileData.extractedText}\n`
+        ).join('\n');
+      }
+      
+      // Call DeepSeek API
+      const deepseekApiKey = process.env.DEEPSEEK_API_KEY;
+      if (!deepseekApiKey) {
+        return res.status(500).json({ message: 'DeepSeek API key not configured' });
+      }
+      
+      const systemPrompt = `You are a loan portfolio advisor for the Saudi Arabian market. You analyze loan portfolios, facilities, collateral, and bank relationships to provide strategic insights and recommendations.
+
+IMPORTANT RULES:
+1. ONLY use data from the portfolio context and attached files provided - NEVER make assumptions or use external data
+2. All financial figures are in SAR (Saudi Riyals)
+3. Be specific and reference actual numbers from the portfolio
+4. Focus on portfolio optimization, risk management, and cost efficiency
+5. When answering questions, cite specific loans, facilities, or banks from the context
+6. If the user asks about data not in the context, explain what data is available
+7. Keep responses concise and actionable
+8. If files are attached, analyze them and incorporate their data into your response
+
+${portfolioContext}${fileContext}`;
+      
+      try {
+        const response = await fetch('https://api.deepseek.com/v1/chat/completions', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${deepseekApiKey}`,
+          },
+          body: JSON.stringify({
+            model: 'deepseek-chat',
+            messages: [
+              { role: 'system', content: systemPrompt },
+              ...conversationHistory,
+            ],
+            temperature: 0.7,
+            max_tokens: 1000,
+          }),
+        });
+        
+        if (!response.ok) {
+          throw new Error(`DeepSeek API error: ${response.statusText}`);
+        }
+        
+        const aiResponse = await response.json();
+        const aiMessageContent = aiResponse.choices[0]?.message?.content || 'I apologize, but I was unable to generate a response.';
+        
+        // Save AI response
+        const aiMessage = await storage.addMessage({
+          conversationId,
+          role: 'assistant',
+          content: aiMessageContent,
+          metadata: {
+            model: 'deepseek-chat',
+            timestamp: new Date().toISOString(),
+          },
+        });
+        
+        // Update conversation title if it's the first exchange
+        if (history.length <= 2 && conversation.title === 'New Conversation') {
+          const newTitle = content.substring(0, 50) + (content.length > 50 ? '...' : '');
+          await storage.updateConversation(conversationId, { title: newTitle });
+        }
+        
+        res.json({
+          userMessage,
+          aiMessage,
+        });
+      } catch (aiError: any) {
+        console.error('Error calling DeepSeek API:', aiError);
+        
+        // Save error message
+        const errorMessage = await storage.addMessage({
+          conversationId,
+          role: 'assistant',
+          content: 'I apologize, but I encountered an error processing your request. Please try again.',
+          metadata: {
+            error: true,
+            timestamp: new Date().toISOString(),
+          },
+        });
+        
+        res.json({
+          userMessage,
+          aiMessage: errorMessage,
+        });
+      }
+    } catch (error) {
+      console.error('Error sending message:', error);
+      res.status(500).json({ message: 'Failed to send message' });
+    }
+  });
+
+  // Delete a conversation
+  app.delete('/api/chat/conversations/:conversationId', isAuthenticated, async (req: any, res) => {
+    try {
+      const { conversationId } = req.params;
+      const userId = req.user.claims.sub;
+      
+      // getConversation() already filters by isActive, so this returns undefined for deleted conversations
+      const conversation = await storage.getConversation(conversationId);
+      if (!conversation) {
+        return res.status(404).json({ message: 'Conversation not found or already deleted' });
+      }
+      
+      if (conversation.userId !== userId) {
+        return res.status(403).json({ message: 'Access denied' });
+      }
+      
+      await storage.deleteConversation(conversationId);
+      res.json({ message: 'Conversation deleted successfully' });
+    } catch (error) {
+      console.error('Error deleting conversation:', error);
+      res.status(500).json({ message: 'Failed to delete conversation' });
+    }
+  });
+  
+  // Export conversation as PDF
+  app.get('/api/chat/conversations/:conversationId/export-pdf', isAuthenticated, async (req: any, res) => {
+    try {
+      const { conversationId } = req.params;
+      const userId = req.user.claims.sub;
+      
+      const conversation = await storage.getConversation(conversationId);
+      if (!conversation) {
+        return res.status(404).json({ message: 'Conversation not found' });
+      }
+      
+      if (conversation.userId !== userId) {
+        return res.status(403).json({ message: 'Access denied' });
+      }
+      
+      const messages = await storage.getConversationMessages(conversationId);
+      
+      const PDFDoc = (jsPDF as any).default || jsPDF;
+      const doc = new PDFDoc();
+      
+      // Title
+      doc.setFontSize(18);
+      doc.text('AI Portfolio Assistant - Conversation Export', 14, 20);
+      
+      doc.setFontSize(10);
+      doc.text(`Title: ${conversation.title || 'Untitled Conversation'}`, 14, 28);
+      doc.text(`Date: ${new Date(conversation.createdAt).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}`, 14, 34);
+      doc.text(`Messages: ${messages.length}`, 14, 40);
+      
+      // Messages
+      let yPos = 50;
+      const pageHeight = doc.internal.pageSize.height;
+      const margin = 14;
+      const maxWidth = doc.internal.pageSize.width - (margin * 2);
+      
+      messages.forEach((message, index) => {
+        const role = message.role === 'user' ? 'You' : 'AI Assistant';
+        const timestamp = new Date(message.createdAt).toLocaleTimeString('en-US');
+        
+        // Check if we need a new page
+        if (yPos > pageHeight - 40) {
+          doc.addPage();
+          yPos = 20;
+        }
+        
+        // Message header
+        doc.setFontSize(10);
+        doc.setFont(undefined, 'bold');
+        doc.text(`${role} - ${timestamp}`, margin, yPos);
+        yPos += 6;
+        
+        // Message content
+        doc.setFont(undefined, 'normal');
+        doc.setFontSize(9);
+        const lines = doc.splitTextToSize(message.content, maxWidth);
+        
+        lines.forEach((line: string) => {
+          if (yPos > pageHeight - 20) {
+            doc.addPage();
+            yPos = 20;
+          }
+          doc.text(line, margin, yPos);
+          yPos += 5;
+        });
+        
+        yPos += 5; // Space between messages
+      });
+      
+      const pdfBuffer = Buffer.from(doc.output('arraybuffer'));
+      
+      res.setHeader('Content-Type', 'application/pdf');
+      res.setHeader('Content-Disposition', `attachment; filename="conversation-${conversationId}-${new Date().toISOString().split('T')[0]}.pdf"`);
+      res.send(pdfBuffer);
+    } catch (error) {
+      console.error('Error exporting conversation:', error);
+      res.status(500).json({ message: 'Failed to export conversation' });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }
@@ -1900,18 +3832,16 @@ async function initializeDefaultBanks() {
     
     if (existingBanks.length === 0) {
       const saudiBanks = [
-        { name: "Arab National Bank (ANB)", code: "ANB" },
-        { name: "Saudi British Bank (SABB)", code: "SABB" },
-        { name: "Al Rajhi Bank", code: "ARB" },
-        { name: "Saudi National Bank (SNB)", code: "SNB" },
-        { name: "Riyad Bank", code: "RB" },
-        { name: "Banque Saudi Fransi (BSF)", code: "BSF" },
-        { name: "Alinma Bank", code: "ALINMA" },
-        { name: "Bank AlJazira", code: "JAZ" },
-        { name: "Bank Albilad", code: "BILAD" },
-        { name: "Saudi Investment Bank (SAIB)", code: "SAIB" },
-        { name: "National Commercial Bank (NCB)", code: "NCB" },
-        { name: "First Abu Dhabi Bank (FAB)", code: "FAB" },
+        { name: "Arab National Bank", code: "ANB" },
+        { name: "Al Rajhi Bank", code: "RJH" },
+        { name: "Alinma Bank", code: "INMA" },
+        { name: "Bank Albilad", code: "ALB" },
+        { name: "Bank AlJazira", code: "BJA" },
+        { name: "Banque Saudi Fransi", code: "BSF" },
+        { name: "Riyad Bank", code: "RIB" },
+        { name: "Saudi Awwal Bank", code: "SAB" },
+        { name: "Saudi Investment Bank", code: "SAIB" },
+        { name: "Saudi National Bank", code: "SNB" },
       ];
 
       for (const bank of saudiBanks) {
@@ -2181,7 +4111,10 @@ async function ensureSampleTransactionHistory(userId: string) {
           let successCount = 0;
           for (const transaction of transactions) {
             try {
-              await storage.addTransaction(transaction);
+              await storage.addTransaction({
+                ...transaction,
+                createdBy: userId
+              });
               successCount++;
             } catch (error: any) {
               // Skip transaction on conflict but continue with others
@@ -2218,11 +4151,4 @@ async function ensureSampleTransactionHistory(userId: string) {
   } catch (error) {
     console.error("Error ensuring sample transaction history:", error);
   }
-}
-
-  // Export functionality to be added later
-
-  // Create and return HTTP server
-  const server = createServer(app);
-  return server;
 }

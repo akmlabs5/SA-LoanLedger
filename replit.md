@@ -32,6 +32,28 @@ A separate, isolated admin portal with its own authentication system provides sy
 - **Revolving Period Tracking System**: Optional tracking of cumulative usage days for facilities with revolving credit.
 - **User Settings Enhancements**: Includes daily alerts configuration, a feature showcase, and user tips.
 
+# API Keys & Configuration Status
+
+## Currently Configured ✓
+- **DATABASE_URL**: PostgreSQL database connection (Neon)
+- **SESSION_SECRET**: Express session encryption
+- **REPLIT_DOMAINS**: Replit authentication domain
+- **REPL_ID**: Replit application ID
+
+## Optional Services (Not Configured)
+- **SUPABASE_URL**: Supabase authentication service (optional alternative auth)
+- **SUPABASE_ANON_KEY**: Supabase anonymous key for client-side auth
+- **SENDGRID_API_KEY**: Email notifications for loan due dates and alerts
+- **DEEPSEEK_API_KEY**: Advanced AI insights and natural language queries
+- **ADMIN_USERNAME**: Admin portal username (defaults to 'admin')
+- **ADMIN_PASSWORD**: Admin portal password (defaults to 'admin123')
+
+## Infrastructure Improvements (Completed)
+- **Centralized Configuration**: All environment variables validated on startup with clear error messages
+- **Modular Architecture**: Server code organized into focused modules (auth, banks, loans, facilities, admin, etc.)
+- **Graceful Degradation**: Optional services fail gracefully with informative warnings
+- **Enhanced Security**: Production-specific validations and development mode safeguards
+
 # External Dependencies
 
 ## Database Services
