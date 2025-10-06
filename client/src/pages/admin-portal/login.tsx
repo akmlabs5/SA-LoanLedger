@@ -12,7 +12,12 @@ export default function AdminLoginPage() {
   // Redirect to dashboard if already authenticated
   useEffect(() => {
     if (isAdminAuthenticated) {
-      setLocation("/admin-portal/dashboard");
+      try {
+        setLocation("/admin-portal/dashboard");
+      } catch (error) {
+        // Fallback for iframe environments
+        window.location.href = "/admin-portal/dashboard";
+      }
     }
   }, [isAdminAuthenticated, setLocation]);
 
