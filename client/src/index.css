@@ -114,6 +114,28 @@
     font-weight: 400;
     letter-spacing: -0.011em;
   }
+
+  /* Fix double-click/tap issues on all devices */
+  button, a, [role="button"], [role="tab"], [role="menuitem"] {
+    /* Prevent double-tap zoom delay on mobile */
+    touch-action: manipulation;
+    /* Ensure immediate tap response */
+    -webkit-tap-highlight-color: transparent;
+    /* Remove user-select to prevent accidental text selection requiring double-tap */
+    user-select: none;
+    -webkit-user-select: none;
+  }
+
+  /* Fix double-click issue on touch devices by disabling hover effects */
+  @media (hover: none) and (pointer: coarse) {
+    *:hover {
+      /* Remove all hover effects on touch devices */
+      background-color: inherit !important;
+      color: inherit !important;
+      transform: none !important;
+      box-shadow: inherit !important;
+    }
+  }
   
   /* Improved typography hierarchy */
   h1, h2, h3, h4, h5, h6 {
