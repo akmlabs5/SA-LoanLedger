@@ -1573,6 +1573,8 @@ export class MemoryStorage implements IStorage {
   constructor() {
     // Initialize with default Saudi banks
     this.initializeDefaultBanks();
+    // Initialize with default reminder templates
+    this.initializeDefaultTemplates();
   }
 
   private initializeDefaultBanks() {
@@ -1590,6 +1592,167 @@ export class MemoryStorage implements IStorage {
     ];
 
     defaultBanks.forEach(bank => this.banks.set(bank.id, bank));
+  }
+
+  private initializeDefaultTemplates() {
+    const defaultTemplates: ReminderTemplate[] = [
+      {
+        id: 'tpl_due_date_standard',
+        type: 'due_date',
+        name: 'Standard Due Date Alert',
+        subject: 'Loan Payment Due - {loanReference}',
+        emailTemplate: `Dear Valued Customer,
+
+This is a friendly reminder that your loan payment is approaching its due date.
+
+Loan Details:
+- Reference: {loanReference}
+- Bank: {bankName}
+- Amount Due: {amount} SAR
+- Due Date: {dueDate}
+
+Please ensure timely payment to avoid any penalties or disruptions to your credit facility.
+
+If you have already made the payment, please disregard this message.
+
+Best regards,
+Saudi Loan Management Team`,
+        calendarTemplate: `Loan Payment Due - {loanReference}
+
+Amount: {amount} SAR
+Due Date: {dueDate}
+Bank: {bankName}
+
+Reference: {loanReference}`,
+        variables: ['{loanReference}', '{amount}', '{dueDate}', '{bankName}'],
+        isActive: true,
+        createdAt: new Date(),
+        updatedAt: new Date()
+      },
+      {
+        id: 'tpl_payment_urgent',
+        type: 'payment',
+        name: 'Urgent Payment Reminder',
+        subject: 'Urgent: Loan Payment Overdue - {loanReference}',
+        emailTemplate: `Dear Valued Customer,
+
+This is an urgent reminder regarding your loan payment.
+
+Loan Details:
+- Reference: {loanReference}
+- Bank: {bankName}
+- Outstanding Amount: {amount} SAR
+- Original Due Date: {dueDate}
+
+Your payment is now overdue. Please arrange immediate payment to avoid:
+- Late payment penalties
+- Negative impact on your credit rating
+- Potential legal action
+
+If you need assistance with payment arrangements, please contact us immediately.
+
+Best regards,
+Saudi Loan Management Team`,
+        calendarTemplate: `URGENT: Loan Payment Overdue - {loanReference}
+
+Amount: {amount} SAR
+Due Date (Passed): {dueDate}
+Bank: {bankName}
+
+Immediate payment required!
+
+Reference: {loanReference}`,
+        variables: ['{loanReference}', '{amount}', '{dueDate}', '{bankName}'],
+        isActive: true,
+        createdAt: new Date(),
+        updatedAt: new Date()
+      },
+      {
+        id: 'tpl_review_annual',
+        type: 'review',
+        name: 'Annual Loan Review',
+        subject: 'Annual Loan Review Required - {loanReference}',
+        emailTemplate: `Dear Valued Customer,
+
+It's time for your annual loan review.
+
+Loan Details:
+- Reference: {loanReference}
+- Bank: {bankName}
+- Current Outstanding: {amount} SAR
+- Review Date: {dueDate}
+
+As part of our standard procedures, we need to review your loan facility. This review helps ensure:
+- Your credit terms remain optimal
+- Documentation is up to date
+- Facility limits meet your business needs
+
+Please prepare:
+1. Updated financial statements
+2. Current business plan
+3. Any changes to your business structure
+
+We will contact you shortly to schedule a meeting.
+
+Best regards,
+Saudi Loan Management Team`,
+        calendarTemplate: `Annual Loan Review - {loanReference}
+
+Review Date: {dueDate}
+Bank: {bankName}
+Current Balance: {amount} SAR
+
+Prepare financial documents and business updates.
+
+Reference: {loanReference}`,
+        variables: ['{loanReference}', '{amount}', '{dueDate}', '{bankName}'],
+        isActive: true,
+        createdAt: new Date(),
+        updatedAt: new Date()
+      },
+      {
+        id: 'tpl_due_date_7days',
+        type: 'due_date',
+        name: '7-Day Advance Notice',
+        subject: 'Reminder: Loan Payment Due in 7 Days - {loanReference}',
+        emailTemplate: `Dear Valued Customer,
+
+This is an advance reminder that your loan payment will be due in 7 days.
+
+Loan Details:
+- Reference: {loanReference}
+- Bank: {bankName}
+- Amount Due: {amount} SAR
+- Due Date: {dueDate}
+
+This early notification allows you to plan your cash flow accordingly.
+
+Payment Methods:
+- Bank transfer to your facility account
+- Through your online banking portal
+- Visit your bank branch
+
+Thank you for your continued business.
+
+Best regards,
+Saudi Loan Management Team`,
+        calendarTemplate: `Payment Due in 7 Days - {loanReference}
+
+Amount: {amount} SAR
+Due Date: {dueDate}
+Bank: {bankName}
+
+Plan your payment in advance.
+
+Reference: {loanReference}`,
+        variables: ['{loanReference}', '{amount}', '{dueDate}', '{bankName}'],
+        isActive: true,
+        createdAt: new Date(),
+        updatedAt: new Date()
+      }
+    ];
+
+    defaultTemplates.forEach(template => this.reminderTemplates.set(template.id, template));
   }
 
   private generateId(): string {
