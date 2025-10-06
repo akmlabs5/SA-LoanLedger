@@ -56,6 +56,7 @@ import AppLayout from "@/components/AppLayout";
 import { useAuth } from "@/hooks/useAuth";
 import { queryClient } from "@/lib/queryClient";
 import { SupabaseAuthProvider } from "@/contexts/SupabaseAuthContext";
+import { PWAInstallPrompt } from "@/components/PWAInstallPrompt";
 
 function App() {
   const { isAuthenticated, isLoading } = useAuth();
@@ -169,6 +170,7 @@ export default function AppWrapper() {
       <SupabaseAuthProvider>
         <App />
         <Toaster />
+        <PWAInstallPrompt />
       </SupabaseAuthProvider>
     </QueryClientProvider>
   );
