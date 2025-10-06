@@ -141,7 +141,7 @@ const coreNavItems = [
 ];
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
-  const [location] = useLocation();
+  const [location, setLocation] = useLocation();
   const { user, authSystem, clearAuthCache } = useAuth();
   const isMobile = useIsMobile();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -330,23 +330,21 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   return (
     <div className="relative">
       <SidebarProvider>
-        <Sidebar 
-          ref={sidebarRef}
-          variant="inset" 
-          className={cn(
-            "border-r border-border transition-all duration-300",
-            isMobile ? (
-              mobileMenuOpen 
-                ? "fixed inset-y-0 left-0 z-[60] w-80 bg-background shadow-2xl block animate-in slide-in-from-left duration-300" 
-                : "hidden"
-            ) : ""
-          )}
-          onTouchStart={handleTouchStart}
-          onTouchMove={handleTouchMove}
-          onTouchEnd={handleTouchEnd}
-          role={isMobile && mobileMenuOpen ? "dialog" : undefined}
-          aria-modal={isMobile && mobileMenuOpen ? "true" : undefined}
-        >
+        {/* Conditionally render sidebar on mobile, always render on desktop */}
+        {(!isMobile || mobileMenuOpen) && (
+          <Sidebar 
+            ref={sidebarRef}
+            variant="inset" 
+            className={cn(
+              "border-r border-border transition-all duration-300",
+              isMobile && "fixed inset-y-0 left-0 z-[60] w-80 bg-background shadow-2xl block animate-in slide-in-from-left duration-300"
+            )}
+            onTouchStart={handleTouchStart}
+            onTouchMove={handleTouchMove}
+            onTouchEnd={handleTouchEnd}
+            role={isMobile && mobileMenuOpen ? "dialog" : undefined}
+            aria-modal={isMobile && mobileMenuOpen ? "true" : undefined}
+          >
           <SidebarHeader className="border-b border-border">
             <div className="flex items-center justify-between px-4 py-4">
               <div className="flex items-center gap-3">
@@ -444,6 +442,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
           </SidebarFooter>
           <SidebarRail />
         </Sidebar>
+        )}
 
         <SidebarInset className={cn(isMobile && "w-full")}>
           {/* Mobile Header with Menu Toggle */}
