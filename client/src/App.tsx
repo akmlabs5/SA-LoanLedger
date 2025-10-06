@@ -37,7 +37,13 @@ import ForgotPasswordPage from "@/pages/auth/forgot-password";
 // Admin portal pages
 import AdminLoginPage from "@/pages/admin-portal/login";
 import AdminDashboardPage from "@/pages/admin-portal/dashboard";
+import AdminAnalyticsPage from "@/pages/admin-portal/analytics";
 import AdminUsersPage from "@/pages/admin-portal/users";
+import AdminUserActivitiesPage from "@/pages/admin-portal/user-activities";
+import AdminDatabasePage from "@/pages/admin-portal/database";
+import AdminSecurityPage from "@/pages/admin-portal/security";
+import AdminAlertsPage from "@/pages/admin-portal/alerts";
+import AdminSettingsPage from "@/pages/admin-portal/settings";
 import AdminTemplatesPage from "@/pages/admin-portal/templates";
 import UserSettingsPage from "@/pages/user-settings";
 import FeaturesTipsPage from "@/pages/features-tips";
@@ -90,7 +96,13 @@ function App() {
       <Switch>
         <Route path="/admin-portal/login" component={AdminLoginPage} />
         <Route path="/admin-portal/dashboard" component={AdminDashboardPage} />
+        <Route path="/admin-portal/analytics" component={AdminAnalyticsPage} />
         <Route path="/admin-portal/users" component={AdminUsersPage} />
+        <Route path="/admin-portal/user-activities" component={AdminUserActivitiesPage} />
+        <Route path="/admin-portal/database" component={AdminDatabasePage} />
+        <Route path="/admin-portal/security" component={AdminSecurityPage} />
+        <Route path="/admin-portal/alerts" component={AdminAlertsPage} />
+        <Route path="/admin-portal/settings" component={AdminSettingsPage} />
         <Route path="/admin-portal/templates" component={AdminTemplatesPage} />
         <Route path="/admin-portal/*" component={AdminDashboardPage} />
       </Switch>
