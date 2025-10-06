@@ -14,6 +14,14 @@ The client-side is a React TypeScript single-page application, using Wouter for 
 ## Backend Architecture
 The server is built with Express.js, utilizing Drizzle ORM with Neon (PostgreSQL) for type-safe database operations. Authentication is managed via dual systems: Replit Auth (OpenID Connect) with Passport.js for standard authentication, and Supabase Auth for enhanced security with email-based Two-Factor Authentication (2FA). PostgreSQL-backed sessions ensure scalability. It follows a REST API pattern, organizing endpoints by resource, and includes a storage abstraction layer for maintainability.
 
+## Authentication UI
+The platform features a unified login page with a clean, green-themed design that serves both regular users and administrators:
+- **Tabbed Interface**: Two-tab design allowing users to switch between "User Login" and "Admin Login"
+- **User Authentication**: Email/password login with 2FA OTP verification for enhanced security
+- **Admin Authentication**: Username/password login for administrative access
+- **Consistent Theme**: Green gradient background (from-green-50 to-white) maintaining visual consistency
+- **Single Entry Point**: All authentication flows consolidated into one page for better user experience
+
 ## AI Intelligence System
 The platform incorporates a rules-based AI for intelligent insights, including portfolio risk analysis (bank concentration, LTV monitoring), and email notifications for loan due dates via SendGrid. It integrates with DeepSeek API for advanced insights and operates on user-configurable thresholds to provide actionable recommendations. Key AI features include a Smart Loan Matcher, What-If Scenario Analysis, a Natural Language Query System, Auto-Categorized Daily Alerts, and the ability to attach files to AI chat for context enrichment.
 
