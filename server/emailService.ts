@@ -42,7 +42,7 @@ export async function sendLoanDueNotification(
     
     const emailHtml = `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-        <h2 style="color: #006600;">Saudi Loan Manager - Payment Due Alert</h2>
+        <h2 style="color: #006600;">Morouna Loans - Payment Due Alert</h2>
         
         <p>Dear Valued Client,</p>
         
@@ -62,10 +62,10 @@ export async function sendLoanDueNotification(
         <p>Please ensure sufficient funds are available to meet these obligations. Contact your relationship manager if you need to discuss payment arrangements.</p>
         
         <p>Best regards,<br>
-        Saudi Loan Management Team</p>
+        Morouna Loans Team</p>
         
         <hr>
-        <p style="font-size: 12px; color: #666;">This is an automated notification from your Saudi Loan Management Platform.</p>
+        <p style="font-size: 12px; color: #666;">This is an automated notification from your Morouna Loans Platform.</p>
       </div>
     `;
 
@@ -98,7 +98,7 @@ export async function sendAIAlertNotification(
   try {
     const emailHtml = `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-        <h2 style="color: #006600;">Saudi Loan Manager - AI Portfolio Alert</h2>
+        <h2 style="color: #006600;">Morouna Loans - AI Portfolio Alert</h2>
         
         <p>Dear Valued Client,</p>
         
@@ -112,10 +112,10 @@ export async function sendAIAlertNotification(
         <p>Please log in to your dashboard to review the detailed recommendations and take appropriate action.</p>
         
         <p>Best regards,<br>
-        Saudi Loan Management AI System</p>
+        Morouna Loans AI System</p>
         
         <hr>
-        <p style="font-size: 12px; color: #666;">This is an automated AI-generated notification from your Saudi Loan Management Platform.</p>
+        <p style="font-size: 12px; color: #666;">This is an automated AI-generated notification from your Morouna Loans Platform.</p>
       </div>
     `;
 
@@ -248,7 +248,7 @@ export async function sendSimpleReminderEmail(
   try {
     const emailHtml = `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; line-height: 1.6;">
-        <h2 style="color: #006600;">Saudi Loan Manager - Reminder</h2>
+        <h2 style="color: #006600;">Morouna Loans - Reminder</h2>
         
         <p>Dear Valued Client,</p>
         
@@ -262,10 +262,10 @@ export async function sendSimpleReminderEmail(
         <p>Please take appropriate action as needed. Contact your relationship manager if you have any questions.</p>
         
         <p>Best regards,<br>
-        Saudi Loan Management Team</p>
+        Morouna Loans Team</p>
         
         <hr>
-        <p style="font-size: 12px; color: #666;">This is an automated reminder from your Saudi Loan Management Platform.</p>
+        <p style="font-size: 12px; color: #666;">This is an automated reminder from your Morouna Loans Platform.</p>
       </div>
     `;
 

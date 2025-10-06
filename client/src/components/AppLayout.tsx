@@ -45,6 +45,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useSupabaseAuth } from "@/contexts/SupabaseAuthContext";
 import { User as UserType } from "@shared/schema";
 import { cn } from "@/lib/utils";
+import morounaSymbol from "@assets/symbol_1759754524455.png";
 
 interface AppLayoutProps {
   children: React.ReactNode;
@@ -338,11 +339,11 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
           <SidebarHeader className="border-b border-border">
             <div className="flex items-center justify-between px-4 py-4">
               <div className="flex items-center gap-3">
-                <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-saudi text-white">
-                  <University className="h-4 w-4" />
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-emerald-400 to-teal-500 p-2">
+                  <img src={morounaSymbol} alt="Morouna" className="w-full h-full object-contain" />
                 </div>
                 <div className="flex flex-col">
-                  <h1 className="text-sm font-semibold tracking-tight">Saudi Loan Manager</h1>
+                  <h1 className="text-sm font-semibold tracking-tight">Morouna Loans</h1>
                   <p className="text-xs text-muted-foreground font-normal">Portfolio Management</p>
                 </div>
               </div>

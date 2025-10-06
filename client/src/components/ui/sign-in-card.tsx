@@ -316,7 +316,7 @@ export function SignInCard({ onSubmit, onReplitAuth, isLoading: externalLoading 
                   transition={{ delay: 0.3 }}
                   className="text-gray-600 text-xs"
                 >
-                  Sign in to Saudi Loan Manager
+                  Sign in to Morouna Loans
                 </motion.p>
               </div>
 

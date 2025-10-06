@@ -24,7 +24,7 @@ export default function LoginHub() {
             </div>
           </div>
           <h1 className="text-4xl font-bold text-white mb-4 bg-gradient-to-r from-purple-400 to-blue-400 bg-clip-text text-transparent">
-            Saudi Loan Manager
+            Morouna Loans
           </h1>
           <p className="text-lg text-gray-300 max-w-2xl mx-auto">
             Comprehensive loan portfolio management platform designed for the Saudi Arabian market with SIBOR-based calculations and intelligent risk management.

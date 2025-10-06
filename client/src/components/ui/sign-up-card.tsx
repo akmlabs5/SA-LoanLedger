@@ -332,7 +332,7 @@ export function SignUpCard({ onSubmit, onReplitAuth, isLoading: externalLoading 
                   transition={{ delay: 0.3 }}
                   className="text-white/60 text-xs"
                 >
-                  Join Saudi Loan Manager platform
+                  Join Morouna Loans platform
                 </motion.p>
               </div>
 

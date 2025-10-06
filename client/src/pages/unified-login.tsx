@@ -8,22 +8,16 @@ import { Input } from "@/components/ui/input";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { useToast } from "@/hooks/use-toast";
 import { useLocation } from "wouter";
-import { Lock, Mail, Shield, User } from "lucide-react";
+import { Lock, Mail, Shield } from "lucide-react";
 import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import morounaLogo from "@assets/with_padding (1)_1759754533676.png";
 
-const userSigninSchema = z.object({
-  email: z.string().email("Please enter a valid email address"),
+const loginSchema = z.object({
+  identifier: z.string().min(1, "Email or username is required"),
   password: z.string().min(1, "Password is required"),
 });
 
-const adminSigninSchema = z.object({
-  username: z.string().min(1, "Username is required"),
-  password: z.string().min(1, "Password is required"),
-});
-
-type UserSigninForm = z.infer<typeof userSigninSchema>;
-type AdminSigninForm = z.infer<typeof adminSigninSchema>;
+type LoginForm = z.infer<typeof loginSchema>;
 
 export default function UnifiedLoginPage() {
   const [, setLocation] = useLocation();
@@ -34,101 +28,95 @@ export default function UnifiedLoginPage() {
   const [otpValue, setOtpValue] = useState("");
   const [isVerifying, setIsVerifying] = useState(false);
 
-  const userForm = useForm<UserSigninForm>({
-    resolver: zodResolver(userSigninSchema),
+  const form = useForm<LoginForm>({
+    resolver: zodResolver(loginSchema),
     defaultValues: {
-      email: "",
+      identifier: "",
       password: "",
     },
   });
 
-  const adminForm = useForm<AdminSigninForm>({
-    resolver: zodResolver(adminSigninSchema),
-    defaultValues: {
-      username: "",
-      password: "",
-    },
-  });
-
-  const onUserSubmit = async (values: UserSigninForm) => {
-    setIsLoading(true);
-    try {
-      const response = await fetch('/api/auth/supabase/signin', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(values),
-      });
-
-      const data = await response.json();
-
-      if (!response.ok || !data.success) {
-        throw new Error(data.message || 'Failed to sign in');
-      }
-
-      if (data.requires2FA) {
-        setRequires2FA(true);
-        setUserEmail(data.email);
-        toast({
-          title: "2FA Required",
-          description: data.message || "Please check your email for the verification code",
-        });
-      } else {
-        if (data.session) {
-          localStorage.setItem('supabase_session', JSON.stringify(data.session));
-        }
-        
-        toast({
-          title: "Welcome back!",
-          description: "Successfully signed in",
-        });
-        
-        setLocation('/');
-      }
-    } catch (error: any) {
-      console.error('Signin error:', error);
-      toast({
-        title: "Sign in failed",
-        description: error.message || "Invalid email or password",
-        variant: "destructive",
-      });
-    } finally {
-      setIsLoading(false);
-    }
+  const isEmailFormat = (str: string): boolean => {
+    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(str);
   };
 
-  const onAdminSubmit = async (values: AdminSigninForm) => {
+  const onSubmit = async (values: LoginForm) => {
     setIsLoading(true);
+    const isEmail = isEmailFormat(values.identifier);
+
     try {
-      const response = await fetch('/api/admin/auth/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(values),
-      });
+      if (isEmail) {
+        // User login with Supabase
+        const response = await fetch('/api/auth/supabase/signin', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            email: values.identifier,
+            password: values.password,
+          }),
+        });
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || 'Authentication failed');
-      }
+        const data = await response.json();
 
-      const data = await response.json();
-      
-      localStorage.setItem('admin_token', data.token);
-      localStorage.setItem('admin_user', JSON.stringify(data.admin));
-      
-      toast({
-        title: "Admin access granted",
-        description: "Welcome to the admin portal",
-      });
+        if (!response.ok || !data.success) {
+          throw new Error(data.message || 'Failed to sign in');
+        }
 
-      try {
-        setLocation("/admin-portal/dashboard");
-      } catch {
-        window.location.href = "/admin-portal/dashboard";
+        if (data.requires2FA) {
+          setRequires2FA(true);
+          setUserEmail(data.email);
+          toast({
+            title: "2FA Required",
+            description: data.message || "Please check your email for the verification code",
+          });
+        } else {
+          if (data.session) {
+            localStorage.setItem('supabase_session', JSON.stringify(data.session));
+          }
+          
+          toast({
+            title: "Welcome back!",
+            description: "Successfully signed in",
+          });
+          
+          setLocation('/');
+        }
+      } else {
+        // Admin login
+        const response = await fetch('/api/admin/auth/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            username: values.identifier,
+            password: values.password,
+          }),
+        });
+
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.message || 'Authentication failed');
+        }
+
+        const data = await response.json();
+        
+        localStorage.setItem('admin_token', data.token);
+        localStorage.setItem('admin_user', JSON.stringify(data.admin));
+        
+        toast({
+          title: "Admin access granted",
+          description: "Welcome to the admin portal",
+        });
+
+        try {
+          setLocation("/admin-portal/dashboard");
+        } catch {
+          window.location.href = "/admin-portal/dashboard";
+        }
       }
     } catch (error: any) {
-      console.error('Admin login error:', error);
+      console.error('Login error:', error);
       toast({
-        title: "Admin login failed",
+        title: "Sign in failed",
         description: error.message || "Invalid credentials",
         variant: "destructive",
       });
@@ -188,8 +176,8 @@ export default function UnifiedLoginPage() {
 
   if (requires2FA) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-green-50 to-white dark:from-gray-900 dark:to-gray-800 p-4">
-        <Card className="w-full max-w-md">
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-emerald-400 via-green-500 to-teal-600 p-4">
+        <Card className="w-full max-w-md shadow-2xl">
           <CardHeader>
             <div className="mx-auto w-16 h-16 bg-blue-100 dark:bg-blue-900/20 rounded-full flex items-center justify-center mb-4">
               <Shield className="w-10 h-10 text-blue-600 dark:text-blue-400" />
@@ -220,7 +208,7 @@ export default function UnifiedLoginPage() {
 
             <Button 
               onClick={verifyOTP} 
-              className="w-full" 
+              className="w-full bg-cyan-500 hover:bg-cyan-600" 
               disabled={isVerifying || otpValue.length !== 6}
               data-testid="button-verify-otp"
             >
@@ -246,157 +234,102 @@ export default function UnifiedLoginPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-green-50 to-white dark:from-gray-900 dark:to-gray-800 p-4">
-      <Card className="w-full max-w-md">
-        <CardHeader>
-          <CardTitle className="text-2xl font-bold text-center">Welcome Back</CardTitle>
-          <CardDescription className="text-center">
-            Sign in to Saudi Loan Manager
+    <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-emerald-400 via-green-500 to-teal-600 p-4">
+      {/* Logo and Brand */}
+      <div className="text-center mb-8">
+        <div className="mx-auto w-24 h-24 mb-6 rounded-full bg-white/20 backdrop-blur-sm p-4 shadow-xl">
+          <img src={morounaLogo} alt="Morouna Loans" className="w-full h-full object-contain" />
+        </div>
+        <h1 className="text-4xl font-bold text-white mb-2 tracking-tight">Morouna Loans</h1>
+        <p className="text-white/90 text-lg font-light">Manage Your Financial Journey</p>
+      </div>
+
+      {/* Login Card */}
+      <Card className="w-full max-w-md shadow-2xl bg-white/95 backdrop-blur-sm">
+        <CardHeader className="text-center pb-4">
+          <CardTitle className="text-2xl font-bold text-gray-800">Welcome Back</CardTitle>
+          <CardDescription className="text-gray-600">
+            Sign in to continue your financial journey
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <Tabs defaultValue="user" className="w-full">
-            <TabsList className="grid w-full grid-cols-2 mb-6">
-              <TabsTrigger value="user" data-testid="tab-user">User Login</TabsTrigger>
-              <TabsTrigger value="admin" data-testid="tab-admin">Admin Login</TabsTrigger>
-            </TabsList>
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5">
+              <FormField
+                control={form.control}
+                name="identifier"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="text-gray-700 font-medium">Email Address</FormLabel>
+                    <FormControl>
+                      <div className="relative">
+                        <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                        <Input 
+                          type="text" 
+                          placeholder="name@example.com" 
+                          className="pl-11 h-12 rounded-xl border-gray-300 focus:border-cyan-500 focus:ring-cyan-500" 
+                          {...field} 
+                          data-testid="input-identifier"
+                        />
+                      </div>
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
 
-            <TabsContent value="user">
-              <Form {...userForm}>
-                <form onSubmit={userForm.handleSubmit(onUserSubmit)} className="space-y-4">
-                  <FormField
-                    control={userForm.control}
-                    name="email"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Email</FormLabel>
-                        <FormControl>
-                          <div className="relative">
-                            <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                            <Input 
-                              type="email" 
-                              placeholder="name@example.com" 
-                              className="pl-10" 
-                              {...field} 
-                              data-testid="input-email"
-                            />
-                          </div>
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
+              <FormField
+                control={form.control}
+                name="password"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="text-gray-700 font-medium">Password</FormLabel>
+                    <FormControl>
+                      <div className="relative">
+                        <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                        <Input 
+                          type="password" 
+                          placeholder="••••••••" 
+                          className="pl-11 h-12 rounded-xl border-gray-300 focus:border-cyan-500 focus:ring-cyan-500" 
+                          {...field} 
+                          data-testid="input-password"
+                        />
+                      </div>
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
 
-                  <FormField
-                    control={userForm.control}
-                    name="password"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Password</FormLabel>
-                        <FormControl>
-                          <div className="relative">
-                            <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                            <Input 
-                              type="password" 
-                              placeholder="••••••••" 
-                              className="pl-10" 
-                              {...field} 
-                              data-testid="input-password"
-                            />
-                          </div>
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
+              <Button 
+                type="submit" 
+                className="w-full h-12 text-lg font-semibold bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-600 hover:to-blue-600 rounded-xl shadow-lg hover:shadow-xl transition-all duration-200" 
+                disabled={isLoading}
+                data-testid="button-signin"
+              >
+                {isLoading ? "Signing in..." : "Sign In"}
+              </Button>
 
-                  <Button 
-                    type="submit" 
-                    className="w-full" 
-                    disabled={isLoading}
-                    data-testid="button-signin"
-                  >
-                    {isLoading ? "Signing in..." : "Sign In"}
-                  </Button>
-
-                  <div className="text-center text-sm text-muted-foreground">
-                    Don't have an account?{" "}
-                    <Button
-                      variant="link"
-                      className="p-0 h-auto font-normal"
-                      onClick={() => setLocation('/supabase-signup')}
-                      data-testid="link-signup"
-                    >
-                      Sign up
-                    </Button>
-                  </div>
-                </form>
-              </Form>
-            </TabsContent>
-
-            <TabsContent value="admin">
-              <Form {...adminForm}>
-                <form onSubmit={adminForm.handleSubmit(onAdminSubmit)} className="space-y-4">
-                  <FormField
-                    control={adminForm.control}
-                    name="username"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Username</FormLabel>
-                        <FormControl>
-                          <div className="relative">
-                            <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                            <Input 
-                              type="text" 
-                              placeholder="admin" 
-                              className="pl-10" 
-                              {...field} 
-                              data-testid="input-admin-username"
-                            />
-                          </div>
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={adminForm.control}
-                    name="password"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Password</FormLabel>
-                        <FormControl>
-                          <div className="relative">
-                            <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                            <Input 
-                              type="password" 
-                              placeholder="••••••••" 
-                              className="pl-10" 
-                              {...field} 
-                              data-testid="input-admin-password"
-                            />
-                          </div>
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <Button 
-                    type="submit" 
-                    className="w-full bg-gradient-to-r from-red-600 to-orange-600 hover:from-red-700 hover:to-orange-700" 
-                    disabled={isLoading}
-                    data-testid="button-admin-signin"
-                  >
-                    {isLoading ? "Signing in..." : "Admin Sign In"}
-                  </Button>
-                </form>
-              </Form>
-            </TabsContent>
-          </Tabs>
+              <div className="text-center text-sm text-gray-600 pt-2">
+                Don't have an account?{" "}
+                <Button
+                  variant="link"
+                  className="p-0 h-auto font-semibold text-cyan-600 hover:text-cyan-700"
+                  onClick={() => setLocation('/supabase-signup')}
+                  data-testid="link-signup"
+                >
+                  Create Account
+                </Button>
+              </div>
+            </form>
+          </Form>
         </CardContent>
       </Card>
+
+      {/* Footer Tagline */}
+      <p className="text-white/80 text-sm mt-8 text-center max-w-md">
+        Intelligent loan portfolio management for the Saudi Arabian market
+      </p>
     </div>
   );
 }
