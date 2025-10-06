@@ -122,17 +122,6 @@
     /* Remove tap highlight color on mobile */
     -webkit-tap-highlight-color: transparent;
   }
-
-  /* CRITICAL FIX: Completely disable hover effects on touch devices */
-  html.touch-device button:hover,
-  html.touch-device a:hover,
-  html.touch-device [role="button"]:hover,
-  html.touch-device [role="tab"]:hover,
-  html.touch-device [role="menuitem"]:hover,
-  html.touch-device *:hover {
-    /* Force all hover effects to be disabled */
-    pointer-events: auto !important;
-  }
   
   /* Improved typography hierarchy */
   h1, h2, h3, h4, h5, h6 {
