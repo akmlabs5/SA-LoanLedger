@@ -38,7 +38,6 @@ import SupabaseSigninPage from "@/pages/supabase-signin";
 import UnifiedLoginPage from "@/pages/unified-login";
 
 // Admin portal pages
-import AdminLoginPage from "@/pages/admin-portal/login";
 import AdminDashboardPage from "@/pages/admin-portal/dashboard";
 import AdminAnalyticsPage from "@/pages/admin-portal/analytics";
 import AdminUsersPage from "@/pages/admin-portal/users";

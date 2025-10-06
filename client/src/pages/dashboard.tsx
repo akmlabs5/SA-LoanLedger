@@ -142,7 +142,7 @@ export default function Dashboard() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-green-50 via-white to-emerald-50 dark:from-gray-900 dark:via-gray-900 dark:to-gray-800">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6 space-y-6">
+      <div className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-6 py-4 sm:py-6 space-y-4 sm:space-y-6">
         {/* Welcome Header */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
           <div>
@@ -196,7 +196,7 @@ export default function Dashboard() {
         <AIInsightsPanel />
 
         {/* Enhanced KPI Metrics */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 lg:gap-6 mb-6 sm:mb-8">
           <StatisticCard
             title="Total Outstanding"
             value={portfolioSummary ? `${(portfolioSummary.totalOutstanding / 1000000).toFixed(1)}M` : '0.0M'}
@@ -255,7 +255,7 @@ export default function Dashboard() {
         </div>
 
         {/* Enhanced Loans Management Section */}
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 mb-8">
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-3 sm:gap-4 lg:gap-6 mb-6 sm:mb-8">
           {/* Priority Loans with Compact Cards */}
           <div className="lg:col-span-3">
             <Card className="bg-card border border-border shadow-sm hover:shadow-md transition-shadow duration-200 h-full flex flex-col">
@@ -431,7 +431,7 @@ export default function Dashboard() {
         </div>
 
         {/* Enhanced Bank Exposures Overview */}
-        <Card className="mb-8 bg-card border border-border shadow-sm hover:shadow-md transition-shadow duration-200">
+        <Card className="mb-6 sm:mb-8 bg-card border border-border shadow-sm hover:shadow-md transition-shadow duration-200">
           <CardHeader className="pb-6">
             <div className="flex items-center justify-between">
               <div className="space-y-1">
