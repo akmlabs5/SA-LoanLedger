@@ -56,7 +56,15 @@ export default function SupabaseSignupPage() {
         }),
       });
 
-      const data = await response.json();
+      let data;
+      const contentType = response.headers.get('content-type');
+      
+      if (contentType && contentType.includes('application/json')) {
+        data = await response.json();
+      } else {
+        const text = await response.text();
+        throw new Error(`Server returned non-JSON response: ${text.substring(0, 100)}`);
+      }
 
       if (!response.ok || !data.success) {
         throw new Error(data.message || 'Failed to create account');
@@ -69,7 +77,7 @@ export default function SupabaseSignupPage() {
       });
 
       setTimeout(() => {
-        setLocation('/supabase-signin');
+        setLocation('/unified-login');
       }, 3000);
 
     } catch (error: any) {
@@ -87,13 +95,13 @@ export default function SupabaseSignupPage() {
   if (signupComplete) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-emerald-400 via-green-500 to-teal-600 p-4">
-        <Card className="w-full max-w-md shadow-2xl">
+        <Card className="w-full max-w-md shadow-2xl bg-white/10 backdrop-blur-xl border border-white/20">
           <CardHeader className="text-center">
-            <div className="mx-auto w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mb-4">
-              <CheckCircle2 className="w-10 h-10 text-green-600" />
+            <div className="mx-auto w-16 h-16 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center mb-4">
+              <CheckCircle2 className="w-10 h-10 text-white" />
             </div>
-            <CardTitle>Account Created!</CardTitle>
-            <CardDescription>
+            <CardTitle className="text-white">Account Created!</CardTitle>
+            <CardDescription className="text-white/90">
               Please check your email to verify your account before signing in.
             </CardDescription>
           </CardHeader>
@@ -113,10 +121,10 @@ export default function SupabaseSignupPage() {
         <p className="text-white/90 text-lg font-light">Manage Your Financial Journey</p>
       </div>
 
-      <Card className="w-full max-w-md shadow-2xl bg-white/95 backdrop-blur-sm">
+      <Card className="w-full max-w-md shadow-2xl bg-white/10 backdrop-blur-xl border border-white/20">
         <CardHeader className="text-center pb-4">
-          <CardTitle className="text-2xl font-bold text-gray-800">Create Account</CardTitle>
-          <CardDescription className="text-gray-600">
+          <CardTitle className="text-2xl font-bold text-white">Create Account</CardTitle>
+          <CardDescription className="text-white/90">
             Join Morouna Loans today
           </CardDescription>
         </CardHeader>
@@ -129,19 +137,19 @@ export default function SupabaseSignupPage() {
                   name="firstName"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>First Name</FormLabel>
+                      <FormLabel className="text-white font-medium">First Name</FormLabel>
                       <FormControl>
                         <div className="relative">
-                          <User className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                          <User className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-white/60" />
                           <Input 
-                            placeholder="First" 
-                            className="pl-11 h-12 rounded-xl border-gray-300 focus:border-cyan-500 focus:ring-cyan-500" 
+                            placeholder="Abdullah" 
+                            className="pl-11 h-12 rounded-xl bg-white/20 border-white/30 text-white placeholder:text-white/50 focus:border-white/50 focus:ring-white/30 focus:bg-white/25" 
                             {...field} 
                             data-testid="input-first-name"
                           />
                         </div>
                       </FormControl>
-                      <FormMessage />
+                      <FormMessage className="text-white/90" />
                     </FormItem>
                   )}
                 />
@@ -151,19 +159,19 @@ export default function SupabaseSignupPage() {
                   name="lastName"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Last Name</FormLabel>
+                      <FormLabel className="text-white font-medium">Last Name</FormLabel>
                       <FormControl>
                         <div className="relative">
-                          <User className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                          <User className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-white/60" />
                           <Input 
-                            placeholder="Last" 
-                            className="pl-11 h-12 rounded-xl border-gray-300 focus:border-cyan-500 focus:ring-cyan-500" 
+                            placeholder="Almulhim" 
+                            className="pl-11 h-12 rounded-xl bg-white/20 border-white/30 text-white placeholder:text-white/50 focus:border-white/50 focus:ring-white/30 focus:bg-white/25" 
                             {...field} 
                             data-testid="input-last-name"
                           />
                         </div>
                       </FormControl>
-                      <FormMessage />
+                      <FormMessage className="text-white/90" />
                     </FormItem>
                   )}
                 />
@@ -174,20 +182,20 @@ export default function SupabaseSignupPage() {
                 name="email"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Email</FormLabel>
+                    <FormLabel className="text-white font-medium">Email</FormLabel>
                     <FormControl>
                       <div className="relative">
-                        <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                        <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-white/60" />
                         <Input 
                           type="email" 
-                          placeholder="name@example.com" 
-                          className="pl-11 h-12 rounded-xl border-gray-300 focus:border-cyan-500 focus:ring-cyan-500" 
+                          placeholder="abdullah@jabalalkhairan.com" 
+                          className="pl-11 h-12 rounded-xl bg-white/20 border-white/30 text-white placeholder:text-white/50 focus:border-white/50 focus:ring-white/30 focus:bg-white/25" 
                           {...field} 
                           data-testid="input-email"
                         />
                       </div>
                     </FormControl>
-                    <FormMessage />
+                    <FormMessage className="text-white/90" />
                   </FormItem>
                 )}
               />
@@ -197,20 +205,20 @@ export default function SupabaseSignupPage() {
                 name="password"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Password</FormLabel>
+                    <FormLabel className="text-white font-medium">Password</FormLabel>
                     <FormControl>
                       <div className="relative">
-                        <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                        <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-white/60" />
                         <Input 
                           type="password" 
                           placeholder="••••••••" 
-                          className="pl-11 h-12 rounded-xl border-gray-300 focus:border-cyan-500 focus:ring-cyan-500" 
+                          className="pl-11 h-12 rounded-xl bg-white/20 border-white/30 text-white placeholder:text-white/50 focus:border-white/50 focus:ring-white/30 focus:bg-white/25" 
                           {...field} 
                           data-testid="input-password"
                         />
                       </div>
                     </FormControl>
-                    <FormMessage />
+                    <FormMessage className="text-white/90" />
                   </FormItem>
                 )}
               />
@@ -220,39 +228,39 @@ export default function SupabaseSignupPage() {
                 name="confirmPassword"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Confirm Password</FormLabel>
+                    <FormLabel className="text-white font-medium">Confirm Password</FormLabel>
                     <FormControl>
                       <div className="relative">
-                        <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                        <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-white/60" />
                         <Input 
                           type="password" 
                           placeholder="••••••••" 
-                          className="pl-11 h-12 rounded-xl border-gray-300 focus:border-cyan-500 focus:ring-cyan-500" 
+                          className="pl-11 h-12 rounded-xl bg-white/20 border-white/30 text-white placeholder:text-white/50 focus:border-white/50 focus:ring-white/30 focus:bg-white/25" 
                           {...field} 
                           data-testid="input-confirm-password"
                         />
                       </div>
                     </FormControl>
-                    <FormMessage />
+                    <FormMessage className="text-white/90" />
                   </FormItem>
                 )}
               />
 
               <Button 
                 type="submit" 
-                className="w-full h-12 text-lg font-semibold bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-600 hover:to-blue-600 rounded-xl shadow-lg hover:shadow-xl transition-all duration-200" 
+                className="w-full h-12 text-lg font-semibold bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-600 hover:to-blue-600 rounded-xl shadow-lg hover:shadow-xl transition-all duration-200 text-white" 
                 disabled={isLoading}
                 data-testid="button-signup"
               >
                 {isLoading ? "Creating account..." : "Create Account"}
               </Button>
 
-              <div className="text-center text-sm text-gray-600 pt-2">
+              <div className="text-center text-sm text-white/80 pt-2">
                 Already have an account?{" "}
                 <Button
                   variant="link"
-                  className="p-0 h-auto font-semibold text-cyan-600 hover:text-cyan-700"
-                  onClick={() => setLocation('/')}
+                  className="p-0 h-auto font-semibold text-white hover:text-white/90"
+                  onClick={() => setLocation('/unified-login')}
                   data-testid="link-signin"
                 >
                   Sign In
