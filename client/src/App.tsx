@@ -33,6 +33,8 @@ import NotFoundPage from "@/pages/not-found";
 import LoginPage from "@/pages/auth/login";
 import SignupPage from "@/pages/auth/signup";
 import ForgotPasswordPage from "@/pages/auth/forgot-password";
+import SupabaseSignupPage from "@/pages/supabase-signup";
+import SupabaseSigninPage from "@/pages/supabase-signin";
 
 // Admin portal pages
 import AdminLoginPage from "@/pages/admin-portal/login";
@@ -116,6 +118,8 @@ function App() {
         <Route path="/auth/login" component={LoginPage} />
         <Route path="/auth/signup" component={SignupPage} />
         <Route path="/auth/forgot-password" component={ForgotPasswordPage} />
+        <Route path="/supabase-signup" component={SupabaseSignupPage} />
+        <Route path="/supabase-signin" component={SupabaseSigninPage} />
         <Route path="/landing" component={LandingPage} />
         <Route component={LoginHub} />
       </Switch>

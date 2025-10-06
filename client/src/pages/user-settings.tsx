@@ -113,6 +113,135 @@ type NotificationFormData = z.infer<typeof notificationSchema>;
 type AIInsightsFormData = z.infer<typeof aiInsightsSchema>;
 type DailyAlertsFormData = z.infer<typeof dailyAlertsSchema>;
 
+function TwoFactorAuthCard() {
+  const { toast } = useToast();
+  const [is2FAEnabled, setIs2FAEnabled] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isToggling, setIsToggling] = useState(false);
+
+  // Fetch 2FA status
+  useQuery({
+    queryKey: ['/api/auth/supabase/2fa-status'],
+    queryFn: async () => {
+      const session = localStorage.getItem('supabase_session');
+      if (!session) return null;
+      
+      const sessionData = JSON.parse(session);
+      const response = await fetch('/api/auth/supabase/2fa-status', {
+        headers: {
+          'Authorization': `Bearer ${sessionData.access_token}`
+        }
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to fetch 2FA status');
+      }
+      
+      const data = await response.json();
+      setIs2FAEnabled(data.twoFactorEnabled);
+      setIsLoading(false);
+      return data;
+    },
+    enabled: !!localStorage.getItem('supabase_session'),
+  });
+
+  const toggle2FA = async (enabled: boolean) => {
+    setIsToggling(true);
+    try {
+      const session = localStorage.getItem('supabase_session');
+      if (!session) {
+        throw new Error('Not authenticated');
+      }
+      
+      const sessionData = JSON.parse(session);
+      const response = await fetch('/api/auth/supabase/toggle-2fa', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${sessionData.access_token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ enabled })
+      });
+
+      const data = await response.json();
+
+      if (!response.ok || !data.success) {
+        throw new Error(data.message || 'Failed to update 2FA');
+      }
+
+      setIs2FAEnabled(enabled);
+      toast({
+        title: enabled ? "2FA Enabled" : "2FA Disabled",
+        description: data.message || (enabled 
+          ? "Two-factor authentication has been enabled for your account" 
+          : "Two-factor authentication has been disabled"),
+      });
+    } catch (error: any) {
+      console.error('Toggle 2FA error:', error);
+      toast({
+        title: "Error",
+        description: error.message || "Failed to update 2FA settings",
+        variant: "destructive",
+      });
+    } finally {
+      setIsToggling(false);
+    }
+  };
+
+  return (
+    <Card data-testid="card-2fa">
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2">
+          <Smartphone className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+          Two-Factor Authentication (2FA)
+        </CardTitle>
+        <CardDescription>Add an extra layer of security to your account</CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-6">
+        <div className="rounded-lg border p-4 bg-blue-50 dark:bg-blue-900/10">
+          <h3 className="font-semibold mb-2 text-blue-900 dark:text-blue-100">What is 2FA?</h3>
+          <p className="text-sm text-blue-800 dark:text-blue-200">
+            Two-factor authentication adds an extra layer of security by requiring a verification code sent to your email 
+            in addition to your password when signing in.
+          </p>
+        </div>
+
+        <div className="flex items-center justify-between p-4 border rounded-lg">
+          <div className="space-y-1">
+            <p className="font-medium">Email Verification</p>
+            <p className="text-sm text-muted-foreground">
+              {is2FAEnabled 
+                ? "Receive a 6-digit code via email when signing in" 
+                : "Enable to require email verification on sign-in"}
+            </p>
+          </div>
+          <Switch
+            checked={is2FAEnabled}
+            onCheckedChange={toggle2FA}
+            disabled={isLoading || isToggling}
+            data-testid="switch-2fa"
+          />
+        </div>
+
+        {is2FAEnabled && (
+          <div className="rounded-lg border p-4 bg-green-50 dark:bg-green-900/10">
+            <div className="flex items-start gap-3">
+              <CheckCircle className="h-5 w-5 text-green-600 dark:text-green-400 mt-0.5 flex-shrink-0" />
+              <div>
+                <p className="font-medium text-green-900 dark:text-green-100">2FA is Active</p>
+                <p className="text-sm text-green-800 dark:text-green-200 mt-1">
+                  Your account is protected with two-factor authentication. You'll receive a verification code 
+                  via email each time you sign in.
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
 export default function UserSettingsPage() {
   const { toast } = useToast();
   const [activeTab, setActiveTab] = useState("profile");
@@ -1314,6 +1443,8 @@ export default function UserSettingsPage() {
 
           {/* Security Tab */}
           <TabsContent value="security" className="space-y-6">
+            <TwoFactorAuthCard />
+            
             <Card data-testid="card-security">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
