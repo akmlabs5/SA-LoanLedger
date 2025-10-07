@@ -32,8 +32,9 @@ createRoot(document.getElementById("root")!).render(<App />);
 // PRODUCTION ONLY: Register Service Worker for PWA support
 if (import.meta.env.PROD && 'serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    // Add version query parameter to force browser to fetch new SW
-    const swUrl = `/sw.js?v=${Date.now()}`;
+    // Use stable version to prevent worker thrashing (matches service worker CACHE_VERSION)
+    const SW_VERSION = 'v1.0.2';
+    const swUrl = `/sw.js?v=${SW_VERSION}`;
     
     navigator.serviceWorker
       .register(swUrl)
