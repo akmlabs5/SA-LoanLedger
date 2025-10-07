@@ -123,6 +123,34 @@
     /* Remove tap highlight color on mobile */
     -webkit-tap-highlight-color: transparent;
   }
+
+  /* Fix double-tap issue on mobile by disabling hover effects on touch-only devices */
+  @media (hover: none) {
+    button:hover, 
+    a:hover, 
+    [role="button"]:hover, 
+    [role="tab"]:hover, 
+    [role="menuitem"]:hover,
+    .hover\:bg-primary\/90:hover,
+    .hover\:bg-white\/90:hover,
+    .hover\:shadow-md:hover,
+    .hover\:border-primary:hover {
+      /* Disable hover effects on touch devices */
+      background-color: inherit !important;
+      box-shadow: inherit !important;
+      border-color: inherit !important;
+    }
+    
+    /* Add visible tap feedback instead */
+    button:active, 
+    a:active, 
+    [role="button"]:active, 
+    [role="tab"]:active, 
+    [role="menuitem"]:active {
+      transform: scale(0.98);
+      transition: transform 0.1s ease;
+    }
+  }
   
   /* Improved typography hierarchy */
   h1, h2, h3, h4, h5, h6 {
