@@ -23,7 +23,8 @@ import {
   AlertTriangle,
   Target,
   BarChart3,
-  ChevronDown
+  ChevronDown,
+  MessageCircle
 } from "lucide-react";
 import { Link, useLocation } from "wouter";
 import StatisticCard from "@/components/StatisticCard";
