@@ -18,7 +18,23 @@ The backend is built with Express.js, employing Drizzle ORM with Neon (PostgreSQ
 The platform features a unified login page with a green-themed design, automatically detecting user (email) or admin (username) credentials. User authentication includes email/password login with 2FA OTP verification via SendGrid, while admin authentication uses username/password. The design incorporates Morouna branding, a tagline, rounded inputs, and cyan gradient buttons.
 
 ## AI Intelligence System
-A rules-based AI provides intelligent insights, including portfolio risk analysis (bank concentration, LTV monitoring) and email notifications via SendGrid. It integrates with DeepSeek API for advanced insights and operates on user-configurable thresholds, offering features like a Smart Loan Matcher, What-If Scenario Analysis, Natural Language Query System, Auto-Categorized Daily Alerts, and file attachment to AI chat.
+A dual AI chat system powered by DeepSeek API provides comprehensive support:
+
+**Hybrid Agent Chat (Green Button - Bottom Right)**
+- Smart AI that both teaches and executes actions
+- Detects intent: "How do I...?" triggers teaching mode, "Create a loan..." triggers execution
+- 12 agentic functions: create/settle loans, set reminders, calculate totals, analyze risks, check facilities, monitor LTV, suggest refinancing, export reports
+- Multi-turn conversations with session-based context
+- Function calling with OpenAI-compatible interface
+
+**Help Desk Chat (Blue Button - Bottom Left)**
+- Dedicated Q&A assistant for learning platform features
+- Single-turn Q&A format (no conversation history)
+- Comprehensive knowledge of all Morouna features, navigation, and Saudi banking concepts
+- Guides users on "how to" use features without executing actions
+- Instant answers to feature discovery, troubleshooting, and best practices
+
+Additional AI features include rules-based portfolio risk analysis, bank concentration monitoring, LTV tracking, email notifications via SendGrid, and user-configurable alert thresholds.
 
 ## Data Storage Architecture
 The database schema is tailored for the Saudi banking context, storing information on Banks, Facilities, Loans (with SIBOR calculations), Collateral (with valuation history), Users, and Sessions. It uses UUID primary keys and proper foreign key relationships.
