@@ -49,6 +49,26 @@ The application is optimized for mobile devices with responsive breakpoints, tou
 - **Responsive Spacing**: Consistent use of responsive gaps (`gap-2 sm:gap-3`) throughout header sections
 - **Content Containment**: All elements now properly fit within viewport boundaries on mobile devices
 
+### Development Cache-Busting System (October 2025)
+Implemented a comprehensive cache-busting solution to ensure latest code changes are immediately visible during development:
+
+**Development Mode (auto-enabled when NODE_ENV=development)**:
+- Service worker registration completely disabled to prevent caching interference with HMR
+- Automatic cache clearing on app startup: unregisters any lingering service workers and deletes all `morouna-*` caches
+- Aggressive HTTP cache-control headers: `no-store, no-cache, must-revalidate` on all HTML/JS responses
+- Cache-busting meta tags in index.html to prevent browser-level caching
+- Visible version badge (v2.0.3) on dashboard for instant verification of loaded version
+
+**Production Mode (auto-enabled when built for production)**:
+- Service worker registered with stable version query parameter (`/sw.js?v=v1.0.2`)
+- Full PWA functionality preserved with offline support and asset caching
+- Stable worker registration prevents thrashing and maintains offline behavior
+
+**Version Management**:
+- **CRITICAL**: When releasing new versions, update both `SW_VERSION` in `client/src/main.tsx` and `CACHE_VERSION` in `client/public/sw.js` to the same value
+- Version format: `v1.0.X` where X increments for each release
+- Current version: `v1.0.2`
+
 ## Admin Portal
 A comprehensive admin portal with its own authentication system provides complete system oversight and management. Features include:
 
