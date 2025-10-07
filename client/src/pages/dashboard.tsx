@@ -147,7 +147,10 @@ export default function Dashboard() {
         {/* Welcome Header */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Dashboard</h1>
+            <div className="flex items-center gap-3">
+              <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Dashboard</h1>
+              <Badge className="bg-emerald-600 text-white hover:bg-emerald-700">v2.0.3</Badge>
+            </div>
             <p className="text-gray-600 dark:text-gray-300 mt-1">
               Welcome back, {String((user as any)?.displayName || (user as any)?.firstName || 'User')}. Here's your portfolio overview.
             </p>
