@@ -13,6 +13,7 @@ import { registerGuaranteesRoutes } from "./guarantees";
 import { registerAttachmentsRoutes } from "./attachments";
 import { registerMiscRoutes } from "./misc";
 import { registerAgentRoutes } from "./agent";
+import { registerHelpDeskRoutes } from "./helpDesk";
 
 export function registerAllRoutes(app: Express, deps: AppDependencies) {
   registerAuthRoutes(app, deps);
@@ -24,6 +25,7 @@ export function registerAllRoutes(app: Express, deps: AppDependencies) {
   registerAdminRoutes(app, deps);
   registerAiRoutes(app, deps);
   registerAgentRoutes(app, deps);
+  registerHelpDeskRoutes(app);
   registerRemindersRoutes(app, deps);
   registerGuaranteesRoutes(app, deps);
   registerAttachmentsRoutes(app, deps);
