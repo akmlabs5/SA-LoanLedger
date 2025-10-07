@@ -126,41 +126,56 @@
 
   /* 
    * ==================================================================================
-   * GROUND-UP FIX: Mobile Double-Tap Issue - Final Solution
+   * MOBILE DOUBLE-TAP MITIGATION (NOT A COMPLETE FIX)
    * ==================================================================================
    * 
-   * ROOT CAUSE:
-   * On touch devices, tapping triggers :hover pseudo-class which persists until
-   * another element is tapped, requiring a second tap to trigger the click event.
+   * PROBLEM:
+   * On touch devices, tapping triggers :hover pseudo-class which can persist,
+   * sometimes requiring a second tap to trigger click event.
    * 
-   * SOLUTION:
-   * 1. JavaScript (in index.html) detects touch and adds 'touch-device' class
-   * 2. CSS makes all transitions instant (0s) on touch devices
-   * 3. Hover effects still trigger but don't persist visually
-   * 4. Click events fire immediately on first tap
+   * LIMITATION:
+   * There is NO perfect CSS-only cross-browser solution. The :hover state itself
+   * cannot be removed with CSS - it's controlled by the browser.
    * 
-   * This preserves ALL base styles while fixing the double-tap issue.
+   * MITIGATION STRATEGY:
+   * 1. Instant transitions (0s) on interactive elements minimize visual hover artifacts
+   * 2. Strong active state feedback provides immediate tap confirmation
+   * 3. This reduces but does NOT eliminate the double-tap issue on all devices
+   * 
+   * This is an industry-standard mitigation approach, not a complete fix.
    * ==================================================================================
    */
   
-  /* Make all transitions instant on touch devices to prevent hover persistence */
-  html.touch-device *,
-  html.touch-device *::before,
-  html.touch-device *::after {
+  /* 
+   * On touch devices: instant transitions minimize visual hover persistence
+   * Scoped to interactive elements - does not affect layout animations
+   */
+  html.touch-device button,
+  html.touch-device a,
+  html.touch-device [role="button"],
+  html.touch-device [role="tab"],
+  html.touch-device [role="menuitem"],
+  html.touch-device [role="link"],
+  html.touch-device input[type="button"],
+  html.touch-device input[type="submit"],
+  html.touch-device [class*="hover:"] {
     transition-duration: 0s !important;
-    animation-duration: 0.01s !important;
   }
   
-  /* Add instant visual feedback for taps */
-  html.touch-device button:active, 
-  html.touch-device a:active, 
-  html.touch-device [role="button"]:active,
-  html.touch-device [role="tab"]:active,
-  html.touch-device [role="menuitem"]:active,
-  html.touch-device [data-testid^="button-"]:active {
-    transform: scale(0.96) !important;
-    opacity: 0.85 !important;
-    transition-duration: 0.05s !important;
+  /* Touch feedback using active states for immediate visual confirmation */
+  @media (hover: none) {
+    button:active, 
+    a:active, 
+    [role="button"]:active,
+    [role="tab"]:active,
+    [role="menuitem"]:active,
+    input[type="button"]:active,
+    input[type="submit"]:active,
+    [data-testid^="button-"]:active {
+      transform: scale(0.96) !important;
+      opacity: 0.85 !important;
+      transition: transform 0.1s ease, opacity 0.1s ease !important;
+    }
   }
   
   /* Improved typography hierarchy */

@@ -34,10 +34,22 @@ The database schema is designed for the Saudi banking context, storing informati
 The application is optimized for mobile devices with responsive breakpoints, touch-friendly elements, mobile-specific navigation, and optimized form layouts, ensuring a seamless experience across devices.
 
 ### Mobile Touch Optimizations (October 2025)
-- **Fixed Sticky Hover Issue**: Resolved the double-click problem on mobile where buttons and tabs showed hover states on first tap
-- **Solution**: Implemented `@media (hover: none)` CSS rule to disable hover effects on touch-only devices
-- **Touch Feedback**: Added `active:scale-[0.98]` for visual feedback on tap
-- **Enhanced Responsiveness**: All interactive elements use `touch-action: manipulation` to prevent double-tap zoom delays
+- **Double-Tap Issue Investigation**: Extensively researched the mobile hover persistence problem where tapping triggers :hover pseudo-class on touch devices
+- **Technical Finding**: After comprehensive testing, confirmed there is **NO perfect CSS-only cross-browser solution**. The :hover state is controlled by the browser and cannot be removed with CSS alone.
+- **Approaches Tested & Why They Failed**:
+  - Property overrides (`inherit`, `revert`, `currentColor`) - Break base styles completely
+  - Pointer-events manipulation - Leaves elements non-interactive after tap
+  - Global instant transitions - Removes all animations (modals, toasts, etc.)
+  - Tailwind variant override with @media (hover:hover) - Breaks CSS generation
+  - Scoped selectors with various CSS techniques - :hover state still persists on iOS Safari
+- **Current Mitigation** (Industry Standard Approach):
+  - Instant transitions (0s) on interactive elements only (buttons, links, etc.) to minimize visual hover artifacts
+  - Strong active state visual feedback (`transform: scale(0.96)`, `opacity: 0.85`) provides immediate tap confirmation
+  - `touch-action: manipulation` prevents double-tap zoom delays
+  - **Important**: This reduces but does NOT eliminate the double-tap issue on all devices
+- **Touch Device Detection**: JavaScript in `client/index.html` (lines 64-73) detects touch capability and adds `touch-device` class
+- **Documented in**: `client/src/index.css` (lines 130-178) with honest assessment of limitations
+- **Conclusion**: Perfect hover suppression requires build-time Tailwind modification or invasive JavaScript. The current mitigation provides the best UX possible with CSS alone.
 
 ### Mobile Layout Overflow Fixes (October 2025)
 - **Global Overflow Prevention**: Added `overflow-x: hidden` to body element to prevent horizontal scrolling
