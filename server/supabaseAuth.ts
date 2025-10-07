@@ -28,7 +28,7 @@ export async function setupSupabaseAuth(app: Express, databaseAvailable = true) 
   
   app.post('/api/auth/supabase/signup', async (req, res) => {
     try {
-      const { email: rawEmail, password, firstName, lastName } = req.body;
+      const { email: rawEmail, password, firstName, lastName, enable2FA } = req.body;
       const email = rawEmail.trim().toLowerCase();
       
       const { data, error } = await supabase.auth.signUp({
@@ -54,7 +54,7 @@ export async function setupSupabaseAuth(app: Express, databaseAvailable = true) 
           email: data.user.email || email,
           firstName,
           lastName,
-          twoFactorEnabled: false
+          twoFactorEnabled: enable2FA || false
         });
       }
       
