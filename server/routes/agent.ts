@@ -1,6 +1,6 @@
 import type { Express } from "express";
 import type { AppDependencies } from "../types";
-import { isAuthenticated } from "../middleware/auth";
+import { isAuthenticated } from "../replitAuth";
 import { AgentService } from "../agentService";
 
 export function registerAgentRoutes(app: Express, deps: AppDependencies) {
