@@ -21,7 +21,7 @@ function Input({ className, type, ...props }: React.ComponentProps<"input">) {
 }
 
 interface SignUpCardProps {
-  onSubmit?: (firstName: string, lastName: string, email: string, password: string, agreeToTerms: boolean) => Promise<void>;
+  onSubmit?: (firstName: string, lastName: string, email: string, password: string, agreeToTerms: boolean, enable2FA: boolean) => Promise<void>;
   onReplitAuth?: () => void;
   isLoading?: boolean;
   error?: string;
@@ -37,6 +37,7 @@ export function SignUpCard({ onSubmit, onReplitAuth, isLoading: externalLoading 
   const [isLoading, setIsLoading] = useState(false);
   const [focusedInput, setFocusedInput] = useState<string | null>(null);
   const [agreeToTerms, setAgreeToTerms] = useState(false);
+  const [enable2FA, setEnable2FA] = useState(false);
 
   const loading = isLoading || externalLoading;
 
@@ -71,7 +72,7 @@ export function SignUpCard({ onSubmit, onReplitAuth, isLoading: externalLoading 
     if (onSubmit) {
       setIsLoading(true);
       try {
-        await onSubmit(firstName, lastName, email, password, agreeToTerms);
+        await onSubmit(firstName, lastName, email, password, agreeToTerms, enable2FA);
       } catch (error) {
         // Error handling is done by parent
       } finally {
@@ -537,6 +538,35 @@ export function SignUpCard({ onSubmit, onReplitAuth, isLoading: externalLoading 
                     <Link href="/privacy" className="text-white underline hover:text-white/80">
                       Privacy Policy
                     </Link>
+                  </label>
+                </div>
+
+                {/* 2FA Toggle */}
+                <div className="flex items-start space-x-2 pt-3">
+                  <div className="relative mt-1">
+                    <input
+                      id="enable-2fa"
+                      name="enable-2fa"
+                      type="checkbox"
+                      checked={enable2FA}
+                      onChange={() => setEnable2FA(!enable2FA)}
+                      className="appearance-none h-4 w-4 rounded border border-white/20 bg-white/5 checked:bg-cyan-500 checked:border-cyan-500 focus:outline-none focus:ring-1 focus:ring-cyan-400/30 transition-all duration-200"
+                      data-testid="checkbox-enable-2fa"
+                    />
+                    {enable2FA && (
+                      <motion.div 
+                        initial={{ opacity: 0, scale: 0.5 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        className="absolute inset-0 flex items-center justify-center text-white pointer-events-none"
+                      >
+                        <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                          <polyline points="20 6 9 17 4 12"></polyline>
+                        </svg>
+                      </motion.div>
+                    )}
+                  </div>
+                  <label htmlFor="enable-2fa" className="text-xs text-white/60 hover:text-white/80 transition-colors duration-200 leading-relaxed">
+                    Enable Two-Factor Authentication (2FA) for enhanced security
                   </label>
                 </div>
 

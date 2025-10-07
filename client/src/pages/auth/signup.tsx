@@ -7,7 +7,7 @@ export default function SignUpPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [, setLocation] = useLocation();
 
-  const handleEmailPasswordSignUp = async (firstName: string, lastName: string, email: string, password: string, agreeToTerms: boolean) => {
+  const handleEmailPasswordSignUp = async (firstName: string, lastName: string, email: string, password: string, agreeToTerms: boolean, enable2FA: boolean) => {
     setIsLoading(true);
     setError("");
 

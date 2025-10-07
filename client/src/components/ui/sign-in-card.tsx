@@ -575,6 +575,13 @@ export function SignInCard({ onSubmit, onReplitAuth, isLoading: externalLoading 
           </div>
         </div>
       </motion.div>
+
+      {/* Branding Footer */}
+      <div className="fixed bottom-6 right-6 z-10">
+        <p className="text-sm text-gray-600 font-medium">
+          Morouna Loans by AKM Labs
+        </p>
+      </div>
     </div>
   );
 }
