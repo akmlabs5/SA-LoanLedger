@@ -46,15 +46,15 @@ export function FloatingAgentChat() {
     try {
       const apiMessages = messages.concat(userMessage);
       
-      const response = await apiRequest('/api/agent/chat', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ messages: apiMessages })
+      const response = await apiRequest('POST', '/api/agent/chat', { 
+        messages: apiMessages 
       });
+
+      const data = await response.json();
 
       const assistantMessage: Message = {
         role: 'assistant',
-        content: response.message
+        content: data.message
       };
 
       setMessages(prev => [...prev, assistantMessage]);
