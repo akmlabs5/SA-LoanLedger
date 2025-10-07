@@ -254,6 +254,31 @@ export default function Dashboard() {
           />
         </div>
 
+        {/* 🔥 NEW AI ASSISTANT QUICK ACCESS - CACHE TEST */}
+        <Card className="bg-gradient-to-r from-emerald-500 to-teal-600 text-white border-0 shadow-lg mb-6 sm:mb-8">
+          <CardHeader className="pb-3">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-white/20 backdrop-blur-sm">
+                  <MessageCircle className="h-6 w-6 text-white" />
+                </div>
+                <div>
+                  <CardTitle className="text-xl font-bold text-white">AI Assistant</CardTitle>
+                  <p className="text-sm text-white/90 mt-1">Get intelligent insights and recommendations</p>
+                </div>
+              </div>
+              <Link href="/ai-chat">
+                <Button 
+                  className="bg-white text-emerald-600 hover:bg-white/90 font-semibold"
+                  data-testid="button-ai-assistant"
+                >
+                  Open AI Chat
+                </Button>
+              </Link>
+            </div>
+          </CardHeader>
+        </Card>
+
         {/* Enhanced Loans Management Section */}
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-3 sm:gap-4 lg:gap-6 mb-6 sm:mb-8">
           {/* Priority Loans with Compact Cards */}
