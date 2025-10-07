@@ -124,31 +124,48 @@
     -webkit-tap-highlight-color: transparent;
   }
 
-  /* Fix double-tap issue on mobile by disabling hover effects on touch-only devices */
-  @media (hover: none) {
-    button:hover, 
-    a:hover, 
-    [role="button"]:hover, 
-    [role="tab"]:hover, 
-    [role="menuitem"]:hover,
-    .hover\:bg-primary\/90:hover,
-    .hover\:bg-white\/90:hover,
-    .hover\:shadow-md:hover,
-    .hover\:border-primary:hover {
-      /* Disable hover effects on touch devices */
-      background-color: inherit !important;
-      box-shadow: inherit !important;
-      border-color: inherit !important;
+  /* 
+   * COMPREHENSIVE FIX: Double-tap issue on mobile touch devices
+   * Problem: Hover states persist on touch, requiring double-tap to activate
+   * Solution: Globally disable ALL hover pseudo-classes on touch-only devices
+   */
+  @media (hover: none) and (pointer: coarse) {
+    /* 
+     * Universal hover suppression - disables ALL hover effects
+     * This catches every possible hover variant in the app
+     */
+    *:hover {
+      /* Force reset all hover-triggered properties to their non-hover state */
+      background-color: revert !important;
+      box-shadow: revert !important;
+      border-color: revert !important;
+      color: revert !important;
+      text-decoration: revert !important;
+      transform: revert !important;
+      opacity: revert !important;
+      filter: revert !important;
+      outline: revert !important;
     }
     
-    /* Add visible tap feedback instead */
+    /* 
+     * Add instant visual feedback on tap (active state)
+     * This gives users confirmation that their tap registered
+     */
     button:active, 
     a:active, 
     [role="button"]:active, 
     [role="tab"]:active, 
-    [role="menuitem"]:active {
-      transform: scale(0.98);
-      transition: transform 0.1s ease;
+    [role="menuitem"]:active,
+    input[type="submit"]:active,
+    input[type="button"]:active {
+      transform: scale(0.97) !important;
+      opacity: 0.8 !important;
+      transition: transform 0.1s ease, opacity 0.1s ease !important;
+    }
+    
+    /* Prevent hover states from being applied at all */
+    *[class*="hover:"] {
+      pointer-events: auto !important;
     }
   }
   
