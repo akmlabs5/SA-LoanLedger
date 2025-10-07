@@ -12,6 +12,7 @@ import { registerRemindersRoutes } from "./reminders";
 import { registerGuaranteesRoutes } from "./guarantees";
 import { registerAttachmentsRoutes } from "./attachments";
 import { registerMiscRoutes } from "./misc";
+import { registerAgentRoutes } from "./agent";
 
 export function registerAllRoutes(app: Express, deps: AppDependencies) {
   registerAuthRoutes(app, deps);
@@ -22,6 +23,7 @@ export function registerAllRoutes(app: Express, deps: AppDependencies) {
   registerLoansRoutes(app, deps);
   registerAdminRoutes(app, deps);
   registerAiRoutes(app, deps);
+  registerAgentRoutes(app, deps);
   registerRemindersRoutes(app, deps);
   registerGuaranteesRoutes(app, deps);
   registerAttachmentsRoutes(app, deps);
