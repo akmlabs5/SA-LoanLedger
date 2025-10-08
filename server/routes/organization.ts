@@ -327,4 +327,177 @@ export function registerOrganizationRoutes(app: Express, deps: AppDependencies) 
       });
     }
   });
+
+  // Get organization members
+  app.get('/api/organization/members', isAuthenticated, async (req, res) => {
+    try {
+      const userId = (req as any).user.claims.sub;
+
+      // Get user's organization
+      const userOrg = await storage.getUserOrganization(userId);
+
+      if (!userOrg) {
+        return res.status(404).json({ 
+          success: false, 
+          message: "Organization not found" 
+        });
+      }
+
+      // Get all members
+      const members = await storage.getOrganizationMembers(userOrg.id);
+
+      // Return members with user details
+      const memberList = members.map(member => ({
+        id: member.id,
+        userId: member.userId,
+        isOwner: member.isOwner,
+        joinedAt: member.joinedAt,
+        user: {
+          id: member.user.id,
+          email: member.user.email,
+          firstName: member.user.firstName,
+          lastName: member.user.lastName,
+          profileImageUrl: member.user.profileImageUrl
+        }
+      }));
+
+      res.json({ 
+        success: true, 
+        members: memberList,
+        organization: {
+          id: userOrg.id,
+          name: userOrg.name
+        }
+      });
+
+    } catch (error: any) {
+      console.error("Get members error:", error);
+      res.status(500).json({ 
+        success: false, 
+        message: error.message || "Failed to get organization members" 
+      });
+    }
+  });
+
+  // Remove organization member (owner only)
+  app.delete('/api/organization/members/:userId', isAuthenticated, async (req, res) => {
+    try {
+      const currentUserId = (req as any).user.claims.sub;
+      const { userId: targetUserId } = req.params;
+
+      // Get current user's organization
+      const userOrg = await storage.getUserOrganization(currentUserId);
+
+      if (!userOrg) {
+        return res.status(404).json({ 
+          success: false, 
+          message: "Organization not found" 
+        });
+      }
+
+      // Check if current user is owner
+      const members = await storage.getOrganizationMembers(userOrg.id);
+      const currentMember = members.find(m => m.userId === currentUserId);
+
+      if (!currentMember?.isOwner) {
+        return res.status(403).json({ 
+          success: false, 
+          message: "Only organization owners can remove members" 
+        });
+      }
+
+      // Check if target user is a member of the organization
+      const targetMember = members.find(m => m.userId === targetUserId);
+
+      if (!targetMember) {
+        return res.status(404).json({ 
+          success: false, 
+          message: "User is not a member of this organization" 
+        });
+      }
+
+      // Prevent owner from removing themselves if they're the only member
+      if (currentUserId === targetUserId) {
+        if (members.length > 1) {
+          return res.status(400).json({ 
+            success: false, 
+            message: "You cannot remove yourself while there are other members. Please transfer ownership first or have another owner remove you." 
+          });
+        }
+        // If they're the only member, they can remove themselves (organization will be orphaned but that's handled elsewhere)
+      }
+
+      // Prevent removing another owner (only one owner allowed in this simple model)
+      if (targetMember.isOwner && currentUserId !== targetUserId) {
+        return res.status(403).json({ 
+          success: false, 
+          message: "Cannot remove the organization owner" 
+        });
+      }
+
+      // Remove the member
+      await storage.removeMember(targetUserId, userOrg.id);
+
+      res.json({ 
+        success: true, 
+        message: "Member removed successfully" 
+      });
+
+    } catch (error: any) {
+      console.error("Remove member error:", error);
+      res.status(500).json({ 
+        success: false, 
+        message: error.message || "Failed to remove member" 
+      });
+    }
+  });
+
+  // Get pending invitations (owner only)
+  app.get('/api/organization/invitations', isAuthenticated, async (req, res) => {
+    try {
+      const userId = (req as any).user.claims.sub;
+
+      // Get user's organization
+      const userOrg = await storage.getUserOrganization(userId);
+
+      if (!userOrg) {
+        return res.status(404).json({ 
+          success: false, 
+          message: "Organization not found" 
+        });
+      }
+
+      // Check if user is owner
+      const members = await storage.getOrganizationMembers(userOrg.id);
+      const currentMember = members.find(m => m.userId === userId);
+
+      if (!currentMember?.isOwner) {
+        return res.status(403).json({ 
+          success: false, 
+          message: "Only organization owners can view invitations" 
+        });
+      }
+
+      // Get invitations
+      const invitations = await storage.getOrganizationInvitations(userOrg.id);
+
+      res.json({ 
+        success: true, 
+        invitations: invitations.map(inv => ({
+          id: inv.id,
+          email: inv.email,
+          status: inv.status,
+          createdAt: inv.createdAt,
+          expiresAt: inv.expiresAt
+        }))
+      });
+
+    } catch (error: any) {
+      console.error("Get invitations error:", error);
+      res.status(500).json({ 
+        success: false, 
+        message: error.message || "Failed to get invitations" 
+      });
+    }
+  });
 }
