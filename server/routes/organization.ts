@@ -170,4 +170,161 @@ export function registerOrganizationRoutes(app: Express, deps: AppDependencies) 
       });
     }
   });
+
+  // Get invitation details (public endpoint for validation)
+  app.get('/api/organization/invitation/:token', async (req, res) => {
+    try {
+      const { token } = req.params;
+
+      const invitation = await storage.getInvitation(token);
+
+      if (!invitation) {
+        return res.status(404).json({ 
+          success: false, 
+          message: "Invitation not found" 
+        });
+      }
+
+      // Check if invitation is expired
+      if (invitation.expiresAt && new Date() > new Date(invitation.expiresAt)) {
+        return res.status(400).json({ 
+          success: false, 
+          message: "This invitation has expired" 
+        });
+      }
+
+      // Check if invitation is already used
+      if (invitation.status !== 'pending') {
+        return res.status(400).json({ 
+          success: false, 
+          message: "This invitation has already been used" 
+        });
+      }
+
+      // Get organization details
+      const organization = await storage.getOrganization(invitation.organizationId);
+
+      if (!organization) {
+        return res.status(404).json({ 
+          success: false, 
+          message: "Organization not found" 
+        });
+      }
+
+      res.json({ 
+        success: true, 
+        invitation: {
+          email: invitation.email,
+          organizationName: organization.name,
+          expiresAt: invitation.expiresAt
+        }
+      });
+
+    } catch (error: any) {
+      console.error("Get invitation error:", error);
+      res.status(500).json({ 
+        success: false, 
+        message: error.message || "Failed to get invitation details" 
+      });
+    }
+  });
+
+  // Accept invitation (requires authentication)
+  app.post('/api/organization/accept-invite', isAuthenticated, async (req, res) => {
+    try {
+      const userId = (req as any).user.claims.sub;
+      const { token } = req.body;
+
+      if (!token) {
+        return res.status(400).json({ 
+          success: false, 
+          message: "Invitation token is required" 
+        });
+      }
+
+      const invitation = await storage.getInvitation(token);
+
+      if (!invitation) {
+        return res.status(404).json({ 
+          success: false, 
+          message: "Invitation not found" 
+        });
+      }
+
+      // Check if invitation is expired
+      if (invitation.expiresAt && new Date() > new Date(invitation.expiresAt)) {
+        return res.status(400).json({ 
+          success: false, 
+          message: "This invitation has expired" 
+        });
+      }
+
+      // Check if invitation is already used
+      if (invitation.status !== 'pending') {
+        return res.status(400).json({ 
+          success: false, 
+          message: "This invitation has already been used" 
+        });
+      }
+
+      // Get user's email to verify
+      const user = await storage.getUser(userId);
+      
+      if (!user) {
+        return res.status(404).json({ 
+          success: false, 
+          message: "User not found" 
+        });
+      }
+
+      // Verify email matches invitation
+      if (user.email?.toLowerCase() !== invitation.email.toLowerCase()) {
+        return res.status(403).json({ 
+          success: false, 
+          message: "This invitation was sent to a different email address" 
+        });
+      }
+
+      // Check if user is already a member
+      const isAlreadyMember = await storage.isUserInOrganization(userId, invitation.organizationId);
+
+      if (isAlreadyMember) {
+        // Mark invitation as accepted anyway
+        await storage.deleteInvitation(invitation.id);
+        return res.status(400).json({ 
+          success: false, 
+          message: "You are already a member of this organization" 
+        });
+      }
+
+      // Add user to organization
+      await storage.addMember({
+        organizationId: invitation.organizationId,
+        userId,
+        isOwner: false
+      });
+
+      // Mark invitation as accepted by deleting it
+      await storage.deleteInvitation(invitation.id);
+
+      // Get organization details for response
+      const organization = await storage.getOrganization(invitation.organizationId);
+
+      res.json({ 
+        success: true, 
+        message: `Successfully joined ${organization?.name || 'the organization'}`,
+        organization: {
+          id: invitation.organizationId,
+          name: organization?.name
+        }
+      });
+
+    } catch (error: any) {
+      console.error("Accept invitation error:", error);
+      res.status(500).json({ 
+        success: false, 
+        message: error.message || "Failed to accept invitation" 
+      });
+    }
+  });
 }
