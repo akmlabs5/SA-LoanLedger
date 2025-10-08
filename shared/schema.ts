@@ -222,12 +222,15 @@ export const organizationInvitations = pgTable("organization_invitations", {
 // Saudi Banks
 export const banks = pgTable("banks", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  organizationId: varchar("organization_id").references(() => organizations.id, { onDelete: 'cascade' }),
   name: varchar("name", { length: 100 }).notNull(),
-  code: varchar("code", { length: 10 }).notNull().unique(),
+  code: varchar("code", { length: 10 }).notNull().unique(), // Keep global unique during migration
   targetLtv: decimal("target_ltv", { precision: 5, scale: 2 }).default('70.00'),
   isActive: boolean("is_active").default(true),
   createdAt: timestamp("created_at").defaultNow(),
-});
+}, (table) => [
+  index("idx_banks_org").on(table.organizationId),
+]);
 
 // Bank Contacts (Account Managers)
 export const bankContacts = pgTable("bank_contacts", {
@@ -254,6 +257,7 @@ export const bankContacts = pgTable("bank_contacts", {
 // Bank Facilities
 export const facilities = pgTable("facilities", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  organizationId: varchar("organization_id").references(() => organizations.id, { onDelete: 'cascade' }),
   bankId: varchar("bank_id").references(() => banks.id).notNull(),
   userId: varchar("user_id").references(() => users.id).notNull(),
   facilityType: facilityTypeEnum("facility_type").notNull(),
@@ -268,11 +272,16 @@ export const facilities = pgTable("facilities", {
   maxRevolvingPeriod: integer("max_revolving_period"), // Maximum days (e.g., 360)
   initialDrawdownDate: date("initial_drawdown_date"), // Set on first loan drawdown
   createdAt: timestamp("created_at").defaultNow(),
-});
+}, (table) => [
+  index("idx_facilities_org").on(table.organizationId),
+  index("idx_facilities_bank").on(table.bankId),
+  index("idx_facilities_user").on(table.userId),
+]);
 
 // Credit Lines (intermediate layer between facilities and loans)
 export const creditLines = pgTable("credit_lines", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  organizationId: varchar("organization_id").references(() => organizations.id, { onDelete: 'cascade' }),
   facilityId: varchar("facility_id").references(() => facilities.id).notNull(),
   userId: varchar("user_id").references(() => users.id).notNull(),
   creditLineType: creditLineTypeEnum("credit_line_type").notNull(),
@@ -287,7 +296,7 @@ export const creditLines = pgTable("credit_lines", {
   isActive: boolean("is_active").default(true),
   createdAt: timestamp("created_at").defaultNow(),
 }, (table) => [
-  // Ensure credit line limit doesn't exceed facility limit via application logic
+  index("idx_credit_lines_org").on(table.organizationId),
   index("idx_credit_lines_facility").on(table.facilityId),
   index("idx_credit_lines_user").on(table.userId),
 ]);
@@ -295,6 +304,7 @@ export const creditLines = pgTable("credit_lines", {
 // Collateral
 export const collateral = pgTable("collateral", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  organizationId: varchar("organization_id").references(() => organizations.id, { onDelete: 'cascade' }),
   userId: varchar("user_id").references(() => users.id).notNull(),
   type: collateralTypeEnum("type").notNull(),
   name: varchar("name", { length: 200 }).notNull(),
@@ -305,7 +315,10 @@ export const collateral = pgTable("collateral", {
   notes: text("notes"),
   isActive: boolean("is_active").default(true),
   createdAt: timestamp("created_at").defaultNow(),
-});
+}, (table) => [
+  index("idx_collateral_org").on(table.organizationId),
+  index("idx_collateral_user").on(table.userId),
+]);
 
 // Collateral Assignments (Links collateral to facilities, credit lines, or banks)
 export const collateralAssignments = pgTable("collateral_assignments", {
@@ -334,6 +347,7 @@ export const collateralAssignments = pgTable("collateral_assignments", {
 // Loans (drawdowns from specific credit lines or facilities)
 export const loans = pgTable("loans", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  organizationId: varchar("organization_id").references(() => organizations.id, { onDelete: 'cascade' }),
   facilityId: varchar("facility_id").references(() => facilities.id, { onDelete: "restrict" }).notNull(),
   creditLineId: varchar("credit_line_id").references(() => creditLines.id, { onDelete: "restrict" }),
   userId: varchar("user_id").references(() => users.id).notNull(),
@@ -359,6 +373,7 @@ export const loans = pgTable("loans", {
   updatedAt: timestamp("updated_at").defaultNow(),
   createdAt: timestamp("created_at").defaultNow(),
 }, (table) => [
+  index("idx_loans_org").on(table.organizationId),
   index("idx_loans_facility").on(table.facilityId),
   index("idx_loans_credit_line").on(table.creditLineId),
   index("idx_loans_user").on(table.userId),
@@ -654,6 +669,7 @@ export const userReminderSettings = pgTable("user_reminder_settings", {
 // Guarantees for non-cash facility types
 export const guarantees = pgTable("guarantees", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  organizationId: varchar("organization_id").references(() => organizations.id, { onDelete: 'cascade' }),
   facilityId: varchar("facility_id").references(() => facilities.id, { onDelete: "restrict" }).notNull(),
   userId: varchar("user_id").references(() => users.id).notNull(),
   guaranteeType: guaranteeTypeEnum("guarantee_type").notNull(),
@@ -679,6 +695,7 @@ export const guarantees = pgTable("guarantees", {
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 }, (table) => [
+  index("idx_guarantees_org").on(table.organizationId),
   index("idx_guarantees_facility").on(table.facilityId),
   index("idx_guarantees_user").on(table.userId),
   index("idx_guarantees_expiry_date").on(table.expiryDate),
