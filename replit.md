@@ -119,6 +119,13 @@ The application features a complete touch-first mobile redesign that eliminates 
 
 **Responsive Breakpoint:** Mobile UI renders for `<lg` breakpoint (< 1024px), desktop UI completely unchanged for `≥lg` breakpoint.
 
+**Critical Fix - Single-Tap Interactions:**
+- Removed global touch event listeners from AppLayout that were causing React re-renders on every tap
+- Previous issue: First tap triggered state update → re-render → onClick handler lost; second tap worked
+- Solution: Eliminated global `touchstart`/`touchend` listeners that called `setTouchStart()` on every interaction
+- Result: All buttons, links, tabs, and interactive elements now respond to single tap across all mobile browsers
+- Note: Swipe-to-open sidebar removed in favor of bottom tab navigation and hamburger menu
+
 ## Admin Portal
 A comprehensive admin portal with its own authentication provides system oversight. Features include a dashboard for real-time statistics, analytics for platform usage and loan trends, user management with activity logs, database management, security monitoring, system alerts, global settings, and email template management. Security is maintained with separate authentication and Bearer token-based API protection.
 
