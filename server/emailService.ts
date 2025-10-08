@@ -15,6 +15,27 @@ if (sendgridKey) {
 
 export const FROM_EMAIL = config.get('SENDGRID_FROM_EMAIL');
 
+export async function sendEmail(options: {
+  to: string;
+  subject: string;
+  text?: string;
+  html?: string;
+}): Promise<void> {
+  if (!config.has('SENDGRID_API_KEY')) {
+    console.log('Email would be sent to:', options.to);
+    console.log('Subject:', options.subject);
+    return;
+  }
+
+  await mailService.send({
+    to: options.to,
+    from: FROM_EMAIL || 'noreply@morouna-loans.com',
+    subject: options.subject,
+    text: options.text,
+    html: options.html,
+  });
+}
+
 interface LoanDueNotification {
   id: string;
   referenceNumber: string;
