@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { ComposedChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from "recharts";
+import { ComposedChart, Bar, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from "recharts";
 import { CalendarDays, TrendingUp } from "lucide-react";
 import { SAUDI_CHART_COLORS, CHART_STYLING } from "@/lib/chart-colors";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -175,13 +175,14 @@ export default function UpcomingLoansByMonthChart({ allBanks }: UpcomingLoansByM
               radius={[4, 4, 0, 0]}
               maxBarSize={40}
             />
-            <Bar 
+            <Line 
               yAxisId="right"
+              type="monotone"
               dataKey="amountInMillions" 
-              fill={SAUDI_CHART_COLORS.saudiGreen} 
+              stroke={SAUDI_CHART_COLORS.saudiGreen} 
+              strokeWidth={3}
+              dot={{ fill: SAUDI_CHART_COLORS.saudiGreen, r: 5 }}
               name="Total Amount (M SAR)"
-              radius={[4, 4, 0, 0]}
-              maxBarSize={40}
             />
           </ComposedChart>
         </ResponsiveContainer>

@@ -1210,7 +1210,7 @@ export class DatabaseStorage implements IStorage {
     // Calculate totals
     const totalOutstanding = activeLoans.reduce((sum, loan) => sum + parseFloat(loan.amount), 0);
     const totalCreditLimit = userFacilities.reduce((sum, facility) => sum + parseFloat(facility.facilities.creditLimit), 0);
-    const availableCredit = totalCreditLimit - totalOutstanding;
+    const availableCredit = Math.max(0, totalCreditLimit - totalOutstanding);
 
     // Get total collateral value for LTV calculation (portfolio-level)
     const userCollateralList = await this.getUserCollateral(userId);
