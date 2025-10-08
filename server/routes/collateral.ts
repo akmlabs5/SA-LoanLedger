@@ -1,15 +1,16 @@
 import type { Express } from "express";
 import type { AppDependencies } from "../types";
 import { isAuthenticated } from "../replitAuth";
+import { attachOrganizationContext, requireOrganization } from "../organizationMiddleware";
 import { insertCollateralSchema, insertCollateralAssignmentSchema } from "@shared/schema";
 
 export function registerCollateralRoutes(app: Express, deps: AppDependencies) {
   const { storage } = deps;
 
-  app.get('/api/collateral', isAuthenticated, async (req: any, res) => {
+  app.get('/api/collateral', isAuthenticated, attachOrganizationContext, requireOrganization, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
-      const collateral = await storage.getUserCollateral(userId);
+      const organizationId = req.organizationId;
+      const collateral = await storage.getUserCollateral(organizationId);
       res.json(collateral);
     } catch (error) {
       console.error("Error fetching collateral:", error);
@@ -17,9 +18,9 @@ export function registerCollateralRoutes(app: Express, deps: AppDependencies) {
     }
   });
 
-  app.post('/api/collateral', isAuthenticated, async (req: any, res) => {
+  app.post('/api/collateral', isAuthenticated, attachOrganizationContext, requireOrganization, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const organizationId = req.organizationId;
       
       const { facilityId, bankId, pledgeType, ...collateralFields } = req.body;
       
@@ -35,10 +36,10 @@ export function registerCollateralRoutes(app: Express, deps: AppDependencies) {
         return res.status(400).json({ message: "Pledge type is required for collateral creation" });
       }
       
-      const collateralData = insertCollateralSchema.parse({ ...collateralFields, userId });
+      const collateralData = insertCollateralSchema.parse({ ...collateralFields, organizationId });
       
       if (facilityId) {
-        const userFacilities = await storage.getUserFacilities(userId);
+        const userFacilities = await storage.getUserFacilities(organizationId);
         const facility = userFacilities.find((f: any) => f.id === facilityId);
         if (!facility) {
           return res.status(403).json({ message: "Facility not found or access denied" });
@@ -46,7 +47,7 @@ export function registerCollateralRoutes(app: Express, deps: AppDependencies) {
       }
       
       if (bankId) {
-        const userFacilities = await storage.getUserFacilities(userId);
+        const userFacilities = await storage.getUserFacilities(organizationId);
         const hasRelationship = userFacilities.some((f: any) => f.bankId === bankId);
         if (!hasRelationship) {
           return res.status(403).json({ message: "No relationship found with this bank" });
@@ -61,7 +62,7 @@ export function registerCollateralRoutes(app: Express, deps: AppDependencies) {
           pledgeType,
           effectiveDate: new Date().toISOString().split('T')[0],
           isActive: true,
-          userId
+          organizationId
         };
         
         if (facilityId) {
@@ -88,7 +89,7 @@ export function registerCollateralRoutes(app: Express, deps: AppDependencies) {
     }
   });
 
-  app.put('/api/collateral/:id', isAuthenticated, async (req: any, res) => {
+  app.put('/api/collateral/:id', isAuthenticated, attachOrganizationContext, requireOrganization, async (req: any, res) => {
     try {
       const collateralId = req.params.id;
       const updates = req.body;
@@ -100,7 +101,7 @@ export function registerCollateralRoutes(app: Express, deps: AppDependencies) {
     }
   });
 
-  app.delete('/api/collateral/:id', isAuthenticated, async (req: any, res) => {
+  app.delete('/api/collateral/:id', isAuthenticated, attachOrganizationContext, requireOrganization, async (req: any, res) => {
     try {
       const collateralId = req.params.id;
       await storage.deleteCollateral(collateralId);
@@ -111,10 +112,10 @@ export function registerCollateralRoutes(app: Express, deps: AppDependencies) {
     }
   });
 
-  app.get('/api/collateral-assignments', isAuthenticated, async (req: any, res) => {
+  app.get('/api/collateral-assignments', isAuthenticated, attachOrganizationContext, requireOrganization, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
-      const assignments = await storage.getUserCollateralAssignments(userId);
+      const organizationId = req.organizationId;
+      const assignments = await storage.getUserCollateralAssignments(organizationId);
       res.json(assignments);
     } catch (error) {
       console.error("Error fetching collateral assignments:", error);
@@ -122,14 +123,14 @@ export function registerCollateralRoutes(app: Express, deps: AppDependencies) {
     }
   });
 
-  app.post('/api/collateral-assignments', isAuthenticated, async (req: any, res) => {
+  app.post('/api/collateral-assignments', isAuthenticated, attachOrganizationContext, requireOrganization, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
-      const assignmentData = insertCollateralAssignmentSchema.parse({ ...req.body, userId });
+      const organizationId = req.organizationId;
+      const assignmentData = insertCollateralAssignmentSchema.parse({ ...req.body, organizationId });
       
-      const userCollateral = await storage.getUserCollateral(userId);
-      const userFacilities = await storage.getUserFacilities(userId);
-      const userCreditLines = await storage.getUserCreditLines(userId);
+      const userCollateral = await storage.getUserCollateral(organizationId);
+      const userFacilities = await storage.getUserFacilities(organizationId);
+      const userCreditLines = await storage.getUserCreditLines(organizationId);
       
       if (!userCollateral.find((c: any) => c.id === assignmentData.collateralId)) {
         return res.status(403).json({ message: "Collateral not found or access denied" });
@@ -165,13 +166,13 @@ export function registerCollateralRoutes(app: Express, deps: AppDependencies) {
     }
   });
 
-  app.put('/api/collateral-assignments/:id', isAuthenticated, async (req: any, res) => {
+  app.put('/api/collateral-assignments/:id', isAuthenticated, attachOrganizationContext, requireOrganization, async (req: any, res) => {
     try {
       const assignmentId = req.params.id;
-      const userId = req.user.claims.sub;
+      const organizationId = req.organizationId;
       const updates = req.body;
       
-      const userAssignments = await storage.getUserCollateralAssignments(userId);
+      const userAssignments = await storage.getUserCollateralAssignments(organizationId);
       const existingAssignment = userAssignments.find((a: any) => a.id === assignmentId);
       
       if (!existingAssignment) {
@@ -179,8 +180,8 @@ export function registerCollateralRoutes(app: Express, deps: AppDependencies) {
       }
       
       if (updates.facilityId || updates.creditLineId) {
-        const userFacilities = await storage.getUserFacilities(userId);
-        const userCreditLines = await storage.getUserCreditLines(userId);
+        const userFacilities = await storage.getUserFacilities(organizationId);
+        const userCreditLines = await storage.getUserCreditLines(organizationId);
         
         if (updates.facilityId && !userFacilities.find((f: any) => f.id === updates.facilityId)) {
           return res.status(403).json({ message: "Facility not found or access denied" });
@@ -206,12 +207,12 @@ export function registerCollateralRoutes(app: Express, deps: AppDependencies) {
     }
   });
 
-  app.delete('/api/collateral-assignments/:id', isAuthenticated, async (req: any, res) => {
+  app.delete('/api/collateral-assignments/:id', isAuthenticated, attachOrganizationContext, requireOrganization, async (req: any, res) => {
     try {
       const assignmentId = req.params.id;
-      const userId = req.user.claims.sub;
+      const organizationId = req.organizationId;
       
-      const userAssignments = await storage.getUserCollateralAssignments(userId);
+      const userAssignments = await storage.getUserCollateralAssignments(organizationId);
       const existingAssignment = userAssignments.find((a: any) => a.id === assignmentId);
       
       if (!existingAssignment) {

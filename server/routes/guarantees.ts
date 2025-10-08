@@ -1,15 +1,16 @@
 import type { Express } from "express";
 import type { AppDependencies } from "../types";
 import { isAuthenticated } from "../replitAuth";
+import { attachOrganizationContext, requireOrganization } from "../organizationMiddleware";
 import { insertGuaranteeSchema, updateGuaranteeSchema } from "@shared/schema";
 
 export function registerGuaranteesRoutes(app: Express, deps: AppDependencies) {
   const { storage } = deps;
 
-  app.get('/api/guarantees', isAuthenticated, async (req: any, res) => {
+  app.get('/api/guarantees', isAuthenticated, attachOrganizationContext, requireOrganization, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
-      const guarantees = await storage.getUserGuarantees(userId);
+      const organizationId = req.organizationId;
+      const guarantees = await storage.getUserGuarantees(organizationId);
       res.json(guarantees);
     } catch (error) {
       console.error("Error fetching guarantees:", error);
@@ -17,13 +18,13 @@ export function registerGuaranteesRoutes(app: Express, deps: AppDependencies) {
     }
   });
 
-  app.get('/api/guarantees/:guaranteeId', isAuthenticated, async (req: any, res) => {
+  app.get('/api/guarantees/:guaranteeId', isAuthenticated, attachOrganizationContext, requireOrganization, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const organizationId = req.organizationId;
       const { guaranteeId } = req.params;
       
       const guarantee = await storage.getGuaranteeById(guaranteeId);
-      if (!guarantee || guarantee.userId !== userId) {
+      if (!guarantee || guarantee.organizationId !== organizationId) {
         return res.status(404).json({ message: "Guarantee not found" });
       }
       
@@ -34,17 +35,17 @@ export function registerGuaranteesRoutes(app: Express, deps: AppDependencies) {
     }
   });
 
-  app.post('/api/guarantees', isAuthenticated, async (req: any, res) => {
+  app.post('/api/guarantees', isAuthenticated, attachOrganizationContext, requireOrganization, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const organizationId = req.organizationId;
       
       const guaranteeData = insertGuaranteeSchema.parse({
         ...req.body,
-        userId,
+        organizationId,
       });
       
-      // Verify user owns the facility
-      const userFacilities = await storage.getUserFacilities(userId);
+      // Verify organization owns the facility
+      const userFacilities = await storage.getUserFacilities(organizationId);
       const facility = userFacilities.find(f => f.id === guaranteeData.facilityId);
       if (!facility) {
         return res.status(404).json({ message: "Facility not found" });
@@ -58,14 +59,14 @@ export function registerGuaranteesRoutes(app: Express, deps: AppDependencies) {
     }
   });
 
-  app.put('/api/guarantees/:guaranteeId', isAuthenticated, async (req: any, res) => {
+  app.put('/api/guarantees/:guaranteeId', isAuthenticated, attachOrganizationContext, requireOrganization, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const organizationId = req.organizationId;
       const { guaranteeId } = req.params;
       
-      // Verify user owns the guarantee
+      // Verify organization owns the guarantee
       const existingGuarantee = await storage.getGuaranteeById(guaranteeId);
-      if (!existingGuarantee || existingGuarantee.userId !== userId) {
+      if (!existingGuarantee || existingGuarantee.organizationId !== organizationId) {
         return res.status(404).json({ message: "Guarantee not found" });
       }
       
@@ -82,14 +83,14 @@ export function registerGuaranteesRoutes(app: Express, deps: AppDependencies) {
     }
   });
 
-  app.delete('/api/guarantees/:guaranteeId', isAuthenticated, async (req: any, res) => {
+  app.delete('/api/guarantees/:guaranteeId', isAuthenticated, attachOrganizationContext, requireOrganization, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const organizationId = req.organizationId;
       const { guaranteeId } = req.params;
       
-      // Verify user owns the guarantee
+      // Verify organization owns the guarantee
       const existingGuarantee = await storage.getGuaranteeById(guaranteeId);
-      if (!existingGuarantee || existingGuarantee.userId !== userId) {
+      if (!existingGuarantee || existingGuarantee.organizationId !== organizationId) {
         return res.status(404).json({ message: "Guarantee not found" });
       }
       
@@ -101,13 +102,13 @@ export function registerGuaranteesRoutes(app: Express, deps: AppDependencies) {
     }
   });
 
-  app.get('/api/facilities/:facilityId/guarantees', isAuthenticated, async (req: any, res) => {
+  app.get('/api/facilities/:facilityId/guarantees', isAuthenticated, attachOrganizationContext, requireOrganization, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const organizationId = req.organizationId;
       const { facilityId } = req.params;
       
-      // Verify user owns the facility
-      const userFacilities = await storage.getUserFacilities(userId);
+      // Verify organization owns the facility
+      const userFacilities = await storage.getUserFacilities(organizationId);
       const facility = userFacilities.find(f => f.id === facilityId);
       if (!facility) {
         return res.status(404).json({ message: "Facility not found" });

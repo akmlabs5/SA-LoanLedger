@@ -1,6 +1,7 @@
 import type { Express } from "express";
 import type { AppDependencies } from "../types";
 import { isAuthenticated } from "../replitAuth";
+import { attachOrganizationContext, requireOrganization } from "../organizationMiddleware";
 import { 
   insertLoanSchema, 
   paymentRequestSchema,
@@ -12,16 +13,16 @@ import { sendTemplateReminderEmail } from "../emailService";
 export function registerLoansRoutes(app: Express, deps: AppDependencies) {
   const { storage } = deps;
 
-  app.get('/api/loans', isAuthenticated, async (req: any, res) => {
+  app.get('/api/loans', isAuthenticated, attachOrganizationContext, requireOrganization, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const organizationId = req.organizationId;
       const status = req.query.status as string;
       
       let loans;
       if (status === 'settled') {
-        loans = await storage.getSettledLoansByUser(userId);
+        loans = await storage.getSettledLoansByUser(organizationId);
       } else {
-        loans = await storage.getActiveLoansByUser(userId);
+        loans = await storage.getActiveLoansByUser(organizationId);
       }
       
       res.json(loans);
@@ -31,9 +32,9 @@ export function registerLoansRoutes(app: Express, deps: AppDependencies) {
     }
   });
 
-  app.post('/api/loans', isAuthenticated, async (req: any, res) => {
+  app.post('/api/loans', isAuthenticated, attachOrganizationContext, requireOrganization, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const organizationId = req.organizationId;
       
       const processedBody = { ...req.body };
       if (processedBody.chargesDueDate === "") {
@@ -46,13 +47,13 @@ export function registerLoansRoutes(app: Express, deps: AppDependencies) {
         processedBody.settledDate = null;
       }
       
-      const loanData = insertLoanSchema.parse({ ...processedBody, userId });
+      const loanData = insertLoanSchema.parse({ ...processedBody, organizationId });
       
       if (!loanData.facilityId) {
         return res.status(400).json({ message: "Facility is required for loan creation" });
       }
       
-      const userFacilities = await storage.getUserFacilities(userId);
+      const userFacilities = await storage.getUserFacilities(organizationId);
       const facility = userFacilities.find((f: any) => f.id === loanData.facilityId);
       
       if (!facility) {
@@ -62,7 +63,7 @@ export function registerLoansRoutes(app: Express, deps: AppDependencies) {
       let finalCreditLineId = loanData.creditLineId;
       
       if (loanData.creditLineId) {
-        const userCreditLines = await storage.getUserCreditLines(userId);
+        const userCreditLines = await storage.getUserCreditLines(organizationId);
         const creditLine = userCreditLines.find((cl: any) => cl.id === loanData.creditLineId);
         
         if (!creditLine) {
@@ -75,7 +76,7 @@ export function registerLoansRoutes(app: Express, deps: AppDependencies) {
         
         finalCreditLineId = loanData.creditLineId;
       } else {
-        const userCreditLines = await storage.getUserCreditLines(userId);
+        const userCreditLines = await storage.getUserCreditLines(organizationId);
         const facilityCreditLines = userCreditLines.filter((cl: any) => cl.facilityId === loanData.facilityId);
         
         if (facilityCreditLines.length > 0) {
@@ -83,7 +84,7 @@ export function registerLoansRoutes(app: Express, deps: AppDependencies) {
         } else {
           const newCreditLine = await storage.createCreditLine({
             facilityId: loanData.facilityId,
-            userId,
+            organizationId,
             creditLineType: "working_capital",
             name: `Credit Line 1 - ${facility.bank?.name || 'Bank'}`,
             description: "Auto-created credit line for loan drawdown",
@@ -98,7 +99,7 @@ export function registerLoansRoutes(app: Express, deps: AppDependencies) {
       const loan = await storage.createLoan(finalLoanData);
 
       try {
-        const userSettings = await storage.getUserReminderSettings(userId);
+        const userSettings = await storage.getUserReminderSettings(organizationId);
         
         if (userSettings && userSettings.autoApplyDefaults && Array.isArray(userSettings.defaultIntervals) && userSettings.defaultIntervals.length > 0) {
           const validIntervals = Array.from(new Set(
@@ -134,7 +135,7 @@ export function registerLoansRoutes(app: Express, deps: AppDependencies) {
 
                 const reminderData = {
                   loanId: loan.id,
-                  userId,
+                  organizationId,
                   reminderDate: reminderDateStr,
                   message: `Automated reminder: Payment due in ${interval} days`,
                   isEmailEnabled: userSettings.emailNotifications,
@@ -147,9 +148,9 @@ export function registerLoansRoutes(app: Express, deps: AppDependencies) {
                   
                   if (createdReminder.emailEnabled) {
                     try {
-                      const user = await storage.getUser(userId);
+                      const user = await storage.getUser(organizationId);
                       if (!user) {
-                        console.error(`User not found for auto-reminder email: ${userId}`);
+                        console.error(`User not found for auto-reminder email: ${organizationId}`);
                       } else {
                         const facility = await storage.getFacilityById(loan.facilityId);
                         let bank = null;
@@ -215,7 +216,7 @@ export function registerLoansRoutes(app: Express, deps: AppDependencies) {
     }
   });
 
-  app.get('/api/loans/:id', isAuthenticated, async (req: any, res) => {
+  app.get('/api/loans/:id', isAuthenticated, attachOrganizationContext, requireOrganization, async (req: any, res) => {
     try {
       const loanId = req.params.id;
       const loan = await storage.getLoanById(loanId);
@@ -231,15 +232,15 @@ export function registerLoansRoutes(app: Express, deps: AppDependencies) {
     }
   });
 
-  app.patch('/api/loans/:id', isAuthenticated, async (req: any, res) => {
+  app.patch('/api/loans/:id', isAuthenticated, attachOrganizationContext, requireOrganization, async (req: any, res) => {
     try {
       const loanId = req.params.id;
-      const userId = req.user.claims.sub;
+      const organizationId = req.organizationId;
       const { reason, ...updateData } = req.body;
       
       const validatedData = insertLoanSchema.partial().parse(updateData);
       
-      const updatedLoan = await storage.updateLoan(loanId, validatedData, userId, reason);
+      const updatedLoan = await storage.updateLoan(loanId, validatedData, organizationId, reason);
       res.json(updatedLoan);
     } catch (error) {
       console.error("Error updating loan:", error);
@@ -247,13 +248,13 @@ export function registerLoansRoutes(app: Express, deps: AppDependencies) {
     }
   });
 
-  app.post('/api/loans/:id/repayments', isAuthenticated, async (req: any, res) => {
+  app.post('/api/loans/:id/repayments', isAuthenticated, attachOrganizationContext, requireOrganization, async (req: any, res) => {
     try {
       const loanId = req.params.id;
-      const userId = req.user.claims.sub;
+      const organizationId = req.organizationId;
       const paymentData = paymentRequestSchema.parse(req.body);
       
-      const result = await storage.processPayment(loanId, paymentData, userId);
+      const result = await storage.processPayment(loanId, paymentData, organizationId);
       res.json(result);
     } catch (error) {
       console.error("Error processing payment:", error);
@@ -261,13 +262,13 @@ export function registerLoansRoutes(app: Express, deps: AppDependencies) {
     }
   });
 
-  app.post('/api/loans/:id/settle', isAuthenticated, async (req: any, res) => {
+  app.post('/api/loans/:id/settle', isAuthenticated, attachOrganizationContext, requireOrganization, async (req: any, res) => {
     try {
       const loanId = req.params.id;
-      const userId = req.user.claims.sub;
+      const organizationId = req.organizationId;
       const settlementData = settlementRequestSchema.parse(req.body);
       
-      const result = await storage.settleLoan(loanId, settlementData, userId);
+      const result = await storage.settleLoan(loanId, settlementData, organizationId);
       res.json(result);
     } catch (error) {
       console.error("Error settling loan:", error);
@@ -275,13 +276,13 @@ export function registerLoansRoutes(app: Express, deps: AppDependencies) {
     }
   });
 
-  app.post('/api/loans/:id/revolve', isAuthenticated, async (req: any, res) => {
+  app.post('/api/loans/:id/revolve', isAuthenticated, attachOrganizationContext, requireOrganization, async (req: any, res) => {
     try {
       const loanId = req.params.id;
-      const userId = req.user.claims.sub;
+      const organizationId = req.organizationId;
       const revolveData = revolveRequestSchema.parse(req.body);
       
-      const result = await storage.revolveLoan(loanId, revolveData, userId);
+      const result = await storage.revolveLoan(loanId, revolveData, organizationId);
       res.json(result);
     } catch (error) {
       console.error("Error revolving loan:", error);
@@ -289,7 +290,7 @@ export function registerLoansRoutes(app: Express, deps: AppDependencies) {
     }
   });
 
-  app.get('/api/loans/:id/ledger', isAuthenticated, async (req: any, res) => {
+  app.get('/api/loans/:id/ledger', isAuthenticated, attachOrganizationContext, requireOrganization, async (req: any, res) => {
     try {
       const loanId = req.params.id;
       const transactions = await storage.getLoanLedger(loanId);
@@ -300,7 +301,7 @@ export function registerLoansRoutes(app: Express, deps: AppDependencies) {
     }
   });
 
-  app.get('/api/loans/:id/balance', isAuthenticated, async (req: any, res) => {
+  app.get('/api/loans/:id/balance', isAuthenticated, attachOrganizationContext, requireOrganization, async (req: any, res) => {
     try {
       const loanId = req.params.id;
       const balance = await storage.calculateLoanBalance(loanId);
@@ -311,13 +312,13 @@ export function registerLoansRoutes(app: Express, deps: AppDependencies) {
     }
   });
 
-  app.delete('/api/loans/:id', isAuthenticated, async (req: any, res) => {
+  app.delete('/api/loans/:id', isAuthenticated, attachOrganizationContext, requireOrganization, async (req: any, res) => {
     try {
       const loanId = req.params.id;
-      const userId = req.user.claims.sub;
+      const organizationId = req.organizationId;
       const { reason } = req.body;
       
-      await storage.deleteLoan(loanId, userId, reason);
+      await storage.deleteLoan(loanId, organizationId, reason);
       res.json({ message: "Loan cancelled successfully" });
     } catch (error) {
       console.error("Error cancelling loan:", error);
