@@ -13,7 +13,7 @@ import { Lock, Mail, User, CheckCircle2, Building2, Shield } from "lucide-react"
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import morounaLogo from "@assets/with_padding_1759917358345.png";
+import morounaLogo from "@assets/noBgWhite_1759919560002.png";
 
 const signupSchema = z.object({
   email: z.string().email("Please enter a valid email address"),
@@ -279,14 +279,14 @@ export default function SupabaseSignupPage() {
                         className="flex flex-col space-y-1"
                       >
                         <div className="flex items-center space-x-2 p-3 rounded-lg hover:bg-white/10 transition-colors">
-                          <RadioGroupItem value="personal" id="personal" className="border-white/30 text-green-500" />
+                          <RadioGroupItem value="personal" id="personal" className="border-white/50 text-white/70 data-[state=checked]:border-white data-[state=checked]:text-white data-[state=checked]:bg-white/20" />
                           <Label htmlFor="personal" className="text-white font-normal cursor-pointer flex items-center gap-2">
                             <User className="w-4 h-4" />
                             Personal Account
                           </Label>
                         </div>
                         <div className="flex items-center space-x-2 p-3 rounded-lg hover:bg-white/10 transition-colors">
-                          <RadioGroupItem value="organization" id="organization" className="border-white/30 text-green-500" />
+                          <RadioGroupItem value="organization" id="organization" className="border-white/50 text-white/70 data-[state=checked]:border-white data-[state=checked]:text-white data-[state=checked]:bg-white/20" />
                           <Label htmlFor="organization" className="text-white font-normal cursor-pointer flex items-center gap-2">
                             <Building2 className="w-4 h-4" />
                             Organization Account
