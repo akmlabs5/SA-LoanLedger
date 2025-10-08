@@ -219,16 +219,14 @@ export default function GeneralLoanCreatePage() {
   });
 
   const onSubmit = (data: LoanFormData) => {
-    // Validate credit limit
+    // Show warning if loan exceeds available credit, but allow creation
     if (creditInfo) {
       const loanAmount = parseFloat(data.amount);
       if (loanAmount > creditInfo.availableCredit) {
         toast({
-          title: "Insufficient Credit",
-          description: `Loan amount (${loanAmount.toLocaleString()} SAR) exceeds available credit (${creditInfo.availableCredit.toLocaleString()} SAR)`,
-          variant: "destructive"
+          title: "Warning: Exceeding Available Credit",
+          description: `Loan amount (${loanAmount.toLocaleString()} SAR) exceeds available credit (${creditInfo.availableCredit.toLocaleString()} SAR). Proceeding with loan creation.`,
         });
-        return;
       }
     }
 

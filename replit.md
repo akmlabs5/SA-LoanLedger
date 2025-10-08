@@ -92,6 +92,11 @@ A comprehensive admin portal with its own authentication provides system oversig
 ## Key Features
 The system supports bank-level collateral assignment, optional facility durations, and a revolving period tracking system. User settings include daily alerts configuration, a feature showcase, and user tips.
 
+**Loan Creation Flexibility:**
+- Users can create loans that exceed facility credit limits (over-limit drawdowns allowed)
+- System shows a warning notification when loan amount exceeds available credit, but allows proceeding
+- This enables overdraft scenarios and flexible credit management while keeping users informed
+
 # External Dependencies
 
 ## Database Services
