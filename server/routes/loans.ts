@@ -35,6 +35,7 @@ export function registerLoansRoutes(app: Express, deps: AppDependencies) {
   app.post('/api/loans', isAuthenticated, attachOrganizationContext, requireOrganization, async (req: any, res) => {
     try {
       const organizationId = req.organizationId;
+      const userId = req.user.claims.sub;
       
       const processedBody = { ...req.body };
       if (processedBody.chargesDueDate === "") {
@@ -47,7 +48,7 @@ export function registerLoansRoutes(app: Express, deps: AppDependencies) {
         processedBody.settledDate = null;
       }
       
-      const loanData = insertLoanSchema.parse({ ...processedBody, organizationId });
+      const loanData = insertLoanSchema.parse({ ...processedBody, organizationId, userId });
       
       if (!loanData.facilityId) {
         return res.status(400).json({ message: "Facility is required for loan creation" });
