@@ -281,9 +281,9 @@ export const facilities = pgTable("facilities", {
 // Credit Lines (intermediate layer between facilities and loans)
 export const creditLines = pgTable("credit_lines", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  organizationId: varchar("organization_id").references(() => organizations.id, { onDelete: 'cascade' }),
+  organizationId: varchar("organization_id").references(() => organizations.id, { onDelete: 'cascade' }).notNull(),
   facilityId: varchar("facility_id").references(() => facilities.id).notNull(),
-  userId: varchar("user_id").references(() => users.id).notNull(),
+  userId: varchar("user_id").references(() => users.id), // Optional - for audit trail
   creditLineType: creditLineTypeEnum("credit_line_type").notNull(),
   name: varchar("name", { length: 200 }).notNull(),
   description: text("description"),
@@ -614,7 +614,8 @@ export const auditLogs = pgTable("audit_logs", {
 export const loanReminders = pgTable("loan_reminders", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   loanId: varchar("loan_id").references(() => loans.id, { onDelete: "cascade" }).notNull(),
-  userId: varchar("user_id").references(() => users.id).notNull(),
+  organizationId: varchar("organization_id").references(() => organizations.id, { onDelete: 'cascade' }).notNull(),
+  userId: varchar("user_id").references(() => users.id), // Optional - for audit trail
   type: reminderTypeEnum("type").notNull(),
   title: varchar("title", { length: 200 }).notNull(),
   message: text("message"),
@@ -628,6 +629,7 @@ export const loanReminders = pgTable("loan_reminders", {
   updatedAt: timestamp("updated_at").defaultNow(),
 }, (table) => [
   index("idx_loan_reminders_loan").on(table.loanId),
+  index("idx_loan_reminders_org").on(table.organizationId),
   index("idx_loan_reminders_user").on(table.userId),
   index("idx_loan_reminders_date").on(table.reminderDate),
   index("idx_loan_reminders_status").on(table.status),
@@ -650,10 +652,11 @@ export const reminderTemplates = pgTable("reminder_templates", {
   index("idx_reminder_templates_active").on(table.isActive),
 ]);
 
-// User Reminder Settings - Default preferences per user
+// Organization Reminder Settings - Default preferences per organization
 export const userReminderSettings = pgTable("user_reminder_settings", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  userId: varchar("user_id").references(() => users.id).notNull(),
+  organizationId: varchar("organization_id").references(() => organizations.id, { onDelete: 'cascade' }).notNull(),
+  userId: varchar("user_id").references(() => users.id), // Optional - for audit trail
   autoApplyEnabled: boolean("auto_apply_enabled").default(false),
   defaultEmailEnabled: boolean("default_email_enabled").default(true),
   defaultCalendarEnabled: boolean("default_calendar_enabled").default(false),
@@ -662,8 +665,9 @@ export const userReminderSettings = pgTable("user_reminder_settings", {
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 }, (table) => [
+  index("idx_user_reminder_settings_org").on(table.organizationId),
   index("idx_user_reminder_settings_user").on(table.userId),
-  unique("unique_user_reminder_settings").on(table.userId), // One settings record per user
+  unique("unique_org_reminder_settings").on(table.organizationId), // One settings record per organization
 ]);
 
 // Guarantees for non-cash facility types

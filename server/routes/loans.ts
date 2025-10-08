@@ -101,7 +101,7 @@ export function registerLoansRoutes(app: Express, deps: AppDependencies) {
       try {
         const userSettings = await storage.getUserReminderSettings(organizationId);
         
-        if (userSettings && userSettings.autoApplyDefaults && Array.isArray(userSettings.defaultIntervals) && userSettings.defaultIntervals.length > 0) {
+        if (userSettings && userSettings.autoApplyEnabled && Array.isArray(userSettings.defaultIntervals) && userSettings.defaultIntervals.length > 0) {
           const validIntervals = Array.from(new Set(
             userSettings.defaultIntervals.filter(interval => 
               Number.isInteger(interval) && interval > 0
@@ -118,7 +118,7 @@ export function registerLoansRoutes(app: Express, deps: AppDependencies) {
               const today = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Riyadh' });
               
               const existingReminders = await storage.getLoanReminders(loan.id);
-              const existingDates = new Set(existingReminders.map(r => r.reminderDate));
+              const existingDates = new Set(existingReminders.map(r => new Date(r.reminderDate).toLocaleDateString('en-CA', { timeZone: 'Asia/Riyadh' })));
               
               const reminderPromises = validIntervals.map(async (interval) => {
                 const reminderDate = new Date(loanDueDate);
@@ -136,56 +136,19 @@ export function registerLoansRoutes(app: Express, deps: AppDependencies) {
                 const reminderData = {
                   loanId: loan.id,
                   organizationId,
-                  reminderDate: reminderDateStr,
+                  type: 'due_date' as const,
+                  title: `Payment Due in ${interval} Days`,
+                  reminderDate: new Date(reminderDateStr),
                   message: `Automated reminder: Payment due in ${interval} days`,
-                  isEmailEnabled: userSettings.emailNotifications,
-                  isCalendarEnabled: userSettings.calendarEvents,
-                  templateId: userSettings.defaultTemplateId || null
+                  emailEnabled: userSettings.defaultEmailEnabled,
+                  calendarEnabled: userSettings.defaultCalendarEnabled,
                 };
 
                 try {
                   const createdReminder = await storage.createLoanReminder(reminderData);
                   
                   if (createdReminder.emailEnabled) {
-                    try {
-                      const user = await storage.getUser(organizationId);
-                      if (!user) {
-                        console.error(`User not found for auto-reminder email: ${organizationId}`);
-                      } else {
-                        const facility = await storage.getFacilityById(loan.facilityId);
-                        let bank = null;
-                        if (facility?.bankId) {
-                          bank = await storage.getBankById(facility.bankId);
-                        }
-                        
-                        let template = null;
-                        if (createdReminder.templateId) {
-                          try {
-                            const templates = await storage.getReminderTemplates();
-                            template = templates.find(t => t.id === createdReminder.templateId) || null;
-                          } catch (error) {
-                            console.log('Template not found for auto-reminder, using default:', error);
-                          }
-                        }
-                        
-                        const emailSent = await sendTemplateReminderEmail(
-                          user, 
-                          loan, 
-                          createdReminder, 
-                          template, 
-                          bank, 
-                          facility
-                        );
-                        
-                        if (emailSent) {
-                          console.log(`Email sent for auto-generated reminder ${createdReminder.id}`);
-                        } else {
-                          console.error(`Failed to send email for auto-generated reminder ${createdReminder.id}`);
-                        }
-                      }
-                    } catch (emailError) {
-                      console.error('Error sending auto-reminder email:', emailError);
-                    }
+                    console.log(`Auto-reminder created with email enabled: ${createdReminder.id} (email will be sent by reminder processing system)`);
                   }
                   
                   return { success: true, reminder: createdReminder, interval };

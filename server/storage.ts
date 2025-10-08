@@ -104,22 +104,22 @@ export interface IStorage {
   // Bank Contact operations
   getBankContacts(bankId: string, organizationId: string): Promise<Array<BankContact & { bank: Bank }>>;
   createBankContact(contact: InsertBankContact): Promise<BankContact>;
-  updateBankContact(contactId: string, contact: Partial<InsertBankContact>): Promise<BankContact>;
-  deleteBankContact(contactId: string): Promise<void>;
+  updateBankContact(contactId: string, organizationId: string, contact: Partial<InsertBankContact>): Promise<BankContact>;
+  deleteBankContact(contactId: string, organizationId: string): Promise<void>;
   setPrimaryContact(contactId: string, bankId: string, organizationId: string): Promise<BankContact>;
   
   // Facility operations
   getUserFacilities(organizationId: string): Promise<Array<Facility & { bank: Bank }>>;
   getFacilityWithBank(facilityId: string): Promise<(Facility & { bank: Bank }) | undefined>;
   createFacility(facility: InsertFacility): Promise<Facility>;
-  updateFacility(facilityId: string, facility: Partial<InsertFacility>): Promise<Facility>;
-  deleteFacility(facilityId: string): Promise<void>;
+  updateFacility(facilityId: string, organizationId: string, facility: Partial<InsertFacility>): Promise<Facility>;
+  deleteFacility(facilityId: string, organizationId: string): Promise<void>;
   
   // Collateral operations
   getUserCollateral(organizationId: string): Promise<Collateral[]>;
   createCollateral(collateral: InsertCollateral): Promise<Collateral>;
-  updateCollateral(collateralId: string, collateral: Partial<InsertCollateral>): Promise<Collateral>;
-  deleteCollateral(collateralId: string): Promise<void>;
+  updateCollateral(collateralId: string, organizationId: string, collateral: Partial<InsertCollateral>): Promise<Collateral>;
+  deleteCollateral(collateralId: string, organizationId: string): Promise<void>;
   
   // Collateral Assignment operations
   getUserCollateralAssignments(organizationId: string): Promise<Array<CollateralAssignment & { 
@@ -128,13 +128,13 @@ export interface IStorage {
     creditLine?: CreditLine & { facility: Facility & { bank: Bank } } 
   }>>;
   createCollateralAssignment(assignment: InsertCollateralAssignment): Promise<CollateralAssignment>;
-  updateCollateralAssignment(assignmentId: string, assignment: Partial<InsertCollateralAssignment>): Promise<CollateralAssignment>;
-  deleteCollateralAssignment(assignmentId: string): Promise<void>;
+  updateCollateralAssignment(assignmentId: string, organizationId: string, assignment: Partial<InsertCollateralAssignment>): Promise<CollateralAssignment>;
+  deleteCollateralAssignment(assignmentId: string, organizationId: string): Promise<void>;
   
   // Credit Line operations
   getUserCreditLines(organizationId: string): Promise<Array<CreditLine & { facility: Facility & { bank: Bank } }>>;
   createCreditLine(creditLine: InsertCreditLine): Promise<CreditLine>;
-  updateCreditLine(creditLineId: string, creditLine: Partial<InsertCreditLine>): Promise<CreditLine>;
+  updateCreditLine(creditLineId: string, organizationId: string, creditLine: Partial<InsertCreditLine>): Promise<CreditLine>;
   
   // Loan operations
   getUserLoans(organizationId: string): Promise<Loan[]>;
@@ -163,8 +163,8 @@ export interface IStorage {
   getLoanReminders(loanId: string): Promise<LoanReminder[]>;
   getUserReminders(userId: string): Promise<Array<LoanReminder & { loan: Loan }>>;
   createLoanReminder(reminder: InsertLoanReminder): Promise<LoanReminder>;
-  updateLoanReminder(reminderId: string, reminder: Partial<UpdateLoanReminder>): Promise<LoanReminder>;
-  deleteLoanReminder(reminderId: string): Promise<void>;
+  updateLoanReminder(reminderId: string, organizationId: string, reminder: Partial<UpdateLoanReminder>): Promise<LoanReminder>;
+  deleteLoanReminder(reminderId: string, organizationId: string): Promise<void>;
   
   // Reminder Template operations
   getAllReminderTemplates(): Promise<ReminderTemplate[]>;
@@ -192,8 +192,8 @@ export interface IStorage {
   getFacilityGuarantees(facilityId: string): Promise<Guarantee[]>;
   getGuaranteeById(guaranteeId: string): Promise<Guarantee | undefined>;
   createGuarantee(guarantee: InsertGuarantee): Promise<Guarantee>;
-  updateGuarantee(guaranteeId: string, guarantee: Partial<UpdateGuarantee>): Promise<Guarantee>;
-  deleteGuarantee(guaranteeId: string): Promise<void>;
+  updateGuarantee(guaranteeId: string, organizationId: string, guarantee: Partial<UpdateGuarantee>): Promise<Guarantee>;
+  deleteGuarantee(guaranteeId: string, organizationId: string): Promise<void>;
   
   // AI Insight Config operations
   getUserAiConfig(userId: string): Promise<AiInsightConfig | undefined>;
@@ -352,26 +352,32 @@ export class DatabaseStorage implements IStorage {
     return newContact;
   }
 
-  async updateBankContact(contactId: string, contact: Partial<InsertBankContact>): Promise<BankContact> {
+  async updateBankContact(contactId: string, organizationId: string, contact: Partial<InsertBankContact>): Promise<BankContact> {
     const [updatedContact] = await db
       .update(bankContacts)
       .set({
         ...contact,
         updatedAt: new Date()
       })
-      .where(eq(bankContacts.id, contactId))
+      .where(and(
+        eq(bankContacts.id, contactId),
+        eq(bankContacts.organizationId, organizationId)
+      ))
       .returning();
     return updatedContact;
   }
 
-  async deleteBankContact(contactId: string): Promise<void> {
+  async deleteBankContact(contactId: string, organizationId: string): Promise<void> {
     await db
       .update(bankContacts)
       .set({ 
         isActive: false, 
         updatedAt: new Date() 
       })
-      .where(eq(bankContacts.id, contactId));
+      .where(and(
+        eq(bankContacts.id, contactId),
+        eq(bankContacts.organizationId, organizationId)
+      ));
   }
 
   async setPrimaryContact(contactId: string, bankId: string, organizationId: string): Promise<BankContact> {
@@ -437,23 +443,29 @@ export class DatabaseStorage implements IStorage {
     return newFacility;
   }
 
-  async updateFacility(facilityId: string, facility: Partial<InsertFacility>): Promise<Facility> {
+  async updateFacility(facilityId: string, organizationId: string, facility: Partial<InsertFacility>): Promise<Facility> {
     const [updatedFacility] = await db
       .update(facilities)
       .set(facility)
-      .where(eq(facilities.id, facilityId))
+      .where(and(
+        eq(facilities.id, facilityId),
+        eq(facilities.organizationId, organizationId)
+      ))
       .returning();
     return updatedFacility;
   }
 
-  async deleteFacility(facilityId: string): Promise<void> {
+  async deleteFacility(facilityId: string, organizationId: string): Promise<void> {
     await db
       .update(facilities)
       .set({ 
         isActive: false, 
         updatedAt: new Date() 
       })
-      .where(eq(facilities.id, facilityId));
+      .where(and(
+        eq(facilities.id, facilityId),
+        eq(facilities.organizationId, organizationId)
+      ));
   }
 
   // Credit Line operations
@@ -463,7 +475,7 @@ export class DatabaseStorage implements IStorage {
       .from(creditLines)
       .innerJoin(facilities, eq(creditLines.facilityId, facilities.id))
       .innerJoin(banks, eq(facilities.bankId, banks.id))
-      .where(and(eq(creditLines.userId, userId), eq(creditLines.isActive, true)))
+      .where(and(eq(creditLines.organizationId, organizationId), eq(creditLines.isActive, true)))
       .orderBy(desc(creditLines.createdAt));
 
     return result.map(row => ({
@@ -480,11 +492,14 @@ export class DatabaseStorage implements IStorage {
     return newCreditLine;
   }
 
-  async updateCreditLine(creditLineId: string, creditLine: Partial<InsertCreditLine>): Promise<CreditLine> {
+  async updateCreditLine(creditLineId: string, organizationId: string, creditLine: Partial<InsertCreditLine>): Promise<CreditLine> {
     const [updatedCreditLine] = await db
       .update(creditLines)
       .set(creditLine)
-      .where(eq(creditLines.id, creditLineId))
+      .where(and(
+        eq(creditLines.id, creditLineId),
+        eq(creditLines.organizationId, organizationId)
+      ))
       .returning();
     return updatedCreditLine;
   }
@@ -503,23 +518,29 @@ export class DatabaseStorage implements IStorage {
     return newCollateral;
   }
 
-  async updateCollateral(collateralId: string, collateralData: Partial<InsertCollateral>): Promise<Collateral> {
+  async updateCollateral(collateralId: string, organizationId: string, collateralData: Partial<InsertCollateral>): Promise<Collateral> {
     const [updatedCollateral] = await db
       .update(collateral)
       .set(collateralData)
-      .where(eq(collateral.id, collateralId))
+      .where(and(
+        eq(collateral.id, collateralId),
+        eq(collateral.organizationId, organizationId)
+      ))
       .returning();
     return updatedCollateral;
   }
 
-  async deleteCollateral(collateralId: string): Promise<void> {
+  async deleteCollateral(collateralId: string, organizationId: string): Promise<void> {
     await db
       .update(collateral)
       .set({ 
         isActive: false, 
         updatedAt: new Date() 
       })
-      .where(eq(collateral.id, collateralId));
+      .where(and(
+        eq(collateral.id, collateralId),
+        eq(collateral.organizationId, organizationId)
+      ));
   }
 
   // Collateral Assignment operations
@@ -554,20 +575,26 @@ export class DatabaseStorage implements IStorage {
     return newAssignment;
   }
 
-  async updateCollateralAssignment(assignmentId: string, assignmentData: Partial<InsertCollateralAssignment>): Promise<CollateralAssignment> {
+  async updateCollateralAssignment(assignmentId: string, organizationId: string, assignmentData: Partial<InsertCollateralAssignment>): Promise<CollateralAssignment> {
     const [updatedAssignment] = await db
       .update(collateralAssignments)
       .set(assignmentData)
-      .where(eq(collateralAssignments.id, assignmentId))
+      .where(and(
+        eq(collateralAssignments.id, assignmentId),
+        eq(collateralAssignments.organizationId, organizationId)
+      ))
       .returning();
     return updatedAssignment;
   }
 
-  async deleteCollateralAssignment(assignmentId: string): Promise<void> {
+  async deleteCollateralAssignment(assignmentId: string, organizationId: string): Promise<void> {
     await db
       .update(collateralAssignments)
       .set({ isActive: false })
-      .where(eq(collateralAssignments.id, assignmentId));
+      .where(and(
+        eq(collateralAssignments.id, assignmentId),
+        eq(collateralAssignments.organizationId, organizationId)
+      ));
   }
 
   // Loan operations
@@ -867,11 +894,14 @@ export class DatabaseStorage implements IStorage {
     return result;
   }
 
-  async updateLoanReminder(reminderId: string, reminder: Partial<UpdateLoanReminder>): Promise<LoanReminder> {
+  async updateLoanReminder(reminderId: string, organizationId: string, reminder: Partial<UpdateLoanReminder>): Promise<LoanReminder> {
     const [result] = await db
       .update(loanReminders)
       .set({ ...reminder, updatedAt: new Date() })
-      .where(eq(loanReminders.id, reminderId))
+      .where(and(
+        eq(loanReminders.id, reminderId),
+        eq(loanReminders.organizationId, organizationId)
+      ))
       .returning();
     
     if (!result) {
@@ -881,11 +911,14 @@ export class DatabaseStorage implements IStorage {
     return result;
   }
 
-  async deleteLoanReminder(reminderId: string): Promise<void> {
+  async deleteLoanReminder(reminderId: string, organizationId: string): Promise<void> {
     await db
       .update(loanReminders)
       .set({ isActive: false, updatedAt: new Date() })
-      .where(eq(loanReminders.id, reminderId));
+      .where(and(
+        eq(loanReminders.id, reminderId),
+        eq(loanReminders.organizationId, organizationId)
+      ));
   }
 
   // Reminder Template operations
@@ -1090,11 +1123,14 @@ export class DatabaseStorage implements IStorage {
     return result;
   }
 
-  async updateGuarantee(guaranteeId: string, guarantee: Partial<UpdateGuarantee>): Promise<Guarantee> {
+  async updateGuarantee(guaranteeId: string, organizationId: string, guarantee: Partial<UpdateGuarantee>): Promise<Guarantee> {
     const [result] = await db
       .update(guarantees)
       .set({ ...guarantee, updatedAt: new Date() })
-      .where(eq(guarantees.id, guaranteeId))
+      .where(and(
+        eq(guarantees.id, guaranteeId),
+        eq(guarantees.organizationId, organizationId)
+      ))
       .returning();
     
     if (!result) {
@@ -1104,11 +1140,14 @@ export class DatabaseStorage implements IStorage {
     return result;
   }
 
-  async deleteGuarantee(guaranteeId: string): Promise<void> {
+  async deleteGuarantee(guaranteeId: string, organizationId: string): Promise<void> {
     await db
       .update(guarantees)
       .set({ isActive: false, updatedAt: new Date() })
-      .where(eq(guarantees.id, guaranteeId));
+      .where(and(
+        eq(guarantees.id, guaranteeId),
+        eq(guarantees.organizationId, organizationId)
+      ));
   }
 
   // AI Insight Config operations
@@ -1984,9 +2023,11 @@ Reference: {loanReference}`,
     return newContact;
   }
 
-  async updateBankContact(contactId: string, contact: Partial<InsertBankContact>): Promise<BankContact> {
+  async updateBankContact(contactId: string, organizationId: string, contact: Partial<InsertBankContact>): Promise<BankContact> {
     const existing = this.bankContacts.get(contactId);
-    if (!existing) throw new Error('Contact not found');
+    if (!existing || existing.organizationId !== organizationId) {
+      throw new Error('Contact not found');
+    }
 
     const updated: BankContact = {
       ...existing,
@@ -1997,9 +2038,9 @@ Reference: {loanReference}`,
     return updated;
   }
 
-  async deleteBankContact(contactId: string): Promise<void> {
+  async deleteBankContact(contactId: string, organizationId: string): Promise<void> {
     const existing = this.bankContacts.get(contactId);
-    if (existing) {
+    if (existing && existing.organizationId === organizationId) {
       existing.isActive = false;
       existing.updatedAt = new Date();
       this.bankContacts.set(contactId, existing);
@@ -2068,9 +2109,11 @@ Reference: {loanReference}`,
     return newFacility;
   }
 
-  async updateFacility(facilityId: string, facility: Partial<InsertFacility>): Promise<Facility> {
+  async updateFacility(facilityId: string, organizationId: string, facility: Partial<InsertFacility>): Promise<Facility> {
     const existing = this.facilities.get(facilityId);
-    if (!existing) throw new Error('Facility not found');
+    if (!existing || existing.organizationId !== organizationId) {
+      throw new Error('Facility not found');
+    }
 
     const updated: Facility = {
       ...existing,
@@ -2081,9 +2124,11 @@ Reference: {loanReference}`,
     return updated;
   }
 
-  async deleteFacility(facilityId: string): Promise<void> {
+  async deleteFacility(facilityId: string, organizationId: string): Promise<void> {
     const existing = this.facilities.get(facilityId);
-    if (!existing) throw new Error('Facility not found');
+    if (!existing || existing.organizationId !== organizationId) {
+      throw new Error('Facility not found');
+    }
     
     // Remove the facility from memory
     this.facilities.delete(facilityId);
@@ -2105,9 +2150,11 @@ Reference: {loanReference}`,
     return newCollateral;
   }
 
-  async updateCollateral(collateralId: string, collateral: Partial<InsertCollateral>): Promise<Collateral> {
+  async updateCollateral(collateralId: string, organizationId: string, collateral: Partial<InsertCollateral>): Promise<Collateral> {
     const existing = this.collateral.get(collateralId);
-    if (!existing) throw new Error('Collateral not found');
+    if (!existing || existing.organizationId !== organizationId) {
+      throw new Error('Collateral not found');
+    }
 
     const updated: Collateral = {
       ...existing,
@@ -2118,9 +2165,9 @@ Reference: {loanReference}`,
     return updated;
   }
 
-  async deleteCollateral(collateralId: string): Promise<void> {
+  async deleteCollateral(collateralId: string, organizationId: string): Promise<void> {
     const existing = this.collateral.get(collateralId);
-    if (existing) {
+    if (existing && existing.organizationId === organizationId) {
       const updated = { ...existing, isActive: false, updatedAt: new Date() };
       this.collateral.set(collateralId, updated);
     }
@@ -2145,9 +2192,11 @@ Reference: {loanReference}`,
     return newAssignment;
   }
 
-  async updateCollateralAssignment(assignmentId: string, assignment: Partial<InsertCollateralAssignment>): Promise<CollateralAssignment> {
+  async updateCollateralAssignment(assignmentId: string, organizationId: string, assignment: Partial<InsertCollateralAssignment>): Promise<CollateralAssignment> {
     const existing = this.collateralAssignments.get(assignmentId);
-    if (!existing) throw new Error('Collateral assignment not found');
+    if (!existing || existing.organizationId !== organizationId) {
+      throw new Error('Collateral assignment not found');
+    }
 
     const updated: CollateralAssignment = {
       ...existing,
@@ -2157,9 +2206,9 @@ Reference: {loanReference}`,
     return updated;
   }
 
-  async deleteCollateralAssignment(assignmentId: string): Promise<void> {
+  async deleteCollateralAssignment(assignmentId: string, organizationId: string): Promise<void> {
     const existing = this.collateralAssignments.get(assignmentId);
-    if (existing) {
+    if (existing && existing.organizationId === organizationId) {
       const updated = { ...existing, isActive: false };
       this.collateralAssignments.set(assignmentId, updated);
     }
@@ -2180,9 +2229,11 @@ Reference: {loanReference}`,
     return newCreditLine;
   }
 
-  async updateCreditLine(creditLineId: string, creditLine: Partial<InsertCreditLine>): Promise<CreditLine> {
+  async updateCreditLine(creditLineId: string, organizationId: string, creditLine: Partial<InsertCreditLine>): Promise<CreditLine> {
     const existing = this.creditLines.get(creditLineId);
-    if (!existing) throw new Error('Credit line not found');
+    if (!existing || existing.organizationId !== organizationId) {
+      throw new Error('Credit line not found');
+    }
 
     const updated: CreditLine = {
       ...existing,
@@ -2322,9 +2373,11 @@ Reference: {loanReference}`,
     return newReminder;
   }
 
-  async updateLoanReminder(reminderId: string, reminder: Partial<UpdateLoanReminder>): Promise<LoanReminder> {
+  async updateLoanReminder(reminderId: string, organizationId: string, reminder: Partial<UpdateLoanReminder>): Promise<LoanReminder> {
     const existing = this.loanReminders.get(reminderId);
-    if (!existing) throw new Error('Reminder not found');
+    if (!existing || existing.organizationId !== organizationId) {
+      throw new Error('Reminder not found');
+    }
 
     const updated: LoanReminder = {
       ...existing,
@@ -2335,9 +2388,9 @@ Reference: {loanReference}`,
     return updated;
   }
 
-  async deleteLoanReminder(reminderId: string): Promise<void> {
+  async deleteLoanReminder(reminderId: string, organizationId: string): Promise<void> {
     const existing = this.loanReminders.get(reminderId);
-    if (existing) {
+    if (existing && existing.organizationId === organizationId) {
       existing.isActive = false;
       existing.updatedAt = new Date();
     }
@@ -3022,9 +3075,11 @@ Reference: {loanReference}`,
     return newGuarantee;
   }
 
-  async updateGuarantee(guaranteeId: string, guarantee: Partial<UpdateGuarantee>): Promise<Guarantee> {
+  async updateGuarantee(guaranteeId: string, organizationId: string, guarantee: Partial<UpdateGuarantee>): Promise<Guarantee> {
     const existing = this.guarantees.get(guaranteeId);
-    if (!existing) throw new Error('Guarantee not found');
+    if (!existing || existing.organizationId !== organizationId) {
+      throw new Error('Guarantee not found');
+    }
 
     const updated: Guarantee = {
       ...existing,
@@ -3035,9 +3090,9 @@ Reference: {loanReference}`,
     return updated;
   }
 
-  async deleteGuarantee(guaranteeId: string): Promise<void> {
+  async deleteGuarantee(guaranteeId: string, organizationId: string): Promise<void> {
     const existing = this.guarantees.get(guaranteeId);
-    if (existing) {
+    if (existing && existing.organizationId === organizationId) {
       existing.isActive = false;
       existing.updatedAt = new Date();
     }
