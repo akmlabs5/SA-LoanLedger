@@ -287,7 +287,7 @@ When setting reminders, minimum required info: loan identifier, reminder date or
     ];
   }
 
-  async processChat(messages: AgentMessage[], userId: string): Promise<AgentResponse> {
+  async processChat(messages: AgentMessage[], userId: string, organizationId: string): Promise<AgentResponse> {
     try {
       // Add system prompt if not present
       if (messages[0]?.role !== 'system') {
@@ -325,7 +325,7 @@ When setting reminders, minimum required info: loan identifier, reminder date or
         const functionArgs = JSON.parse(toolCall.function.arguments);
 
         // Execute the function
-        const result = await this.executeFunction(functionName, functionArgs, userId);
+        const result = await this.executeFunction(functionName, functionArgs, userId, organizationId);
 
         // Add assistant message and tool result to conversation
         messages.push(assistantMessage);
@@ -373,38 +373,38 @@ When setting reminders, minimum required info: loan identifier, reminder date or
     }
   }
 
-  private async executeFunction(functionName: string, args: any, userId: string): Promise<any> {
+  private async executeFunction(functionName: string, args: any, userId: string, organizationId: string): Promise<any> {
     switch (functionName) {
       case 'createLoan':
-        return await this.createLoan(args, userId);
+        return await this.createLoan(args, userId, organizationId);
       case 'settleLoan':
-        return await this.settleLoan(args, userId);
+        return await this.settleLoan(args, userId, organizationId);
       case 'setReminder':
-        return await this.setReminder(args, userId);
+        return await this.setReminder(args, userId, organizationId);
       case 'queryLoanDetails':
-        return await this.queryLoanDetails(args, userId);
+        return await this.queryLoanDetails(args, organizationId);
       case 'calculateTotals':
-        return await this.calculateTotals(args, userId);
+        return await this.calculateTotals(args, organizationId);
       case 'updateCollateral':
-        return await this.updateCollateral(args, userId);
+        return await this.updateCollateral(args, organizationId);
       case 'checkFacilityAvailability':
-        return await this.checkFacilityAvailability(args, userId);
+        return await this.checkFacilityAvailability(args, organizationId);
       case 'analyzeBankConcentration':
-        return await this.analyzeBankConcentration(args, userId);
+        return await this.analyzeBankConcentration(args, organizationId);
       case 'monitorLTV':
-        return await this.monitorLTV(args, userId);
+        return await this.monitorLTV(args, organizationId);
       case 'showDueLoans':
-        return await this.showDueLoans(args, userId);
+        return await this.showDueLoans(args, organizationId);
       case 'suggestRefinancing':
-        return await this.suggestRefinancing(args, userId);
+        return await this.suggestRefinancing(args, organizationId);
       case 'exportReport':
-        return await this.exportReport(args, userId);
+        return await this.exportReport(args, organizationId);
       default:
         throw new Error(`Unknown function: ${functionName}`);
     }
   }
 
-  private async createLoan(args: any, userId: string) {
+  private async createLoan(args: any, userId: string, organizationId: string) {
     const { facilityId, amount, interestRate, dateTaken, dueDate, purpose, bankName } = args;
 
     // Convert interestRate to siborRate, margin, bankRate
@@ -416,10 +416,18 @@ When setting reminders, minimum required info: loan identifier, reminder date or
     // Generate reference number
     const referenceNumber = `LOAN-${nanoid(10)}`;
 
-    // If facilityId provided, use it directly
+    // If facilityId provided, verify it belongs to the organization
     if (facilityId) {
+      const facilities = await this.storage.getUserFacilities(organizationId);
+      const facility = facilities.find((f: Facility & { bank: Bank }) => f.id === facilityId);
+      
+      if (!facility) {
+        return { success: false, error: 'Facility not found or not accessible' };
+      }
+      
       const loan = await this.storage.createLoan({
         userId,
+        organizationId,
         facilityId,
         amount: amount.toString(),
         startDate: dateTaken,
@@ -436,8 +444,8 @@ When setting reminders, minimum required info: loan identifier, reminder date or
 
     // Otherwise, find facility by bank name
     if (bankName) {
-      const facilities = await this.storage.getUserFacilities(userId);
-      const banks = await this.storage.getAllBanks();
+      const facilities = await this.storage.getUserFacilities(organizationId);
+      const banks = await this.storage.getAllBanks(organizationId);
       const bank = banks.find((b: Bank) => 
         b.name.toLowerCase().includes(bankName.toLowerCase()) || 
         b.code.toLowerCase() === bankName.toLowerCase()
@@ -454,6 +462,7 @@ When setting reminders, minimum required info: loan identifier, reminder date or
 
       const loan = await this.storage.createLoan({
         userId,
+        organizationId,
         facilityId: facility.id,
         amount: amount.toString(),
         startDate: dateTaken,
@@ -471,11 +480,11 @@ When setting reminders, minimum required info: loan identifier, reminder date or
     return { success: false, error: 'Either facilityId or bankName is required' };
   }
 
-  private async settleLoan(args: any, userId: string) {
+  private async settleLoan(args: any, userId: string, organizationId: string) {
     const { loanId, settlementDate, settlementAmount } = args;
     
     const loan = await this.storage.getLoanById(loanId);
-    if (!loan || loan.userId !== userId) {
+    if (!loan || loan.organizationId !== organizationId) {
       return { success: false, error: 'Loan not found' };
     }
 
@@ -487,11 +496,11 @@ When setting reminders, minimum required info: loan identifier, reminder date or
     return { success: true, loanId, message: 'Loan settled successfully' };
   }
 
-  private async setReminder(args: any, userId: string) {
+  private async setReminder(args: any, userId: string, organizationId: string) {
     const { loanId, reminderDate, daysBefore, message } = args;
     
     const loan = await this.storage.getLoanById(loanId);
-    if (!loan || loan.userId !== userId) {
+    if (!loan || loan.organizationId !== organizationId) {
       return { success: false, error: 'Loan not found' };
     }
 
@@ -508,6 +517,7 @@ When setting reminders, minimum required info: loan identifier, reminder date or
 
     const reminder = await this.storage.createLoanReminder({
       userId,
+        organizationId,
       loanId,
       reminderDate: new Date(finalReminderDate),
       type: 'due_date',
@@ -519,24 +529,24 @@ When setting reminders, minimum required info: loan identifier, reminder date or
     return { success: true, reminderId: reminder.id, message: 'Reminder set successfully' };
   }
 
-  private async queryLoanDetails(args: any, userId: string) {
+  private async queryLoanDetails(args: any, organizationId: string) {
     const { loanId, bankName, status } = args;
 
     if (loanId) {
       const loan = await this.storage.getLoanById(loanId);
-      if (!loan || loan.userId !== userId) {
+      if (!loan || loan.organizationId !== organizationId) {
         return { success: false, error: 'Loan not found' };
       }
       return { success: true, loan };
     }
 
     let loans = status === 'settled' 
-      ? await this.storage.getSettledLoansByUser(userId)
-      : await this.storage.getActiveLoansByUser(userId);
+      ? await this.storage.getSettledLoansByUser(organizationId)
+      : await this.storage.getActiveLoansByUser(organizationId);
 
     if (bankName) {
-      const banks = await this.storage.getAllBanks();
-      const facilities = await this.storage.getUserFacilities(userId);
+      const banks = await this.storage.getAllBanks(organizationId);
+      const facilities = await this.storage.getUserFacilities(organizationId);
       
       const bank = banks.find((b: Bank) => 
         b.name.toLowerCase().includes(bankName.toLowerCase()) ||
@@ -554,15 +564,15 @@ When setting reminders, minimum required info: loan identifier, reminder date or
     return { success: true, loans, count: loans.length };
   }
 
-  private async calculateTotals(args: any, userId: string) {
+  private async calculateTotals(args: any, organizationId: string) {
     const { metric, bankName } = args;
 
-    const loans = await this.storage.getActiveLoansByUser(userId);
-    const facilities = await this.storage.getUserFacilities(userId);
+    const loans = await this.storage.getActiveLoansByUser(organizationId);
+    const facilities = await this.storage.getUserFacilities(organizationId);
 
     let filteredLoans = loans;
     if (bankName) {
-      const banks = await this.storage.getAllBanks();
+      const banks = await this.storage.getAllBanks(organizationId);
       const bank = banks.find((b: Bank) => 
         b.name.toLowerCase().includes(bankName.toLowerCase()) ||
         b.code.toLowerCase() === bankName.toLowerCase()
@@ -598,17 +608,17 @@ When setting reminders, minimum required info: loan identifier, reminder date or
     }
   }
 
-  private async updateCollateral(args: any, userId: string) {
+  private async updateCollateral(args: any, organizationId: string) {
     const { collateralId, newValue, valuationDate } = args;
     
-    const allCollateral = await this.storage.getUserCollateral(userId);
+    const allCollateral = await this.storage.getUserCollateral(organizationId);
     const collateral = allCollateral.find((c: Collateral) => c.id === collateralId);
     
-    if (!collateral || collateral.userId !== userId) {
+    if (!collateral || collateral.organizationId !== organizationId) {
       return { success: false, error: 'Collateral not found' };
     }
 
-    await this.storage.updateCollateral(collateralId, {
+    await this.storage.updateCollateral(collateralId, organizationId, {
       currentValue: newValue.toString(),
       valuationDate: valuationDate || new Date().toISOString().split('T')[0]
     });
@@ -616,14 +626,14 @@ When setting reminders, minimum required info: loan identifier, reminder date or
     return { success: true, collateralId, newValue, message: 'Collateral updated successfully' };
   }
 
-  private async checkFacilityAvailability(args: any, userId: string) {
+  private async checkFacilityAvailability(args: any, organizationId: string) {
     const { bankName, facilityType } = args;
 
-    let facilities = await this.storage.getUserFacilities(userId);
-    const loans = await this.storage.getActiveLoansByUser(userId);
+    let facilities = await this.storage.getUserFacilities(organizationId);
+    const loans = await this.storage.getActiveLoansByUser(organizationId);
 
     if (bankName) {
-      const banks = await this.storage.getAllBanks();
+      const banks = await this.storage.getAllBanks(organizationId);
       const bank = banks.find((b: Bank) => 
         b.name.toLowerCase().includes(bankName.toLowerCase()) ||
         b.code.toLowerCase() === bankName.toLowerCase()
@@ -657,12 +667,12 @@ When setting reminders, minimum required info: loan identifier, reminder date or
     return { success: true, facilities: availability };
   }
 
-  private async analyzeBankConcentration(args: any, userId: string) {
+  private async analyzeBankConcentration(args: any, organizationId: string) {
     const { threshold = 30 } = args;
 
-    const loans = await this.storage.getActiveLoansByUser(userId);
-    const facilities = await this.storage.getUserFacilities(userId);
-    const banks = await this.storage.getAllBanks();
+    const loans = await this.storage.getActiveLoansByUser(organizationId);
+    const facilities = await this.storage.getUserFacilities(organizationId);
+    const banks = await this.storage.getAllBanks(organizationId);
 
     const totalExposure = loans.reduce((sum: number, loan: Loan & { facility: Facility & { bank: Bank } }) => sum + parseFloat(loan.amount), 0);
 
@@ -691,15 +701,15 @@ When setting reminders, minimum required info: loan identifier, reminder date or
     };
   }
 
-  private async monitorLTV(args: any, userId: string) {
+  private async monitorLTV(args: any, organizationId: string) {
     const { loanId, threshold = 80 } = args;
 
-    const loans = loanId ? [await this.storage.getLoanById(loanId)] : await this.storage.getActiveLoansByUser(userId);
-    const collateralAssignments = await this.storage.getUserCollateralAssignments(userId);
-    const allCollateral = await this.storage.getUserCollateral(userId);
+    const loans = loanId ? [await this.storage.getLoanById(loanId)] : await this.storage.getActiveLoansByUser(organizationId);
+    const collateralAssignments = await this.storage.getUserCollateralAssignments(organizationId);
+    const allCollateral = await this.storage.getUserCollateral(organizationId);
 
     const ltvData = loans
-      .filter((loan): loan is Loan & { facility: Facility & { bank: Bank } } => loan !== null && loan !== undefined && loan.userId === userId)
+      .filter((loan): loan is Loan & { facility: Facility & { bank: Bank } } => loan !== null && loan !== undefined && loan.organizationId === organizationId)
       .map((loan: Loan & { facility: Facility & { bank: Bank } }) => {
         const assignments = collateralAssignments.filter((a: any) => a.loanId === loan.id);
         const totalCollateralValue = assignments.reduce((sum: number, a: any) => {
@@ -722,10 +732,10 @@ When setting reminders, minimum required info: loan identifier, reminder date or
     return { success: true, ltvData, threshold };
   }
 
-  private async showDueLoans(args: any, userId: string) {
+  private async showDueLoans(args: any, organizationId: string) {
     const { timeframe } = args;
 
-    const loans = await this.storage.getActiveLoansByUser(userId);
+    const loans = await this.storage.getActiveLoansByUser(organizationId);
     const now = new Date();
     let endDate = new Date();
 
@@ -754,10 +764,10 @@ When setting reminders, minimum required info: loan identifier, reminder date or
     };
   }
 
-  private async suggestRefinancing(args: any, userId: string) {
+  private async suggestRefinancing(args: any, organizationId: string) {
     const { minSavings = 10000 } = args;
 
-    const loans = await this.storage.getActiveLoansByUser(userId);
+    const loans = await this.storage.getActiveLoansByUser(organizationId);
     
     // Simple refinancing logic based on bank rates
     const suggestions = loans
@@ -781,15 +791,15 @@ When setting reminders, minimum required info: loan identifier, reminder date or
     return { success: true, suggestions, count: suggestions.length };
   }
 
-  private async exportReport(args: any, userId: string) {
+  private async exportReport(args: any, organizationId: string) {
     const { reportType, format = 'json' } = args;
 
     let reportData: any = {};
 
     switch (reportType) {
       case 'portfolio_summary':
-        const loans = await this.storage.getActiveLoansByUser(userId);
-        const facilities = await this.storage.getUserFacilities(userId);
+        const loans = await this.storage.getActiveLoansByUser(organizationId);
+        const facilities = await this.storage.getUserFacilities(organizationId);
         reportData = {
           totalLoans: loans.length,
           totalDebt: loans.reduce((sum: number, l: Loan & { facility: Facility & { bank: Bank } }) => sum + parseFloat(l.amount), 0),
@@ -799,16 +809,16 @@ When setting reminders, minimum required info: loan identifier, reminder date or
         break;
 
       case 'loan_list':
-        reportData = { loans: await this.storage.getActiveLoansByUser(userId) };
+        reportData = { loans: await this.storage.getActiveLoansByUser(organizationId) };
         break;
 
       case 'bank_exposure':
-        const bankConcentration = await this.analyzeBankConcentration({}, userId);
+        const bankConcentration = await this.analyzeBankConcentration({}, organizationId);
         reportData = bankConcentration;
         break;
 
       case 'collateral_report':
-        reportData = { collateral: await this.storage.getUserCollateral(userId) };
+        reportData = { collateral: await this.storage.getUserCollateral(organizationId) };
         break;
     }
 
