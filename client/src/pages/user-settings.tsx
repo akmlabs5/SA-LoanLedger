@@ -1491,8 +1491,217 @@ export default function UserSettingsPage() {
               </CardContent>
             </Card>
           </TabsContent>
+
+          {/* Team Management Tab */}
+          <TabsContent value="team" className="space-y-6">
+            <TeamManagementSection />
+          </TabsContent>
         </Tabs>
         </div>
+    </div>
+  );
+}
+
+// Team Management Component
+function TeamManagementSection() {
+  const { toast } = useToast();
+  const [inviteEmail, setInviteEmail] = useState("");
+  const [isInviting, setIsInviting] = useState(false);
+
+  // Fetch organization members
+  const { data: members, isLoading: membersLoading } = useQuery({
+    queryKey: ['/api/organization/members'],
+  });
+
+  // Invite member mutation
+  const inviteMutation = useMutation({
+    mutationFn: async (email: string) => {
+      return await apiRequest('POST', '/api/organization/invite', { email });
+    },
+    onSuccess: () => {
+      toast({
+        title: "Invitation sent",
+        description: `An invitation email has been sent to ${inviteEmail}`,
+      });
+      setInviteEmail("");
+      queryClient.invalidateQueries({ queryKey: ['/api/organization/invitations'] });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Failed to send invitation",
+        description: error.message || "Please try again",
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Remove member mutation
+  const removeMemberMutation = useMutation({
+    mutationFn: async (userId: string) => {
+      return await apiRequest('DELETE', `/api/organization/members/${userId}`);
+    },
+    onSuccess: () => {
+      toast({
+        title: "Member removed",
+        description: "The team member has been removed successfully",
+      });
+      queryClient.invalidateQueries({ queryKey: ['/api/organization/members'] });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Failed to remove member",
+        description: error.message || "Please try again",
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Fetch pending invitations
+  const { data: invitations } = useQuery({
+    queryKey: ['/api/organization/invitations'],
+  });
+
+  const handleInvite = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!inviteEmail.trim()) return;
+    
+    setIsInviting(true);
+    try {
+      await inviteMutation.mutateAsync(inviteEmail);
+    } finally {
+      setIsInviting(false);
+    }
+  };
+
+  const handleRemoveMember = async (userId: string, memberName: string) => {
+    if (confirm(`Are you sure you want to remove ${memberName} from the team?`)) {
+      await removeMemberMutation.mutateAsync(userId);
+    }
+  };
+
+  if (membersLoading) {
+    return <div>Loading team information...</div>;
+  }
+
+  const currentUser = members?.find((m: any) => m.isCurrentUser);
+  const isOwner = currentUser?.isOwner;
+
+  return (
+    <div className="space-y-6">
+      {/* Organization Info */}
+      <Card data-testid="card-organization-info">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Building2 className="h-5 w-5" />
+            Organization
+          </CardTitle>
+          <CardDescription>
+            {members && members.length > 0 ? members[0].organizationName : "No organization"}
+          </CardDescription>
+        </CardHeader>
+      </Card>
+
+      {/* Team Members */}
+      <Card data-testid="card-team-members">
+        <CardHeader>
+          <CardTitle>Team Members</CardTitle>
+          <CardDescription>
+            Manage your organization's team members
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
+            {members && members.length > 0 ? (
+              members.map((member: any) => (
+                <div key={member.userId} className="flex items-center justify-between p-4 border rounded-lg" data-testid={`member-${member.userId}`}>
+                  <div className="flex items-center gap-3">
+                    <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
+                      <User className="h-5 w-5 text-primary" />
+                    </div>
+                    <div>
+                      <p className="font-medium">{member.user?.firstName} {member.user?.lastName}</p>
+                      <p className="text-sm text-muted-foreground">{member.user?.email}</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    {member.isOwner && (
+                      <Badge variant="secondary">Owner</Badge>
+                    )}
+                    {isOwner && !member.isOwner && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleRemoveMember(member.userId, `${member.user?.firstName} ${member.user?.lastName}`)}
+                        disabled={removeMemberMutation.isPending}
+                        data-testid={`button-remove-member-${member.userId}`}
+                      >
+                        Remove
+                      </Button>
+                    )}
+                  </div>
+                </div>
+              ))
+            ) : (
+              <p className="text-sm text-muted-foreground">No team members found</p>
+            )}
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Invite Member (Owner Only) */}
+      {isOwner && (
+        <Card data-testid="card-invite-member">
+          <CardHeader>
+            <CardTitle>Invite Team Member</CardTitle>
+            <CardDescription>
+              Send an invitation to join your organization
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <form onSubmit={handleInvite} className="flex gap-3">
+              <Input
+                type="email"
+                placeholder="colleague@example.com"
+                value={inviteEmail}
+                onChange={(e) => setInviteEmail(e.target.value)}
+                className="flex-1 h-12"
+                data-testid="input-invite-email"
+                required
+              />
+              <Button type="submit" disabled={isInviting || inviteMutation.isPending} className="h-12" data-testid="button-send-invite">
+                {isInviting ? "Sending..." : "Send Invite"}
+              </Button>
+            </form>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Pending Invitations */}
+      {isOwner && invitations && invitations.length > 0 && (
+        <Card data-testid="card-pending-invitations">
+          <CardHeader>
+            <CardTitle>Pending Invitations</CardTitle>
+            <CardDescription>
+              Invitations waiting to be accepted
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-3">
+              {invitations.map((invitation: any) => (
+                <div key={invitation.id} className="flex items-center justify-between p-3 border rounded-lg" data-testid={`invitation-${invitation.id}`}>
+                  <div>
+                    <p className="font-medium">{invitation.email}</p>
+                    <p className="text-sm text-muted-foreground">
+                      Expires {new Date(invitation.expiresAt).toLocaleDateString()}
+                    </p>
+                  </div>
+                  <Badge variant="outline">Pending</Badge>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 }
