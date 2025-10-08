@@ -78,6 +78,15 @@ import {
   type InsertChatConversation,
   type ChatMessage,
   type InsertChatMessage,
+  organizations,
+  organizationMembers,
+  organizationInvitations,
+  type Organization,
+  type InsertOrganization,
+  type OrganizationMember,
+  type InsertOrganizationMember,
+  type OrganizationInvitation,
+  type InsertOrganizationInvitation,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, desc, asc, sql, gte, lte, isNull, isNotNull } from "drizzle-orm";
@@ -260,6 +269,24 @@ export interface IStorage {
   // Chat Message operations
   getConversationMessages(conversationId: string): Promise<ChatMessage[]>;
   addMessage(message: InsertChatMessage): Promise<ChatMessage>;
+  
+  // Organization operations
+  createOrganization(organization: InsertOrganization): Promise<Organization>;
+  getOrganization(organizationId: string): Promise<Organization | undefined>;
+  getUserOrganization(userId: string): Promise<Organization | undefined>;
+  updateOrganization(organizationId: string, updates: Partial<InsertOrganization>): Promise<Organization>;
+  
+  // Organization Member operations
+  addMember(member: InsertOrganizationMember): Promise<OrganizationMember>;
+  removeMember(userId: string, organizationId: string): Promise<void>;
+  getOrganizationMembers(organizationId: string): Promise<Array<OrganizationMember & { user: User }>>;
+  isUserInOrganization(userId: string, organizationId: string): Promise<boolean>;
+  
+  // Organization Invitation operations
+  createInvitation(invitation: InsertOrganizationInvitation): Promise<OrganizationInvitation>;
+  getInvitation(token: string): Promise<OrganizationInvitation | undefined>;
+  deleteInvitation(invitationId: string): Promise<void>;
+  getOrganizationInvitations(organizationId: string): Promise<OrganizationInvitation[]>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -1543,6 +1570,135 @@ export class DatabaseStorage implements IStorage {
       .returning();
     return result;
   }
+
+  // Organization operations
+  async createOrganization(organization: InsertOrganization): Promise<Organization> {
+    const [result] = await db
+      .insert(organizations)
+      .values(organization)
+      .returning();
+    return result;
+  }
+
+  async getOrganization(organizationId: string): Promise<Organization | undefined> {
+    const [result] = await db
+      .select()
+      .from(organizations)
+      .where(eq(organizations.id, organizationId));
+    return result;
+  }
+
+  async getUserOrganization(userId: string): Promise<Organization | undefined> {
+    const [membership] = await db
+      .select()
+      .from(organizationMembers)
+      .where(eq(organizationMembers.userId, userId));
+    
+    if (!membership) return undefined;
+
+    const [org] = await db
+      .select()
+      .from(organizations)
+      .where(eq(organizations.id, membership.organizationId));
+    return org;
+  }
+
+  async updateOrganization(organizationId: string, updates: Partial<InsertOrganization>): Promise<Organization> {
+    const [result] = await db
+      .update(organizations)
+      .set({ ...updates, updatedAt: new Date() })
+      .where(eq(organizations.id, organizationId))
+      .returning();
+    return result;
+  }
+
+  // Organization Member operations
+  async addMember(member: InsertOrganizationMember): Promise<OrganizationMember> {
+    const [result] = await db
+      .insert(organizationMembers)
+      .values(member)
+      .returning();
+    return result;
+  }
+
+  async removeMember(userId: string, organizationId: string): Promise<void> {
+    await db
+      .delete(organizationMembers)
+      .where(
+        and(
+          eq(organizationMembers.userId, userId),
+          eq(organizationMembers.organizationId, organizationId)
+        )
+      );
+  }
+
+  async getOrganizationMembers(organizationId: string): Promise<Array<OrganizationMember & { user: User }>> {
+    const results = await db
+      .select({
+        id: organizationMembers.id,
+        userId: organizationMembers.userId,
+        organizationId: organizationMembers.organizationId,
+        isOwner: organizationMembers.isOwner,
+        joinedAt: organizationMembers.joinedAt,
+        user: users,
+      })
+      .from(organizationMembers)
+      .innerJoin(users, eq(organizationMembers.userId, users.id))
+      .where(eq(organizationMembers.organizationId, organizationId));
+    
+    return results.map(r => ({
+      id: r.id,
+      userId: r.userId,
+      organizationId: r.organizationId,
+      isOwner: r.isOwner,
+      joinedAt: r.joinedAt,
+      user: r.user,
+    }));
+  }
+
+  async isUserInOrganization(userId: string, organizationId: string): Promise<boolean> {
+    const [result] = await db
+      .select()
+      .from(organizationMembers)
+      .where(
+        and(
+          eq(organizationMembers.userId, userId),
+          eq(organizationMembers.organizationId, organizationId)
+        )
+      );
+    return !!result;
+  }
+
+  // Organization Invitation operations
+  async createInvitation(invitation: InsertOrganizationInvitation): Promise<OrganizationInvitation> {
+    const [result] = await db
+      .insert(organizationInvitations)
+      .values(invitation)
+      .returning();
+    return result;
+  }
+
+  async getInvitation(token: string): Promise<OrganizationInvitation | undefined> {
+    const [result] = await db
+      .select()
+      .from(organizationInvitations)
+      .where(eq(organizationInvitations.token, token));
+    return result;
+  }
+
+  async deleteInvitation(invitationId: string): Promise<void> {
+    await db
+      .delete(organizationInvitations)
+      .where(eq(organizationInvitations.id, invitationId));
+  }
+
+  async getOrganizationInvitations(organizationId: string): Promise<OrganizationInvitation[]> {
+    return await db
+      .select()
+      .from(organizationInvitations)
+      .where(eq(organizationInvitations.organizationId, organizationId))
+      .orderBy(desc(organizationInvitations.createdAt));
+  }
 }
 
 // In-memory storage fallback implementation
@@ -1569,6 +1725,9 @@ export class MemoryStorage implements IStorage {
   private attachmentAudits = new Map<string, AttachmentAudit>();
   private chatConversations = new Map<string, ChatConversation>();
   private chatMessages = new Map<string, ChatMessage>();
+  private organizations = new Map<string, Organization>();
+  private organizationMembers = new Map<string, OrganizationMember>();
+  private organizationInvitations = new Map<string, OrganizationInvitation>();
 
   constructor() {
     // Initialize with default Saudi banks
@@ -2876,6 +3035,105 @@ Reference: {loanReference}`,
       existing.isActive = false;
       existing.updatedAt = new Date();
     }
+  }
+
+  // Organization operations
+  async createOrganization(organization: InsertOrganization): Promise<Organization> {
+    const newOrg: Organization = {
+      ...organization,
+      id: this.generateId(),
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
+    this.organizations.set(newOrg.id, newOrg);
+    return newOrg;
+  }
+
+  async getOrganization(organizationId: string): Promise<Organization | undefined> {
+    return this.organizations.get(organizationId);
+  }
+
+  async getUserOrganization(userId: string): Promise<Organization | undefined> {
+    const membership = Array.from(this.organizationMembers.values())
+      .find(m => m.userId === userId);
+    
+    if (!membership) return undefined;
+    return this.organizations.get(membership.organizationId);
+  }
+
+  async updateOrganization(organizationId: string, updates: Partial<InsertOrganization>): Promise<Organization> {
+    const existing = this.organizations.get(organizationId);
+    if (!existing) throw new Error('Organization not found');
+
+    const updated: Organization = {
+      ...existing,
+      ...updates,
+      updatedAt: new Date(),
+    };
+    this.organizations.set(organizationId, updated);
+    return updated;
+  }
+
+  // Organization Member operations
+  async addMember(member: InsertOrganizationMember): Promise<OrganizationMember> {
+    const newMember: OrganizationMember = {
+      ...member,
+      id: this.generateId(),
+      joinedAt: new Date(),
+    };
+    this.organizationMembers.set(newMember.id, newMember);
+    return newMember;
+  }
+
+  async removeMember(userId: string, organizationId: string): Promise<void> {
+    const member = Array.from(this.organizationMembers.values())
+      .find(m => m.userId === userId && m.organizationId === organizationId);
+    
+    if (member) {
+      this.organizationMembers.delete(member.id);
+    }
+  }
+
+  async getOrganizationMembers(organizationId: string): Promise<Array<OrganizationMember & { user: User }>> {
+    const members = Array.from(this.organizationMembers.values())
+      .filter(m => m.organizationId === organizationId);
+    
+    return members.map(m => {
+      const user = this.users.get(m.userId);
+      if (!user) throw new Error(`User ${m.userId} not found`);
+      return { ...m, user };
+    });
+  }
+
+  async isUserInOrganization(userId: string, organizationId: string): Promise<boolean> {
+    return Array.from(this.organizationMembers.values())
+      .some(m => m.userId === userId && m.organizationId === organizationId);
+  }
+
+  // Organization Invitation operations
+  async createInvitation(invitation: InsertOrganizationInvitation): Promise<OrganizationInvitation> {
+    const newInvitation: OrganizationInvitation = {
+      ...invitation,
+      id: this.generateId(),
+      createdAt: new Date(),
+    };
+    this.organizationInvitations.set(newInvitation.id, newInvitation);
+    return newInvitation;
+  }
+
+  async getInvitation(token: string): Promise<OrganizationInvitation | undefined> {
+    return Array.from(this.organizationInvitations.values())
+      .find(inv => inv.token === token);
+  }
+
+  async deleteInvitation(invitationId: string): Promise<void> {
+    this.organizationInvitations.delete(invitationId);
+  }
+
+  async getOrganizationInvitations(organizationId: string): Promise<OrganizationInvitation[]> {
+    return Array.from(this.organizationInvitations.values())
+      .filter(inv => inv.organizationId === organizationId)
+      .sort((a, b) => (b.createdAt?.getTime() || 0) - (a.createdAt?.getTime() || 0));
   }
 }
 
