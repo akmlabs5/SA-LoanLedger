@@ -18,8 +18,9 @@ The backend is built with Express.js, employing Drizzle ORM with Neon (PostgreSQ
 The platform features a unified login page with a green-themed design, automatically detecting user (email) or admin (username) credentials. User authentication includes email/password login with optional 2FA OTP verification via SendGrid, while admin authentication uses username/password. 
 
 **Signup Experience:**
-- **Circular Logo Design**: Consistent branding across all auth pages with circular transparent logo container
-- **Account Type Selection**: Radio buttons for Personal or Organization accounts with conditional organization name field
+- **Transparent Logo**: Clean white transparent logo (noBgWhite_1759919560002.png) displayed in circular container on all auth pages
+- **Account Type Selection**: Radio buttons for Personal or Organization accounts with clear white indicator when selected
+- **Visual Indicators**: Bright white circular indicator dot visible when account type is selected
 - **Two-Factor Authentication**: Optional 2FA toggle with Shield icon for enhanced security
 - **Professional Forms**: Clean green-themed design with rounded inputs, icon-decorated fields, and proper validation
 - **Preferences Storage**: All signup preferences (2FA, account type, organization name) saved to database and enforced on login
