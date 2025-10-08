@@ -18,6 +18,7 @@ interface DocumentListProps {
   entityId: string;
   showUpload?: boolean;
   className?: string;
+  alwaysVisible?: boolean;
 }
 
 interface Document {
@@ -66,15 +67,21 @@ export default function DocumentList({
   entityId,
   showUpload = true,
   className = '',
+  alwaysVisible = false,
 }: DocumentListProps) {
   const [searchTerm, setSearchTerm] = useState('');
   const [categoryFilter, setCategoryFilter] = useState<string>('all');
   const [viewMode, setViewMode] = useState<keyof typeof VIEW_MODES>('GRID');
-  const [isVisible, setIsVisible] = useState(false);
+  const [isVisible, setIsVisible] = useState(alwaysVisible);
   const { toast } = useToast();
 
-  // Use intersection observer to detect when component becomes visible
+  // Use intersection observer to detect when component becomes visible (skip if alwaysVisible)
   useEffect(() => {
+    if (alwaysVisible) {
+      setIsVisible(true);
+      return;
+    }
+
     const observer = new IntersectionObserver(
       (entries) => {
         if (entries[0].isIntersecting) {
@@ -90,7 +97,7 @@ export default function DocumentList({
     }
 
     return () => observer.disconnect();
-  }, [entityType, entityId]);
+  }, [entityType, entityId, alwaysVisible]);
 
   // Fetch documents (only when visible)
   const { data: documents = [], isLoading, refetch } = useQuery({

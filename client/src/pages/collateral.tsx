@@ -6,9 +6,11 @@ import { apiRequest } from "@/lib/queryClient";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { University, Plus, ArrowLeft, Building, TrendingUp, Shield, Edit, Trash2 } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { University, Plus, ArrowLeft, Building, TrendingUp, Shield, Edit, Trash2, FileText } from "lucide-react";
 import { Link, useLocation } from "wouter";
 import { isUnauthorizedError } from "@/lib/authUtils";
+import DocumentList from "@/components/DocumentList";
 import backgroundImage from "@assets/loan_management_background_excel_green_1759302449019.png";
 
 export default function CollateralPage() {
@@ -16,6 +18,7 @@ export default function CollateralPage() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [, setLocation] = useLocation();
+  const [selectedCollateralForDocs, setSelectedCollateralForDocs] = useState<{id: string; name: string} | null>(null);
 
   // Redirect to login if not authenticated
   useEffect(() => {
@@ -398,7 +401,13 @@ export default function CollateralPage() {
                               <Trash2 className="mr-2 h-4 w-4" />
                               {deleteCollateralMutation.isPending ? "Deleting..." : "Delete"}
                             </Button>
-                            <Button variant="outline" size="sm" data-testid={`button-collateral-documents-${asset.id}`}>
+                            <Button 
+                              variant="outline" 
+                              size="sm" 
+                              onClick={() => setSelectedCollateralForDocs({ id: asset.id, name: asset.name })}
+                              data-testid={`button-collateral-documents-${asset.id}`}
+                            >
+                              <FileText className="mr-2 h-4 w-4" />
                               Documents
                             </Button>
                           </div>
@@ -418,6 +427,26 @@ export default function CollateralPage() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Documents Dialog */}
+      <Dialog open={!!selectedCollateralForDocs} onOpenChange={(open) => !open && setSelectedCollateralForDocs(null)}>
+        <DialogContent className="max-w-5xl max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center space-x-2">
+              <FileText className="h-5 w-5" />
+              <span>Documents - {selectedCollateralForDocs?.name}</span>
+            </DialogTitle>
+          </DialogHeader>
+          {selectedCollateralForDocs && (
+            <DocumentList
+              entityType="collateral"
+              entityId={selectedCollateralForDocs.id}
+              showUpload={true}
+              alwaysVisible={true}
+            />
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
