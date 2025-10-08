@@ -1,11 +1,36 @@
 
-import { createClient } from '@supabase/supabase-js';
+import { createClient, SupabaseClient } from '@supabase/supabase-js';
 
-// Supabase configuration
-const supabaseUrl = process.env.SUPABASE_URL || '';
-const supabaseAnonKey = process.env.SUPABASE_ANON_KEY || '';
+// Lazy Supabase client - only created when needed
+let _supabaseClient: SupabaseClient | null = null;
 
-export const supabase = createClient(supabaseUrl, supabaseAnonKey);
+function getSupabaseClient() {
+  if (!_supabaseClient) {
+    const supabaseUrl = process.env.SUPABASE_URL;
+    const supabaseAnonKey = process.env.SUPABASE_ANON_KEY;
+    
+    if (!supabaseUrl || !supabaseAnonKey) {
+      throw new Error('Missing SUPABASE_URL or SUPABASE_ANON_KEY environment variables');
+    }
+    
+    // Validate URL format
+    if (!supabaseUrl.startsWith('http://') && !supabaseUrl.startsWith('https://')) {
+      throw new Error(
+        `Invalid SUPABASE_URL format. Expected a URL like "https://xxxxx.supabase.co" but got a value starting with "${supabaseUrl.substring(0, 8)}...". ` +
+        'Please check your environment secrets and ensure SUPABASE_URL is set to your Supabase project URL, not a secret key.'
+      );
+    }
+    
+    _supabaseClient = createClient(supabaseUrl, supabaseAnonKey);
+  }
+  return _supabaseClient;
+}
+
+export const supabase = {
+  get auth() {
+    return getSupabaseClient().auth;
+  }
+};
 
 // Supabase Auth helper functions
 export async function verifySupabaseToken(token: string) {

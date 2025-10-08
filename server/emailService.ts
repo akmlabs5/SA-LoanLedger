@@ -13,7 +13,7 @@ if (sendgridKey) {
   mailService.setApiKey(sendgridKey);
 }
 
-export const FROM_EMAIL = config.get('SENDGRID_FROM_EMAIL');
+export const FROM_EMAIL: string = config.get('SENDGRID_FROM_EMAIL') || 'noreply@morouna-loans.com';
 
 export async function sendEmail(options: {
   to: string;
@@ -27,13 +27,16 @@ export async function sendEmail(options: {
     return;
   }
 
-  await mailService.send({
+  const emailData: any = {
     to: options.to,
-    from: FROM_EMAIL || 'noreply@morouna-loans.com',
+    from: FROM_EMAIL,
     subject: options.subject,
-    text: options.text,
-    html: options.html,
-  });
+  };
+  
+  if (options.text) emailData.text = options.text;
+  if (options.html) emailData.html = options.html;
+  
+  await mailService.send(emailData);
 }
 
 interface LoanDueNotification {

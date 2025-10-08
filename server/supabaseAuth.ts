@@ -9,12 +9,12 @@ const otpRequestTracker = new Map<string, { count: number; lastRequest: Date; lo
 
 setInterval(() => {
   const now = new Date();
-  for (const [email, data] of otpStore.entries()) {
+  for (const [email, data] of Array.from(otpStore.entries())) {
     if (now > data.expiry) {
       otpStore.delete(email);
     }
   }
-  for (const [email, tracker] of otpRequestTracker.entries()) {
+  for (const [email, tracker] of Array.from(otpRequestTracker.entries())) {
     if (tracker.lockoutUntil && now > tracker.lockoutUntil) {
       otpRequestTracker.delete(email);
     } else if (!tracker.lockoutUntil && now.getTime() - tracker.lastRequest.getTime() > 300000) {
