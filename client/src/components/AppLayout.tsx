@@ -351,6 +351,14 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
             <div className="flex items-center justify-between px-4 py-4">
               <div className="flex items-center gap-3">
                 <img src={morounaLogo} alt="Morouna Loans" className="h-10 w-auto object-contain" />
+                <div className="flex flex-col">
+                  <h1 className="text-sm font-semibold text-gray-900 dark:text-white leading-tight">
+                    Saudi Loan Portfolio Management
+                  </h1>
+                  <p className="text-xs text-gray-600 dark:text-gray-400">
+                    By AKM-Labs
+                  </p>
+                </div>
               </div>
               {isMobile && (
                 <Button
