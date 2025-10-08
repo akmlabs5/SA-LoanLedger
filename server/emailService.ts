@@ -7,13 +7,13 @@ if (!config.has('SENDGRID_API_KEY')) {
   console.warn("SENDGRID_API_KEY environment variable not set - email notifications disabled");
 }
 
-const mailService = new MailService();
+export const mailService = new MailService();
 const sendgridKey = config.get('SENDGRID_API_KEY');
 if (sendgridKey) {
   mailService.setApiKey(sendgridKey);
 }
 
-const FROM_EMAIL = config.get('SENDGRID_FROM_EMAIL');
+export const FROM_EMAIL = config.get('SENDGRID_FROM_EMAIL');
 
 interface LoanDueNotification {
   id: string;
