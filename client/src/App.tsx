@@ -51,8 +51,10 @@ import UserSettingsPage from "@/pages/user-settings";
 import FeaturesTipsPage from "@/pages/features-tips";
 import HelpDeskPage from "@/pages/help-desk";
 import AcceptInvitePage from "@/pages/accept-invite";
+import MorePage from "@/pages/MorePage";
 
 import AppLayout from "@/components/AppLayout";
+import { MobileLayout } from "@/components/mobile";
 import { useAuth } from "@/hooks/useAuth";
 import { queryClient } from "@/lib/queryClient";
 import { SupabaseAuthProvider } from "@/contexts/SupabaseAuthContext";
@@ -133,34 +135,38 @@ function App() {
   // Authenticated user routes
   return (
     <AppLayout>
-      <Switch>
-        <Route path="/" component={DashboardPage} />
-        <Route path="/loans" component={LoansPage} />
-        <Route path="/loans/create" component={LoanCreatePage} />
-        <Route path="/loans/create-general" component={LoanCreateGeneralPage} />
-        <Route path="/loans/:id" component={LoanDetailPage} />
-        <Route path="/loans/:id/edit" component={LoanEditPage} />
-        <Route path="/loans/:id/payment/create" component={PaymentCreatePage} />
-        <Route path="/banks" component={BanksPage} />
-        <Route path="/banks/:bankId/analytics" component={BankAnalyticsPage} />
-        <Route path="/banks/:id" component={BankDetailPage} />
-        <Route path="/banks/:bankId/contacts/new" component={BankContactCreatePage} />
-        <Route path="/banks/:bankId/facility/create" component={FacilityCreatePage} />
-        <Route path="/facility/create-general" component={FacilityCreateGeneralPage} />
-        <Route path="/banks/:bankId/facility/:facilityId/edit" component={FacilityEditPage} />
-        <Route path="/collateral" component={CollateralPage} />
-        <Route path="/collateral/create" component={CollateralCreatePage} />
-        <Route path="/collateral/:id/edit" component={CollateralEditPage} />
-        <Route path="/guarantees" component={GuaranteesPage} />
-        <Route path="/guarantees/create" component={GuaranteeCreatePage} />
-        <Route path="/history" component={HistoryPage} />
-        <Route path="/reports" component={ReportsPage} />
-        <Route path="/ai-chat" component={AIChatPage} />
-        <Route path="/user-settings" component={UserSettingsPage} />
-        <Route path="/features-tips" component={FeaturesTipsPage} />
-        <Route path="/help-desk" component={HelpDeskPage} />
-        <Route component={NotFoundPage} />
-      </Switch>
+      <MobileLayout>
+        <Switch>
+          <Route path="/" component={DashboardPage} />
+          <Route path="/loans" component={LoansPage} />
+          <Route path="/loans/create" component={LoanCreatePage} />
+          <Route path="/loans/create-general" component={LoanCreateGeneralPage} />
+          <Route path="/loans/:id" component={LoanDetailPage} />
+          <Route path="/loans/:id/edit" component={LoanEditPage} />
+          <Route path="/loans/:id/payment/create" component={PaymentCreatePage} />
+          <Route path="/banks" component={BanksPage} />
+          <Route path="/banks/:bankId/analytics" component={BankAnalyticsPage} />
+          <Route path="/banks/:id" component={BankDetailPage} />
+          <Route path="/banks/:bankId/contacts/new" component={BankContactCreatePage} />
+          <Route path="/banks/:bankId/facility/create" component={FacilityCreatePage} />
+          <Route path="/facility/create-general" component={FacilityCreateGeneralPage} />
+          <Route path="/banks/:bankId/facility/:facilityId/edit" component={FacilityEditPage} />
+          <Route path="/collateral" component={CollateralPage} />
+          <Route path="/collateral/create" component={CollateralCreatePage} />
+          <Route path="/collateral/:id/edit" component={CollateralEditPage} />
+          <Route path="/guarantees" component={GuaranteesPage} />
+          <Route path="/guarantees/create" component={GuaranteeCreatePage} />
+          <Route path="/history" component={HistoryPage} />
+          <Route path="/reports" component={ReportsPage} />
+          <Route path="/ai-chat" component={AIChatPage} />
+          <Route path="/more" component={MorePage} />
+          <Route path="/settings" component={UserSettingsPage} />
+          <Route path="/user-settings" component={UserSettingsPage} />
+          <Route path="/features-tips" component={FeaturesTipsPage} />
+          <Route path="/help-desk" component={HelpDeskPage} />
+          <Route component={NotFoundPage} />
+        </Switch>
+      </MobileLayout>
     </AppLayout>
   );
 }
