@@ -201,9 +201,17 @@ export default function Banks() {
                 >
                   <div className="p-4 space-y-3">
                     {/* Bank Header - Tappable to view bank details */}
-                    <button
+                    <div
                       onClick={() => setLocation(`/banks/${exposure.bankId}`)}
-                      className="w-full flex items-start gap-3 active:bg-accent/50 active:scale-[0.98] transition-all rounded-lg p-2 -m-2"
+                      role="button"
+                      tabIndex={0}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' || e.key === ' ') {
+                          e.preventDefault();
+                          setLocation(`/banks/${exposure.bankId}`);
+                        }
+                      }}
+                      className="w-full flex items-start gap-3 active:bg-accent/50 active:scale-[0.98] transition-all rounded-lg p-2 -m-2 cursor-pointer"
                       data-testid={`button-bank-card-${exposure.bankId}`}
                     >
                       <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center flex-shrink-0">
@@ -227,7 +235,7 @@ export default function Banks() {
                       >
                         <MoreVertical className="h-5 w-5" />
                       </Button>
-                    </button>
+                    </div>
 
                     {/* Key Metrics */}
                     <div className="grid grid-cols-3 gap-2">
@@ -280,10 +288,18 @@ export default function Banks() {
                               : 0;
 
                             return (
-                              <button
+                              <div
                                 key={facility.id}
                                 onClick={() => setLocation(`/banks/${exposure.bankId}?facilityId=${facility.id}`)}
-                                className="w-full bg-background border border-border rounded-lg p-3 active:bg-accent/50 active:scale-[0.98] transition-all"
+                                role="button"
+                                tabIndex={0}
+                                onKeyDown={(e) => {
+                                  if (e.key === 'Enter' || e.key === ' ') {
+                                    e.preventDefault();
+                                    setLocation(`/banks/${exposure.bankId}?facilityId=${facility.id}`);
+                                  }
+                                }}
+                                className="w-full bg-background border border-border rounded-lg p-3 active:bg-accent/50 active:scale-[0.98] transition-all cursor-pointer"
                                 data-testid={`button-facility-${facility.id}`}
                               >
                                 <div className="flex items-start justify-between mb-2">
@@ -324,7 +340,7 @@ export default function Banks() {
                                     </span>
                                   </div>
                                 </div>
-                              </button>
+                              </div>
                             );
                           })}
                         </CollapsibleContent>
