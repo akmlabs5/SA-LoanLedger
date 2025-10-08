@@ -141,6 +141,18 @@ export const guaranteeTypeEnum = pgEnum('guarantee_type', [
   'other'
 ]);
 
+export const accountTypeEnum = pgEnum('account_type', [
+  'personal',
+  'organization'
+]);
+
+export const invitationStatusEnum = pgEnum('invitation_status', [
+  'pending',
+  'accepted',
+  'expired',
+  'cancelled'
+]);
+
 // Session storage table.
 // (IMPORTANT) This table is mandatory for Replit Auth, don't drop it.
 export const sessions = pgTable(
@@ -162,9 +174,50 @@ export const users = pgTable("users", {
   lastName: varchar("last_name"),
   profileImageUrl: varchar("profile_image_url"),
   twoFactorEnabled: boolean("two_factor_enabled").default(false),
+  accountType: accountTypeEnum("account_type").default('personal'),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
+
+// Organizations
+export const organizations = pgTable("organizations", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  name: varchar("name", { length: 255 }).notNull(),
+  ownerId: varchar("owner_id").references(() => users.id).notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+}, (table) => [
+  index("idx_organizations_owner").on(table.ownerId),
+]);
+
+// Organization Members
+export const organizationMembers = pgTable("organization_members", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").references(() => users.id, { onDelete: 'cascade' }).notNull(),
+  organizationId: varchar("organization_id").references(() => organizations.id, { onDelete: 'cascade' }).notNull(),
+  isOwner: boolean("is_owner").default(false),
+  joinedAt: timestamp("joined_at").defaultNow(),
+}, (table) => [
+  index("idx_org_members_user").on(table.userId),
+  index("idx_org_members_org").on(table.organizationId),
+  unique("unique_user_org").on(table.userId, table.organizationId),
+]);
+
+// Organization Invitations
+export const organizationInvitations = pgTable("organization_invitations", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  organizationId: varchar("organization_id").references(() => organizations.id, { onDelete: 'cascade' }).notNull(),
+  email: varchar("email", { length: 255 }).notNull(),
+  token: varchar("token", { length: 255 }).notNull().unique(),
+  invitedBy: varchar("invited_by").references(() => users.id).notNull(),
+  status: invitationStatusEnum("status").default('pending'),
+  expiresAt: timestamp("expires_at").notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
+}, (table) => [
+  index("idx_org_invitations_org").on(table.organizationId),
+  index("idx_org_invitations_token").on(table.token),
+  index("idx_org_invitations_email").on(table.email),
+]);
 
 // Saudi Banks
 export const banks = pgTable("banks", {
@@ -1331,3 +1384,41 @@ export type InsertChatConversation = z.infer<typeof insertChatConversationSchema
 export type ChatMessage = typeof chatMessages.$inferSelect;
 export type InsertChatMessage = z.infer<typeof insertChatMessageSchema>;
 export type MessageRole = z.infer<typeof messageRoleZodEnum>;
+
+// Organization Schemas
+export const insertOrganizationSchema = createInsertSchema(organizations).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+}).extend({
+  name: z.string().min(1, "Organization name is required").max(255, "Organization name must be less than 255 characters"),
+});
+
+export const updateOrganizationSchema = insertOrganizationSchema.partial().extend({
+  id: z.string(),
+});
+
+export type InsertOrganization = z.infer<typeof insertOrganizationSchema>;
+export type UpdateOrganization = z.infer<typeof updateOrganizationSchema>;
+export type Organization = typeof organizations.$inferSelect;
+
+// Organization Member Schemas
+export const insertOrganizationMemberSchema = createInsertSchema(organizationMembers).omit({
+  id: true,
+  joinedAt: true,
+});
+
+export type InsertOrganizationMember = z.infer<typeof insertOrganizationMemberSchema>;
+export type OrganizationMember = typeof organizationMembers.$inferSelect;
+
+// Organization Invitation Schemas
+export const insertOrganizationInvitationSchema = createInsertSchema(organizationInvitations).omit({
+  id: true,
+  createdAt: true,
+}).extend({
+  email: z.string().email("Must be a valid email address"),
+  expiresAt: z.date(),
+});
+
+export type InsertOrganizationInvitation = z.infer<typeof insertOrganizationInvitationSchema>;
+export type OrganizationInvitation = typeof organizationInvitations.$inferSelect;
