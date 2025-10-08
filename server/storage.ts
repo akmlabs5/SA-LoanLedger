@@ -89,7 +89,7 @@ import {
   type InsertOrganizationInvitation,
 } from "@shared/schema";
 import { db } from "./db";
-import { eq, and, desc, asc, sql, gte, lte, isNull, isNotNull } from "drizzle-orm";
+import { eq, and, or, desc, asc, sql, gte, lte, isNull, isNotNull } from "drizzle-orm";
 
 // Interface for storage operations
 export interface IStorage {
@@ -188,7 +188,7 @@ export interface IStorage {
   upsertDailyAlertsPreferences(preferences: InsertDailyAlertsPreferences): Promise<DailyAlertsPreferences>;
   
   // Guarantee operations
-  getUserGuarantees(userId: string): Promise<Array<Guarantee & { facility: Facility & { bank: Bank } }>>;
+  getUserGuarantees(organizationId: string): Promise<Array<Guarantee & { facility: Facility & { bank: Bank } }>>;
   getFacilityGuarantees(facilityId: string): Promise<Guarantee[]>;
   getGuaranteeById(guaranteeId: string): Promise<Guarantee | undefined>;
   createGuarantee(guarantee: InsertGuarantee): Promise<Guarantee>;
@@ -314,8 +314,15 @@ export class DatabaseStorage implements IStorage {
   // Bank operations
   async getAllBanks(organizationId?: string): Promise<Bank[]> {
     if (organizationId) {
+      // Return both global banks (organizationId is null) AND organization-specific banks
       return await db.select().from(banks)
-        .where(and(eq(banks.isActive, true), eq(banks.organizationId, organizationId)))
+        .where(and(
+          eq(banks.isActive, true),
+          or(
+            isNull(banks.organizationId),
+            eq(banks.organizationId, organizationId)
+          )
+        ))
         .orderBy(asc(banks.name));
     }
     return await db.select().from(banks).where(eq(banks.isActive, true)).orderBy(asc(banks.name));
@@ -1055,7 +1062,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   // Guarantee operations
-  async getUserGuarantees(userId: string): Promise<Array<Guarantee & { facility: Facility & { bank: Bank } }>> {
+  async getUserGuarantees(organizationId: string): Promise<Array<Guarantee & { facility: Facility & { bank: Bank } }>> {
     return await db
       .select({
         id: guarantees.id,
@@ -1100,7 +1107,7 @@ export class DatabaseStorage implements IStorage {
       .from(guarantees)
       .innerJoin(facilities, eq(guarantees.facilityId, facilities.id))
       .innerJoin(banks, eq(facilities.bankId, banks.id))
-      .where(and(eq(guarantees.userId, userId), eq(guarantees.isActive, true)))
+      .where(and(eq(guarantees.organizationId, organizationId), eq(guarantees.isActive, true)))
       .orderBy(desc(guarantees.createdAt));
   }
 
@@ -3055,7 +3062,7 @@ Reference: {loanReference}`,
   }
 
   // Guarantee operations
-  async getUserGuarantees(userId: string): Promise<Array<Guarantee & { facility: Facility & { bank: Bank } }>> {
+  async getUserGuarantees(organizationId: string): Promise<Array<Guarantee & { facility: Facility & { bank: Bank } }>> {
     return [];
   }
 
