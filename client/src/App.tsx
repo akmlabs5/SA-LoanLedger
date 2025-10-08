@@ -50,6 +50,7 @@ import AdminTemplatesPage from "@/pages/admin-portal/templates";
 import UserSettingsPage from "@/pages/user-settings";
 import FeaturesTipsPage from "@/pages/features-tips";
 import HelpDeskPage from "@/pages/help-desk";
+import AcceptInvitePage from "@/pages/accept-invite";
 
 import AppLayout from "@/components/AppLayout";
 import { useAuth } from "@/hooks/useAuth";
@@ -123,6 +124,7 @@ function App() {
         <Route path="/supabase-signin" component={SupabaseSigninPage} />
         <Route path="/landing" component={LandingPage} />
         <Route path="/login-hub" component={LoginHub} />
+        <Route path="/accept-invite" component={AcceptInvitePage} />
         <Route component={UnifiedLoginPage} />
       </Switch>
     );

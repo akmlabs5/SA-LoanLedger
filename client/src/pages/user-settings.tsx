@@ -1509,9 +1509,12 @@ function TeamManagementSection() {
   const [isInviting, setIsInviting] = useState(false);
 
   // Fetch organization members
-  const { data: members, isLoading: membersLoading } = useQuery({
+  const { data: membersResponse, isLoading: membersLoading } = useQuery({
     queryKey: ['/api/organization/members'],
   });
+
+  const members = membersResponse?.members || [];
+  const organizationName = membersResponse?.organization?.name || "";
 
   // Invite member mutation
   const inviteMutation = useMutation({
@@ -1557,9 +1560,11 @@ function TeamManagementSection() {
   });
 
   // Fetch pending invitations
-  const { data: invitations } = useQuery({
+  const { data: invitationsResponse } = useQuery({
     queryKey: ['/api/organization/invitations'],
   });
+
+  const invitations = invitationsResponse?.invitations || [];
 
   const handleInvite = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -1596,7 +1601,7 @@ function TeamManagementSection() {
             Organization
           </CardTitle>
           <CardDescription>
-            {members && members.length > 0 ? members[0].organizationName : "No organization"}
+            {organizationName || "No organization"}
           </CardDescription>
         </CardHeader>
       </Card>

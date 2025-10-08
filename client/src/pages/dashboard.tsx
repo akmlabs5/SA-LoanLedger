@@ -61,6 +61,51 @@ export default function Dashboard() {
     }
   }, [isAuthenticated, isLoading, toast]);
 
+  // Auto-accept pending invitation after login
+  useEffect(() => {
+    const acceptPendingInvitation = async () => {
+      const pendingToken = localStorage.getItem('pending_invite_token');
+      if (isAuthenticated && pendingToken && !isLoading) {
+        try {
+          const response = await fetch('/api/organization/accept-invite', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ token: pendingToken }),
+            credentials: 'include',
+          });
+
+          if (response.ok) {
+            localStorage.removeItem('pending_invite_token');
+            toast({
+              title: "Welcome to the team!",
+              description: "You've successfully joined the organization",
+            });
+          } else {
+            // Handle failed auto-accept
+            localStorage.removeItem('pending_invite_token');
+            const errorData = await response.json().catch(() => ({ message: 'Unknown error' }));
+            toast({
+              title: "Failed to join organization",
+              description: errorData.message || "The invitation may have expired or been revoked",
+              variant: "destructive",
+            });
+          }
+        } catch (error) {
+          // Clear token and show error on network/other failures
+          localStorage.removeItem('pending_invite_token');
+          toast({
+            title: "Failed to join organization",
+            description: "Please try accepting the invitation again",
+            variant: "destructive",
+          });
+          console.error('Failed to auto-accept invitation:', error);
+        }
+      }
+    };
+
+    acceptPendingInvitation();
+  }, [isAuthenticated, isLoading, toast]);
+
   const { data: portfolioSummary, isLoading: portfolioLoading, error: portfolioError } = useQuery<PortfolioSummary>({
     queryKey: ["/api/dashboard/portfolio"],
     enabled: isAuthenticated,
