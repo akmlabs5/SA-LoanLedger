@@ -25,7 +25,13 @@ import {
   BarChart3,
   Lightbulb,
   CheckCircle,
-  Smartphone
+  Smartphone,
+  Users,
+  UserPlus,
+  Lock,
+  Layers,
+  ShieldCheck,
+  Settings
 } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -49,7 +55,7 @@ export default function FeaturesTipsPage() {
         </div>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="grid w-full grid-cols-2" data-testid="tabs-features-tips">
+          <TabsList className="grid w-full grid-cols-3" data-testid="tabs-features-tips">
             <TabsTrigger value="features" className="flex items-center gap-2 h-12" data-testid="tab-features">
               <Boxes className="h-4 w-4" />
               <span>Platform Features</span>
@@ -57,6 +63,10 @@ export default function FeaturesTipsPage() {
             <TabsTrigger value="tips" className="flex items-center gap-2 h-12" data-testid="tab-tips">
               <Lightbulb className="h-4 w-4" />
               <span>User Tips</span>
+            </TabsTrigger>
+            <TabsTrigger value="organization" className="flex items-center gap-2 h-12" data-testid="tab-organization">
+              <Users className="h-4 w-4" />
+              <span>Organization Tips</span>
             </TabsTrigger>
           </TabsList>
 
@@ -529,6 +539,243 @@ export default function FeaturesTipsPage() {
                     <div>
                       <h4 className="font-semibold text-sm">Responsive charts and tables</h4>
                       <p className="text-sm text-muted-foreground">Charts automatically adapt to screen size with touch interactions. Pinch to zoom on graphs and swipe through data points for detailed analysis.</p>
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* Organization Tips Tab */}
+          <TabsContent value="organization" className="space-y-6">
+            {/* Team Collaboration Features Section */}
+            <Card data-testid="card-team-collaboration">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Users className="h-5 w-5" />
+                  Team Collaboration Features
+                </CardTitle>
+                <CardDescription>Work together with your team on shared loan portfolios</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  <div className="p-4 border rounded-lg hover:border-primary transition-colors" data-testid="feature-card-team-accounts">
+                    <Users className="h-8 w-8 text-primary mb-3" />
+                    <h3 className="font-semibold mb-2">Organization Accounts</h3>
+                    <p className="text-sm text-muted-foreground">
+                      Create team accounts that support 2-5 members (1 owner + up to 4 members) working together on shared loan portfolios.
+                    </p>
+                  </div>
+
+                  <div className="p-4 border rounded-lg hover:border-primary transition-colors" data-testid="feature-card-invitations">
+                    <UserPlus className="h-8 w-8 text-primary mb-3" />
+                    <h3 className="font-semibold mb-2">Email Invitations</h3>
+                    <p className="text-sm text-muted-foreground">
+                      Owners can invite team members via email with secure token-based links that expire in 7 days for enhanced security.
+                    </p>
+                  </div>
+
+                  <div className="p-4 border rounded-lg hover:border-primary transition-colors" data-testid="feature-card-role-access">
+                    <ShieldCheck className="h-8 w-8 text-primary mb-3" />
+                    <h3 className="font-semibold mb-2">Role-Based Access</h3>
+                    <p className="text-sm text-muted-foreground">
+                      Owner role with exclusive permissions (invite/remove members) and Member role with full portfolio access.
+                    </p>
+                  </div>
+
+                  <div className="p-4 border rounded-lg hover:border-primary transition-colors" data-testid="feature-card-data-isolation">
+                    <Lock className="h-8 w-8 text-primary mb-3" />
+                    <h3 className="font-semibold mb-2">Complete Data Isolation</h3>
+                    <p className="text-sm text-muted-foreground">
+                      All loans, facilities, collateral, and bank data is completely isolated between organizations with SQL-level enforcement.
+                    </p>
+                  </div>
+
+                  <div className="p-4 border rounded-lg hover:border-primary transition-colors" data-testid="feature-card-team-settings">
+                    <Settings className="h-8 w-8 text-primary mb-3" />
+                    <h3 className="font-semibold mb-2">Team Management</h3>
+                    <p className="text-sm text-muted-foreground">
+                      Dedicated settings tab showing organization info, member list, invite form, and pending invitations.
+                    </p>
+                  </div>
+
+                  <div className="p-4 border rounded-lg hover:border-primary transition-colors" data-testid="feature-card-shared-ai">
+                    <Layers className="h-8 w-8 text-primary mb-3" />
+                    <h3 className="font-semibold mb-2">Shared AI Insights</h3>
+                    <p className="text-sm text-muted-foreground">
+                      AI Agent operations respect organization boundaries, providing insights based on your team's shared portfolio data.
+                    </p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Getting Started with Organizations */}
+            <Card data-testid="card-org-getting-started">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Lightbulb className="h-5 w-5" />
+                  Getting Started with Organizations
+                </CardTitle>
+                <CardDescription>Step-by-step guide to set up team collaboration</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  <div className="space-y-2" data-testid="org-step-create">
+                    <h4 className="font-semibold text-sm flex items-center gap-2">
+                      <span className="flex h-6 w-6 items-center justify-center rounded-full bg-primary/10 text-primary text-xs">1</span>
+                      Create an Organization Account
+                    </h4>
+                    <p className="text-sm text-muted-foreground ml-8">
+                      During signup, select "Organization" as account type and provide your organization name. You'll automatically become the owner with full admin privileges.
+                    </p>
+                  </div>
+                  
+                  <div className="space-y-2" data-testid="org-step-invite">
+                    <h4 className="font-semibold text-sm flex items-center gap-2">
+                      <span className="flex h-6 w-6 items-center justify-center rounded-full bg-primary/10 text-primary text-xs">2</span>
+                      Invite Team Members
+                    </h4>
+                    <p className="text-sm text-muted-foreground ml-8">
+                      Go to User Settings → Team Management tab, enter member's email, and click "Send Invitation". They'll receive a secure link to join your organization.
+                    </p>
+                  </div>
+
+                  <div className="space-y-2" data-testid="org-step-accept">
+                    <h4 className="font-semibold text-sm flex items-center gap-2">
+                      <span className="flex h-6 w-6 items-center justify-center rounded-full bg-primary/10 text-primary text-xs">3</span>
+                      Member Acceptance Process
+                    </h4>
+                    <p className="text-sm text-muted-foreground ml-8">
+                      Invited members click the email link, review organization details, and choose to Accept or Decline. No auto-join - consent is always required.
+                    </p>
+                  </div>
+
+                  <div className="space-y-2" data-testid="org-step-collaborate">
+                    <h4 className="font-semibold text-sm flex items-center gap-2">
+                      <span className="flex h-6 w-6 items-center justify-center rounded-full bg-primary/10 text-primary text-xs">4</span>
+                      Start Collaborating
+                    </h4>
+                    <p className="text-sm text-muted-foreground ml-8">
+                      Once accepted, all members see the same portfolio data. Create loans, track facilities, and manage collateral together as a team.
+                    </p>
+                  </div>
+
+                  <div className="space-y-2" data-testid="org-step-manage">
+                    <h4 className="font-semibold text-sm flex items-center gap-2">
+                      <span className="flex h-6 w-6 items-center justify-center rounded-full bg-primary/10 text-primary text-xs">5</span>
+                      Manage Team Members
+                    </h4>
+                    <p className="text-sm text-muted-foreground ml-8">
+                      Owners can remove members anytime from Team Management settings. Members automatically lose access to organization data upon removal.
+                    </p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Organization Best Practices */}
+            <Card data-testid="card-org-best-practices">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <CheckCircle className="h-5 w-5" />
+                  Organization Best Practices
+                </CardTitle>
+                <CardDescription>Recommended practices for effective team collaboration</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-3">
+                  <div className="flex items-start gap-3" data-testid="org-practice-roles">
+                    <CheckCircle className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
+                    <div>
+                      <h4 className="font-semibold text-sm">Define clear team roles and responsibilities</h4>
+                      <p className="text-sm text-muted-foreground">Assign specific tasks to team members - one person for data entry, another for reviews, etc. While all members have full access, clear roles improve efficiency.</p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-start gap-3" data-testid="org-practice-invites">
+                    <CheckCircle className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
+                    <div>
+                      <h4 className="font-semibold text-sm">Only invite trusted team members</h4>
+                      <p className="text-sm text-muted-foreground">Members have full access to all portfolio data. Only invite colleagues you trust with sensitive financial information and loan details.</p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-start gap-3" data-testid="org-practice-review">
+                    <CheckCircle className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
+                    <div>
+                      <h4 className="font-semibold text-sm">Regularly review team membership</h4>
+                      <p className="text-sm text-muted-foreground">Periodically check your team member list and remove anyone who no longer needs access. This maintains security and data integrity.</p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-start gap-3" data-testid="org-practice-communication">
+                    <CheckCircle className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
+                    <div>
+                      <h4 className="font-semibold text-sm">Coordinate data updates with your team</h4>
+                      <p className="text-sm text-muted-foreground">When making major changes (adding facilities, updating collateral), communicate with team members to avoid conflicts and ensure everyone is informed.</p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-start gap-3" data-testid="org-practice-ownership">
+                    <CheckCircle className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
+                    <div>
+                      <h4 className="font-semibold text-sm">Plan for ownership succession</h4>
+                      <p className="text-sm text-muted-foreground">Organization owners cannot delete their accounts while members exist. Before leaving, ensure you remove all members or designate a successor.</p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-start gap-3" data-testid="org-practice-isolation">
+                    <CheckCircle className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
+                    <div>
+                      <h4 className="font-semibold text-sm">Understand data isolation boundaries</h4>
+                      <p className="text-sm text-muted-foreground">Your organization data is completely isolated from others. No cross-organization access is possible - each team's data is secure and private.</p>
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Security & Privacy */}
+            <Card data-testid="card-org-security">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <ShieldCheck className="h-5 w-5" />
+                  Security & Privacy
+                </CardTitle>
+                <CardDescription>How we protect your organization's data</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-3">
+                  <div className="flex items-start gap-3" data-testid="security-tokens">
+                    <Lock className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
+                    <div>
+                      <h4 className="font-semibold text-sm">Token-based invitation system</h4>
+                      <p className="text-sm text-muted-foreground">Invitations use secure tokens that expire after 7 days. Email verification ensures only the intended recipient can join your organization.</p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-start gap-3" data-testid="security-isolation">
+                    <Lock className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
+                    <div>
+                      <h4 className="font-semibold text-sm">SQL-level data isolation</h4>
+                      <p className="text-sm text-muted-foreground">All database queries enforce organization boundaries. Cross-tenant data access is blocked at the SQL level, preventing unauthorized access.</p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-start gap-3" data-testid="security-validation">
+                    <Lock className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
+                    <div>
+                      <h4 className="font-semibold text-sm">Organization context validation</h4>
+                      <p className="text-sm text-muted-foreground">Every API request validates organization context. Middleware ensures users can only access data belonging to their organization.</p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-start gap-3" data-testid="security-ownership">
+                    <Lock className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
+                    <div>
+                      <h4 className="font-semibold text-sm">Protected owner operations</h4>
+                      <p className="text-sm text-muted-foreground">Owner-only actions (inviting/removing members) are protected with ownership checks. Regular members cannot perform administrative functions.</p>
                     </div>
                   </div>
                 </div>
