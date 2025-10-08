@@ -126,43 +126,25 @@
 
   /* 
    * ==================================================================================
-   * GLOBAL HOVER DISABLING FOR TOUCH DEVICES - PRODUCTION SOLUTION
+   * TOUCH-FIRST MOBILE FEEDBACK - PROPER SOLUTION
    * ==================================================================================
    * 
-   * This completely disables ALL hover states on touch-only devices using the
-   * industry-standard @media (hover: none) query. This single rule eliminates
-   * the double-tap issue globally without needing to prefix every hover class.
+   * REAL ISSUE WAS: Nested button elements (button inside button)
+   * - First tap activates outer button
+   * - Second tap activates inner button
    * 
-   * How it works:
-   * - @media (hover: none) targets devices without hover capability (touch screens)
-   * - @media (hover: hover) targets devices WITH hover capability (mice, trackpads)
-   * - This is the cleanest, most maintainable solution
+   * SOLUTION: Use div with role="button" for containers, keep Button components for actions
+   * 
+   * This provides proper touch feedback without removing hover states that help users
+   * understand what's clickable.
    * ==================================================================================
    */
   
   /* 
-   * CRITICAL: Disable ALL hover states on touch devices
-   * This prevents the browser from triggering hover pseudo-classes on tap
+   * Enhanced active state feedback for touch devices
+   * Provides immediate visual confirmation on tap
    */
-  @media (hover: none) {
-    * {
-      /* Disable hover effects globally on touch devices */
-      pointer-events: auto !important;
-    }
-    
-    *:hover {
-      /* Override all hover styles - they become no-ops on touch */
-      background-color: inherit !important;
-      color: inherit !important;
-      border-color: inherit !important;
-      opacity: inherit !important;
-      transform: none !important;
-      box-shadow: inherit !important;
-      text-decoration: inherit !important;
-    }
-    
-    /* Global active state feedback for touch devices */
-    /* Provides immediate visual confirmation on tap */
+  @media (hover: none) and (pointer: coarse) {
     button:not(:disabled):active, 
     a:active, 
     [role="button"]:active,
@@ -171,18 +153,10 @@
     input[type="button"]:active,
     input[type="submit"]:active,
     [data-testid^="button-"]:active {
-      transform: scale(0.96) !important;
-      opacity: 0.85 !important;
-      transition: transform 0.1s ease, opacity 0.1s ease !important;
+      transform: scale(0.98) !important;
+      opacity: 0.9 !important;
+      transition: transform 0.08s ease, opacity 0.08s ease !important;
     }
-  }
-  
-  /* 
-   * Desktop/hover-capable devices keep all hover functionality
-   */
-  @media (hover: hover) {
-    /* All hover states work normally on desktop */
-    /* This media query ensures hover-based interactions only work with a mouse/trackpad */
   }
   
   /* Improved typography hierarchy */
