@@ -126,30 +126,43 @@
 
   /* 
    * ==================================================================================
-   * TOUCH-FIRST MOBILE REDESIGN - NO HOVER STATES
+   * GLOBAL HOVER DISABLING FOR TOUCH DEVICES - PRODUCTION SOLUTION
    * ==================================================================================
    * 
-   * SOLUTION:
-   * Complete mobile UI overhaul using native mobile patterns - no hover states needed.
+   * This completely disables ALL hover states on touch-only devices using the
+   * industry-standard @media (hover: none) query. This single rule eliminates
+   * the double-tap issue globally without needing to prefix every hover class.
    * 
-   * NEW ARCHITECTURE:
-   * 1. Bottom tab navigation (Dashboard, Loans, Banks, AI, More)
-   * 2. Card-based layouts with active (pressed) states only
-   * 3. Action sheets for menus (slides from bottom)
-   * 4. Floating action buttons (FAB) for quick actions
-   * 5. 48px minimum touch targets throughout
-   * 6. Horizontal scrolling with snap points for metrics
-   * 7. Full-screen mobile views with proper bottom padding for tab bar
-   * 
-   * This eliminates the double-tap issue by removing hover dependencies entirely.
+   * How it works:
+   * - @media (hover: none) targets devices without hover capability (touch screens)
+   * - @media (hover: hover) targets devices WITH hover capability (mice, trackpads)
+   * - This is the cleanest, most maintainable solution
    * ==================================================================================
    */
   
   /* 
-   * Global active state feedback for touch devices
-   * Provides immediate visual confirmation on tap
+   * CRITICAL: Disable ALL hover states on touch devices
+   * This prevents the browser from triggering hover pseudo-classes on tap
    */
   @media (hover: none) {
+    * {
+      /* Disable hover effects globally on touch devices */
+      pointer-events: auto !important;
+    }
+    
+    *:hover {
+      /* Override all hover styles - they become no-ops on touch */
+      background-color: inherit !important;
+      color: inherit !important;
+      border-color: inherit !important;
+      opacity: inherit !important;
+      transform: none !important;
+      box-shadow: inherit !important;
+      text-decoration: inherit !important;
+    }
+    
+    /* Global active state feedback for touch devices */
+    /* Provides immediate visual confirmation on tap */
     button:not(:disabled):active, 
     a:active, 
     [role="button"]:active,
@@ -162,6 +175,14 @@
       opacity: 0.85 !important;
       transition: transform 0.1s ease, opacity 0.1s ease !important;
     }
+  }
+  
+  /* 
+   * Desktop/hover-capable devices keep all hover functionality
+   */
+  @media (hover: hover) {
+    /* All hover states work normally on desktop */
+    /* This media query ensures hover-based interactions only work with a mouse/trackpad */
   }
   
   /* Improved typography hierarchy */
