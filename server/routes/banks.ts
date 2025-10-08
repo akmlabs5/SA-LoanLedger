@@ -69,13 +69,14 @@ export function registerBanksRoutes(app: Express, deps: AppDependencies) {
 
   app.put('/api/bank-contacts/:contactId', isAuthenticated, attachOrganizationContext, requireOrganization, async (req: any, res) => {
     try {
+      const organizationId = req.organizationId;
       const { contactId } = req.params;
       const contactData = req.body;
       delete contactData.id;
       delete contactData.organizationId;
       delete contactData.bankId;
       
-      const contact = await storage.updateBankContact(contactId, contactData);
+      const contact = await storage.updateBankContact(contactId, organizationId, contactData);
       res.json(contact);
     } catch (error) {
       console.error("Error updating bank contact:", error);
@@ -85,8 +86,9 @@ export function registerBanksRoutes(app: Express, deps: AppDependencies) {
 
   app.delete('/api/bank-contacts/:contactId', isAuthenticated, attachOrganizationContext, requireOrganization, async (req: any, res) => {
     try {
+      const organizationId = req.organizationId;
       const { contactId } = req.params;
-      await storage.deleteBankContact(contactId);
+      await storage.deleteBankContact(contactId, organizationId);
       res.json({ message: "Bank contact deleted successfully" });
     } catch (error) {
       console.error("Error deleting bank contact:", error);

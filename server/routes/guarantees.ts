@@ -75,7 +75,7 @@ export function registerGuaranteesRoutes(app: Express, deps: AppDependencies) {
         id: guaranteeId,
       });
       
-      const guarantee = await storage.updateGuarantee(guaranteeId, guaranteeData);
+      const guarantee = await storage.updateGuarantee(guaranteeId, organizationId, guaranteeData);
       res.json(guarantee);
     } catch (error) {
       console.error("Error updating guarantee:", error);
@@ -94,7 +94,7 @@ export function registerGuaranteesRoutes(app: Express, deps: AppDependencies) {
         return res.status(404).json({ message: "Guarantee not found" });
       }
       
-      await storage.deleteGuarantee(guaranteeId);
+      await storage.deleteGuarantee(guaranteeId, organizationId);
       res.status(200).json({ message: "Guarantee deleted successfully" });
     } catch (error) {
       console.error("Error deleting guarantee:", error);

@@ -190,7 +190,7 @@ export function registerFacilitiesRoutes(app: Express, deps: AppDependencies) {
       const facilityUpdateSchema = insertFacilitySchema.omit({ organizationId: true }).partial();
       const validatedData = facilityUpdateSchema.parse(updateData);
       
-      const updatedFacility = await storage.updateFacility(facilityId, validatedData);
+      const updatedFacility = await storage.updateFacility(facilityId, organizationId, validatedData);
       res.json(updatedFacility);
     } catch (error) {
       console.error("Error updating facility:", error);
@@ -200,8 +200,9 @@ export function registerFacilitiesRoutes(app: Express, deps: AppDependencies) {
 
   app.delete('/api/facilities/:facilityId', isAuthenticated, attachOrganizationContext, requireOrganization, async (req: any, res) => {
     try {
+      const organizationId = req.organizationId;
       const { facilityId } = req.params;
-      await storage.deleteFacility(facilityId);
+      await storage.deleteFacility(facilityId, organizationId);
       res.json({ message: "Facility deleted successfully" });
     } catch (error) {
       console.error("Error deleting facility:", error);

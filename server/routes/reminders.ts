@@ -1,6 +1,7 @@
 import type { Express } from "express";
 import type { AppDependencies } from "../types";
 import { isAuthenticated } from "../replitAuth";
+import { attachOrganizationContext, requireOrganization } from "../organizationMiddleware";
 import { sendTemplateReminderEmail } from "../emailService";
 import { CalendarService } from "../calendarService";
 import {
@@ -108,8 +109,9 @@ export function registerRemindersRoutes(app: Express, deps: AppDependencies) {
     }
   });
 
-  app.put('/api/reminders/:reminderId', isAuthenticated, async (req: any, res) => {
+  app.put('/api/reminders/:reminderId', isAuthenticated, attachOrganizationContext, requireOrganization, async (req: any, res) => {
     try {
+      const organizationId = req.organizationId;
       const userId = req.user.claims.sub;
       const { reminderId } = req.params;
       
@@ -126,7 +128,7 @@ export function registerRemindersRoutes(app: Express, deps: AppDependencies) {
         id: reminderId,
       });
       
-      const reminder = await storage.updateLoanReminder(reminderId, reminderData);
+      const reminder = await storage.updateLoanReminder(reminderId, organizationId, reminderData);
       res.json(reminder);
     } catch (error) {
       console.error("Error updating reminder:", error);
@@ -134,8 +136,9 @@ export function registerRemindersRoutes(app: Express, deps: AppDependencies) {
     }
   });
 
-  app.delete('/api/reminders/:reminderId', isAuthenticated, async (req: any, res) => {
+  app.delete('/api/reminders/:reminderId', isAuthenticated, attachOrganizationContext, requireOrganization, async (req: any, res) => {
     try {
+      const organizationId = req.organizationId;
       const userId = req.user.claims.sub;
       const { reminderId } = req.params;
       
@@ -147,7 +150,7 @@ export function registerRemindersRoutes(app: Express, deps: AppDependencies) {
         return res.status(404).json({ message: "Reminder not found" });
       }
       
-      await storage.deleteLoanReminder(reminderId);
+      await storage.deleteLoanReminder(reminderId, organizationId);
       res.status(200).json({ message: "Reminder deleted successfully" });
     } catch (error) {
       console.error("Error deleting reminder:", error);

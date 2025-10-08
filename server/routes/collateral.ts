@@ -76,7 +76,7 @@ export function registerCollateralRoutes(app: Express, deps: AppDependencies) {
         res.json(collateral);
       } catch (assignmentError) {
         try {
-          await storage.deleteCollateral(collateral.id);
+          await storage.deleteCollateral(collateral.id, organizationId);
         } catch (rollbackError) {
           console.error("Failed to rollback collateral after assignment failure:", rollbackError);
         }
@@ -91,9 +91,10 @@ export function registerCollateralRoutes(app: Express, deps: AppDependencies) {
 
   app.put('/api/collateral/:id', isAuthenticated, attachOrganizationContext, requireOrganization, async (req: any, res) => {
     try {
+      const organizationId = req.organizationId;
       const collateralId = req.params.id;
       const updates = req.body;
-      const collateral = await storage.updateCollateral(collateralId, updates);
+      const collateral = await storage.updateCollateral(collateralId, organizationId, updates);
       res.json(collateral);
     } catch (error) {
       console.error("Error updating collateral:", error);
@@ -103,8 +104,9 @@ export function registerCollateralRoutes(app: Express, deps: AppDependencies) {
 
   app.delete('/api/collateral/:id', isAuthenticated, attachOrganizationContext, requireOrganization, async (req: any, res) => {
     try {
+      const organizationId = req.organizationId;
       const collateralId = req.params.id;
-      await storage.deleteCollateral(collateralId);
+      await storage.deleteCollateral(collateralId, organizationId);
       res.json({ message: "Collateral deleted successfully" });
     } catch (error) {
       console.error("Error deleting collateral:", error);
@@ -199,7 +201,7 @@ export function registerCollateralRoutes(app: Express, deps: AppDependencies) {
         }
       }
       
-      const assignment = await storage.updateCollateralAssignment(assignmentId, updates);
+      const assignment = await storage.updateCollateralAssignment(assignmentId, organizationId, updates);
       res.json(assignment);
     } catch (error) {
       console.error("Error updating collateral assignment:", error);
@@ -219,7 +221,7 @@ export function registerCollateralRoutes(app: Express, deps: AppDependencies) {
         return res.status(403).json({ message: "Assignment not found or access denied" });
       }
       
-      await storage.deleteCollateralAssignment(assignmentId);
+      await storage.deleteCollateralAssignment(assignmentId, organizationId);
       res.json({ message: "Collateral assignment deleted successfully" });
     } catch (error) {
       console.error("Error deleting collateral assignment:", error);
