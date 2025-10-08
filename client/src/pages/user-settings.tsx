@@ -503,7 +503,7 @@ export default function UserSettingsPage() {
         </div>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="grid w-full grid-cols-2 sm:grid-cols-3 md:grid-cols-6" data-testid="tabs-settings">
+          <TabsList className="grid w-full grid-cols-2 sm:grid-cols-4 md:grid-cols-7" data-testid="tabs-settings">
             <TabsTrigger value="profile" className="flex items-center gap-2 h-12" data-testid="tab-profile">
               <User className="h-4 w-4" />
               <span className="hidden sm:inline">Profile</span>
@@ -527,6 +527,10 @@ export default function UserSettingsPage() {
             <TabsTrigger value="security" className="flex items-center gap-2 h-12" data-testid="tab-security">
               <Shield className="h-4 w-4" />
               <span className="hidden sm:inline">Security</span>
+            </TabsTrigger>
+            <TabsTrigger value="team" className="flex items-center gap-2 h-12" data-testid="tab-team">
+              <Building2 className="h-4 w-4" />
+              <span className="hidden sm:inline">Team</span>
             </TabsTrigger>
           </TabsList>
 

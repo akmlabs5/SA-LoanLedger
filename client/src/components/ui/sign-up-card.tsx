@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Link } from 'wouter';
 import { motion, AnimatePresence, useMotionValue, useTransform } from 'framer-motion';
-import { Mail, Lock, Eye, EyeClosed, ArrowRight, University, User } from 'lucide-react';
+import { Mail, Lock, Eye, EyeClosed, ArrowRight, University, User, Building2 } from 'lucide-react';
 import { cn } from "@/lib/utils"
 
 function Input({ className, type, ...props }: React.ComponentProps<"input">) {
@@ -21,7 +21,7 @@ function Input({ className, type, ...props }: React.ComponentProps<"input">) {
 }
 
 interface SignUpCardProps {
-  onSubmit?: (firstName: string, lastName: string, email: string, password: string, agreeToTerms: boolean, enable2FA: boolean) => Promise<void>;
+  onSubmit?: (firstName: string, lastName: string, email: string, password: string, agreeToTerms: boolean, enable2FA: boolean, accountType: 'personal' | 'organization', organizationName?: string) => Promise<void>;
   onReplitAuth?: () => void;
   isLoading?: boolean;
   error?: string;
@@ -38,6 +38,8 @@ export function SignUpCard({ onSubmit, onReplitAuth, isLoading: externalLoading 
   const [focusedInput, setFocusedInput] = useState<string | null>(null);
   const [agreeToTerms, setAgreeToTerms] = useState(false);
   const [enable2FA, setEnable2FA] = useState(false);
+  const [accountType, setAccountType] = useState<'personal' | 'organization'>('personal');
+  const [organizationName, setOrganizationName] = useState("");
 
   const loading = isLoading || externalLoading;
 
@@ -69,10 +71,14 @@ export function SignUpCard({ onSubmit, onReplitAuth, isLoading: externalLoading 
       return; // Terms validation will be shown in UI
     }
     
+    if (accountType === 'organization' && !organizationName.trim()) {
+      return; // Organization name required for organization accounts
+    }
+    
     if (onSubmit) {
       setIsLoading(true);
       try {
-        await onSubmit(firstName, lastName, email, password, agreeToTerms, enable2FA);
+        await onSubmit(firstName, lastName, email, password, agreeToTerms, enable2FA, accountType, organizationName || undefined);
       } catch (error) {
         // Error handling is done by parent
       } finally {
@@ -82,7 +88,7 @@ export function SignUpCard({ onSubmit, onReplitAuth, isLoading: externalLoading 
   };
 
   const passwordsMatch = password === confirmPassword || confirmPassword === "";
-  const canSubmit = firstName && lastName && email && password && confirmPassword && passwordsMatch && agreeToTerms && !loading;
+  const canSubmit = firstName && lastName && email && password && confirmPassword && passwordsMatch && agreeToTerms && (accountType === 'personal' || organizationName.trim()) && !loading;
 
   return (
     <div className="min-h-screen w-screen bg-black relative overflow-hidden flex items-center justify-center">
@@ -401,6 +407,79 @@ export function SignUpCard({ onSubmit, onReplitAuth, isLoading: externalLoading 
                       </div>
                     </motion.div>
                   </div>
+
+                  {/* Account Type Selector */}
+                  <div className="space-y-2">
+                    <label className="text-white/70 text-xs font-medium">Account Type</label>
+                    <div className="grid grid-cols-2 gap-3">
+                      <motion.button
+                        type="button"
+                        onClick={() => setAccountType('personal')}
+                        className={`relative h-10 rounded-lg border transition-all duration-300 ${
+                          accountType === 'personal' 
+                            ? 'bg-white/10 border-white/30 text-white' 
+                            : 'bg-white/5 border-transparent text-white/50 hover:bg-white/7'
+                        }`}
+                        whileHover={{ scale: 1.02 }}
+                        whileTap={{ scale: 0.98 }}
+                        data-testid="button-account-personal"
+                      >
+                        <div className="flex items-center justify-center gap-2">
+                          <User className="w-4 h-4" />
+                          <span className="text-sm">Personal</span>
+                        </div>
+                      </motion.button>
+
+                      <motion.button
+                        type="button"
+                        onClick={() => setAccountType('organization')}
+                        className={`relative h-10 rounded-lg border transition-all duration-300 ${
+                          accountType === 'organization' 
+                            ? 'bg-white/10 border-white/30 text-white' 
+                            : 'bg-white/5 border-transparent text-white/50 hover:bg-white/7'
+                        }`}
+                        whileHover={{ scale: 1.02 }}
+                        whileTap={{ scale: 0.98 }}
+                        data-testid="button-account-organization"
+                      >
+                        <div className="flex items-center justify-center gap-2">
+                          <Building2 className="w-4 h-4" />
+                          <span className="text-sm">Organization</span>
+                        </div>
+                      </motion.button>
+                    </div>
+                  </div>
+
+                  {/* Organization Name (conditional) */}
+                  <AnimatePresence>
+                    {accountType === 'organization' && (
+                      <motion.div
+                        initial={{ opacity: 0, height: 0 }}
+                        animate={{ opacity: 1, height: 'auto' }}
+                        exit={{ opacity: 0, height: 0 }}
+                        transition={{ duration: 0.3 }}
+                        className={`relative ${focusedInput === "organizationName" ? 'z-10' : ''}`}
+                      >
+                        <div className="relative flex items-center overflow-hidden rounded-lg">
+                          <Building2 className={`absolute left-3 w-4 h-4 transition-all duration-300 ${
+                            focusedInput === "organizationName" ? 'text-white' : 'text-white/40'
+                          }`} />
+                          
+                          <Input
+                            type="text"
+                            placeholder="Organization name"
+                            value={organizationName}
+                            onChange={(e) => setOrganizationName(e.target.value)}
+                            onFocus={() => setFocusedInput("organizationName")}
+                            onBlur={() => setFocusedInput(null)}
+                            className="w-full bg-white/5 border-transparent focus:border-white/20 text-white placeholder:text-white/30 h-10 transition-all duration-300 pl-10 pr-3 focus:bg-white/10"
+                            data-testid="input-organization-name"
+                            required={accountType === 'organization'}
+                          />
+                        </div>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
 
                   {/* Email input */}
                   <motion.div 
