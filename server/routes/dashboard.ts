@@ -1,14 +1,15 @@
 import type { Express } from "express";
 import { isAuthenticated } from "../replitAuth";
+import { attachOrganizationContext, requireOrganization } from "../middleware/organization";
 import type { AppDependencies } from "../types";
 
 export function registerDashboardRoutes(app: Express, deps: AppDependencies) {
   const { storage } = deps;
 
-  app.get('/api/dashboard/portfolio', isAuthenticated, async (req: any, res) => {
+  app.get('/api/dashboard/portfolio', isAuthenticated, attachOrganizationContext, requireOrganization, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
-      const portfolioSummary = await storage.getUserPortfolioSummary(userId);
+      const organizationId = req.organizationId;
+      const portfolioSummary = await storage.getUserPortfolioSummary(organizationId);
       res.json(portfolioSummary);
     } catch (error) {
       console.error("Error fetching portfolio summary:", error);
@@ -16,14 +17,14 @@ export function registerDashboardRoutes(app: Express, deps: AppDependencies) {
     }
   });
 
-  app.get('/api/dashboard/upcoming-loans-by-month', isAuthenticated, async (req: any, res) => {
+  app.get('/api/dashboard/upcoming-loans-by-month', isAuthenticated, attachOrganizationContext, requireOrganization, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const organizationId = req.organizationId;
       const bankId = req.query.bankId as string | undefined;
       const facilityType = req.query.facilityType as string | undefined;
       
-      const allLoans = await storage.getActiveLoansByUser(userId);
-      const facilities = await storage.getUserFacilities(userId);
+      const allLoans = await storage.getActiveLoansByUser(organizationId);
+      const facilities = await storage.getUserFacilities(organizationId);
       
       let filteredLoans = allLoans.filter((loan: any) => loan.status === 'active');
       

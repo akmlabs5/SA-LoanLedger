@@ -128,7 +128,7 @@ export function registerBanksRoutes(app: Express, deps: AppDependencies) {
       const cancelledLoans = loans.filter(l => l.status === 'cancelled').length;
 
       const activeLoansList = loans.filter(l => l.status === 'active');
-      const balancePromises = activeLoansList.map(loan => storage.getLoanBalance(loan.id));
+      const balancePromises = activeLoansList.map(loan => storage.calculateLoanBalance(loan.id));
       const balances = await Promise.all(balancePromises);
 
       const totalOutstanding = balances.reduce((sum, balance) => {
@@ -163,7 +163,7 @@ export function registerBanksRoutes(app: Express, deps: AppDependencies) {
         facilities.map(async facility => {
           const facilityLoans = loans.filter(l => l.facilityId === facility.id && l.status === 'active');
           
-          const facilityBalancePromises = facilityLoans.map(loan => storage.getLoanBalance(loan.id));
+          const facilityBalancePromises = facilityLoans.map(loan => storage.calculateLoanBalance(loan.id));
           const facilityBalances = await Promise.all(facilityBalancePromises);
           
           const facilityOutstanding = facilityBalances.reduce((sum, balance) => {
