@@ -17,6 +17,40 @@ The backend is built with Express.js, employing Drizzle ORM with Neon (PostgreSQ
 ## Authentication UI
 The platform features a unified login page with a green-themed design, automatically detecting user (email) or admin (username) credentials. User authentication includes email/password login with optional 2FA OTP verification via SendGrid, while admin authentication uses username/password. The design incorporates "Morouna Loans by AKM Labs" branding in the lower right corner, a tagline, rounded inputs, and cyan gradient buttons. During signup, users can select account type (Personal or Organization) with conditional organization name field, optionally enable Two-Factor Authentication via a checkbox, with preferences saved to the database and enforced on subsequent logins.
 
+## Multi-Tenant Team Collaboration
+The platform now supports organizational team collaboration, enabling 2-5 members to work together on shared loan portfolios with complete data isolation between organizations.
+
+**Organization Types:**
+- **Personal**: Individual account with private data
+- **Organization**: Team account with shared access (owner + up to 4 members)
+
+**Team Management Features:**
+- **Invitation System**: Owners send email invitations via SendGrid with secure token-based acceptance
+- **Role-Based Access**: Owner role with exclusive permissions (invite, remove members); Member role with full portfolio access
+- **Team Settings**: Dedicated tab in user settings showing organization info, member list, invite form, and pending invitations
+- **Invitation Flow**: Token-based links with validation, expiration (7 days), and consent-respecting acceptance (no forced auto-join)
+- **Member Removal**: Owners can remove members; automatic cleanup of user's organization association
+- **Account Protection**: Prevents organization owners from deleting accounts when other members exist
+
+**Data Isolation:**
+- All loan, facility, collateral, and bank data is scoped by `organizationId`
+- SQL-level enforcement via WHERE clauses on all queries
+- Cross-tenant data access blocked by organization middleware
+- API routes validate organization context on all mutations
+- AI Agent operations respect organization boundaries
+
+**User Context:**
+- User session includes `organizationId`, `organizationName`, and `isOwner` flags
+- Frontend components conditionally render owner-only actions
+- Organization context automatically attached to all authenticated requests
+
+**Security Model:**
+- Token-based invitation system with email verification
+- Email matching enforced on invitation acceptance  
+- Organization ownership checks on all privileged operations
+- Complete data isolation prevents cross-tenant attacks
+- Facility ownership validation blocks cross-organization spoofing
+
 ## AI Intelligence System
 A dual AI chat system powered by DeepSeek API provides comprehensive support:
 
