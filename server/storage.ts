@@ -98,7 +98,7 @@ export interface IStorage {
   upsertUser(user: UpsertUser): Promise<User>;
   
   // Bank operations
-  getAllBanks(): Promise<Bank[]>;
+  getAllBanks(organizationId?: string): Promise<Bank[]>;
   createBank(bank: InsertBank): Promise<Bank>;
   
   // Bank Contact operations
@@ -312,7 +312,12 @@ export class DatabaseStorage implements IStorage {
   }
 
   // Bank operations
-  async getAllBanks(): Promise<Bank[]> {
+  async getAllBanks(organizationId?: string): Promise<Bank[]> {
+    if (organizationId) {
+      return await db.select().from(banks)
+        .where(and(eq(banks.isActive, true), eq(banks.organizationId, organizationId)))
+        .orderBy(asc(banks.name));
+    }
     return await db.select().from(banks).where(eq(banks.isActive, true)).orderBy(asc(banks.name));
   }
 
@@ -1935,8 +1940,9 @@ Reference: {loanReference}`,
   }
 
   // Bank operations
-  async getAllBanks(): Promise<Bank[]> {
-    return Array.from(this.banks.values()).filter(bank => bank.isActive);
+  async getAllBanks(organizationId?: string): Promise<Bank[]> {
+    return Array.from(this.banks.values())
+      .filter(bank => bank.isActive && (!organizationId || bank.organizationId === organizationId));
   }
 
   async createBank(bank: InsertBank): Promise<Bank> {

@@ -1,5 +1,6 @@
 import type { Express } from "express";
 import { isAuthenticated } from "../replitAuth";
+import { attachOrganizationContext, requireOrganization } from "../organizationMiddleware";
 import type { AppDependencies } from "../types";
 import {
   insertBankContactSchema,
@@ -8,9 +9,10 @@ import {
 export function registerBanksRoutes(app: Express, deps: AppDependencies) {
   const { storage } = deps;
 
-  app.get('/api/banks', isAuthenticated, async (req, res) => {
+  app.get('/api/banks', isAuthenticated, attachOrganizationContext, requireOrganization, async (req: any, res) => {
     try {
-      const banks = await storage.getAllBanks();
+      const organizationId = req.organizationId;
+      const banks = await storage.getAllBanks(organizationId);
       res.json(banks);
     } catch (error) {
       console.error("Error fetching banks:", error);
@@ -18,10 +20,11 @@ export function registerBanksRoutes(app: Express, deps: AppDependencies) {
     }
   });
 
-  app.get('/api/banks/:bankId', isAuthenticated, async (req, res) => {
+  app.get('/api/banks/:bankId', isAuthenticated, attachOrganizationContext, requireOrganization, async (req: any, res) => {
     try {
+      const organizationId = req.organizationId;
       const { bankId } = req.params;
-      const banks = await storage.getAllBanks();
+      const banks = await storage.getAllBanks(organizationId);
       const bank = banks.find(b => b.id === bankId);
       
       if (!bank) {
@@ -105,15 +108,15 @@ export function registerBanksRoutes(app: Express, deps: AppDependencies) {
     }
   });
 
-  app.get('/api/banks/:bankId/analytics', isAuthenticated, async (req: any, res) => {
+  app.get('/api/banks/:bankId/analytics', isAuthenticated, attachOrganizationContext, requireOrganization, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const organizationId = req.organizationId;
       const { bankId } = req.params;
 
-      const allFacilities = await storage.getUserFacilities(userId);
+      const allFacilities = await storage.getUserFacilities(organizationId);
       const facilities = allFacilities.filter(f => f.bankId === bankId);
 
-      const allLoans = await storage.getUserLoans(userId);
+      const allLoans = await storage.getUserLoans(organizationId);
       const loans = allLoans.filter(loan => 
         facilities.some(f => f.id === loan.facilityId)
       );
