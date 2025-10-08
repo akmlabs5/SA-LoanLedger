@@ -179,6 +179,17 @@ export default function LoanCreatePage() {
   });
 
   const onSubmit = async (data: LoanFormData) => {
+    // Show warning if loan exceeds available credit, but allow creation
+    if (creditInfo) {
+      const loanAmount = parseFloat(data.amount);
+      if (loanAmount > creditInfo.availableCredit) {
+        toast({
+          title: "Warning: Exceeding Available Credit",
+          description: `Loan amount (${loanAmount.toLocaleString()} SAR) exceeds available credit (${creditInfo.availableCredit.toLocaleString()} SAR). Proceeding with loan creation.`,
+        });
+      }
+    }
+
     // Check revolving period tracking if enabled
     if (selectedFacility?.enableRevolvingTracking && selectedFacility?.maxRevolvingPeriod) {
       try {
