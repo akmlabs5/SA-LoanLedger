@@ -1009,9 +1009,9 @@ export const insertFacilitySchema = createInsertSchema(facilities)
       .refine((val) => Number(val) >= 0, "Must be non-negative")
       .refine((val) => Number(val) <= 100, "Must be 100% or less"),
     startDate: z.string().refine((val) => !isNaN(Date.parse(val)), "Must be a valid date"),
-    expiryDate: z.string().refine((val) => !isNaN(Date.parse(val)), "Must be a valid date"),
+    expiryDate: z.string().refine((val) => !isNaN(Date.parse(val)), "Must be a valid date").optional().nullable(),
     enableRevolvingTracking: z.boolean().optional(),
-    maxRevolvingPeriod: z.number().int().positive("Maximum period must be positive").optional(),
+    maxRevolvingPeriod: z.number().int().positive("Maximum period must be positive").optional().nullable(),
   });
 
 export const insertCreditLineSchema = createInsertSchema(creditLines)
