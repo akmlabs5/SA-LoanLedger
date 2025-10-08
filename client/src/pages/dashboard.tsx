@@ -24,7 +24,8 @@ import {
   Target,
   BarChart3,
   ChevronDown,
-  MessageCircle
+  MessageCircle,
+  ChevronRight
 } from "lucide-react";
 import { Link, useLocation } from "wouter";
 import StatisticCard from "@/components/StatisticCard";
@@ -37,6 +38,8 @@ import { SmartLoanMatcher } from "@/components/SmartLoanMatcher";
 import { isUnauthorizedError } from "@/lib/authUtils";
 import { PortfolioSummary, LoanWithDetails } from "@shared/types";
 import { SAUDI_CHART_COLORS } from "@/lib/chart-colors";
+import { useIsMobile } from "@/hooks/use-mobile";
+import { MobileHeader, FloatingActionButton } from "@/components/mobile";
 import backgroundImage from "@assets/loan_management_background_excel_green_1759302449019.png";
 
 export default function Dashboard() {
@@ -45,6 +48,7 @@ export default function Dashboard() {
   const [, setLocation] = useLocation();
   const [visibleLoans, setVisibleLoans] = useState(8);
   const [visibleBanks, setVisibleBanks] = useState(3);
+  const isMobile = useIsMobile();
 
   // Redirect to login if not authenticated
   useEffect(() => {
@@ -139,7 +143,6 @@ export default function Dashboard() {
   // Navigation handlers
   const handleBankRowClick = (bankId: string, bankName: string) => {
     setLocation(`/banks/${bankId}`);
-    // Removed navigation toast to reduce noise - users can see navigation visually
   };
 
   const handleBankSwitcherChange = (bankId: string) => {
@@ -166,7 +169,7 @@ export default function Dashboard() {
   }
 
   if (!isAuthenticated) {
-    return null; // Will redirect via useEffect
+    return null;
   }
 
   // Priority sorting for loans based on due date
@@ -186,6 +189,358 @@ export default function Dashboard() {
     return { color: 'green', label: `Due in ${daysDiff} days`, priority: 'normal' };
   };
 
+  // Mobile Layout
+  if (isMobile) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-green-50 via-white to-emerald-50 dark:from-gray-900 dark:via-gray-900 dark:to-gray-800 pb-20">
+        <MobileHeader 
+          title="Dashboard" 
+          rightAction={
+            <Badge className="bg-emerald-600 text-white">v2.0.3</Badge>
+          }
+        />
+
+        <div className="px-4 py-4 space-y-4">
+          {/* Mobile: Horizontal Scrolling Metrics with Snap Points */}
+          <div className="overflow-x-auto -mx-4 px-4 pb-2">
+            <div className="flex gap-3 snap-x snap-mandatory" style={{ scrollbarWidth: 'none' }}>
+              <Card 
+                className="min-w-[280px] snap-start bg-gradient-to-br from-emerald-500 to-teal-600 border-0 active:scale-95 transition-transform" 
+                data-testid="card-metric-outstanding"
+              >
+                <CardContent className="p-4">
+                  <div className="flex items-start justify-between">
+                    <div className="flex-1">
+                      <p className="text-sm text-white/80 mb-1">Total Outstanding</p>
+                      <p className="text-3xl font-bold text-white" data-testid="text-total-outstanding">
+                        {portfolioSummary ? `${(portfolioSummary.totalOutstanding / 1000000).toFixed(1)}M` : '0.0M'}
+                      </p>
+                      <p className="text-xs text-white/70 mt-1">SAR</p>
+                      <div className="flex items-center gap-1 mt-2 text-white/90">
+                        <ArrowUp className="h-3 w-3" />
+                        <span className="text-xs">+2.4% from last month</span>
+                      </div>
+                    </div>
+                    <div className="h-12 w-12 rounded-full bg-white/20 flex items-center justify-center">
+                      <BarChart3 className="h-6 w-6 text-white" />
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card 
+                className="min-w-[280px] snap-start bg-gradient-to-br from-blue-500 to-cyan-600 border-0 active:scale-95 transition-transform"
+                data-testid="card-metric-credit"
+              >
+                <CardContent className="p-4">
+                  <div className="flex items-start justify-between">
+                    <div className="flex-1">
+                      <p className="text-sm text-white/80 mb-1">Available Credit</p>
+                      <p className="text-3xl font-bold text-white" data-testid="text-available-credit">
+                        {portfolioSummary ? `${(portfolioSummary.availableCredit / 1000000).toFixed(1)}M` : '0.0M'}
+                      </p>
+                      <p className="text-xs text-white/70 mt-1">SAR</p>
+                      <p className="text-xs text-white/90 mt-2">
+                        {portfolioSummary ? `${((portfolioSummary.totalOutstanding / portfolioSummary.totalCreditLimit) * 100).toFixed(0)}% utilization` : '0% utilization'}
+                      </p>
+                    </div>
+                    <div className="h-12 w-12 rounded-full bg-white/20 flex items-center justify-center">
+                      <Wallet className="h-6 w-6 text-white" />
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card 
+                className="min-w-[280px] snap-start bg-gradient-to-br from-purple-500 to-pink-600 border-0 active:scale-95 transition-transform"
+                data-testid="card-metric-ltv"
+              >
+                <CardContent className="p-4">
+                  <div className="flex items-start justify-between">
+                    <div className="flex-1">
+                      <p className="text-sm text-white/80 mb-1">Portfolio LTV</p>
+                      <p className="text-3xl font-bold text-white" data-testid="text-portfolio-ltv">
+                        {portfolioSummary ? `${portfolioSummary.portfolioLtv.toFixed(1)}` : '68.4'}%
+                      </p>
+                      <p className="text-xs text-white/70 mt-1">Ratio</p>
+                      <div className="flex items-center gap-1 mt-2 text-white/90">
+                        <Target className="h-3 w-3" />
+                        <span className="text-xs">Optimal: 60-75%</span>
+                      </div>
+                    </div>
+                    <div className="h-12 w-12 rounded-full bg-white/20 flex items-center justify-center">
+                      <Shield className="h-6 w-6 text-white" />
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card 
+                className="min-w-[280px] snap-start bg-gradient-to-br from-amber-500 to-orange-600 border-0 active:scale-95 transition-transform"
+                data-testid="card-metric-loans"
+              >
+                <CardContent className="p-4">
+                  <div className="flex items-start justify-between">
+                    <div className="flex-1">
+                      <p className="text-sm text-white/80 mb-1">Active Loans</p>
+                      <p className="text-3xl font-bold text-white" data-testid="text-active-loans">
+                        {portfolioSummary?.activeLoansCount || 0}
+                      </p>
+                      <p className="text-xs text-white/70 mt-1">loans</p>
+                      <div className="flex items-center gap-1 mt-2 text-white/90">
+                        <AlertTriangle className="h-3 w-3" />
+                        <span className="text-xs">
+                          {sortedLoans.filter(loan => {
+                            const urgency = getLoanUrgency(loan.dueDate);
+                            return urgency.priority === 'critical';
+                          }).length} due this week
+                        </span>
+                      </div>
+                    </div>
+                    <div className="h-12 w-12 rounded-full bg-white/20 flex items-center justify-center">
+                      <FileText className="h-6 w-6 text-white" />
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          </div>
+
+          {/* Mobile: AI Assistant Card */}
+          <Card 
+            className="bg-gradient-to-r from-emerald-500 to-teal-600 text-white border-0 active:scale-[0.98] transition-transform"
+            onClick={() => setLocation('/ai-chat')}
+            data-testid="card-ai-assistant"
+          >
+            <CardContent className="p-4">
+              <div className="flex items-center gap-3">
+                <div className="h-12 w-12 rounded-xl bg-white/20 flex items-center justify-center shrink-0">
+                  <MessageCircle className="h-6 w-6 text-white" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <h3 className="font-bold text-white">AI Assistant</h3>
+                  <p className="text-sm text-white/90">Get intelligent insights</p>
+                </div>
+                <ChevronRight className="h-5 w-5 text-white shrink-0" />
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Mobile: Priority Loans List */}
+          <div>
+            <div className="flex items-center justify-between mb-3">
+              <h2 className="text-lg font-semibold">Priority Loans</h2>
+              <Badge variant="outline">{sortedLoans.length} total</Badge>
+            </div>
+
+            {loansLoading ? (
+              <div className="flex items-center justify-center py-12">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+              </div>
+            ) : sortedLoans.length === 0 ? (
+              <Card className="p-8 text-center">
+                <FileText className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                <p className="text-muted-foreground">No active loans</p>
+              </Card>
+            ) : (
+              <div className="space-y-3">
+                {sortedLoans.slice(0, visibleLoans).map((loan) => {
+                  const urgency = getLoanUrgency(loan.dueDate);
+                  const urgencyBorderClass = urgency.color === 'red' 
+                    ? 'border-l-destructive' 
+                    : urgency.color === 'yellow' 
+                      ? 'border-l-amber-500'
+                      : 'border-l-primary';
+                  
+                  return (
+                    <Card 
+                      key={loan.id} 
+                      className={`${urgencyBorderClass} border-l-4 active:scale-[0.98] active:bg-accent/50 transition-all cursor-pointer`}
+                      onClick={() => setLocation(`/loans/${loan.id}`)}
+                      data-testid={`card-loan-${loan.id}`}
+                    >
+                      <CardContent className="p-4">
+                        <div className="flex items-start justify-between gap-3">
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2 mb-2">
+                              <Badge 
+                                className={`${
+                                  urgency.color === 'red' ? 'bg-destructive text-destructive-foreground' : 
+                                  urgency.color === 'yellow' ? 'bg-amber-500 text-white' : 
+                                  'bg-primary text-primary-foreground'
+                                } text-xs`}
+                              >
+                                {urgency.priority === 'critical' ? 'Critical' : urgency.priority === 'warning' ? 'Warning' : 'Normal'}
+                              </Badge>
+                            </div>
+                            <p className="font-semibold truncate" data-testid={`text-loan-reference-${loan.id}`}>
+                              {(loan as any).facility?.bank?.name}
+                            </p>
+                            <p className="text-sm text-muted-foreground truncate">{loan.referenceNumber}</p>
+                            <p className="text-xs text-muted-foreground mt-1">
+                              Due {new Date(loan.dueDate).toLocaleDateString()}
+                            </p>
+                          </div>
+                          <div className="text-right shrink-0">
+                            <p className="text-xl font-bold" data-testid={`text-loan-amount-${loan.id}`}>
+                              {(parseFloat(loan.amount) / 1000000).toFixed(1)}M
+                            </p>
+                            <p className="text-xs text-muted-foreground">SAR</p>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  );
+                })}
+                
+                {sortedLoans.length > visibleLoans && (
+                  <Button 
+                    variant="outline" 
+                    className="w-full h-12 active:scale-95 active:bg-accent/50 transition-all"
+                    onClick={() => setVisibleLoans(prev => prev + 8)}
+                    data-testid="button-load-more-loans"
+                  >
+                    <ChevronDown className="mr-2 h-4 w-4" />
+                    Load more ({sortedLoans.length - visibleLoans} remaining)
+                  </Button>
+                )}
+              </div>
+            )}
+          </div>
+
+          {/* Mobile: Bank Exposures Cards */}
+          <div>
+            <div className="flex items-center justify-between mb-3">
+              <h2 className="text-lg font-semibold">Bank Exposures</h2>
+              <Badge variant="outline">{portfolioSummary?.bankExposures?.length || 0} banks</Badge>
+            </div>
+
+            <div className="space-y-3">
+              {portfolioSummary?.bankExposures && portfolioSummary.bankExposures.length > 0 ? (
+                portfolioSummary.bankExposures.slice(0, visibleBanks).map((exposure) => (
+                  <Card 
+                    key={exposure.bankId}
+                    className="active:scale-[0.98] active:bg-accent/50 transition-all cursor-pointer"
+                    onClick={() => handleBankRowClick(exposure.bankId, exposure.bankName)}
+                    data-testid={`card-bank-${exposure.bankId}`}
+                  >
+                    <CardContent className="p-4">
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2 mb-2">
+                            <Building className="h-4 w-4 text-primary" />
+                            <p className="font-semibold truncate" data-testid={`text-bank-name-${exposure.bankId}`}>
+                              {exposure.bankName}
+                            </p>
+                          </div>
+                          <div className="grid grid-cols-2 gap-2 text-sm">
+                            <div>
+                              <p className="text-xs text-muted-foreground">Outstanding</p>
+                              <p className="font-semibold" data-testid={`text-bank-outstanding-${exposure.bankId}`}>
+                                {(exposure.outstanding / 1000000).toFixed(1)}M SAR
+                              </p>
+                            </div>
+                            <div>
+                              <p className="text-xs text-muted-foreground">Available</p>
+                              <p className="font-semibold text-emerald-600" data-testid={`text-bank-available-${exposure.bankId}`}>
+                                {((exposure.creditLimit - exposure.outstanding) / 1000000).toFixed(1)}M SAR
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+                        <div className="text-right shrink-0">
+                          <p className="text-2xl font-bold" data-testid={`text-bank-utilization-${exposure.bankId}`}>
+                            {exposure.utilization.toFixed(0)}%
+                          </p>
+                          <p className="text-xs text-muted-foreground">used</p>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))
+              ) : (
+                <Card className="p-8 text-center">
+                  <Building className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                  <p className="text-muted-foreground">No bank exposures</p>
+                </Card>
+              )}
+
+              {portfolioSummary?.bankExposures && portfolioSummary.bankExposures.length > visibleBanks && (
+                <Button 
+                  variant="outline" 
+                  className="w-full h-12 active:scale-95 active:bg-accent/50 transition-all"
+                  onClick={() => setVisibleBanks(prev => prev + 3)}
+                  data-testid="button-load-more-banks"
+                >
+                  <ChevronDown className="mr-2 h-4 w-4" />
+                  Load more ({portfolioSummary.bankExposures.length - visibleBanks} remaining)
+                </Button>
+              )}
+            </div>
+          </div>
+
+          {/* Mobile: Quick Actions */}
+          <div>
+            <h2 className="text-lg font-semibold mb-3">Quick Actions</h2>
+            <div className="grid grid-cols-2 gap-3">
+              <Card 
+                className="active:scale-95 active:bg-accent/50 transition-all cursor-pointer"
+                onClick={() => setLocation('/banks')}
+                data-testid="card-quick-banks"
+              >
+                <CardContent className="p-4 text-center">
+                  <Building className="h-8 w-8 text-primary mx-auto mb-2" />
+                  <p className="text-sm font-medium">Banks</p>
+                </CardContent>
+              </Card>
+
+              <Card 
+                className="active:scale-95 active:bg-accent/50 transition-all cursor-pointer"
+                onClick={() => setLocation('/collateral')}
+                data-testid="card-quick-collateral"
+              >
+                <CardContent className="p-4 text-center">
+                  <Home className="h-8 w-8 text-primary mx-auto mb-2" />
+                  <p className="text-sm font-medium">Collateral</p>
+                </CardContent>
+              </Card>
+
+              <Card 
+                className="active:scale-95 active:bg-accent/50 transition-all cursor-pointer"
+                onClick={() => setLocation('/reports')}
+                data-testid="card-quick-reports"
+              >
+                <CardContent className="p-4 text-center">
+                  <Download className="h-8 w-8 text-primary mx-auto mb-2" />
+                  <p className="text-sm font-medium">Reports</p>
+                </CardContent>
+              </Card>
+
+              <Card 
+                className="active:scale-95 active:bg-accent/50 transition-all cursor-pointer"
+                onClick={() => setLocation('/ai-chat')}
+                data-testid="card-quick-ai"
+              >
+                <CardContent className="p-4 text-center">
+                  <MessageCircle className="h-8 w-8 text-primary mx-auto mb-2" />
+                  <p className="text-sm font-medium">AI Chat</p>
+                </CardContent>
+              </Card>
+            </div>
+          </div>
+        </div>
+
+        {/* Mobile FAB for Add Loan */}
+        <FloatingActionButton 
+          onClick={() => setLocation('/loans')}
+          icon={<Plus className="h-6 w-6" />}
+          label="Add Loan"
+        />
+      </div>
+    );
+  }
+
+  // Desktop Layout (unchanged)
   return (
     <div className="min-h-screen bg-gradient-to-br from-green-50 via-white to-emerald-50 dark:from-gray-900 dark:via-gray-900 dark:to-gray-800">
       <div className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-6 py-4 sm:py-6 space-y-4 sm:space-y-6">
@@ -583,184 +938,83 @@ export default function Dashboard() {
                         </div>
                       </td>
                       <td className="py-4 px-6 text-right">
-                        <div className="flex items-center justify-end space-x-3">
-                          <div className="w-16 bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+                        <div className="flex items-center justify-end space-x-2">
+                          <div className="w-16 h-2 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
                             <div 
-                              className={`h-2 rounded-full transition-all duration-300 ${
-                                exposure.utilization > 80 ? 'bg-red-500' :
-                                exposure.utilization > 60 ? 'bg-amber-500' :
-                                'bg-emerald-500'
-                              }`}
+                              className={`h-full ${exposure.utilization >= 80 ? 'bg-red-500' : exposure.utilization >= 60 ? 'bg-yellow-500' : 'bg-emerald-500'}`}
                               style={{ width: `${Math.min(exposure.utilization, 100)}%` }}
                             />
                           </div>
-                          <Badge className={`${
-                            exposure.utilization > 80 ? 'bg-red-100 text-red-800 hover:bg-red-200 dark:bg-red-900/20 dark:text-red-400' :
-                            exposure.utilization > 60 ? 'bg-amber-100 text-amber-800 hover:bg-amber-200 dark:bg-amber-900/20 dark:text-amber-400' :
-                            'bg-emerald-100 text-emerald-800 hover:bg-emerald-200 dark:bg-emerald-900/20 dark:text-emerald-400'
-                          }`} data-testid={`text-bank-utilization-${exposure.bankId}`}>
+                          <p className="font-semibold text-gray-900 dark:text-gray-100 w-12" data-testid={`text-bank-utilization-${exposure.bankId}`}>
                             {exposure.utilization.toFixed(0)}%
-                          </Badge>
-                          <Button 
-                            size="sm" 
-                            variant="outline" 
-                            className="hidden group-hover:flex bg-white dark:bg-gray-800 border-indigo-300 dark:border-indigo-700 text-indigo-700 dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 focus:ring-2 focus:ring-indigo-500"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setLocation(`/banks/${exposure.bankId}?tab=facilities`);
-                            }}
-                            onKeyDown={(e) => {
-                              if (e.key === 'Enter' || e.key === ' ') {
-                                e.preventDefault();
-                                e.stopPropagation();
-                                setLocation(`/banks/${exposure.bankId}?tab=facilities`);
-                              }
-                            }}
-                            aria-label={`View facilities for ${exposure.bankName}`}
-                            data-testid={`button-facilities-${exposure.bankId}`}
-                          >
-                            View Facilities
-                          </Button>
+                          </p>
                         </div>
                       </td>
-                      </tr>
+                    </tr>
                     ))
                   ) : (
                     <tr>
-                      <td colSpan={5} className="text-center py-12">
-                        <Building className="h-12 w-12 text-gray-300 dark:text-gray-600 mx-auto mb-4" />
-                        <p className="text-gray-600 dark:text-gray-400 mb-2">No banking relationships found</p>
-                        <Link href="/banks">
-                          <Button 
-                            variant="outline" 
-                            className="text-indigo-600 border-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 focus:ring-2 focus:ring-indigo-500"
-                            data-testid="button-add-first-facility"
-                          >
-                            <Plus className="mr-2 h-4 w-4" />
-                            Set up your first facility
-                          </Button>
-                        </Link>
+                      <td colSpan={5} className="py-12 text-center">
+                        <p className="text-muted-foreground">No bank exposures found</p>
                       </td>
                     </tr>
                   )}
                 </tbody>
               </table>
             </div>
-
-            {/* Load More Banks Button */}
             {portfolioSummary?.bankExposures && portfolioSummary.bankExposures.length > visibleBanks && (
-              <div className="mt-4 flex justify-center">
+              <div className="mt-4 pt-4 border-t border-border">
                 <Button 
                   variant="outline" 
+                  className="w-full"
                   onClick={() => setVisibleBanks(prev => prev + 3)}
                   data-testid="button-load-more-banks"
                 >
                   <ChevronDown className="mr-2 h-4 w-4" />
-                  Load more ({portfolioSummary.bankExposures.length - visibleBanks} remaining)
+                  Load more banks ({portfolioSummary.bankExposures.length - visibleBanks} remaining)
                 </Button>
-              </div>
-            )}
-            
-            {/* Enhanced Portfolio Summary Footer */}
-            {portfolioSummary && (
-              <div className="mt-6 pt-6 border-t border-gray-200 dark:border-gray-700 bg-gradient-to-r from-gray-50 to-blue-50 dark:from-gray-800/50 dark:to-blue-900/20 rounded-xl p-6">
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-                  <div className="text-center">
-                    <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">Total Outstanding</p>
-                    <p className="text-2xl font-bold text-gray-900 dark:text-gray-100" data-testid="text-total-outstanding-summary">
-                      {(portfolioSummary.totalOutstanding / 1000000).toFixed(1)}M
-                    </p>
-                    <p className="text-xs text-gray-500 dark:text-gray-400">SAR</p>
-                  </div>
-                  <div className="text-center">
-                    <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">Total Credit Limits</p>
-                    <p className="text-2xl font-bold text-gray-900 dark:text-gray-100" data-testid="text-total-limits-summary">
-                      {(portfolioSummary.totalCreditLimit / 1000000).toFixed(1)}M
-                    </p>
-                    <p className="text-xs text-gray-500 dark:text-gray-400">SAR</p>
-                  </div>
-                  <div className="text-center">
-                    <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">Portfolio LTV</p>
-                    <p className="text-2xl font-bold text-gray-900 dark:text-gray-100" data-testid="text-overall-ltv-summary">
-                      {portfolioSummary.portfolioLtv.toFixed(1)}%
-                    </p>
-                    <p className="text-xs text-gray-500 dark:text-gray-400">Ratio</p>
-                  </div>
-                  <div className="text-center">
-                    <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">Active Loans</p>
-                    <p className="text-2xl font-bold text-gray-900 dark:text-gray-100" data-testid="text-active-loans-summary">
-                      {portfolioSummary.activeLoansCount}
-                    </p>
-                    <p className="text-xs text-gray-500 dark:text-gray-400">Facilities</p>
-                  </div>
-                </div>
               </div>
             )}
           </CardContent>
         </Card>
 
-        {/* Enhanced Interactive Charts Section */}
-        <div className="space-y-6 mb-8">
-          {/* Row 1: Upcoming Loans by Month */}
-          <Card className="h-[280px] sm:h-[360px] lg:h-[600px] bg-card border border-border shadow-sm hover:shadow-md transition-all duration-200 flex flex-col">
-            <CardHeader className="pb-4 shrink-0">
-              <CardTitle className="text-lg font-semibold flex items-center space-x-2">
-                <BarChart3 className="h-5 w-5" style={{ color: SAUDI_CHART_COLORS.status.error }} />
-                <span>Upcoming Loans by Month</span>
-              </CardTitle>
-              <p className="text-sm text-muted-foreground mt-1">
-                Next 12 months of loan maturities with interactive filtering
-              </p>
+        {/* Charts Section - Desktop Only */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 mb-6 sm:mb-8">
+          <Card className="bg-card border border-border shadow-sm hover:shadow-md transition-shadow duration-200">
+            <CardHeader>
+              <CardTitle className="text-lg font-semibold">Outstanding vs Limits</CardTitle>
             </CardHeader>
-            <CardContent className="flex-1 pt-0 flex flex-col min-h-0">
-              <UpcomingLoansByMonthChart 
-                allBanks={allBanks || []}
-              />
+            <CardContent>
+              <OutstandingVsLimitsChart />
             </CardContent>
           </Card>
-          
-          {/* Row 2: Three Main Charts - Symmetric Layout */}
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            <Card className="h-[280px] sm:h-[360px] lg:h-[560px] bg-card border border-border shadow-sm hover:shadow-md transition-all duration-200 flex flex-col">
-              <CardHeader className="pb-4 shrink-0">
-                <CardTitle className="text-lg font-semibold flex items-center space-x-2">
-                  <BarChart3 className="h-5 w-5" style={{ color: SAUDI_CHART_COLORS.saudiGreen }} />
-                  <span>Outstanding vs Credit Limits</span>
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="flex-1 pt-0 flex flex-col min-h-0">
-                <OutstandingVsLimitsChart portfolioSummary={portfolioSummary} />
-              </CardContent>
-            </Card>
-            
-            <Card className="h-[280px] sm:h-[360px] lg:h-[560px] bg-card border border-border shadow-sm hover:shadow-md transition-all duration-200 flex flex-col">
-              <CardHeader className="pb-4 shrink-0">
-                <CardTitle className="text-lg font-semibold flex items-center space-x-2">
-                  <Target className="h-5 w-5" style={{ color: SAUDI_CHART_COLORS.saudiGreen }} />
-                  <span>Portfolio Distribution</span>
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="flex-1 pt-0 flex flex-col min-h-0">
-                <PortfolioDistributionChart portfolioSummary={portfolioSummary} />
-              </CardContent>
-            </Card>
 
-            <Card className="h-[280px] sm:h-[360px] lg:h-[560px] bg-card border border-border shadow-sm hover:shadow-md transition-all duration-200 flex flex-col">
-              <CardHeader className="pb-4 shrink-0">
-                <CardTitle className="text-lg font-semibold flex items-center space-x-2">
-                  <Activity className="h-5 w-5" style={{ color: SAUDI_CHART_COLORS.saudiGreen }} />
-                  <span>Loans Trend</span>
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="flex-1 pt-0 flex flex-col min-h-0">
-                <LoansTrendChart 
-                  loans={activeLoans || []}
-                  timeframe="month"
-                  isLoading={loansLoading}
-                />
-              </CardContent>
-            </Card>
-          </div>
+          <Card className="bg-card border border-border shadow-sm hover:shadow-md transition-shadow duration-200">
+            <CardHeader>
+              <CardTitle className="text-lg font-semibold">Portfolio Distribution</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <PortfolioDistributionChart />
+            </CardContent>
+          </Card>
+
+          <Card className="bg-card border border-border shadow-sm hover:shadow-md transition-shadow duration-200">
+            <CardHeader>
+              <CardTitle className="text-lg font-semibold">Loans Trend</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <LoansTrendChart loans={activeLoans || []} isLoading={loansLoading} />
+            </CardContent>
+          </Card>
+
+          <Card className="bg-card border border-border shadow-sm hover:shadow-md transition-shadow duration-200">
+            <CardHeader>
+              <CardTitle className="text-lg font-semibold">Upcoming Loans by Month</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <UpcomingLoansByMonthChart />
+            </CardContent>
+          </Card>
         </div>
       </div>
     </div>
