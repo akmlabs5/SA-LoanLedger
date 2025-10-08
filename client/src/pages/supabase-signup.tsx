@@ -9,8 +9,11 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/lib/supabase";
 import { useLocation } from "wouter";
-import { Lock, Mail, User, CheckCircle2 } from "lucide-react";
-import morounaLogo from "@assets/with_padding (1)_1759754533676.png";
+import { Lock, Mail, User, CheckCircle2, Building2, Shield } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Label } from "@/components/ui/label";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import morounaLogo from "@assets/with_padding_1759917358345.png";
 
 const signupSchema = z.object({
   email: z.string().email("Please enter a valid email address"),
@@ -18,9 +21,20 @@ const signupSchema = z.object({
   confirmPassword: z.string(),
   firstName: z.string().min(1, "First name is required"),
   lastName: z.string().min(1, "Last name is required"),
+  enable2FA: z.boolean().default(false),
+  accountType: z.enum(['personal', 'organization']).default('personal'),
+  organizationName: z.string().optional(),
 }).refine((data) => data.password === data.confirmPassword, {
   message: "Passwords don't match",
   path: ["confirmPassword"],
+}).refine((data) => {
+  if (data.accountType === 'organization' && !data.organizationName?.trim()) {
+    return false;
+  }
+  return true;
+}, {
+  message: "Organization name is required",
+  path: ["organizationName"],
 });
 
 type SignupForm = z.infer<typeof signupSchema>;
@@ -39,6 +53,9 @@ export default function SupabaseSignupPage() {
       confirmPassword: "",
       firstName: "",
       lastName: "",
+      enable2FA: false,
+      accountType: 'personal',
+      organizationName: "",
     },
   });
 
@@ -53,6 +70,9 @@ export default function SupabaseSignupPage() {
           password: values.password,
           firstName: values.firstName,
           lastName: values.lastName,
+          enable2FA: values.enable2FA,
+          accountType: values.accountType,
+          organizationName: values.organizationName,
         }),
       });
 
@@ -142,7 +162,7 @@ export default function SupabaseSignupPage() {
                         <div className="relative">
                           <User className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-white/60" />
                           <Input 
-                            placeholder="Abdullah" 
+                            placeholder="First name" 
                             className="pl-11 h-12 rounded-xl bg-white/20 border-white/30 text-white placeholder:text-white/50 focus:border-white/50 focus:ring-white/30 focus:bg-white/25" 
                             {...field} 
                             data-testid="input-first-name"
@@ -164,7 +184,7 @@ export default function SupabaseSignupPage() {
                         <div className="relative">
                           <User className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-white/60" />
                           <Input 
-                            placeholder="Almulhim" 
+                            placeholder="Last name" 
                             className="pl-11 h-12 rounded-xl bg-white/20 border-white/30 text-white placeholder:text-white/50 focus:border-white/50 focus:ring-white/30 focus:bg-white/25" 
                             {...field} 
                             data-testid="input-last-name"
@@ -188,7 +208,7 @@ export default function SupabaseSignupPage() {
                         <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-white/60" />
                         <Input 
                           type="email" 
-                          placeholder="abdullah@jabalalkhairan.com" 
+                          placeholder="name@example.com" 
                           className="pl-11 h-12 rounded-xl bg-white/20 border-white/30 text-white placeholder:text-white/50 focus:border-white/50 focus:ring-white/30 focus:bg-white/25" 
                           {...field} 
                           data-testid="input-email"
@@ -242,6 +262,89 @@ export default function SupabaseSignupPage() {
                       </div>
                     </FormControl>
                     <FormMessage className="text-white/90" />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="accountType"
+                render={({ field }) => (
+                  <FormItem className="space-y-3">
+                    <FormLabel className="text-white font-medium">Account Type</FormLabel>
+                    <FormControl>
+                      <RadioGroup
+                        onValueChange={field.onChange}
+                        defaultValue={field.value}
+                        className="flex flex-col space-y-1"
+                      >
+                        <div className="flex items-center space-x-2 p-3 rounded-lg hover:bg-white/10 transition-colors">
+                          <RadioGroupItem value="personal" id="personal" className="border-white/30 text-green-500" />
+                          <Label htmlFor="personal" className="text-white font-normal cursor-pointer flex items-center gap-2">
+                            <User className="w-4 h-4" />
+                            Personal Account
+                          </Label>
+                        </div>
+                        <div className="flex items-center space-x-2 p-3 rounded-lg hover:bg-white/10 transition-colors">
+                          <RadioGroupItem value="organization" id="organization" className="border-white/30 text-green-500" />
+                          <Label htmlFor="organization" className="text-white font-normal cursor-pointer flex items-center gap-2">
+                            <Building2 className="w-4 h-4" />
+                            Organization Account
+                          </Label>
+                        </div>
+                      </RadioGroup>
+                    </FormControl>
+                    <FormMessage className="text-white/90" />
+                  </FormItem>
+                )}
+              />
+
+              {form.watch('accountType') === 'organization' && (
+                <FormField
+                  control={form.control}
+                  name="organizationName"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="text-white font-medium">Organization Name</FormLabel>
+                      <FormControl>
+                        <div className="relative">
+                          <Building2 className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-white/60" />
+                          <Input 
+                            placeholder="Your organization name" 
+                            className="pl-11 h-12 rounded-xl bg-white/20 border-white/30 text-white placeholder:text-white/50 focus:border-white/50 focus:ring-white/30 focus:bg-white/25" 
+                            {...field} 
+                            data-testid="input-organization-name"
+                          />
+                        </div>
+                      </FormControl>
+                      <FormMessage className="text-white/90" />
+                    </FormItem>
+                  )}
+                />
+              )}
+
+              <FormField
+                control={form.control}
+                name="enable2FA"
+                render={({ field }) => (
+                  <FormItem className="flex flex-row items-center space-x-3 space-y-0 rounded-lg border border-white/20 p-4 bg-white/5">
+                    <FormControl>
+                      <Checkbox
+                        checked={field.value}
+                        onCheckedChange={field.onChange}
+                        className="border-white/30 data-[state=checked]:bg-green-600 data-[state=checked]:border-green-600"
+                        data-testid="checkbox-enable-2fa"
+                      />
+                    </FormControl>
+                    <div className="space-y-1 leading-none">
+                      <FormLabel className="text-white font-medium cursor-pointer flex items-center gap-2">
+                        <Shield className="w-4 h-4" />
+                        Enable Two-Factor Authentication (2FA)
+                      </FormLabel>
+                      <p className="text-sm text-white/70">
+                        Add an extra layer of security to your account
+                      </p>
+                    </div>
                   </FormItem>
                 )}
               />

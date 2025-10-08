@@ -1,8 +1,10 @@
 import { useState } from 'react';
 import { Link } from 'wouter';
 import { motion, AnimatePresence, useMotionValue, useTransform } from 'framer-motion';
-import { Mail, Lock, Eye, EyeClosed, ArrowRight, University, User, Building2 } from 'lucide-react';
-import { cn } from "@/lib/utils"
+import { Mail, Lock, Eye, EyeClosed, ArrowRight, User, Building2 } from 'lucide-react';
+import { SiReplit } from 'react-icons/si';
+import { cn } from "@/lib/utils";
+import morounaLogo from "@assets/with_padding_1759917358345.png";
 
 function Input({ className, type, ...props }: React.ComponentProps<"input">) {
   return (
@@ -316,12 +318,9 @@ export function SignUpCard({ onSubmit, onReplitAuth, isLoading: externalLoading 
                   initial={{ scale: 0.5, opacity: 0 }}
                   animate={{ scale: 1, opacity: 1 }}
                   transition={{ type: "spring", duration: 0.8 }}
-                  className="mx-auto w-10 h-10 rounded-full border border-white/10 flex items-center justify-center relative overflow-hidden bg-gradient-to-br from-blue-600 to-green-600"
+                  className="mx-auto mb-2"
                 >
-                  <University className="text-lg text-white" />
-                  
-                  {/* Inner lighting effect */}
-                  <div className="absolute inset-0 bg-gradient-to-br from-white/10 to-transparent opacity-50" />
+                  <img src={morounaLogo} alt="Morouna Loans" className="h-20 w-auto object-contain" />
                 </motion.div>
 
                 <motion.h1
@@ -733,7 +732,7 @@ export function SignUpCard({ onSubmit, onReplitAuth, isLoading: externalLoading 
                   <div className="absolute inset-0 bg-green-500/10 rounded-lg blur opacity-0 group-hover/replit:opacity-70 transition-opacity duration-300" />
                   
                   <div className="relative overflow-hidden bg-green-600/20 text-white font-medium h-10 rounded-lg border border-green-500/30 hover:border-green-400/50 transition-all duration-300 flex items-center justify-center gap-2">
-                    <University className="w-4 h-4 text-green-400" />
+                    <SiReplit className="w-4 h-4 text-green-400" />
                     
                     <span className="text-white/90 group-hover/replit:text-white transition-colors text-sm">
                       Sign up with Replit Auth

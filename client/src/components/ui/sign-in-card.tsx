@@ -4,7 +4,7 @@ import { motion, AnimatePresence, useMotionValue, useTransform } from 'framer-mo
 import { Mail, Lock, Eye, EyeClosed, ArrowRight } from 'lucide-react';
 import { SiReplit } from 'react-icons/si';
 import { cn } from "@/lib/utils";
-import morounaLogo from "@assets/noBgWhite_1759916796790.png";
+import morounaLogo from "@assets/with_padding_1759917358345.png";
 
 function Input({ className, type, ...props }: React.ComponentProps<"input">) {
   return (
