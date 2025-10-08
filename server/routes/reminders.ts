@@ -14,14 +14,15 @@ export function registerRemindersRoutes(app: Express, deps: AppDependencies) {
   const { storage } = deps;
 
   // Loan Reminder routes
-  app.get('/api/loans/:loanId/reminders', isAuthenticated, async (req: any, res) => {
+  app.get('/api/loans/:loanId/reminders', isAuthenticated, attachOrganizationContext, requireOrganization, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
+      const organizationId = req.organizationId;
       const { loanId } = req.params;
       
-      // Verify user owns the loan
+      // Verify loan belongs to user's organization
       const loan = await storage.getLoanById(loanId);
-      if (!loan || loan.userId !== userId) {
+      if (!loan || loan.organizationId !== organizationId) {
         return res.status(404).json({ message: "Loan not found" });
       }
       
@@ -33,14 +34,15 @@ export function registerRemindersRoutes(app: Express, deps: AppDependencies) {
     }
   });
 
-  app.post('/api/loans/:loanId/reminders', isAuthenticated, async (req: any, res) => {
+  app.post('/api/loans/:loanId/reminders', isAuthenticated, attachOrganizationContext, requireOrganization, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
+      const organizationId = req.organizationId;
       const { loanId } = req.params;
       
-      // Verify user owns the loan
+      // Verify loan belongs to user's organization
       const loan = await storage.getLoanById(loanId);
-      if (!loan || loan.userId !== userId) {
+      if (!loan || loan.organizationId !== organizationId) {
         return res.status(404).json({ message: "Loan not found" });
       }
       
@@ -205,9 +207,10 @@ export function registerRemindersRoutes(app: Express, deps: AppDependencies) {
   });
 
   // Calendar invite endpoints
-  app.get('/api/reminders/:reminderId/calendar', isAuthenticated, async (req: any, res) => {
+  app.get('/api/reminders/:reminderId/calendar', isAuthenticated, attachOrganizationContext, requireOrganization, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
+      const organizationId = req.organizationId;
       const { reminderId } = req.params;
       
       // Verify the reminder exists and user owns it
@@ -218,9 +221,9 @@ export function registerRemindersRoutes(app: Express, deps: AppDependencies) {
         return res.status(404).json({ message: "Reminder not found" });
       }
 
-      // Fetch the loan data separately
+      // Fetch the loan data separately and verify it belongs to organization
       const loan = await storage.getLoanById(reminder.loanId);
-      if (!loan || loan.userId !== userId) {
+      if (!loan || loan.organizationId !== organizationId) {
         return res.status(404).json({ message: "Loan not found" });
       }
 
@@ -243,14 +246,15 @@ export function registerRemindersRoutes(app: Express, deps: AppDependencies) {
     }
   });
 
-  app.get('/api/loans/:loanId/reminders/calendar', isAuthenticated, async (req: any, res) => {
+  app.get('/api/loans/:loanId/reminders/calendar', isAuthenticated, attachOrganizationContext, requireOrganization, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
+      const organizationId = req.organizationId;
       const { loanId } = req.params;
       
-      // Verify loan ownership  
+      // Verify loan belongs to user's organization
       const loan = await storage.getLoanById(loanId);
-      if (!loan || loan.userId !== userId) {
+      if (!loan || loan.organizationId !== organizationId) {
         return res.status(404).json({ message: "Loan not found" });
       }
 

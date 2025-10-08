@@ -1,6 +1,7 @@
 import type { Express } from "express";
 import type { AppDependencies } from "../types";
 import { isAuthenticated } from "../replitAuth";
+import { attachOrganizationContext, requireOrganization } from "../organizationMiddleware";
 import { NLQProcessor } from "../nlqProcessor";
 import { DailyAlertsService } from "../dailyAlerts";
 import { generateAIInsights } from "../aiInsights";
@@ -65,9 +66,10 @@ export function registerAiRoutes(app: Express, deps: AppDependencies) {
   });
 
   // What-If Scenario Analysis
-  app.post('/api/ai/what-if-analysis', isAuthenticated, async (req: any, res) => {
+  app.post('/api/ai/what-if-analysis', isAuthenticated, attachOrganizationContext, requireOrganization, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
+      const organizationId = req.organizationId;
       const { loanId, scenarios } = req.body;
       
       if (!loanId) {
@@ -91,9 +93,9 @@ export function registerAiRoutes(app: Express, deps: AppDependencies) {
         }
       }
       
-      // Get the loan
+      // Get the loan and verify it belongs to user's organization
       const loan = await storage.getLoanById(loanId);
-      if (!loan || loan.userId !== userId) {
+      if (!loan || loan.organizationId !== organizationId) {
         return res.status(404).json({ message: "Loan not found" });
       }
       

@@ -183,9 +183,10 @@ export function registerLoansRoutes(app: Express, deps: AppDependencies) {
   app.get('/api/loans/:id', isAuthenticated, attachOrganizationContext, requireOrganization, async (req: any, res) => {
     try {
       const loanId = req.params.id;
+      const organizationId = req.organizationId;
       const loan = await storage.getLoanById(loanId);
       
-      if (!loan) {
+      if (!loan || loan.organizationId !== organizationId) {
         return res.status(404).json({ message: "Loan not found" });
       }
       
