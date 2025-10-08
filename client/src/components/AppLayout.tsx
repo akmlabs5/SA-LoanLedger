@@ -492,8 +492,8 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
       {/* Mobile Bottom Navigation */}
       <MobileBottomNav />
       
-      {/* Floating AI Agent Chat */}
-      <FloatingAgentChat />
+      {/* Floating AI Agent Chat - Desktop only */}
+      {!isMobile && <FloatingAgentChat />}
     </div>
   );
 }
