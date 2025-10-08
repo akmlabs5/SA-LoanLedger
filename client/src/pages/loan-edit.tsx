@@ -136,7 +136,7 @@ export default function LoanEditPage() {
           <p className="text-gray-600 dark:text-gray-400 mb-4">The loan you're trying to edit could not be found.</p>
           <Button 
             onClick={() => setLocation('/loans')}
-            className="bg-indigo-600 hover:bg-indigo-700 text-white"
+            className="bg-indigo-600 lg:hover:bg-indigo-700 text-white"
           >
             <ArrowLeft className="h-4 w-4 mr-2" />
             Back to Loans
@@ -395,7 +395,7 @@ export default function LoanEditPage() {
                       <Button 
                         type="submit" 
                         disabled={updateLoanMutation.isPending}
-                        className="h-12 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700"
+                        className="h-12 bg-gradient-to-r from-blue-600 to-indigo-600 lg:hover:from-blue-700 lg:hover:to-indigo-700"
                         data-testid="button-save-loan"
                       >
                         {updateLoanMutation.isPending ? (

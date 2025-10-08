@@ -206,7 +206,7 @@ export default function CollateralCreatePage() {
                 size="sm"
                 onClick={() => setLocation("/collateral")}
                 data-testid="button-back-to-collateral"
-                className="hover:bg-gray-100 dark:hover:bg-gray-700"
+                className="lg:hover:bg-gray-100 dark:hover:bg-gray-700"
               >
                 <ArrowLeft className="h-4 w-4 mr-2" />
                 Back to Collateral
@@ -252,7 +252,7 @@ export default function CollateralCreatePage() {
                 </div>
                 <div className="flex flex-col sm:flex-row gap-3 justify-center">
                   <Link href="/banks">
-                    <Button className="bg-primary hover:bg-primary/90 text-primary-foreground" data-testid="button-create-facility">
+                    <Button className="bg-primary lg:hover:bg-primary/90 text-primary-foreground" data-testid="button-create-facility">
                       <Building2 className="mr-2 h-4 w-4" />
                       Go to Banks & Facilities
                     </Button>
@@ -653,7 +653,7 @@ export default function CollateralCreatePage() {
                         type="submit"
                         disabled={createCollateralMutation.isPending}
                         data-testid="button-create-asset"
-                        className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700"
+                        className="bg-gradient-to-r from-purple-600 to-pink-600 lg:hover:from-purple-700 lg:hover:to-pink-700"
                       >
                         {createCollateralMutation.isPending ? "Creating..." : "Create Asset"}
                       </Button>

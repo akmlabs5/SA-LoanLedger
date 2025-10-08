@@ -154,7 +154,7 @@ export function SignUpCard({ onSubmit, onReplitAuth, isLoading: externalLoading 
           <div className="relative group">
             {/* Card glow effect */}
             <motion.div 
-              className="absolute -inset-[1px] rounded-2xl opacity-0 group-hover:opacity-70 transition-opacity duration-700"
+              className="absolute -inset-[1px] rounded-2xl opacity-0 lg:group-hover:opacity-70 transition-opacity duration-700"
               animate={{
                 boxShadow: [
                   "0 0 10px 2px rgba(255,255,255,0.03)",
@@ -300,7 +300,7 @@ export function SignUpCard({ onSubmit, onReplitAuth, isLoading: externalLoading 
             </div>
 
             {/* Card border glow */}
-            <div className="absolute -inset-[0.5px] rounded-2xl bg-gradient-to-r from-white/3 via-white/7 to-white/3 opacity-0 group-hover:opacity-70 transition-opacity duration-500" />
+            <div className="absolute -inset-[0.5px] rounded-2xl bg-gradient-to-r from-white/3 via-white/7 to-white/3 opacity-0 lg:group-hover:opacity-70 transition-opacity duration-500" />
             
             {/* Glass card background */}
             <div className="relative bg-black/40 backdrop-blur-xl rounded-2xl p-6 border border-white/[0.05] shadow-2xl overflow-hidden">
@@ -417,7 +417,7 @@ export function SignUpCard({ onSubmit, onReplitAuth, isLoading: externalLoading 
                         className={`relative h-10 rounded-lg border transition-all duration-300 ${
                           accountType === 'personal' 
                             ? 'bg-white/10 border-white/30 text-white' 
-                            : 'bg-white/5 border-transparent text-white/50 hover:bg-white/7'
+                            : 'bg-white/5 border-transparent text-white/50 lg:hover:bg-white/7'
                         }`}
                         whileHover={{ scale: 1.02 }}
                         whileTap={{ scale: 0.98 }}
@@ -435,7 +435,7 @@ export function SignUpCard({ onSubmit, onReplitAuth, isLoading: externalLoading 
                         className={`relative h-10 rounded-lg border transition-all duration-300 ${
                           accountType === 'organization' 
                             ? 'bg-white/10 border-white/30 text-white' 
-                            : 'bg-white/5 border-transparent text-white/50 hover:bg-white/7'
+                            : 'bg-white/5 border-transparent text-white/50 lg:hover:bg-white/7'
                         }`}
                         whileHover={{ scale: 1.02 }}
                         whileTap={{ scale: 0.98 }}
@@ -537,9 +537,9 @@ export function SignUpCard({ onSubmit, onReplitAuth, isLoading: externalLoading 
                         data-testid="button-toggle-password"
                       >
                         {showPassword ? (
-                          <Eye className="w-4 h-4 text-white/40 hover:text-white transition-colors duration-300" />
+                          <Eye className="w-4 h-4 text-white/40 lg:hover:text-white transition-colors duration-300" />
                         ) : (
-                          <EyeClosed className="w-4 h-4 text-white/40 hover:text-white transition-colors duration-300" />
+                          <EyeClosed className="w-4 h-4 text-white/40 lg:hover:text-white transition-colors duration-300" />
                         )}
                       </div>
                     </div>
@@ -607,13 +607,13 @@ export function SignUpCard({ onSubmit, onReplitAuth, isLoading: externalLoading 
                       </motion.div>
                     )}
                   </div>
-                  <label htmlFor="agree-terms" className="text-xs text-white/60 hover:text-white/80 transition-colors duration-200 leading-relaxed">
+                  <label htmlFor="agree-terms" className="text-xs text-white/60 lg:hover:text-white/80 transition-colors duration-200 leading-relaxed">
                     I agree to the{' '}
-                    <Link href="/terms" className="text-white underline hover:text-white/80">
+                    <Link href="/terms" className="text-white underline lg:hover:text-white/80">
                       Terms of Service
                     </Link>
                     {' '}and{' '}
-                    <Link href="/privacy" className="text-white underline hover:text-white/80">
+                    <Link href="/privacy" className="text-white underline lg:hover:text-white/80">
                       Privacy Policy
                     </Link>
                   </label>
@@ -643,7 +643,7 @@ export function SignUpCard({ onSubmit, onReplitAuth, isLoading: externalLoading 
                       </motion.div>
                     )}
                   </div>
-                  <label htmlFor="enable-2fa" className="text-xs text-white/60 hover:text-white/80 transition-colors duration-200 leading-relaxed">
+                  <label htmlFor="enable-2fa" className="text-xs text-white/60 lg:hover:text-white/80 transition-colors duration-200 leading-relaxed">
                     Enable Two-Factor Authentication (2FA) for enhanced security
                   </label>
                 </div>
@@ -731,7 +731,7 @@ export function SignUpCard({ onSubmit, onReplitAuth, isLoading: externalLoading 
                 >
                   <div className="absolute inset-0 bg-green-500/10 rounded-lg blur opacity-0 group-hover/replit:opacity-70 transition-opacity duration-300" />
                   
-                  <div className="relative overflow-hidden bg-green-600/20 text-white font-medium h-10 rounded-lg border border-green-500/30 hover:border-green-400/50 transition-all duration-300 flex items-center justify-center gap-2">
+                  <div className="relative overflow-hidden bg-green-600/20 text-white font-medium h-10 rounded-lg border border-green-500/30 lg:hover:border-green-400/50 transition-all duration-300 flex items-center justify-center gap-2">
                     <SiReplit className="w-4 h-4 text-green-400" />
                     
                     <span className="text-white/90 group-hover/replit:text-white transition-colors text-sm">

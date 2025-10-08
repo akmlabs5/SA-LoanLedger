@@ -160,7 +160,7 @@ export default function AdminUserActivitiesPage() {
                   {filteredActivities.map((activity) => (
                     <div
                       key={activity.id}
-                      className="border border-border rounded-lg p-4 hover:bg-muted/50 transition-colors"
+                      className="border border-border rounded-lg p-4 lg:hover:bg-muted/50 transition-colors"
                       data-testid={`activity-${activity.id}`}
                     >
                       <div className="flex items-start justify-between">

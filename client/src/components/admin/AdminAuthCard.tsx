@@ -123,7 +123,7 @@ export function AdminAuthCard({ onSubmit, isLoading = false, error }: AdminAuthC
           <div className="relative group">
             {/* Card glow effect */}
             <motion.div 
-              className="absolute -inset-[1px] rounded-2xl opacity-0 group-hover:opacity-70 transition-opacity duration-700"
+              className="absolute -inset-[1px] rounded-2xl opacity-0 lg:group-hover:opacity-70 transition-opacity duration-700"
               animate={{
                 boxShadow: [
                   "0 0 10px 2px rgba(255,255,255,0.03)",
@@ -269,7 +269,7 @@ export function AdminAuthCard({ onSubmit, isLoading = false, error }: AdminAuthC
             </div>
 
             {/* Card border glow */}
-            <div className="absolute -inset-[0.5px] rounded-2xl bg-gradient-to-r from-red-300/20 via-orange-300/30 to-red-300/20 opacity-0 group-hover:opacity-70 transition-opacity duration-500" />
+            <div className="absolute -inset-[0.5px] rounded-2xl bg-gradient-to-r from-red-300/20 via-orange-300/30 to-red-300/20 opacity-0 lg:group-hover:opacity-70 transition-opacity duration-500" />
             
             {/* Glass card background */}
             <div className="relative bg-black/40 backdrop-blur-xl rounded-2xl p-6 border border-white/[0.05] shadow-2xl overflow-hidden">
@@ -387,9 +387,9 @@ export function AdminAuthCard({ onSubmit, isLoading = false, error }: AdminAuthC
                         data-testid="button-toggle-admin-password"
                       >
                         {showPassword ? (
-                          <Eye className="w-4 h-4 text-white/40 hover:text-white transition-colors duration-300" />
+                          <Eye className="w-4 h-4 text-white/40 lg:hover:text-white transition-colors duration-300" />
                         ) : (
-                          <EyeClosed className="w-4 h-4 text-white/40 hover:text-white transition-colors duration-300" />
+                          <EyeClosed className="w-4 h-4 text-white/40 lg:hover:text-white transition-colors duration-300" />
                         )}
                       </div>
                     </div>

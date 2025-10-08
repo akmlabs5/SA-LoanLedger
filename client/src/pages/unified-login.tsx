@@ -208,7 +208,7 @@ export default function UnifiedLoginPage() {
 
             <Button 
               onClick={verifyOTP} 
-              className="w-full bg-green-700 hover:bg-green-800 text-white" 
+              className="w-full bg-green-700 lg:hover:bg-green-800 text-white" 
               disabled={isVerifying || otpValue.length !== 6}
               data-testid="button-verify-otp"
             >
@@ -218,7 +218,7 @@ export default function UnifiedLoginPage() {
             <div className="text-center">
               <Button
                 variant="link"
-                className="text-white/90 hover:text-white"
+                className="text-white/90 lg:hover:text-white"
                 onClick={() => {
                   setRequires2FA(false);
                   setOtpValue("");
@@ -304,7 +304,7 @@ export default function UnifiedLoginPage() {
 
               <Button 
                 type="submit" 
-                className="w-full h-12 text-lg font-semibold bg-green-700 hover:bg-green-800 rounded-xl shadow-lg hover:shadow-xl transition-all duration-200 text-white" 
+                className="w-full h-12 text-lg font-semibold bg-green-700 lg:hover:bg-green-800 rounded-xl shadow-lg lg:hover:shadow-xl transition-all duration-200 text-white" 
                 disabled={isLoading}
                 data-testid="button-signin"
               >
@@ -315,7 +315,7 @@ export default function UnifiedLoginPage() {
                 Don't have an account?{" "}
                 <Button
                   variant="link"
-                  className="p-0 h-auto font-semibold text-white hover:text-white/90"
+                  className="p-0 h-auto font-semibold text-white lg:hover:text-white/90"
                   onClick={() => setLocation('/supabase-signup')}
                   data-testid="link-signup"
                 >

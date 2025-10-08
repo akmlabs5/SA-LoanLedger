@@ -416,7 +416,7 @@ export default function Banks() {
                   setLocation(`/banks/${bankId}`);
                 }}>
                   <SelectTrigger 
-                    className="h-12 w-full sm:w-48 bg-background border-border hover:border-primary transition-colors focus:ring-2 focus:ring-primary focus:border-primary" 
+                    className="h-12 w-full sm:w-48 bg-background border-border lg:hover:border-primary transition-colors focus:ring-2 focus:ring-primary focus:border-primary" 
                     data-testid="select-bank-quick-access"
                     aria-label="Quick access to bank details"
                   >
@@ -438,7 +438,7 @@ export default function Banks() {
             )}
             <Button 
               onClick={() => setLocation("/facility/create-general")}
-              className="h-12 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white shadow-lg w-full sm:w-auto"
+              className="h-12 bg-gradient-to-r from-green-600 to-emerald-600 lg:hover:from-green-700 lg:hover:to-emerald-700 text-white shadow-lg w-full sm:w-auto"
               data-testid="button-add-facility"
             >
               <Plus className="mr-2 h-4 w-4" />
@@ -450,7 +450,7 @@ export default function Banks() {
         {/* Enhanced Bank Exposure Tables */}
         <div className="grid grid-cols-1 gap-8">
           {/* Total Outstanding & Limits Table */}
-          <Card className="bg-card border border-border shadow-sm hover:shadow-md transition-shadow duration-200">
+          <Card className="bg-card border border-border shadow-sm lg:hover:shadow-md transition-shadow duration-200">
             <CardHeader>
               <CardTitle className="text-xl font-semibold flex items-center space-x-2">
                 <TrendingUp className="h-5 w-5 text-primary" />
@@ -471,11 +471,11 @@ export default function Banks() {
                   </thead>
                   <tbody className="divide-y divide-border">
                     {bankExposures.map((exposure: any) => (
-                      <tr key={exposure.bankId} className="hover:bg-accent transition-colors">
+                      <tr key={exposure.bankId} className="lg:hover:bg-accent transition-colors">
                         <td className="py-4 px-4">
-                          <Link href={`/banks/${exposure.bankId}`} className="font-medium text-foreground hover:text-primary transition-colors cursor-pointer inline-flex items-center group" data-testid={`link-bank-${exposure.bankId}`}>
+                          <Link href={`/banks/${exposure.bankId}`} className="font-medium text-foreground lg:hover:text-primary transition-colors cursor-pointer inline-flex items-center group" data-testid={`link-bank-${exposure.bankId}`}>
                             {exposure.bankName}
-                            <ArrowRight className="h-4 w-4 ml-2 opacity-0 group-hover:opacity-100 transition-opacity" />
+                            <ArrowRight className="h-4 w-4 ml-2 opacity-0 lg:group-hover:opacity-100 transition-opacity" />
                           </Link>
                         </td>
                         <td className="py-4 px-4 text-right font-semibold text-foreground">
@@ -517,7 +517,7 @@ export default function Banks() {
           </Card>
 
           {/* Total Available Limits Table */}
-          <Card className="bg-card border border-border shadow-sm hover:shadow-md transition-shadow duration-200">
+          <Card className="bg-card border border-border shadow-sm lg:hover:shadow-md transition-shadow duration-200">
             <CardHeader>
               <CardTitle className="text-xl font-semibold flex items-center space-x-2">
                 <Target className="h-5 w-5 text-primary" />
@@ -541,11 +541,11 @@ export default function Banks() {
                       const availabilityStatus = available < exposure.creditLimit * 0.2 ? 'Low' : 
                                                 available < exposure.creditLimit * 0.5 ? 'Medium' : 'High';
                       return (
-                        <tr key={exposure.bankId} className="hover:bg-accent transition-colors">
+                        <tr key={exposure.bankId} className="lg:hover:bg-accent transition-colors">
                           <td className="py-4 px-4">
-                            <Link href={`/banks/${exposure.bankId}`} className="font-medium text-foreground hover:text-primary transition-colors cursor-pointer inline-flex items-center group" data-testid={`link-bank-available-${exposure.bankId}`}>
+                            <Link href={`/banks/${exposure.bankId}`} className="font-medium text-foreground lg:hover:text-primary transition-colors cursor-pointer inline-flex items-center group" data-testid={`link-bank-available-${exposure.bankId}`}>
                               {exposure.bankName}
-                              <ArrowRight className="h-4 w-4 ml-2 opacity-0 group-hover:opacity-100 transition-opacity" />
+                              <ArrowRight className="h-4 w-4 ml-2 opacity-0 lg:group-hover:opacity-100 transition-opacity" />
                             </Link>
                           </td>
                           <td className="py-4 px-4 text-right font-semibold text-foreground">
@@ -585,7 +585,7 @@ export default function Banks() {
 
         {/* Summary Metrics */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <Card className="bg-card border border-border shadow-sm hover:shadow-md transition-shadow duration-200">
+          <Card className="bg-card border border-border shadow-sm lg:hover:shadow-md transition-shadow duration-200">
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
@@ -602,7 +602,7 @@ export default function Banks() {
             </CardContent>
           </Card>
 
-          <Card className="bg-card border border-border shadow-sm hover:shadow-md transition-shadow duration-200">
+          <Card className="bg-card border border-border shadow-sm lg:hover:shadow-md transition-shadow duration-200">
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
@@ -619,7 +619,7 @@ export default function Banks() {
             </CardContent>
           </Card>
 
-          <Card className="bg-card border border-border shadow-sm hover:shadow-md transition-shadow duration-200">
+          <Card className="bg-card border border-border shadow-sm lg:hover:shadow-md transition-shadow duration-200">
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>

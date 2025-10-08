@@ -340,7 +340,7 @@ export function SignInCard({ onSubmit, onReplitAuth, isLoading: externalLoading 
                     whileHover={{ scale: 1.01 }}
                     transition={{ type: "spring", stiffness: 400, damping: 25 }}
                   >
-                    <div className="absolute -inset-[0.5px] bg-gradient-to-r from-white/10 via-white/5 to-white/10 rounded-lg opacity-0 group-hover:opacity-100 transition-all duration-300" />
+                    <div className="absolute -inset-[0.5px] bg-gradient-to-r from-white/10 via-white/5 to-white/10 rounded-lg opacity-0 lg:group-hover:opacity-100 transition-all duration-300" />
                     
                     <div className="relative flex items-center overflow-hidden rounded-lg">
                       <Mail className={`absolute left-3 w-4 h-4 transition-all duration-300 ${
@@ -379,7 +379,7 @@ export function SignInCard({ onSubmit, onReplitAuth, isLoading: externalLoading 
                     whileHover={{ scale: 1.01 }}
                     transition={{ type: "spring", stiffness: 400, damping: 25 }}
                   >
-                    <div className="absolute -inset-[0.5px] bg-gradient-to-r from-white/10 via-white/5 to-white/10 rounded-lg opacity-0 group-hover:opacity-100 transition-all duration-300" />
+                    <div className="absolute -inset-[0.5px] bg-gradient-to-r from-white/10 via-white/5 to-white/10 rounded-lg opacity-0 lg:group-hover:opacity-100 transition-all duration-300" />
                     
                     <div className="relative flex items-center overflow-hidden rounded-lg">
                       <Lock className={`absolute left-3 w-4 h-4 transition-all duration-300 ${
@@ -404,9 +404,9 @@ export function SignInCard({ onSubmit, onReplitAuth, isLoading: externalLoading 
                         data-testid="button-toggle-password"
                       >
                         {showPassword ? (
-                          <Eye className="w-4 h-4 text-gray-400 hover:text-gray-600 transition-colors duration-300" />
+                          <Eye className="w-4 h-4 text-gray-400 lg:hover:text-gray-600 transition-colors duration-300" />
                         ) : (
-                          <EyeClosed className="w-4 h-4 text-gray-400 hover:text-gray-600 transition-colors duration-300" />
+                          <EyeClosed className="w-4 h-4 text-gray-400 lg:hover:text-gray-600 transition-colors duration-300" />
                         )}
                       </div>
                       
@@ -450,13 +450,13 @@ export function SignInCard({ onSubmit, onReplitAuth, isLoading: externalLoading 
                         </motion.div>
                       )}
                     </div>
-                    <label htmlFor="remember-me" className="text-xs text-gray-600 hover:text-gray-800 transition-colors duration-200">
+                    <label htmlFor="remember-me" className="text-xs text-gray-600 lg:hover:text-gray-800 transition-colors duration-200">
                       Remember me
                     </label>
                   </div>
                   
                   <div className="text-xs relative group/link">
-                    <Link href="/auth/forgot-password" className="text-gray-600 hover:text-green-600 transition-colors duration-200">
+                    <Link href="/auth/forgot-password" className="text-gray-600 lg:hover:text-green-600 transition-colors duration-200">
                       Forgot password?
                     </Link>
                   </div>
@@ -474,7 +474,7 @@ export function SignInCard({ onSubmit, onReplitAuth, isLoading: externalLoading 
                   {/* Button glow effect */}
                   <div className="absolute inset-0 bg-green-400/20 rounded-lg blur-lg opacity-0 group-hover/button:opacity-70 transition-opacity duration-300" />
                   
-                  <div className="relative overflow-hidden bg-gradient-to-r from-green-600 to-green-700 text-white font-medium h-10 rounded-lg transition-all duration-300 flex items-center justify-center hover:from-green-700 hover:to-green-800">
+                  <div className="relative overflow-hidden bg-gradient-to-r from-green-600 to-green-700 text-white font-medium h-10 rounded-lg transition-all duration-300 flex items-center justify-center lg:hover:from-green-700 lg:hover:to-green-800">
                     {/* Button shine effect - static */}
                     <div 
                       className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent -z-10"
@@ -531,7 +531,7 @@ export function SignInCard({ onSubmit, onReplitAuth, isLoading: externalLoading 
                 >
                   <div className="absolute inset-0 bg-green-500/10 rounded-lg blur opacity-0 group-hover/replit:opacity-70 transition-opacity duration-300" />
                   
-                  <div className="relative overflow-hidden bg-white border-2 border-green-600 text-green-700 font-medium h-10 rounded-lg hover:bg-green-50 transition-all duration-300 flex items-center justify-center gap-2">
+                  <div className="relative overflow-hidden bg-white border-2 border-green-600 text-green-700 font-medium h-10 rounded-lg lg:hover:bg-green-50 transition-all duration-300 flex items-center justify-center gap-2">
                     <SiReplit className="w-4 h-4 text-green-600" />
                     
                     <span className="text-sm">
@@ -561,7 +561,7 @@ export function SignInCard({ onSubmit, onReplitAuth, isLoading: externalLoading 
                     >
                       <div className="absolute inset-0 bg-green-500/10 rounded-lg blur opacity-0 group-hover/signup:opacity-70 transition-opacity duration-300" />
                       
-                      <div className="relative overflow-hidden bg-white border-2 border-green-600 text-green-700 font-medium h-10 rounded-lg hover:bg-green-50 transition-all duration-300 flex items-center justify-center gap-2">
+                      <div className="relative overflow-hidden bg-white border-2 border-green-600 text-green-700 font-medium h-10 rounded-lg lg:hover:bg-green-50 transition-all duration-300 flex items-center justify-center gap-2">
                         <span className="text-sm">
                           Sign up
                         </span>

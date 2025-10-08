@@ -130,7 +130,7 @@ export default function HelpDeskPage() {
                   disabled={!input.trim() || isLoading}
                   size="lg"
                   data-testid="button-send-help-question"
-                  className="bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-700 hover:to-blue-700 text-white px-6"
+                  className="bg-gradient-to-r from-cyan-600 to-blue-600 lg:hover:from-cyan-700 lg:hover:to-blue-700 text-white px-6"
                 >
                   {isLoading ? (
                     <Loader2 className="w-5 h-5 animate-spin" />
@@ -175,7 +175,7 @@ export default function HelpDeskPage() {
                     key={index}
                     onClick={() => setInput(question)}
                     data-testid={`button-quick-question-${index}`}
-                    className="text-left px-4 py-3 bg-gradient-to-r from-cyan-50 to-blue-50 dark:from-gray-800 dark:to-gray-700 hover:from-cyan-100 hover:to-blue-100 dark:hover:from-gray-700 dark:hover:to-gray-600 rounded-lg transition-all duration-200 border border-cyan-200 dark:border-gray-600 hover:border-cyan-400 dark:hover:border-cyan-600"
+                    className="text-left px-4 py-3 bg-gradient-to-r from-cyan-50 to-blue-50 dark:from-gray-800 dark:to-gray-700 lg:hover:from-cyan-100 lg:hover:to-blue-100 dark:hover:from-gray-700 dark:hover:to-gray-600 rounded-lg transition-all duration-200 border border-cyan-200 dark:border-gray-600 lg:hover:border-cyan-400 dark:hover:border-cyan-600"
                   >
                     <p className="text-sm font-medium text-gray-900 dark:text-gray-100">
                       {question}

@@ -385,7 +385,7 @@ export default function BankContactCreatePage() {
                       <Button 
                         type="submit" 
                         disabled={createContactMutation.isPending}
-                        className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700"
+                        className="bg-gradient-to-r from-blue-600 to-indigo-600 lg:hover:from-blue-700 lg:hover:to-indigo-700"
                         data-testid="button-save-contact"
                       >
                         {createContactMutation.isPending ? (

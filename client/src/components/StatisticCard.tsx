@@ -22,7 +22,7 @@ export default function StatisticCard({
 }: StatisticCardProps) {
   return (
     <Card 
-      className={`bg-card border border-border shadow-sm hover:shadow-md transition-shadow duration-200 min-h-[120px] ${onClick ? 'cursor-pointer' : ''}`}
+      className={`bg-card border border-border shadow-sm lg:hover:shadow-md transition-shadow duration-200 min-h-[120px] ${onClick ? 'cursor-pointer' : ''}`}
       onClick={onClick}
     >
       <CardContent className="p-6">

@@ -83,7 +83,7 @@ export default function FeaturesTipsPage() {
               </CardHeader>
               <CardContent>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  <div className="p-4 border rounded-lg hover:border-primary transition-colors" data-testid="feature-card-bank-management">
+                  <div className="p-4 border rounded-lg lg:hover:border-primary transition-colors" data-testid="feature-card-bank-management">
                     <Building2 className="h-8 w-8 text-primary mb-3" />
                     <h3 className="font-semibold mb-2">Bank Management</h3>
                     <p className="text-sm text-muted-foreground">
@@ -91,7 +91,7 @@ export default function FeaturesTipsPage() {
                     </p>
                   </div>
 
-                  <div className="p-4 border rounded-lg hover:border-primary transition-colors" data-testid="feature-card-facility-tracking">
+                  <div className="p-4 border rounded-lg lg:hover:border-primary transition-colors" data-testid="feature-card-facility-tracking">
                     <CreditCard className="h-8 w-8 text-primary mb-3" />
                     <h3 className="font-semibold mb-2">Facility Tracking</h3>
                     <p className="text-sm text-muted-foreground">
@@ -99,7 +99,7 @@ export default function FeaturesTipsPage() {
                     </p>
                   </div>
 
-                  <div className="p-4 border rounded-lg hover:border-primary transition-colors" data-testid="feature-card-loan-lifecycle">
+                  <div className="p-4 border rounded-lg lg:hover:border-primary transition-colors" data-testid="feature-card-loan-lifecycle">
                     <TrendingUp className="h-8 w-8 text-primary mb-3" />
                     <h3 className="font-semibold mb-2">Loan Lifecycle</h3>
                     <p className="text-sm text-muted-foreground">
@@ -107,7 +107,7 @@ export default function FeaturesTipsPage() {
                     </p>
                   </div>
 
-                  <div className="p-4 border rounded-lg hover:border-primary transition-colors" data-testid="feature-card-collateral-tracking">
+                  <div className="p-4 border rounded-lg lg:hover:border-primary transition-colors" data-testid="feature-card-collateral-tracking">
                     <Shield className="h-8 w-8 text-primary mb-3" />
                     <h3 className="font-semibold mb-2">Collateral Tracking</h3>
                     <p className="text-sm text-muted-foreground">
@@ -115,7 +115,7 @@ export default function FeaturesTipsPage() {
                     </p>
                   </div>
 
-                  <div className="p-4 border rounded-lg hover:border-primary transition-colors" data-testid="feature-card-document-management">
+                  <div className="p-4 border rounded-lg lg:hover:border-primary transition-colors" data-testid="feature-card-document-management">
                     <FileText className="h-8 w-8 text-primary mb-3" />
                     <h3 className="font-semibold mb-2">Document Management</h3>
                     <p className="text-sm text-muted-foreground">
@@ -123,7 +123,7 @@ export default function FeaturesTipsPage() {
                     </p>
                   </div>
 
-                  <div className="p-4 border rounded-lg hover:border-primary transition-colors" data-testid="feature-card-reminder-system">
+                  <div className="p-4 border rounded-lg lg:hover:border-primary transition-colors" data-testid="feature-card-reminder-system">
                     <Bell className="h-8 w-8 text-primary mb-3" />
                     <h3 className="font-semibold mb-2">Reminder System</h3>
                     <p className="text-sm text-muted-foreground">
@@ -145,7 +145,7 @@ export default function FeaturesTipsPage() {
               </CardHeader>
               <CardContent>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  <div className="p-4 border rounded-lg hover:border-primary transition-colors" data-testid="feature-card-ai-chat">
+                  <div className="p-4 border rounded-lg lg:hover:border-primary transition-colors" data-testid="feature-card-ai-chat">
                     <MessageSquare className="h-8 w-8 text-primary mb-3" />
                     <h3 className="font-semibold mb-2">AI Chat Assistant</h3>
                     <p className="text-sm text-muted-foreground">
@@ -153,7 +153,7 @@ export default function FeaturesTipsPage() {
                     </p>
                   </div>
 
-                  <div className="p-4 border rounded-lg hover:border-primary transition-colors" data-testid="feature-card-loan-matcher">
+                  <div className="p-4 border rounded-lg lg:hover:border-primary transition-colors" data-testid="feature-card-loan-matcher">
                     <Target className="h-8 w-8 text-primary mb-3" />
                     <h3 className="font-semibold mb-2">Smart Loan Matcher</h3>
                     <p className="text-sm text-muted-foreground">
@@ -161,7 +161,7 @@ export default function FeaturesTipsPage() {
                     </p>
                   </div>
 
-                  <div className="p-4 border rounded-lg hover:border-primary transition-colors" data-testid="feature-card-what-if">
+                  <div className="p-4 border rounded-lg lg:hover:border-primary transition-colors" data-testid="feature-card-what-if">
                     <Zap className="h-8 w-8 text-primary mb-3" />
                     <h3 className="font-semibold mb-2">What-If Scenarios</h3>
                     <p className="text-sm text-muted-foreground">
@@ -169,7 +169,7 @@ export default function FeaturesTipsPage() {
                     </p>
                   </div>
 
-                  <div className="p-4 border rounded-lg hover:border-primary transition-colors" data-testid="feature-card-nlq">
+                  <div className="p-4 border rounded-lg lg:hover:border-primary transition-colors" data-testid="feature-card-nlq">
                     <MessageSquare className="h-8 w-8 text-primary mb-3" />
                     <h3 className="font-semibold mb-2">Natural Language Queries</h3>
                     <p className="text-sm text-muted-foreground">
@@ -177,7 +177,7 @@ export default function FeaturesTipsPage() {
                     </p>
                   </div>
 
-                  <div className="p-4 border rounded-lg hover:border-primary transition-colors" data-testid="feature-card-daily-alerts">
+                  <div className="p-4 border rounded-lg lg:hover:border-primary transition-colors" data-testid="feature-card-daily-alerts">
                     <Mail className="h-8 w-8 text-primary mb-3" />
                     <h3 className="font-semibold mb-2">Daily Alerts</h3>
                     <p className="text-sm text-muted-foreground">
@@ -185,7 +185,7 @@ export default function FeaturesTipsPage() {
                     </p>
                   </div>
 
-                  <div className="p-4 border rounded-lg hover:border-primary transition-colors" data-testid="feature-card-pdf-export">
+                  <div className="p-4 border rounded-lg lg:hover:border-primary transition-colors" data-testid="feature-card-pdf-export">
                     <Download className="h-8 w-8 text-primary mb-3" />
                     <h3 className="font-semibold mb-2">PDF Export</h3>
                     <p className="text-sm text-muted-foreground">
@@ -207,7 +207,7 @@ export default function FeaturesTipsPage() {
               </CardHeader>
               <CardContent>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  <div className="p-4 border rounded-lg hover:border-primary transition-colors" data-testid="feature-card-portfolio-dashboard">
+                  <div className="p-4 border rounded-lg lg:hover:border-primary transition-colors" data-testid="feature-card-portfolio-dashboard">
                     <Eye className="h-8 w-8 text-primary mb-3" />
                     <h3 className="font-semibold mb-2">Portfolio Dashboard</h3>
                     <p className="text-sm text-muted-foreground">
@@ -215,7 +215,7 @@ export default function FeaturesTipsPage() {
                     </p>
                   </div>
 
-                  <div className="p-4 border rounded-lg hover:border-primary transition-colors" data-testid="feature-card-bank-performance">
+                  <div className="p-4 border rounded-lg lg:hover:border-primary transition-colors" data-testid="feature-card-bank-performance">
                     <Building2 className="h-8 w-8 text-primary mb-3" />
                     <h3 className="font-semibold mb-2">Bank Performance</h3>
                     <p className="text-sm text-muted-foreground">
@@ -223,7 +223,7 @@ export default function FeaturesTipsPage() {
                     </p>
                   </div>
 
-                  <div className="p-4 border rounded-lg hover:border-primary transition-colors" data-testid="feature-card-exposure-tracking">
+                  <div className="p-4 border rounded-lg lg:hover:border-primary transition-colors" data-testid="feature-card-exposure-tracking">
                     <AlertTriangle className="h-8 w-8 text-primary mb-3" />
                     <h3 className="font-semibold mb-2">Exposure Tracking</h3>
                     <p className="text-sm text-muted-foreground">
@@ -231,7 +231,7 @@ export default function FeaturesTipsPage() {
                     </p>
                   </div>
 
-                  <div className="p-4 border rounded-lg hover:border-primary transition-colors" data-testid="feature-card-ltv-monitoring">
+                  <div className="p-4 border rounded-lg lg:hover:border-primary transition-colors" data-testid="feature-card-ltv-monitoring">
                     <Percent className="h-8 w-8 text-primary mb-3" />
                     <h3 className="font-semibold mb-2">LTV Monitoring</h3>
                     <p className="text-sm text-muted-foreground">
@@ -239,7 +239,7 @@ export default function FeaturesTipsPage() {
                     </p>
                   </div>
 
-                  <div className="p-4 border rounded-lg hover:border-primary transition-colors" data-testid="feature-card-sibor-integration">
+                  <div className="p-4 border rounded-lg lg:hover:border-primary transition-colors" data-testid="feature-card-sibor-integration">
                     <TrendingUp className="h-8 w-8 text-primary mb-3" />
                     <h3 className="font-semibold mb-2">SIBOR Integration</h3>
                     <p className="text-sm text-muted-foreground">
@@ -247,7 +247,7 @@ export default function FeaturesTipsPage() {
                     </p>
                   </div>
 
-                  <div className="p-4 border rounded-lg hover:border-primary transition-colors" data-testid="feature-card-mobile-design">
+                  <div className="p-4 border rounded-lg lg:hover:border-primary transition-colors" data-testid="feature-card-mobile-design">
                     <Globe2 className="h-8 w-8 text-primary mb-3" />
                     <h3 className="font-semibold mb-2">Mobile-First Design</h3>
                     <p className="text-sm text-muted-foreground">
@@ -269,7 +269,7 @@ export default function FeaturesTipsPage() {
               </CardHeader>
               <CardContent>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  <div className="p-4 border rounded-lg hover:border-primary transition-colors relative" data-testid="feature-card-arabic-support">
+                  <div className="p-4 border rounded-lg lg:hover:border-primary transition-colors relative" data-testid="feature-card-arabic-support">
                     <Badge className="absolute top-3 right-3" data-testid="badge-coming-soon-arabic">Coming Soon</Badge>
                     <Languages className="h-8 w-8 text-muted-foreground mb-3" />
                     <h3 className="font-semibold mb-2">Arabic Language Support</h3>
@@ -278,7 +278,7 @@ export default function FeaturesTipsPage() {
                     </p>
                   </div>
 
-                  <div className="p-4 border rounded-lg hover:border-primary transition-colors relative" data-testid="feature-card-advanced-reporting">
+                  <div className="p-4 border rounded-lg lg:hover:border-primary transition-colors relative" data-testid="feature-card-advanced-reporting">
                     <Badge className="absolute top-3 right-3" data-testid="badge-coming-soon-reporting">Coming Soon</Badge>
                     <BookOpen className="h-8 w-8 text-muted-foreground mb-3" />
                     <h3 className="font-semibold mb-2">Advanced Reporting</h3>
@@ -287,7 +287,7 @@ export default function FeaturesTipsPage() {
                     </p>
                   </div>
 
-                  <div className="p-4 border rounded-lg hover:border-primary transition-colors relative" data-testid="feature-card-multi-currency">
+                  <div className="p-4 border rounded-lg lg:hover:border-primary transition-colors relative" data-testid="feature-card-multi-currency">
                     <Badge className="absolute top-3 right-3" data-testid="badge-coming-soon-currency">Coming Soon</Badge>
                     <DollarSign className="h-8 w-8 text-muted-foreground mb-3" />
                     <h3 className="font-semibold mb-2">Multi-Currency</h3>
@@ -296,7 +296,7 @@ export default function FeaturesTipsPage() {
                     </p>
                   </div>
 
-                  <div className="p-4 border rounded-lg hover:border-primary transition-colors relative" data-testid="feature-card-api-integration">
+                  <div className="p-4 border rounded-lg lg:hover:border-primary transition-colors relative" data-testid="feature-card-api-integration">
                     <Badge className="absolute top-3 right-3" data-testid="badge-coming-soon-api">Coming Soon</Badge>
                     <Database className="h-8 w-8 text-muted-foreground mb-3" />
                     <h3 className="font-semibold mb-2">API Integration</h3>
@@ -559,7 +559,7 @@ export default function FeaturesTipsPage() {
               </CardHeader>
               <CardContent>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  <div className="p-4 border rounded-lg hover:border-primary transition-colors" data-testid="feature-card-team-accounts">
+                  <div className="p-4 border rounded-lg lg:hover:border-primary transition-colors" data-testid="feature-card-team-accounts">
                     <Users className="h-8 w-8 text-primary mb-3" />
                     <h3 className="font-semibold mb-2">Organization Accounts</h3>
                     <p className="text-sm text-muted-foreground">
@@ -567,7 +567,7 @@ export default function FeaturesTipsPage() {
                     </p>
                   </div>
 
-                  <div className="p-4 border rounded-lg hover:border-primary transition-colors" data-testid="feature-card-invitations">
+                  <div className="p-4 border rounded-lg lg:hover:border-primary transition-colors" data-testid="feature-card-invitations">
                     <UserPlus className="h-8 w-8 text-primary mb-3" />
                     <h3 className="font-semibold mb-2">Email Invitations</h3>
                     <p className="text-sm text-muted-foreground">
@@ -575,7 +575,7 @@ export default function FeaturesTipsPage() {
                     </p>
                   </div>
 
-                  <div className="p-4 border rounded-lg hover:border-primary transition-colors" data-testid="feature-card-role-access">
+                  <div className="p-4 border rounded-lg lg:hover:border-primary transition-colors" data-testid="feature-card-role-access">
                     <ShieldCheck className="h-8 w-8 text-primary mb-3" />
                     <h3 className="font-semibold mb-2">Role-Based Access</h3>
                     <p className="text-sm text-muted-foreground">
@@ -583,7 +583,7 @@ export default function FeaturesTipsPage() {
                     </p>
                   </div>
 
-                  <div className="p-4 border rounded-lg hover:border-primary transition-colors" data-testid="feature-card-data-isolation">
+                  <div className="p-4 border rounded-lg lg:hover:border-primary transition-colors" data-testid="feature-card-data-isolation">
                     <Lock className="h-8 w-8 text-primary mb-3" />
                     <h3 className="font-semibold mb-2">Complete Data Isolation</h3>
                     <p className="text-sm text-muted-foreground">
@@ -591,7 +591,7 @@ export default function FeaturesTipsPage() {
                     </p>
                   </div>
 
-                  <div className="p-4 border rounded-lg hover:border-primary transition-colors" data-testid="feature-card-team-settings">
+                  <div className="p-4 border rounded-lg lg:hover:border-primary transition-colors" data-testid="feature-card-team-settings">
                     <Settings className="h-8 w-8 text-primary mb-3" />
                     <h3 className="font-semibold mb-2">Team Management</h3>
                     <p className="text-sm text-muted-foreground">
@@ -599,7 +599,7 @@ export default function FeaturesTipsPage() {
                     </p>
                   </div>
 
-                  <div className="p-4 border rounded-lg hover:border-primary transition-colors" data-testid="feature-card-shared-ai">
+                  <div className="p-4 border rounded-lg lg:hover:border-primary transition-colors" data-testid="feature-card-shared-ai">
                     <Layers className="h-8 w-8 text-primary mb-3" />
                     <h3 className="font-semibold mb-2">Shared AI Insights</h3>
                     <p className="text-sm text-muted-foreground">

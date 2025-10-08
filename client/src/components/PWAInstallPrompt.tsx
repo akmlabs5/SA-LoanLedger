@@ -95,7 +95,7 @@ export function PWAInstallPrompt() {
           <div className="bg-gradient-to-r from-green-600 via-emerald-600 to-teal-600 p-6 relative">
             <button
               onClick={handleDismiss}
-              className="absolute top-4 right-4 text-white/80 hover:text-white transition-colors"
+              className="absolute top-4 right-4 text-white/80 lg:hover:text-white transition-colors"
               data-testid="button-dismiss-install"
             >
               <X className="h-5 w-5" />
@@ -167,7 +167,7 @@ export function PWAInstallPrompt() {
               {!isIOS && (
                 <Button
                   onClick={handleInstall}
-                  className="flex-1 bg-green-600 hover:bg-green-700 text-white h-11"
+                  className="flex-1 bg-green-600 lg:hover:bg-green-700 text-white h-11"
                   data-testid="button-install-pwa"
                 >
                   <Download className="h-4 w-4 mr-2" />

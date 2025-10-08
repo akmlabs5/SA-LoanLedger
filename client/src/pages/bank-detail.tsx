@@ -348,8 +348,8 @@ export default function BankDetail() {
           </div>
           <div className="flex items-center space-x-3">
             <Badge className={connectionStatus === 'connected' 
-              ? "bg-emerald-100 text-emerald-800 hover:bg-emerald-200 dark:bg-emerald-900/20 dark:text-emerald-400"
-              : "bg-gray-100 text-gray-800 hover:bg-gray-200 dark:bg-gray-900/20 dark:text-gray-400"
+              ? "bg-emerald-100 text-emerald-800 lg:hover:bg-emerald-200 dark:bg-emerald-900/20 dark:text-emerald-400"
+              : "bg-gray-100 text-gray-800 lg:hover:bg-gray-200 dark:bg-gray-900/20 dark:text-gray-400"
             }>
               {connectionStatus === 'connected' ? (
                 <>
@@ -364,7 +364,7 @@ export default function BankDetail() {
               )}
             </Badge>
             {connectionStatus !== 'connected' && (
-              <Button className="bg-gradient-to-r from-indigo-600 to-indigo-700 hover:from-indigo-700 hover:to-indigo-800 text-white">
+              <Button className="bg-gradient-to-r from-indigo-600 to-indigo-700 lg:hover:from-indigo-700 lg:hover:to-indigo-800 text-white">
                 <LogIn className="mr-2 h-4 w-4" />
                 Connect Bank
               </Button>
@@ -492,7 +492,7 @@ export default function BankDetail() {
                     size="sm" 
                     data-testid="button-add-facility"
                     onClick={() => setLocation(`/banks/${bankId}/facility/create`)}
-                    className="bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white shadow-lg"
+                    className="bg-gradient-to-r from-green-600 to-emerald-600 lg:hover:from-green-700 lg:hover:to-emerald-700 text-white shadow-lg"
                   >
                     <Plus className="mr-2 h-4 w-4" />
                     Add Facility
@@ -610,7 +610,7 @@ export default function BankDetail() {
                   <Link href={`/loans/create?bankId=${bankId}`}>
                     <Button 
                       size="sm"
-                      className="bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white shadow-lg"
+                      className="bg-gradient-to-r from-green-600 to-emerald-600 lg:hover:from-green-700 lg:hover:to-emerald-700 text-white shadow-lg"
                       data-testid="button-add-loan-header"
                     >
                       <Plus className="h-4 w-4 mr-2" />
@@ -637,7 +637,7 @@ export default function BankDetail() {
                       return (
                         <div 
                           key={loan.id} 
-                          className="p-4 border border-gray-200 dark:border-gray-700 rounded-xl bg-white dark:bg-gray-800/50 hover:shadow-md transition-shadow cursor-pointer"
+                          className="p-4 border border-gray-200 dark:border-gray-700 rounded-xl bg-white dark:bg-gray-800/50 lg:hover:shadow-md transition-shadow cursor-pointer"
                           onClick={() => setLocation(`/loans/${loan.id}`)}
                           data-testid={`card-loan-${loan.id}`}
                         >
@@ -735,7 +735,7 @@ export default function BankDetail() {
                   <Button 
                     onClick={() => setLocation("/collateral/create")}
                     size="sm"
-                    className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white shadow-lg"
+                    className="bg-gradient-to-r from-purple-600 to-pink-600 lg:hover:from-purple-700 lg:hover:to-pink-700 text-white shadow-lg"
                     data-testid="button-add-collateral"
                   >
                     <Plus className="h-4 w-4 mr-2" />
@@ -933,7 +933,7 @@ export default function BankDetail() {
               </CardHeader>
               <CardContent className="space-y-3">
                 <Button 
-                  className="w-full justify-start bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white"
+                  className="w-full justify-start bg-gradient-to-r from-blue-600 to-blue-700 lg:hover:from-blue-700 lg:hover:to-blue-800 text-white"
                   onClick={() => setLocation("/loans")}
                   data-testid="button-view-all-loans"
                 >
@@ -1439,7 +1439,7 @@ function RevolveDialog({ open, onOpenChange, loan, onSubmit, isPending }: any) {
                 type="submit" 
                 disabled={isPending} 
                 data-testid="button-revolve-submit"
-                className={hasOutstandingInterest ? "bg-orange-600 hover:bg-orange-700" : ""}
+                className={hasOutstandingInterest ? "bg-orange-600 lg:hover:bg-orange-700" : ""}
               >
                 {isPending ? "Processing..." : hasOutstandingInterest ? "Settle & Revolve" : "Revolve Loan"}
               </Button>

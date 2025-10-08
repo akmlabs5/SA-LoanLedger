@@ -156,7 +156,7 @@ export default function AdminDatabasePage() {
                     </thead>
                     <tbody>
                       {dbStats?.tables.map((table) => (
-                        <tr key={table.name} className="border-b border-border hover:bg-muted/50">
+                        <tr key={table.name} className="border-b border-border lg:hover:bg-muted/50">
                           <td className="py-3 px-4 font-medium">{table.name}</td>
                           <td className="py-3 px-4 text-right text-muted-foreground">
                             {table.rowCount.toLocaleString()}

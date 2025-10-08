@@ -59,7 +59,7 @@ export function HelpDeskChat() {
         <button
           onClick={() => setIsOpen(true)}
           data-testid="button-open-help-desk"
-          className="fixed bottom-6 left-6 z-50 flex items-center gap-2 px-4 py-3 bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-700 hover:to-blue-700 text-white rounded-full shadow-lg hover:shadow-xl transition-all duration-200 group"
+          className="fixed bottom-6 left-6 z-50 flex items-center gap-2 px-4 py-3 bg-gradient-to-r from-cyan-600 to-blue-600 lg:hover:from-cyan-700 lg:hover:to-blue-700 text-white rounded-full shadow-lg lg:hover:shadow-xl transition-all duration-200 group active:scale-95 active:from-cyan-700 active:to-blue-700"
         >
           <HelpCircle className="w-5 h-5" />
           <span className="font-medium hidden sm:inline">Help</span>
@@ -88,7 +88,7 @@ export function HelpDeskChat() {
                   size="sm"
                   onClick={handleNewQuestion}
                   data-testid="button-new-question"
-                  className="text-white hover:bg-white/20 h-8 px-2 text-xs"
+                  className="text-white lg:hover:bg-white/20 active:bg-white/20 h-8 px-2 text-xs"
                 >
                   New Question
                 </Button>
@@ -98,7 +98,7 @@ export function HelpDeskChat() {
                 size="sm"
                 onClick={() => setIsOpen(false)}
                 data-testid="button-close-help-desk"
-                className="text-white hover:bg-white/20 h-8 w-8 p-0"
+                className="text-white lg:hover:bg-white/20 active:bg-white/20 h-8 w-8 p-0"
               >
                 <X className="w-4 h-4" />
               </Button>
@@ -125,21 +125,21 @@ export function HelpDeskChat() {
                   <button
                     onClick={() => setInput("How do I create a new loan?")}
                     data-testid="button-help-quick-1"
-                    className="w-full text-left px-3 py-2 text-sm bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-lg transition-colors"
+                    className="w-full text-left px-3 py-2 text-sm bg-gray-100 dark:bg-gray-800 lg:hover:bg-gray-200 dark:lg:hover:bg-gray-700 active:bg-gray-200 dark:active:bg-gray-700 rounded-lg transition-colors"
                   >
                     "How do I create a new loan?"
                   </button>
                   <button
                     onClick={() => setInput("What is SIBOR and how is it calculated?")}
                     data-testid="button-help-quick-2"
-                    className="w-full text-left px-3 py-2 text-sm bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-lg transition-colors"
+                    className="w-full text-left px-3 py-2 text-sm bg-gray-100 dark:bg-gray-800 lg:hover:bg-gray-200 dark:lg:hover:bg-gray-700 active:bg-gray-200 dark:active:bg-gray-700 rounded-lg transition-colors"
                   >
                     "What is SIBOR and how is it calculated?"
                   </button>
                   <button
                     onClick={() => setInput("Where can I find my loan reports?")}
                     data-testid="button-help-quick-3"
-                    className="w-full text-left px-3 py-2 text-sm bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-lg transition-colors"
+                    className="w-full text-left px-3 py-2 text-sm bg-gray-100 dark:bg-gray-800 lg:hover:bg-gray-200 dark:lg:hover:bg-gray-700 active:bg-gray-200 dark:active:bg-gray-700 rounded-lg transition-colors"
                   >
                     "Where can I find my loan reports?"
                   </button>
@@ -183,7 +183,7 @@ export function HelpDeskChat() {
                 disabled={!input.trim() || isLoading}
                 size="icon"
                 data-testid="button-send-help-question"
-                className="bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-700 hover:to-blue-700 text-white"
+                className="bg-gradient-to-r from-cyan-600 to-blue-600 lg:hover:from-cyan-700 lg:hover:to-blue-700 text-white"
               >
                 {isLoading ? (
                   <Loader2 className="w-4 h-4 animate-spin" />

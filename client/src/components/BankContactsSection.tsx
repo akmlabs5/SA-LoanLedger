@@ -133,7 +133,7 @@ export default function BankContactsSection({ bankId, bankName, isAuthenticated 
           <Button 
             size="default" 
             onClick={() => setLocation(`/banks/${bankId}/contacts/new`)}
-            className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white shadow-lg min-h-[44px] min-w-[120px] touch-manipulation"
+            className="bg-gradient-to-r from-blue-600 to-indigo-600 lg:hover:from-blue-700 lg:hover:to-indigo-700 text-white shadow-lg min-h-[44px] min-w-[120px] touch-manipulation"
             data-testid="button-add-contact"
           >
             <Plus className="mr-2 h-4 w-4" />

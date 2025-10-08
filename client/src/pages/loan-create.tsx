@@ -290,7 +290,7 @@ export default function LoanCreatePage() {
         {/* Header with Breadcrumbs */}
         <div className="flex items-center space-x-4">
           <Link href={bankId ? `/banks/${bankId}` : '/loans'}>
-            <Button variant="ghost" size="sm" className="text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100">
+            <Button variant="ghost" size="sm" className="text-gray-600 lg:hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100">
               <ArrowLeft className="h-4 w-4 mr-2" />
               Back to {bankId && currentBank ? currentBank.name : 'Loans'}
             </Button>
@@ -524,7 +524,7 @@ export default function LoanCreatePage() {
                                     type="button"
                                     variant={isSelected ? "default" : "outline"}
                                     size="sm"
-                                    className={`text-xs hover:bg-blue-100 dark:hover:bg-blue-900/30 flex-col h-auto py-2 px-3 ${isSelected ? "bg-blue-600 text-white" : ""}`}
+                                    className={`text-xs lg:hover:bg-blue-100 dark:hover:bg-blue-900/30 flex-col h-auto py-2 px-3 ${isSelected ? "bg-blue-600 text-white" : ""}`}
                                     onClick={() => {
                                       form.setValue("dueDate", dueDateString);
                                       form.setValue("siborTerm", siborTerm);
@@ -718,7 +718,7 @@ export default function LoanCreatePage() {
                       <Button 
                         type="submit" 
                         disabled={createLoanMutation.isPending}
-                        className="h-12 bg-gradient-to-r from-emerald-600 to-blue-600 hover:from-emerald-700 hover:to-blue-700 text-white shadow-lg"
+                        className="h-12 bg-gradient-to-r from-emerald-600 to-blue-600 lg:hover:from-emerald-700 lg:hover:to-blue-700 text-white shadow-lg"
                         data-testid="button-create-loan"
                       >
                         {createLoanMutation.isPending ? "Creating..." : "Create Loan"}

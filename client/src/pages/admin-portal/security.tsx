@@ -219,7 +219,7 @@ export default function AdminSecurityPage() {
                     </thead>
                     <tbody>
                       {securityData?.accessLogs.map((log, idx) => (
-                        <tr key={idx} className="border-b border-border hover:bg-muted/50">
+                        <tr key={idx} className="border-b border-border lg:hover:bg-muted/50">
                           <td className="py-3 px-4">{log.user}</td>
                           <td className="py-3 px-4 text-muted-foreground">{log.action}</td>
                           <td className="py-3 px-4 text-muted-foreground font-mono text-sm">

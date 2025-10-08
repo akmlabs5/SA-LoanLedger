@@ -504,7 +504,7 @@ export default function CollateralForm({ collateral, onSuccess, onCancel }: Coll
               <Button 
                 type="submit" 
                 disabled={createCollateralMutation.isPending}
-                className="bg-primary text-primary-foreground hover:bg-primary/90"
+                className="bg-primary text-primary-foreground lg:hover:bg-primary/90"
                 data-testid="button-save-collateral"
               >
                 {createCollateralMutation.isPending 

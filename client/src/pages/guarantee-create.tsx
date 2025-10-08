@@ -152,7 +152,7 @@ export default function GuaranteeCreatePage() {
                       You need to create a non-cash guarantee facility with a bank before issuing guarantees.
                     </p>
                     <Link href="/facility/create-general">
-                      <Button className="bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white">
+                      <Button className="bg-gradient-to-r from-green-600 to-emerald-600 lg:hover:from-green-700 lg:hover:to-emerald-700 text-white">
                         <Plus className="h-4 w-4 mr-2" />
                         Create Non-Cash Guarantee Facility
                       </Button>
@@ -552,7 +552,7 @@ export default function GuaranteeCreatePage() {
               <Button 
                 type="submit" 
                 disabled={createGuaranteeMutation.isPending}
-                className="bg-green-600 hover:bg-green-700 text-white"
+                className="bg-green-600 lg:hover:bg-green-700 text-white"
                 data-testid="button-create-guarantee"
               >
                 {createGuaranteeMutation.isPending ? "Creating..." : "Create Guarantee"}

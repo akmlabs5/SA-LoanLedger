@@ -94,7 +94,7 @@ export default function DocumentCard({
   const isPDF = document.mimeType === 'application/pdf';
   
   return (
-    <Card className={`group hover:shadow-md transition-shadow ${compact ? 'p-3' : ''}`}>
+    <Card className={`group lg:hover:shadow-md transition-shadow ${compact ? 'p-3' : ''}`}>
       <CardContent className={compact ? 'p-0' : 'p-4'}>
         <div className="space-y-3">
           {/* Document Preview/Icon */}
@@ -103,7 +103,7 @@ export default function DocumentCard({
               className={`
                 ${compact ? 'h-16' : 'h-32'} bg-gray-50 dark:bg-gray-800 rounded-lg 
                 flex items-center justify-center border-2 border-dashed border-gray-200 
-                dark:border-gray-700 cursor-pointer hover:border-primary transition-colors
+                dark:border-gray-700 cursor-pointer lg:hover:border-primary transition-colors
               `}
               onClick={onPreview}
             >
@@ -128,7 +128,7 @@ export default function DocumentCard({
             
             {/* Actions Overlay */}
             {showActions && !compact && (
-              <div className="absolute inset-0 bg-black bg-opacity-50 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center space-x-2">
+              <div className="absolute inset-0 bg-black bg-opacity-50 rounded-lg opacity-0 lg:group-hover:opacity-100 transition-opacity flex items-center justify-center space-x-2">
                 <TooltipProvider>
                   <Tooltip>
                     <TooltipTrigger asChild>

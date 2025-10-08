@@ -418,7 +418,7 @@ export default function AdminTemplatesPage() {
             </div>
           ) : (
             templates.map((template: any) => (
-              <Card key={template.id} className="hover:shadow-md transition-shadow" data-testid={`card-template-${template.id}`}>
+              <Card key={template.id} className="lg:hover:shadow-md transition-shadow" data-testid={`card-template-${template.id}`}>
                 <CardHeader className="pb-3">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center space-x-2">
@@ -474,7 +474,7 @@ export default function AdminTemplatesPage() {
                         size="sm" 
                         variant="outline" 
                         onClick={() => handleDelete(template.id)}
-                        className="text-red-600 hover:text-red-700"
+                        className="text-red-600 lg:hover:text-red-700"
                         data-testid={`button-delete-${template.id}`}
                       >
                         <Trash2 className="h-3 w-3 mr-1" />

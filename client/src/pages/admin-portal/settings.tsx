@@ -285,7 +285,7 @@ export default function AdminSettingsPage() {
                                 href="https://app.sendgrid.com/settings/sender_auth" 
                                 target="_blank" 
                                 rel="noopener noreferrer"
-                                className="underline hover:text-blue-600 dark:hover:text-blue-300"
+                                className="underline lg:hover:text-blue-600 dark:hover:text-blue-300"
                               >
                                 SendGrid Sender Authentication
                               </a>
@@ -295,7 +295,7 @@ export default function AdminSettingsPage() {
                                 href="https://app.sendgrid.com/guide/integrate" 
                                 target="_blank" 
                                 rel="noopener noreferrer"
-                                className="underline hover:text-blue-600 dark:hover:text-blue-300"
+                                className="underline lg:hover:text-blue-600 dark:hover:text-blue-300"
                               >
                                 SendGrid Integration Guide
                               </a>

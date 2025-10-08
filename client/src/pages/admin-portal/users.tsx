@@ -129,7 +129,7 @@ export default function AdminUsersPage() {
                   variant={statusFilter === "all" ? "default" : "outline"}
                   onClick={() => setStatusFilter("all")}
                   data-testid="filter-all"
-                  className={`h-12 flex-1 sm:flex-none ${statusFilter === "all" ? "bg-red-600 hover:bg-red-700" : ""}`}
+                  className={`h-12 flex-1 sm:flex-none ${statusFilter === "all" ? "bg-red-600 lg:hover:bg-red-700" : ""}`}
                 >
                   All
                 </Button>
@@ -137,7 +137,7 @@ export default function AdminUsersPage() {
                   variant={statusFilter === "active" ? "default" : "outline"}
                   onClick={() => setStatusFilter("active")}
                   data-testid="filter-active"
-                  className={`h-12 flex-1 sm:flex-none ${statusFilter === "active" ? "bg-green-600 hover:bg-green-700" : ""}`}
+                  className={`h-12 flex-1 sm:flex-none ${statusFilter === "active" ? "bg-green-600 lg:hover:bg-green-700" : ""}`}
                 >
                   Active
                 </Button>
@@ -145,7 +145,7 @@ export default function AdminUsersPage() {
                   variant={statusFilter === "inactive" ? "default" : "outline"}
                   onClick={() => setStatusFilter("inactive")}
                   data-testid="filter-inactive"
-                  className={`h-12 flex-1 sm:flex-none ${statusFilter === "inactive" ? "bg-gray-600 hover:bg-gray-700" : ""}`}
+                  className={`h-12 flex-1 sm:flex-none ${statusFilter === "inactive" ? "bg-gray-600 lg:hover:bg-gray-700" : ""}`}
                 >
                   Inactive
                 </Button>
@@ -182,7 +182,7 @@ export default function AdminUsersPage() {
                   {filteredUsers.map((user) => (
                     <div 
                       key={user.id} 
-                      className="flex items-center justify-between p-4 border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors min-w-[500px]"
+                      className="flex items-center justify-between p-4 border border-gray-200 dark:border-gray-700 rounded-lg lg:hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors min-w-[500px]"
                       data-testid={`user-row-${user.id}`}
                     >
                       <div className="flex items-center space-x-4 flex-1 min-w-0">

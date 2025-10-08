@@ -450,7 +450,7 @@ export default function LoanForm({ onSuccess, onCancel }: LoanFormProps) {
                           className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${
                             isSelected 
                               ? "bg-blue-600 text-white" 
-                              : "bg-white text-blue-700 border border-blue-300 hover:bg-blue-100"
+                              : "bg-white text-blue-700 border border-blue-300 lg:hover:bg-blue-100"
                           }`}
                           data-testid={`button-term-${days}`}
                         >
@@ -599,7 +599,7 @@ export default function LoanForm({ onSuccess, onCancel }: LoanFormProps) {
               <Button 
                 type="submit" 
                 disabled={createLoanMutation.isPending}
-                className="bg-primary text-primary-foreground hover:bg-primary/90"
+                className="bg-primary text-primary-foreground lg:hover:bg-primary/90"
                 data-testid="button-create-loan"
               >
                 {createLoanMutation.isPending ? "Creating..." : "Create Loan"}

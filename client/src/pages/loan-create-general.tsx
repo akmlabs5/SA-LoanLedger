@@ -540,7 +540,7 @@ export default function GeneralLoanCreatePage() {
                                     type="button"
                                     variant={isSelected ? "default" : "outline"}
                                     size="sm"
-                                    className={`text-xs hover:bg-blue-100 dark:hover:bg-blue-900/30 flex-col h-auto py-2 px-3 ${isSelected ? "bg-blue-600 text-white" : ""}`}
+                                    className={`text-xs lg:hover:bg-blue-100 dark:hover:bg-blue-900/30 flex-col h-auto py-2 px-3 ${isSelected ? "bg-blue-600 text-white" : ""}`}
                                     onClick={() => {
                                       form.setValue("dueDate", dueDateString);
                                       form.setValue("siborTerm", siborTerm);
@@ -750,7 +750,7 @@ export default function GeneralLoanCreatePage() {
                       <Button 
                         type="submit" 
                         disabled={createLoanMutation.isPending}
-                        className="h-12 bg-gradient-to-r from-emerald-600 to-blue-600 hover:from-emerald-700 hover:to-blue-700"
+                        className="h-12 bg-gradient-to-r from-emerald-600 to-blue-600 lg:hover:from-emerald-700 lg:hover:to-blue-700"
                         data-testid="button-save-loan"
                       >
                         {createLoanMutation.isPending ? (

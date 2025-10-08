@@ -597,7 +597,7 @@ export default function GeneralFacilityCreatePage() {
                       <Button 
                         type="submit" 
                         disabled={createFacilityMutation.isPending}
-                        className="h-12 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700"
+                        className="h-12 bg-gradient-to-r from-green-600 to-emerald-600 lg:hover:from-green-700 lg:hover:to-emerald-700"
                         data-testid="button-save-facility"
                       >
                         {createFacilityMutation.isPending ? (

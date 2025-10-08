@@ -777,7 +777,7 @@ export default function Loans() {
               </Button>
               <Button 
                 onClick={() => setLocation("/loans/create")}
-                className="h-10 w-full sm:w-auto bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white shadow-lg hover:shadow-xl transition-all duration-300"
+                className="h-10 w-full sm:w-auto bg-gradient-to-r from-blue-600 to-blue-700 lg:hover:from-blue-700 lg:hover:to-blue-800 text-white shadow-lg lg:hover:shadow-xl transition-all duration-300"
                 data-testid="button-add-loan"
               >
                 <Plus className="mr-2 h-4 w-4" />
@@ -926,7 +926,7 @@ export default function Loans() {
                     {(activeLoans as any[])?.length === 0 ? (
                       <Button 
                         onClick={() => setLocation("/loans/create")}
-                        className="h-10 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white"
+                        className="h-10 bg-gradient-to-r from-blue-600 to-blue-700 lg:hover:from-blue-700 lg:hover:to-blue-800 text-white"
                         data-testid="button-add-first-loan"
                       >
                         <Plus className="mr-2 h-4 w-4" />
@@ -959,7 +959,7 @@ export default function Loans() {
                     return (
                       <Card 
                         key={loan.id} 
-                        className={`border-0 shadow-lg bg-white/50 dark:bg-gray-800/50 backdrop-blur-sm hover:shadow-xl transition-all duration-300 ${
+                        className={`border-0 shadow-lg bg-white/50 dark:bg-gray-800/50 backdrop-blur-sm lg:hover:shadow-xl transition-all duration-300 ${
                           urgency.status === 'critical' ? 'border-l-4 border-l-red-500' :
                           urgency.status === 'warning' ? 'border-l-4 border-l-amber-500' :
                           'border-l-4 border-l-emerald-500'
@@ -987,9 +987,9 @@ export default function Loans() {
                               <Badge 
                                 variant={urgency.variant} 
                                 className={`text-xs ${
-                                  urgency.status === 'critical' ? 'bg-red-100 text-red-800 hover:bg-red-200 dark:bg-red-900/20 dark:text-red-400' :
-                                  urgency.status === 'warning' ? 'bg-amber-100 text-amber-800 hover:bg-amber-200 dark:bg-amber-900/20 dark:text-amber-400' :
-                                  'bg-emerald-100 text-emerald-800 hover:bg-emerald-200 dark:bg-emerald-900/20 dark:text-emerald-400'
+                                  urgency.status === 'critical' ? 'bg-red-100 text-red-800 lg:hover:bg-red-200 dark:bg-red-900/20 dark:text-red-400' :
+                                  urgency.status === 'warning' ? 'bg-amber-100 text-amber-800 lg:hover:bg-amber-200 dark:bg-amber-900/20 dark:text-amber-400' :
+                                  'bg-emerald-100 text-emerald-800 lg:hover:bg-emerald-200 dark:bg-emerald-900/20 dark:text-emerald-400'
                                 }`}
                                 data-testid={`badge-loan-urgency-${loan.id}`}
                               >
@@ -1136,9 +1136,9 @@ export default function Loans() {
                               <Button 
                                 className={`${
                                   urgency.status === 'critical' 
-                                    ? 'bg-red-600 hover:bg-red-700' 
-                                    : 'bg-emerald-600 hover:bg-emerald-700'
-                                } text-white shadow-lg hover:shadow-xl transition-all duration-300 h-10 flex-1 sm:flex-initial`}
+                                    ? 'bg-red-600 lg:hover:bg-red-700' 
+                                    : 'bg-emerald-600 lg:hover:bg-emerald-700'
+                                } text-white shadow-lg lg:hover:shadow-xl transition-all duration-300 h-10 flex-1 sm:flex-initial`}
                                 size="sm"
                                 onClick={() => handleSettleLoan(loan.id, loan.amount)}
                                 disabled={settleLoanMutation.isPending}
@@ -1153,7 +1153,7 @@ export default function Loans() {
                                 onClick={() => handleDeleteLoan(loan.id)}
                                 disabled={deleteLoanMutation.isPending}
                                 data-testid={`button-delete-loan-${loan.id}`}
-                                className="h-10 flex-1 sm:flex-initial text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-950"
+                                className="h-10 flex-1 sm:flex-initial text-red-600 lg:hover:text-red-700 lg:hover:bg-red-50 dark:hover:bg-red-950"
                               >
                                 <Trash2 className="mr-2 h-4 w-4" />
                                 {deleteLoanMutation.isPending ? 'Deleting...' : 'Delete Loan'}
@@ -1220,7 +1220,7 @@ export default function Loans() {
                                 Reference: {loan.referenceNumber}
                               </p>
                             </div>
-                            <Badge className="bg-emerald-100 text-emerald-800 hover:bg-emerald-200 dark:bg-emerald-900/20 dark:text-emerald-400">
+                            <Badge className="bg-emerald-100 text-emerald-800 lg:hover:bg-emerald-200 dark:bg-emerald-900/20 dark:text-emerald-400">
                               Settled
                             </Badge>
                           </div>
@@ -1276,7 +1276,7 @@ export default function Loans() {
             <AlertDialogCancel onClick={() => setLoanToDelete(null)}>Cancel</AlertDialogCancel>
             <AlertDialogAction 
               onClick={confirmDeleteLoan}
-              className="bg-red-600 hover:bg-red-700 text-white"
+              className="bg-red-600 lg:hover:bg-red-700 text-white"
             >
               Delete Loan
             </AlertDialogAction>

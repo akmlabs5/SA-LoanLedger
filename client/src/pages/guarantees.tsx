@@ -134,7 +134,7 @@ export default function GuaranteesPage() {
             <p className="text-gray-600 dark:text-gray-400">Manage your bank guarantee portfolio</p>
           </div>
           <Link href="/guarantees/create">
-            <Button className="bg-green-600 hover:bg-green-700 text-white" data-testid="button-create-guarantee">
+            <Button className="bg-green-600 lg:hover:bg-green-700 text-white" data-testid="button-create-guarantee">
               <Plus className="h-4 w-4 mr-2" />
               Issue New Guarantee
             </Button>
@@ -250,7 +250,7 @@ export default function GuaranteesPage() {
               </p>
               {guarantees?.length === 0 && (
                 <Link href="/guarantees/create">
-                  <Button className="bg-green-600 hover:bg-green-700 text-white" data-testid="button-create-first-guarantee">
+                  <Button className="bg-green-600 lg:hover:bg-green-700 text-white" data-testid="button-create-first-guarantee">
                     <Plus className="h-4 w-4 mr-2" />
                     Issue First Guarantee
                   </Button>
@@ -261,7 +261,7 @@ export default function GuaranteesPage() {
         ) : (
           <div className="space-y-4">
             {filteredGuarantees.map((guarantee) => (
-              <Card key={guarantee.id} className="hover:shadow-md transition-shadow">
+              <Card key={guarantee.id} className="lg:hover:shadow-md transition-shadow">
                 <CardContent className="p-6">
                   <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
                     <div className="flex-1 space-y-2">

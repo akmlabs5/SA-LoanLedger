@@ -25,7 +25,7 @@ export function Breadcrumbs({ items }: BreadcrumbsProps) {
           <ChevronRight className="h-3 w-3" />
           {item.href ? (
             <Link href={item.href}>
-              <Button variant="ghost" size="sm" className="h-8 px-2 text-muted-foreground hover:text-foreground">
+              <Button variant="ghost" size="sm" className="h-8 px-2 text-muted-foreground lg:hover:text-foreground">
                 {item.label}
               </Button>
             </Link>

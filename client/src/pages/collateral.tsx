@@ -192,7 +192,7 @@ export default function CollateralPage() {
             
             <Button 
               onClick={() => setLocation("/collateral/create")}
-              className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white shadow-lg"
+              className="bg-gradient-to-r from-purple-600 to-pink-600 lg:hover:from-purple-700 lg:hover:to-pink-700 text-white shadow-lg"
               data-testid="button-add-collateral"
             >
               <Plus className="mr-2 h-4 w-4" />
@@ -280,7 +280,7 @@ export default function CollateralPage() {
                 <p className="text-muted-foreground mb-4">No collateral assets found</p>
                 <Button 
                   onClick={() => setLocation("/collateral/create")}
-                  className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white shadow-lg"
+                  className="bg-gradient-to-r from-purple-600 to-pink-600 lg:hover:from-purple-700 lg:hover:to-pink-700 text-white shadow-lg"
                   data-testid="button-add-first-collateral"
                 >
                   <Plus className="mr-2 h-4 w-4" />

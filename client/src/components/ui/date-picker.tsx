@@ -39,13 +39,13 @@ export const ModernDatePicker = forwardRef<HTMLInputElement, DatePickerProps>(
               data-testid={dataTestId}
             />
             <DatePicker.Trigger 
-              className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-200"
+              className="p-1.5 rounded-lg lg:hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-200"
               data-testid={dataTestId ? `${dataTestId}-trigger` : undefined}
             >
               <Calendar size={16} className="text-gray-600 dark:text-gray-300" />
             </DatePicker.Trigger>
             <DatePicker.ClearTrigger 
-              className="p-1.5 rounded-lg text-red-500 hover:bg-red-100 dark:hover:bg-red-900/40 transition-colors duration-200"
+              className="p-1.5 rounded-lg text-red-500 lg:hover:bg-red-100 dark:hover:bg-red-900/40 transition-colors duration-200"
               data-testid={dataTestId ? `${dataTestId}-clear` : undefined}
             >
               <X size={14} />
@@ -69,13 +69,13 @@ export const ModernDatePicker = forwardRef<HTMLInputElement, DatePickerProps>(
                     {(datePicker) => (
                       <>
                         <DatePicker.ViewControl className="flex justify-between items-center mb-4 text-sm font-medium text-gray-700 dark:text-gray-300">
-                          <DatePicker.PrevTrigger className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-200">
+                          <DatePicker.PrevTrigger className="p-2 rounded-lg lg:hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-200">
                             <ChevronLeft size={18} />
                           </DatePicker.PrevTrigger>
-                          <DatePicker.ViewTrigger className="cursor-pointer px-3 py-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 font-semibold transition-colors duration-200">
+                          <DatePicker.ViewTrigger className="cursor-pointer px-3 py-2 rounded-lg lg:hover:bg-gray-100 dark:hover:bg-gray-700 font-semibold transition-colors duration-200">
                             <DatePicker.RangeText />
                           </DatePicker.ViewTrigger>
-                          <DatePicker.NextTrigger className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-200">
+                          <DatePicker.NextTrigger className="p-2 rounded-lg lg:hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-200">
                             <ChevronRight size={18} />
                           </DatePicker.NextTrigger>
                         </DatePicker.ViewControl>
@@ -99,7 +99,7 @@ export const ModernDatePicker = forwardRef<HTMLInputElement, DatePickerProps>(
                                 {week.map((day, id) => (
                                   <DatePicker.TableCell key={id} value={day}>
                                     <DatePicker.TableCellTrigger
-                                      className="w-10 h-10 flex items-center justify-center rounded-lg hover:bg-blue-100 dark:hover:bg-blue-800 focus:ring-2 focus:ring-blue-500 transition-all duration-200 data-[selected]:bg-blue-600 data-[selected]:text-white data-[today]:bg-gray-100 data-[today]:dark:bg-gray-700 data-[today]:font-semibold"
+                                      className="w-10 h-10 flex items-center justify-center rounded-lg lg:hover:bg-blue-100 dark:hover:bg-blue-800 focus:ring-2 focus:ring-blue-500 transition-all duration-200 data-[selected]:bg-blue-600 data-[selected]:text-white data-[today]:bg-gray-100 data-[today]:dark:bg-gray-700 data-[today]:font-semibold"
                                     >
                                       {day.day}
                                     </DatePicker.TableCellTrigger>
@@ -120,13 +120,13 @@ export const ModernDatePicker = forwardRef<HTMLInputElement, DatePickerProps>(
                     {(datePicker) => (
                       <>
                         <DatePicker.ViewControl className="flex justify-between items-center mb-4">
-                          <DatePicker.PrevTrigger className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-200">
+                          <DatePicker.PrevTrigger className="p-2 rounded-lg lg:hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-200">
                             <ChevronLeft size={18} />
                           </DatePicker.PrevTrigger>
-                          <DatePicker.ViewTrigger className="cursor-pointer px-3 py-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 font-semibold transition-colors duration-200">
+                          <DatePicker.ViewTrigger className="cursor-pointer px-3 py-2 rounded-lg lg:hover:bg-gray-100 dark:hover:bg-gray-700 font-semibold transition-colors duration-200">
                             <DatePicker.RangeText />
                           </DatePicker.ViewTrigger>
-                          <DatePicker.NextTrigger className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-200">
+                          <DatePicker.NextTrigger className="p-2 rounded-lg lg:hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-200">
                             <ChevronRight size={18} />
                           </DatePicker.NextTrigger>
                         </DatePicker.ViewControl>
@@ -136,7 +136,7 @@ export const ModernDatePicker = forwardRef<HTMLInputElement, DatePickerProps>(
                               <DatePicker.TableRow key={id}>
                                 {months.map((month, id) => (
                                   <DatePicker.TableCell key={id} value={month.value}>
-                                    <DatePicker.TableCellTrigger className="px-3 py-2 rounded-lg hover:bg-blue-100 dark:hover:bg-blue-800 data-[selected]:bg-blue-600 data-[selected]:text-white transition-all duration-200">
+                                    <DatePicker.TableCellTrigger className="px-3 py-2 rounded-lg lg:hover:bg-blue-100 dark:hover:bg-blue-800 data-[selected]:bg-blue-600 data-[selected]:text-white transition-all duration-200">
                                       {month.label}
                                     </DatePicker.TableCellTrigger>
                                   </DatePicker.TableCell>
@@ -156,13 +156,13 @@ export const ModernDatePicker = forwardRef<HTMLInputElement, DatePickerProps>(
                     {(datePicker) => (
                       <>
                         <DatePicker.ViewControl className="flex justify-between items-center mb-4">
-                          <DatePicker.PrevTrigger className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-200">
+                          <DatePicker.PrevTrigger className="p-2 rounded-lg lg:hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-200">
                             <ChevronLeft size={18} />
                           </DatePicker.PrevTrigger>
-                          <DatePicker.ViewTrigger className="cursor-pointer px-3 py-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 font-semibold transition-colors duration-200">
+                          <DatePicker.ViewTrigger className="cursor-pointer px-3 py-2 rounded-lg lg:hover:bg-gray-100 dark:hover:bg-gray-700 font-semibold transition-colors duration-200">
                             <DatePicker.RangeText />
                           </DatePicker.ViewTrigger>
-                          <DatePicker.NextTrigger className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-200">
+                          <DatePicker.NextTrigger className="p-2 rounded-lg lg:hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-200">
                             <ChevronRight size={18} />
                           </DatePicker.NextTrigger>
                         </DatePicker.ViewControl>
@@ -172,7 +172,7 @@ export const ModernDatePicker = forwardRef<HTMLInputElement, DatePickerProps>(
                               <DatePicker.TableRow key={id}>
                                 {years.map((year, id) => (
                                   <DatePicker.TableCell key={id} value={year.value}>
-                                    <DatePicker.TableCellTrigger className="px-3 py-2 rounded-lg hover:bg-blue-100 dark:hover:bg-blue-800 data-[selected]:bg-blue-600 data-[selected]:text-white transition-all duration-200">
+                                    <DatePicker.TableCellTrigger className="px-3 py-2 rounded-lg lg:hover:bg-blue-100 dark:hover:bg-blue-800 data-[selected]:bg-blue-600 data-[selected]:text-white transition-all duration-200">
                                       {year.label}
                                     </DatePicker.TableCellTrigger>
                                   </DatePicker.TableCell>

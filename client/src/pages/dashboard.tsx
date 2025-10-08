@@ -549,7 +549,7 @@ export default function Dashboard() {
           <div>
             <div className="flex items-center gap-3">
               <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Dashboard</h1>
-              <Badge className="bg-emerald-600 text-white hover:bg-emerald-700">v2.0.3</Badge>
+              <Badge className="bg-emerald-600 text-white lg:hover:bg-emerald-700">v2.0.3</Badge>
             </div>
             <p className="text-gray-600 dark:text-gray-300 mt-1">
               Welcome back, {String((user as any)?.displayName || (user as any)?.firstName || 'User')}. Here's your portfolio overview.
@@ -567,7 +567,7 @@ export default function Dashboard() {
                   }
                 }}>
                   <SelectTrigger 
-                    className="w-40 sm:w-48 bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 hover:border-blue-400 dark:hover:border-blue-500 transition-colors focus:ring-2 focus:ring-blue-500 focus:border-blue-500" 
+                    className="w-40 sm:w-48 bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 lg:hover:border-blue-400 dark:hover:border-blue-500 transition-colors focus:ring-2 focus:ring-blue-500 focus:border-blue-500" 
                     data-testid="select-bank-switcher"
                     aria-label="Quick access to bank details"
                   >
@@ -612,7 +612,7 @@ export default function Dashboard() {
               </div>
               <Link href="/ai-chat">
                 <Button 
-                  className="bg-white text-emerald-600 hover:bg-white/90 font-semibold w-full sm:w-auto"
+                  className="bg-white text-emerald-600 lg:hover:bg-white/90 font-semibold w-full sm:w-auto"
                   data-testid="button-ai-assistant"
                 >
                   Open AI Chat
@@ -688,7 +688,7 @@ export default function Dashboard() {
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-3 sm:gap-4 lg:gap-6 mb-6 sm:mb-8">
           {/* Priority Loans with Compact Cards */}
           <div className="lg:col-span-3">
-            <Card className="bg-card border border-border shadow-sm hover:shadow-md transition-shadow duration-200 h-full flex flex-col">
+            <Card className="bg-card border border-border shadow-sm lg:hover:shadow-md transition-shadow duration-200 h-full flex flex-col">
               <CardHeader className="pb-4 shrink-0">
                 <div className="flex items-center justify-between">
                   <div className="space-y-1">
@@ -701,7 +701,7 @@ export default function Dashboard() {
                   <div className="flex gap-2">
                     <SmartLoanMatcher />
                     <Link href="/loans">
-                      <Button className="bg-primary hover:bg-primary/90 text-primary-foreground" data-testid="button-add-loan">
+                      <Button className="bg-primary lg:hover:bg-primary/90 text-primary-foreground" data-testid="button-add-loan">
                         <Plus className="mr-2 h-4 w-4" />
                         New Loan
                       </Button>
@@ -739,7 +739,7 @@ export default function Dashboard() {
                             : 'border-l-primary';
                         
                         return (
-                          <div key={loan.id} className={`bg-card border border-border ${urgencyBorderClass} border-l-4 p-4 rounded-lg shadow-sm hover:shadow-md transition-shadow duration-200`} data-testid={`card-loan-${loan.id}`}>
+                          <div key={loan.id} className={`bg-card border border-border ${urgencyBorderClass} border-l-4 p-4 rounded-lg shadow-sm lg:hover:shadow-md transition-shadow duration-200`} data-testid={`card-loan-${loan.id}`}>
                             <div className="flex items-center justify-between">
                               <div className="flex items-center space-x-3 min-w-0 flex-1">
                                 <Badge 
@@ -758,7 +758,7 @@ export default function Dashboard() {
                                         e.stopPropagation();
                                         handleBankRowClick((loan as any).facility?.bank?.id, (loan as any).facility?.bank?.name);
                                       }}
-                                      className="font-medium text-foreground hover:text-primary hover:underline transition-colors duration-200 truncate"
+                                      className="font-medium text-foreground lg:hover:text-primary lg:hover:underline transition-colors duration-200 truncate"
                                       data-testid={`text-loan-reference-${loan.id}`}
                                       title={`Click to view ${(loan as any).facility?.bank?.name} details`}
                                     >
@@ -817,7 +817,7 @@ export default function Dashboard() {
           
           {/* Sticky Quick Actions Panel */}
           <div className="lg:sticky lg:top-6 lg:self-start">
-            <Card className="bg-card border border-border shadow-sm hover:shadow-md transition-shadow duration-200 h-full flex flex-col min-h-[600px]">
+            <Card className="bg-card border border-border shadow-sm lg:hover:shadow-md transition-shadow duration-200 h-full flex flex-col min-h-[600px]">
               <CardHeader className="pb-4 shrink-0">
               <CardTitle className="text-xl font-semibold flex items-center space-x-2">
                 <TrendingUp className="h-5 w-5 text-primary" />
@@ -828,7 +828,7 @@ export default function Dashboard() {
             <CardContent className="flex-1 flex flex-col justify-between min-h-[450px]">
               <div className="space-y-4">
                 <Link href="/loans">
-                  <Button className="w-full justify-start bg-primary hover:bg-primary/90 text-primary-foreground" data-testid="button-quick-add-loan">
+                  <Button className="w-full justify-start bg-primary lg:hover:bg-primary/90 text-primary-foreground" data-testid="button-quick-add-loan">
                     <Plus className="mr-3 h-4 w-4" />
                     Add New Loan
                   </Button>
@@ -861,7 +861,7 @@ export default function Dashboard() {
         </div>
 
         {/* Enhanced Bank Exposures Overview */}
-        <Card className="mb-6 sm:mb-8 bg-card border border-border shadow-sm hover:shadow-md transition-shadow duration-200">
+        <Card className="mb-6 sm:mb-8 bg-card border border-border shadow-sm lg:hover:shadow-md transition-shadow duration-200">
           <CardHeader className="pb-6">
             <div className="flex items-center justify-between">
               <div className="space-y-1">
@@ -894,7 +894,7 @@ export default function Dashboard() {
                     portfolioSummary.bankExposures.slice(0, visibleBanks).map((exposure, index) => (
                       <tr 
                         key={exposure.bankId} 
-                        className="group hover:bg-accent cursor-pointer transition-colors duration-200 focus-within:ring-2 focus-within:ring-primary focus-within:ring-opacity-50" 
+                        className="group lg:hover:bg-accent cursor-pointer transition-colors duration-200 focus-within:ring-2 focus-within:ring-primary focus-within:ring-opacity-50" 
                         data-testid={`row-bank-${exposure.bankId}`}
                         onClick={() => handleBankRowClick(exposure.bankId, exposure.bankName)}
                         onKeyDown={(e) => handleBankRowKeyDown(e, exposure.bankId, exposure.bankName)}
@@ -980,7 +980,7 @@ export default function Dashboard() {
 
         {/* Charts Section - Desktop Only */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 mb-6 sm:mb-8">
-          <Card className="bg-card border border-border shadow-sm hover:shadow-md transition-shadow duration-200">
+          <Card className="bg-card border border-border shadow-sm lg:hover:shadow-md transition-shadow duration-200">
             <CardHeader>
               <CardTitle className="text-lg font-semibold">Outstanding vs Limits</CardTitle>
             </CardHeader>
@@ -989,7 +989,7 @@ export default function Dashboard() {
             </CardContent>
           </Card>
 
-          <Card className="bg-card border border-border shadow-sm hover:shadow-md transition-shadow duration-200">
+          <Card className="bg-card border border-border shadow-sm lg:hover:shadow-md transition-shadow duration-200">
             <CardHeader>
               <CardTitle className="text-lg font-semibold">Portfolio Distribution</CardTitle>
             </CardHeader>
@@ -998,7 +998,7 @@ export default function Dashboard() {
             </CardContent>
           </Card>
 
-          <Card className="bg-card border border-border shadow-sm hover:shadow-md transition-shadow duration-200">
+          <Card className="bg-card border border-border shadow-sm lg:hover:shadow-md transition-shadow duration-200">
             <CardHeader>
               <CardTitle className="text-lg font-semibold">Loans Trend</CardTitle>
             </CardHeader>
@@ -1007,7 +1007,7 @@ export default function Dashboard() {
             </CardContent>
           </Card>
 
-          <Card className="bg-card border border-border shadow-sm hover:shadow-md transition-shadow duration-200">
+          <Card className="bg-card border border-border shadow-sm lg:hover:shadow-md transition-shadow duration-200">
             <CardHeader>
               <CardTitle className="text-lg font-semibold">Upcoming Loans by Month</CardTitle>
             </CardHeader>

@@ -306,10 +306,10 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
               }}
               className={cn(
                 "flex flex-col items-center justify-center p-3 min-h-[64px] transition-all duration-200 active:scale-95",
-                "hover:bg-accent/50 active:bg-accent",
+                "lg:hover:bg-accent/50 active:bg-accent",
                 isActive
                   ? "text-saudi bg-saudi/5 border-t-2 border-saudi"
-                  : "text-muted-foreground hover:text-foreground"
+                  : "text-muted-foreground lg:hover:text-foreground"
               )}
             >
               <item.icon className={cn("h-5 w-5 mb-1", isActive && "text-saudi")} />
@@ -389,7 +389,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                           isActive={location === item.url}
                           data-testid={`nav-${item.title.toLowerCase().replace(' ', '-')}`}
                           className={cn(
-                            "font-medium text-sm hover:bg-accent/50 data-[state=open]:bg-accent/50 rounded-lg transition-all duration-200 active:scale-[0.98]",
+                            "font-medium text-sm lg:hover:bg-accent/50 data-[state=open]:bg-accent/50 rounded-lg transition-all duration-200 active:scale-[0.98]",
                             isMobile ? "h-12 px-4 text-base" : "h-10 px-3",
                             (item as any).comingSoon && "cursor-not-allowed opacity-60"
                           )}
@@ -420,7 +420,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
 
           <SidebarFooter className="border-t border-border">
             <div className={cn(
-              "flex items-center gap-3 p-4 rounded-xl hover:bg-accent/50 hover:text-accent-foreground cursor-pointer transition-all duration-200",
+              "flex items-center gap-3 p-4 rounded-xl lg:hover:bg-accent/50 lg:hover:text-accent-foreground cursor-pointer transition-all duration-200",
               isMobile && "p-3"
             )}>
               <Avatar className={cn(isMobile ? "h-10 w-10" : "h-9 w-9")}>
@@ -493,7 +493,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                   </h2>
                   {isMobile && location !== '/' && (
                     <div className="flex items-center text-xs text-muted-foreground">
-                      <Link href="/" className="hover:text-foreground transition-colors">
+                      <Link href="/" className="lg:hover:text-foreground transition-colors">
                         Dashboard
                       </Link>
                       <span className="mx-1">›</span>
@@ -510,7 +510,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                   size={isMobile ? "sm" : "icon"} 
                   data-testid="button-notifications"
                   className={cn(
-                    "active:scale-95 transition-transform duration-100 text-foreground hover:text-foreground hover:bg-accent",
+                    "active:scale-95 transition-transform duration-100 text-foreground lg:hover:text-foreground lg:hover:bg-accent",
                     isMobile && "h-9 w-9"
                   )}
                 >
@@ -522,7 +522,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                     variant="ghost" 
                     size="sm"
                     onClick={handleSignOut}
-                    className="text-red-600 hover:text-red-600 hover:bg-red-50"
+                    className="text-red-600 lg:hover:text-red-600 lg:hover:bg-red-50"
                     data-testid="button-signout"
                   >
                     <LogOut className="mr-2 h-4 w-4" />
@@ -534,7 +534,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                     variant="ghost" 
                     size="sm"
                     onClick={handleSignOut}
-                    className="text-red-600 hover:text-red-600 hover:bg-red-50 h-9 px-2 active:scale-95 transition-all duration-100"
+                    className="text-red-600 lg:hover:text-red-600 lg:hover:bg-red-50 h-9 px-2 active:scale-95 transition-all duration-100"
                     data-testid="button-signout-mobile"
                   >
                     <LogOut className="h-4 w-4" />

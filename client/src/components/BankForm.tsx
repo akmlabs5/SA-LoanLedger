@@ -347,7 +347,7 @@ export default function BankForm({ banks, onSuccess, onCancel }: BankFormProps) 
               <Button 
                 type="submit" 
                 disabled={createFacilityMutation.isPending}
-                className="bg-primary text-primary-foreground hover:bg-primary/90"
+                className="bg-primary text-primary-foreground lg:hover:bg-primary/90"
                 data-testid="button-create-facility"
                 onClick={(e) => {
                   console.log("Create Facility button clicked");

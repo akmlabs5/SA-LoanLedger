@@ -97,7 +97,7 @@ export function FloatingAgentChat() {
             "fixed z-50 flex items-center gap-2 px-4 py-3 bg-gradient-to-r from-green-600 to-emerald-600 text-white rounded-full shadow-lg transition-all duration-200 group",
             isMobile 
               ? "bottom-24 right-4 active:from-green-700 active:to-emerald-700 active:scale-95" 
-              : "bottom-6 right-6 hover:from-green-700 hover:to-emerald-700 hover:shadow-xl"
+              : "bottom-6 right-6 lg:hover:from-green-700 lg:hover:to-emerald-700 lg:hover:shadow-xl"
           )}
         >
           <div className="relative">
@@ -138,7 +138,7 @@ export function FloatingAgentChat() {
                   data-testid="button-new-chat"
                   className={cn(
                     "text-white h-8 px-2",
-                    isMobile ? "active:bg-white/20" : "hover:bg-white/20"
+                    isMobile ? "active:bg-white/20" : "lg:hover:bg-white/20"
                   )}
                 >
                   <Sparkles className="w-4 h-4" />
@@ -151,7 +151,7 @@ export function FloatingAgentChat() {
                 data-testid="button-close-agent-chat"
                 className={cn(
                   "text-white h-8 w-8 p-0",
-                  isMobile ? "active:bg-white/20" : "hover:bg-white/20"
+                  isMobile ? "active:bg-white/20" : "lg:hover:bg-white/20"
                 )}
               >
                 <X className="w-4 h-4" />
@@ -183,7 +183,7 @@ export function FloatingAgentChat() {
                       "w-full text-left px-3 py-2 text-sm bg-gray-100 dark:bg-gray-800 rounded-lg transition-colors",
                       isMobile 
                         ? "active:bg-gray-200 dark:active:bg-gray-700" 
-                        : "hover:bg-gray-200 dark:hover:bg-gray-700"
+                        : "lg:hover:bg-gray-200 dark:hover:bg-gray-700"
                     )}
                   >
                     "Show me all my active loans"
@@ -195,7 +195,7 @@ export function FloatingAgentChat() {
                       "w-full text-left px-3 py-2 text-sm bg-gray-100 dark:bg-gray-800 rounded-lg transition-colors",
                       isMobile 
                         ? "active:bg-gray-200 dark:active:bg-gray-700" 
-                        : "hover:bg-gray-200 dark:hover:bg-gray-700"
+                        : "lg:hover:bg-gray-200 dark:hover:bg-gray-700"
                     )}
                   >
                     "What's my total debt?"
@@ -207,7 +207,7 @@ export function FloatingAgentChat() {
                       "w-full text-left px-3 py-2 text-sm bg-gray-100 dark:bg-gray-800 rounded-lg transition-colors",
                       isMobile 
                         ? "active:bg-gray-200 dark:active:bg-gray-700" 
-                        : "hover:bg-gray-200 dark:hover:bg-gray-700"
+                        : "lg:hover:bg-gray-200 dark:hover:bg-gray-700"
                     )}
                   >
                     "I took a 100K loan from Al Rajhi Bank today"
@@ -282,7 +282,7 @@ export function FloatingAgentChat() {
                   "bg-gradient-to-r from-green-600 to-emerald-600 text-white",
                   isMobile 
                     ? "active:from-green-700 active:to-emerald-700 active:scale-95" 
-                    : "hover:from-green-700 hover:to-emerald-700"
+                    : "lg:hover:from-green-700 lg:hover:to-emerald-700"
                 )}
               >
                 {isLoading ? (

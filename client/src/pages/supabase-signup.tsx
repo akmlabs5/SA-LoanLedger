@@ -278,14 +278,14 @@ export default function SupabaseSignupPage() {
                         defaultValue={field.value}
                         className="flex flex-col space-y-1"
                       >
-                        <div className="flex items-center space-x-2 p-3 rounded-lg hover:bg-white/10 transition-colors">
+                        <div className="flex items-center space-x-2 p-3 rounded-lg lg:hover:bg-white/10 transition-colors">
                           <RadioGroupItem value="personal" id="personal" className="border-white/50 text-white/70 data-[state=checked]:border-white data-[state=checked]:text-white data-[state=checked]:bg-white/20" />
                           <Label htmlFor="personal" className="text-white font-normal cursor-pointer flex items-center gap-2">
                             <User className="w-4 h-4" />
                             Personal Account
                           </Label>
                         </div>
-                        <div className="flex items-center space-x-2 p-3 rounded-lg hover:bg-white/10 transition-colors">
+                        <div className="flex items-center space-x-2 p-3 rounded-lg lg:hover:bg-white/10 transition-colors">
                           <RadioGroupItem value="organization" id="organization" className="border-white/50 text-white/70 data-[state=checked]:border-white data-[state=checked]:text-white data-[state=checked]:bg-white/20" />
                           <Label htmlFor="organization" className="text-white font-normal cursor-pointer flex items-center gap-2">
                             <Building2 className="w-4 h-4" />
@@ -351,7 +351,7 @@ export default function SupabaseSignupPage() {
 
               <Button 
                 type="submit" 
-                className="w-full h-12 text-lg font-semibold bg-green-700 hover:bg-green-800 rounded-xl shadow-lg hover:shadow-xl transition-all duration-200 text-white" 
+                className="w-full h-12 text-lg font-semibold bg-green-700 lg:hover:bg-green-800 rounded-xl shadow-lg lg:hover:shadow-xl transition-all duration-200 text-white" 
                 disabled={isLoading}
                 data-testid="button-signup"
               >
@@ -362,7 +362,7 @@ export default function SupabaseSignupPage() {
                 Already have an account?{" "}
                 <Button
                   variant="link"
-                  className="p-0 h-auto font-semibold text-white hover:text-white/90"
+                  className="p-0 h-auto font-semibold text-white lg:hover:text-white/90"
                   onClick={() => setLocation('/unified-login')}
                   data-testid="link-signin"
                 >

@@ -145,7 +145,7 @@ export default function FacilityCreatePage() {
                 size="sm"
                 onClick={() => setLocation(`/banks/${bankId}`)}
                 data-testid="button-back-to-bank"
-                className="hover:bg-gray-100 dark:hover:bg-gray-700"
+                className="lg:hover:bg-gray-100 dark:hover:bg-gray-700"
               >
                 <ArrowLeft className="h-4 w-4 mr-2" />
                 Back to {bank?.name || 'Bank'}
@@ -435,7 +435,7 @@ export default function FacilityCreatePage() {
                         type="submit"
                         disabled={createFacilityMutation.isPending}
                         data-testid="button-create-facility"
-                        className="h-12 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700"
+                        className="h-12 bg-gradient-to-r from-blue-600 to-indigo-600 lg:hover:from-blue-700 lg:hover:to-indigo-700"
                       >
                         {createFacilityMutation.isPending ? "Creating..." : "Create Facility"}
                       </Button>

@@ -35,12 +35,12 @@ export default function LoginHub() {
         <div className="grid md:grid-cols-2 gap-8 max-w-3xl mx-auto">
           {/* Regular User Login */}
           <Card 
-            className="bg-white/10 backdrop-blur-xl border-white/20 hover:bg-white/15 transition-all duration-300 group cursor-pointer"
+            className="bg-white/10 backdrop-blur-xl border-white/20 lg:hover:bg-white/15 transition-all duration-300 group cursor-pointer"
             onClick={() => setLocation('/auth/login')}
             data-testid="card-user-login"
           >
             <CardHeader className="text-center pb-6">
-              <div className="mx-auto mb-4 p-4 bg-gradient-to-r from-purple-600 to-blue-600 rounded-full w-16 h-16 flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
+              <div className="mx-auto mb-4 p-4 bg-gradient-to-r from-purple-600 to-blue-600 rounded-full w-16 h-16 flex items-center justify-center lg:group-hover:scale-110 transition-transform duration-300">
                 <Users className="w-8 h-8 text-white" />
               </div>
               <CardTitle className="text-2xl text-white mb-2">Regular User</CardTitle>
@@ -64,7 +64,7 @@ export default function LoginHub() {
                 </div>
               </div>
               <Button 
-                className="w-full bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white font-semibold py-3 text-lg transition-all duration-300 group-hover:shadow-lg group-hover:shadow-purple-500/25"
+                className="w-full bg-gradient-to-r from-purple-600 to-blue-600 lg:hover:from-purple-700 lg:hover:to-blue-700 text-white font-semibold py-3 text-lg transition-all duration-300 lg:group-hover:shadow-lg lg:group-hover:shadow-purple-500/25"
                 size="lg"
                 data-testid="button-continue-replit"
               >
@@ -75,12 +75,12 @@ export default function LoginHub() {
 
           {/* Admin Login */}
           <Card 
-            className="bg-white/10 backdrop-blur-xl border-white/20 hover:bg-white/15 transition-all duration-300 group cursor-pointer"
+            className="bg-white/10 backdrop-blur-xl border-white/20 lg:hover:bg-white/15 transition-all duration-300 group cursor-pointer"
             onClick={() => setLocation('/admin-portal/login')}
             data-testid="card-admin-login"
           >
             <CardHeader className="text-center pb-6">
-              <div className="mx-auto mb-4 p-4 bg-gradient-to-r from-red-600 to-orange-600 rounded-full w-16 h-16 flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
+              <div className="mx-auto mb-4 p-4 bg-gradient-to-r from-red-600 to-orange-600 rounded-full w-16 h-16 flex items-center justify-center lg:group-hover:scale-110 transition-transform duration-300">
                 <Shield className="w-8 h-8 text-white" />
               </div>
               <CardTitle className="text-2xl text-white mb-2">Administrator</CardTitle>
@@ -104,7 +104,7 @@ export default function LoginHub() {
                 </div>
               </div>
               <Button 
-                className="w-full bg-gradient-to-r from-red-600 to-orange-600 hover:from-red-700 hover:to-orange-700 text-white font-semibold py-3 text-lg transition-all duration-300 group-hover:shadow-lg group-hover:shadow-red-500/25"
+                className="w-full bg-gradient-to-r from-red-600 to-orange-600 lg:hover:from-red-700 lg:hover:to-orange-700 text-white font-semibold py-3 text-lg transition-all duration-300 lg:group-hover:shadow-lg lg:group-hover:shadow-red-500/25"
                 size="lg"
                 data-testid="button-admin-portal"
               >

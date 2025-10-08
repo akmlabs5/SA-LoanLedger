@@ -334,7 +334,7 @@ export default function DocumentUpload({
             border-2 border-dashed rounded-lg p-8 text-center cursor-pointer transition-colors
             ${isDragOver 
               ? 'border-primary bg-primary/5' 
-              : 'border-gray-300 dark:border-gray-600 hover:border-primary'
+              : 'border-gray-300 dark:border-gray-600 lg:hover:border-primary'
             }
           `}
         >
@@ -367,7 +367,7 @@ export default function DocumentUpload({
               <Button
                 onClick={uploadAllFiles}
                 disabled={uploadFiles.every(f => f.status !== 'pending')}
-                className="bg-primary hover:bg-primary/90"
+                className="bg-primary lg:hover:bg-primary/90"
               >
                 <Upload className="mr-2 h-4 w-4" />
                 Upload All Files

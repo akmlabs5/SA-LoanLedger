@@ -247,7 +247,7 @@ export default function LoanDetailPage() {
                   <Button 
                     onClick={handleSettleLoan}
                     disabled={settleLoanMutation.isPending}
-                    className="bg-emerald-600 hover:bg-emerald-700 text-white"
+                    className="bg-emerald-600 lg:hover:bg-emerald-700 text-white"
                     size="sm"
                     data-testid="button-settle-loan"
                   >
@@ -470,7 +470,7 @@ export default function LoanDetailPage() {
                     <Button 
                       onClick={handleSettleLoan}
                       disabled={settleLoanMutation.isPending}
-                      className="w-full bg-emerald-600 hover:bg-emerald-700 text-white"
+                      className="w-full bg-emerald-600 lg:hover:bg-emerald-700 text-white"
                     >
                       <CheckCircle className="mr-2 h-4 w-4" />
                       {settleLoanMutation.isPending ? 'Settling...' : 'Settle Loan'}
@@ -587,7 +587,7 @@ export default function LoanDetailPage() {
               <AlertDialogCancel>Cancel</AlertDialogCancel>
               <AlertDialogAction 
                 onClick={confirmSettle}
-                className="bg-emerald-600 hover:bg-emerald-700"
+                className="bg-emerald-600 lg:hover:bg-emerald-700"
               >
                 Settle Loan
               </AlertDialogAction>

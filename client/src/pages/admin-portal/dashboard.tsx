@@ -99,7 +99,7 @@ export default function AdminDashboardPage() {
             disabled={isRefreshing}
             variant="outline"
             data-testid="button-refresh-dashboard"
-            className="h-12 w-full sm:w-auto border-red-200 text-red-700 hover:bg-red-50 dark:border-red-800 dark:text-red-300 dark:hover:bg-red-900/20"
+            className="h-12 w-full sm:w-auto border-red-200 text-red-700 lg:hover:bg-red-50 dark:border-red-800 dark:text-red-300 dark:hover:bg-red-900/20"
           >
             <RefreshCw className={`w-4 h-4 mr-2 ${isRefreshing ? 'animate-spin' : ''}`} />
             Refresh Data
@@ -352,7 +352,7 @@ export default function AdminDashboardPage() {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <Button 
                 variant="outline" 
-                className="h-12 justify-start gap-2 border-green-200 text-green-700 hover:bg-green-50 dark:border-green-800 dark:text-green-300 dark:hover:bg-green-900/20"
+                className="h-12 justify-start gap-2 border-green-200 text-green-700 lg:hover:bg-green-50 dark:border-green-800 dark:text-green-300 dark:hover:bg-green-900/20"
                 data-testid="button-system-backup"
               >
                 <Database className="w-5 h-5" />
@@ -360,7 +360,7 @@ export default function AdminDashboardPage() {
               </Button>
               <Button 
                 variant="outline" 
-                className="h-12 justify-start gap-2 border-blue-200 text-blue-700 hover:bg-blue-50 dark:border-blue-800 dark:text-blue-300 dark:hover:bg-blue-900/20"
+                className="h-12 justify-start gap-2 border-blue-200 text-blue-700 lg:hover:bg-blue-50 dark:border-blue-800 dark:text-blue-300 dark:hover:bg-blue-900/20"
                 data-testid="button-clear-cache"
               >
                 <RefreshCw className="w-5 h-5" />
@@ -368,7 +368,7 @@ export default function AdminDashboardPage() {
               </Button>
               <Button 
                 variant="outline" 
-                className="h-12 justify-start gap-2 border-red-200 text-red-700 hover:bg-red-50 dark:border-red-800 dark:text-red-300 dark:hover:bg-red-900/20"
+                className="h-12 justify-start gap-2 border-red-200 text-red-700 lg:hover:bg-red-50 dark:border-red-800 dark:text-red-300 dark:hover:bg-red-900/20"
                 data-testid="button-maintenance-mode"
               >
                 <AlertTriangle className="w-5 h-5" />
