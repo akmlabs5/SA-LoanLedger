@@ -18,6 +18,25 @@ export function registerCollateralRoutes(app: Express, deps: AppDependencies) {
     }
   });
 
+  app.get('/api/collateral/:id', isAuthenticated, attachOrganizationContext, requireOrganization, async (req: any, res) => {
+    try {
+      const organizationId = req.organizationId;
+      const collateralId = req.params.id;
+      
+      const collateralList = await storage.getUserCollateral(organizationId);
+      const collateralItem = collateralList.find((c: any) => c.id === collateralId);
+      
+      if (!collateralItem) {
+        return res.status(404).json({ message: "Collateral not found" });
+      }
+      
+      res.json(collateralItem);
+    } catch (error) {
+      console.error("Error fetching collateral:", error);
+      res.status(500).json({ message: "Failed to fetch collateral" });
+    }
+  });
+
   app.post('/api/collateral', isAuthenticated, attachOrganizationContext, requireOrganization, async (req: any, res) => {
     try {
       const organizationId = req.organizationId;

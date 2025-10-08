@@ -334,7 +334,7 @@ export class DatabaseStorage implements IStorage {
       .leftJoin(banks, eq(bankContacts.bankId, banks.id))
       .where(and(
         eq(bankContacts.bankId, bankId),
-        eq(bankContacts.organizationId, organizationId),
+        eq(banks.organizationId, organizationId),
         eq(bankContacts.isActive, true)
       ))
       .orderBy(desc(bankContacts.isPrimary), asc(bankContacts.name))
@@ -556,7 +556,10 @@ export class DatabaseStorage implements IStorage {
       .leftJoin(facilities, eq(collateralAssignments.facilityId, facilities.id))
       .leftJoin(banks, eq(facilities.bankId, banks.id))
       .leftJoin(creditLines, eq(collateralAssignments.creditLineId, creditLines.id))
-      .where(and(eq(collateralAssignments.organizationId, organizationId), eq(collateralAssignments.isActive, true)))
+      .where(and(
+        eq(collateral.organizationId, organizationId),
+        eq(collateralAssignments.isActive, true)
+      ))
       .orderBy(desc(collateralAssignments.createdAt));
 
     return result.map(row => ({

@@ -55,13 +55,13 @@ const collateralFormSchema = z.object({
 type CollateralFormData = z.infer<typeof collateralFormSchema>;
 
 export default function CollateralEditPage() {
-  const { collateralId } = useParams<{ collateralId: string }>();
+  const { id: collateralId } = useParams<{ id: string }>();
   const [, setLocation] = useLocation();
   const { toast } = useToast();
 
   // Fetch collateral details for editing
   const { data: collateral, isLoading: collateralLoading } = useQuery({
-    queryKey: [`/api/collateral/${collateralId}`],
+    queryKey: ['/api/collateral', collateralId],
     enabled: !!collateralId,
   });
 
@@ -104,7 +104,7 @@ export default function CollateralEditPage() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/collateral"] });
-      queryClient.invalidateQueries({ queryKey: [`/api/collateral/${collateralId}`] });
+      queryClient.invalidateQueries({ queryKey: ['/api/collateral', collateralId] });
       queryClient.invalidateQueries({ queryKey: ["/api/dashboard/portfolio"] });
       toast({
         title: "Success",
