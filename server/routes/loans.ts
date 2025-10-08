@@ -217,9 +217,16 @@ export function registerLoansRoutes(app: Express, deps: AppDependencies) {
     try {
       const loanId = req.params.id;
       const organizationId = req.organizationId;
+      const userId = req.user.claims.sub;
       const paymentData = paymentRequestSchema.parse(req.body);
       
-      const result = await storage.processPayment(loanId, paymentData, organizationId);
+      // Verify loan belongs to organization before processing payment
+      const loan = await storage.getLoanById(loanId);
+      if (!loan || loan.organizationId !== organizationId) {
+        return res.status(404).json({ message: "Loan not found" });
+      }
+      
+      const result = await storage.processPayment(loanId, paymentData, userId);
       res.json(result);
     } catch (error) {
       console.error("Error processing payment:", error);
@@ -252,9 +259,16 @@ export function registerLoansRoutes(app: Express, deps: AppDependencies) {
     try {
       const loanId = req.params.id;
       const organizationId = req.organizationId;
+      const userId = req.user.claims.sub;
       const revolveData = revolveRequestSchema.parse(req.body);
       
-      const result = await storage.revolveLoan(loanId, revolveData, organizationId);
+      // Verify loan belongs to organization before revolving
+      const loan = await storage.getLoanById(loanId);
+      if (!loan || loan.organizationId !== organizationId) {
+        return res.status(404).json({ message: "Loan not found" });
+      }
+      
+      const result = await storage.revolveLoan(loanId, revolveData, userId);
       res.json(result);
     } catch (error) {
       console.error("Error revolving loan:", error);
