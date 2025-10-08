@@ -135,11 +135,11 @@ export function registerBanksRoutes(app: Express, deps: AppDependencies) {
         return sum + (balance ? parseFloat(balance.total) : 0);
       }, 0);
 
-      const totalCreditLimit = facilities.reduce((sum, f) => sum + parseFloat(f.limit), 0);
+      const totalCreditLimit = facilities.reduce((sum, f) => sum + parseFloat(f.creditLimit), 0);
       const utilizationRate = totalCreditLimit > 0 ? (totalOutstanding / totalCreditLimit) * 100 : 0;
 
       const loanIds = loans.map(l => l.id);
-      const transactionPromises = loanIds.map(loanId => storage.getLoanTransactions(loanId));
+      const transactionPromises = loanIds.map(loanId => storage.listTransactions({ loanId }));
       const transactionArrays = await Promise.all(transactionPromises);
       const transactions = transactionArrays.flat();
 
@@ -170,14 +170,14 @@ export function registerBanksRoutes(app: Express, deps: AppDependencies) {
             return sum + (balance ? parseFloat(balance.total) : 0);
           }, 0);
           
-          const utilization = parseFloat(facility.limit) > 0 
-            ? (facilityOutstanding / parseFloat(facility.limit)) * 100 
+          const utilization = parseFloat(facility.creditLimit) > 0 
+            ? (facilityOutstanding / parseFloat(facility.creditLimit)) * 100 
             : 0;
 
           return {
             facilityId: facility.id,
-            facilityName: `${(facility.type || 'facility').replace('_', ' ').toUpperCase()} - ${parseFloat(facility.limit).toLocaleString('en-SA')} SAR`,
-            limit: parseFloat(facility.limit),
+            facilityName: `${(facility.facilityType || 'facility').replace('_', ' ').toUpperCase()} - ${parseFloat(facility.creditLimit).toLocaleString('en-SA')} SAR`,
+            limit: parseFloat(facility.creditLimit),
             outstanding: facilityOutstanding,
             utilization: Math.round(utilization * 10) / 10,
             activeLoans: facilityLoans.length

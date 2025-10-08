@@ -1,6 +1,6 @@
 import type { Express } from "express";
 import { isAuthenticated } from "../replitAuth";
-import { attachOrganizationContext, requireOrganization } from "../middleware/organization";
+import { attachOrganizationContext, requireOrganization } from "../organizationMiddleware";
 import type { AppDependencies } from "../types";
 
 export function registerDashboardRoutes(app: Express, deps: AppDependencies) {
