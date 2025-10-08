@@ -43,11 +43,13 @@ The platform now supports organizational team collaboration, enabling 2-5 member
 - **Account Protection**: Prevents organization owners from deleting accounts when other members exist
 
 **Data Isolation:**
-- All loan, facility, collateral, and bank data is scoped by `organizationId`
+- All loan, facility, collateral, guarantee, and bank data is scoped by `organizationId`
 - SQL-level enforcement via WHERE clauses on all queries
 - Cross-tenant data access blocked by organization middleware
 - API routes validate organization context on all mutations
 - AI Agent operations respect organization boundaries
+- Route-level validation ensures loans/facilities belong to requesting organization before access
+- Critical fixes applied: facility creation, loan settlement, and AI insights now properly enforce organizational boundaries
 
 **User Context:**
 - User session includes `organizationId`, `organizationName`, and `isOwner` flags
