@@ -147,8 +147,6 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   const { user, authSystem, clearAuthCache } = useAuth();
   const isMobile = useIsMobile();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [touchStart, setTouchStart] = useState<{ x: number; y: number } | null>(null);
-  const [touchEnd, setTouchEnd] = useState<{ x: number; y: number } | null>(null);
   const sidebarRef = useRef<HTMLDivElement>(null);
   
   // Only use Supabase auth if enabled
@@ -163,81 +161,6 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   const toggleMobileMenu = () => {
     setMobileMenuOpen(!mobileMenuOpen);
   };
-  
-  // Swipe gesture handlers
-  const handleTouchStart = useCallback((e: React.TouchEvent) => {
-    if (!isMobile) return;
-    
-    const touch = e.targetTouches[0];
-    setTouchStart({ x: touch.clientX, y: touch.clientY });
-    setTouchEnd(null);
-  }, [isMobile]);
-  
-  const handleTouchMove = useCallback((e: React.TouchEvent) => {
-    if (!isMobile || !touchStart) return;
-    
-    const touch = e.targetTouches[0];
-    setTouchEnd({ x: touch.clientX, y: touch.clientY });
-  }, [isMobile, touchStart]);
-  
-  const handleTouchEnd = useCallback(() => {
-    if (!isMobile || !touchStart || !touchEnd) return;
-    
-    const deltaX = touchEnd.x - touchStart.x;
-    const deltaY = Math.abs(touchEnd.y - touchStart.y);
-    const minSwipeDistance = 100;
-    
-    // Only trigger swipe if horizontal movement is greater than vertical
-    if (Math.abs(deltaX) > minSwipeDistance && deltaY < 100) {
-      if (deltaX > 0 && touchStart.x < 50) {
-        // Swipe right from left edge - open menu
-        setMobileMenuOpen(true);
-      } else if (deltaX < 0 && mobileMenuOpen) {
-        // Swipe left when menu is open - close menu
-        setMobileMenuOpen(false);
-      }
-    }
-    
-    setTouchStart(null);
-    setTouchEnd(null);
-  }, [isMobile, touchStart, touchEnd, mobileMenuOpen]);
-  
-  // Add global touch listeners for swipe gestures and scroll locking
-  useEffect(() => {
-    if (!isMobile) return;
-    
-    const handleGlobalTouchStart = (e: TouchEvent) => {
-      const touch = e.touches[0];
-      setTouchStart({ x: touch.clientX, y: touch.clientY });
-    };
-    
-    const handleGlobalTouchEnd = (e: TouchEvent) => {
-      if (!touchStart) return;
-      
-      const touch = e.changedTouches[0];
-      const deltaX = touch.clientX - touchStart.x;
-      const deltaY = Math.abs(touch.clientY - touchStart.y);
-      
-      // Swipe from left edge to open
-      if (deltaX > 100 && deltaY < 100 && touchStart.x < 30 && !mobileMenuOpen) {
-        setMobileMenuOpen(true);
-      }
-      // Swipe left to close when menu is open
-      else if (deltaX < -50 && deltaY < 100 && mobileMenuOpen) {
-        setMobileMenuOpen(false);
-      }
-      
-      setTouchStart(null);
-    };
-    
-    document.addEventListener('touchstart', handleGlobalTouchStart, { passive: true });
-    document.addEventListener('touchend', handleGlobalTouchEnd, { passive: true });
-    
-    return () => {
-      document.removeEventListener('touchstart', handleGlobalTouchStart);
-      document.removeEventListener('touchend', handleGlobalTouchEnd);
-    };
-  }, [isMobile, touchStart, mobileMenuOpen]);
   
   // Handle scroll locking when mobile menu is open
   useEffect(() => {
@@ -341,9 +264,6 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
               "border-r border-border transition-all duration-300",
               isMobile && "fixed inset-y-0 left-0 z-[60] w-80 bg-background shadow-2xl block animate-in slide-in-from-left duration-300"
             )}
-            onTouchStart={handleTouchStart}
-            onTouchMove={handleTouchMove}
-            onTouchEnd={handleTouchEnd}
             role={isMobile && mobileMenuOpen ? "dialog" : undefined}
             aria-modal={isMobile && mobileMenuOpen ? "true" : undefined}
           >
