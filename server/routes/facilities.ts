@@ -1,11 +1,12 @@
 import type { Express } from "express";
 import type { AppDependencies } from "../types";
 import { isAuthenticated } from "../replitAuth";
+import { attachOrganizationContext, requireOrganization } from "../organizationMiddleware";
 import { insertFacilitySchema } from "@shared/schema";
 
-async function initializeSampleFacilities(storage: any, userId: string) {
+async function initializeSampleFacilities(storage: any, organizationId: string) {
   try {
-    const userFacilities = await storage.getUserFacilities(userId);
+    const userFacilities = await storage.getUserFacilities(organizationId);
     
     if (userFacilities.length === 0) {
       const banks = await storage.getAllBanks();
@@ -22,13 +23,13 @@ async function initializeSampleFacilities(storage: any, userId: string) {
 export function registerFacilitiesRoutes(app: Express, deps: AppDependencies) {
   const { storage } = deps;
 
-  app.get('/api/facilities', isAuthenticated, async (req: any, res) => {
+  app.get('/api/facilities', isAuthenticated, attachOrganizationContext, requireOrganization, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const organizationId = req.organizationId;
       
-      await initializeSampleFacilities(storage, userId);
+      await initializeSampleFacilities(storage, organizationId);
       
-      const facilities = await storage.getUserFacilities(userId);
+      const facilities = await storage.getUserFacilities(organizationId);
       res.json(facilities);
     } catch (error) {
       console.error("Error fetching facilities:", error);
@@ -36,10 +37,10 @@ export function registerFacilitiesRoutes(app: Express, deps: AppDependencies) {
     }
   });
 
-  app.post('/api/facilities', isAuthenticated, async (req: any, res) => {
+  app.post('/api/facilities', isAuthenticated, attachOrganizationContext, requireOrganization, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
-      const facilityData = insertFacilitySchema.parse({ ...req.body, userId });
+      const organizationId = req.organizationId;
+      const facilityData = insertFacilitySchema.parse({ ...req.body, organizationId });
       const facility = await storage.createFacility(facilityData);
       res.json(facility);
     } catch (error) {
@@ -48,9 +49,9 @@ export function registerFacilitiesRoutes(app: Express, deps: AppDependencies) {
     }
   });
 
-  app.get('/api/facilities/:facilityId', isAuthenticated, async (req: any, res) => {
+  app.get('/api/facilities/:facilityId', isAuthenticated, attachOrganizationContext, requireOrganization, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const organizationId = req.organizationId;
       const { facilityId } = req.params;
       
       const facility = await storage.getFacilityWithBank(facilityId);
@@ -59,7 +60,7 @@ export function registerFacilitiesRoutes(app: Express, deps: AppDependencies) {
         return res.status(404).json({ message: "Facility not found" });
       }
 
-      if (facility.userId !== userId) {
+      if (facility.organizationId !== organizationId) {
         return res.status(403).json({ message: "Access denied" });
       }
       
@@ -70,9 +71,9 @@ export function registerFacilitiesRoutes(app: Express, deps: AppDependencies) {
     }
   });
 
-  app.get('/api/facilities/:facilityId/revolving-usage', isAuthenticated, async (req: any, res) => {
+  app.get('/api/facilities/:facilityId/revolving-usage', isAuthenticated, attachOrganizationContext, requireOrganization, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const organizationId = req.organizationId;
       const { facilityId } = req.params;
       
       const facility = await storage.getFacilityWithBank(facilityId);
@@ -81,7 +82,7 @@ export function registerFacilitiesRoutes(app: Express, deps: AppDependencies) {
         return res.status(404).json({ message: "Facility not found" });
       }
 
-      if (facility.userId !== userId) {
+      if (facility.organizationId !== organizationId) {
         return res.status(403).json({ message: "Access denied" });
       }
 
@@ -89,7 +90,7 @@ export function registerFacilitiesRoutes(app: Express, deps: AppDependencies) {
         return res.status(400).json({ message: "Revolving period tracking is not enabled for this facility" });
       }
       
-      const allLoans = await storage.getUserLoans(userId);
+      const allLoans = await storage.getUserLoans(organizationId);
       const facilityLoans = allLoans.filter((loan: any) => loan.facilityId === facilityId);
       
       let totalDaysUsed = 0;
@@ -168,25 +169,25 @@ export function registerFacilitiesRoutes(app: Express, deps: AppDependencies) {
     }
   });
 
-  app.put('/api/facilities/:facilityId', isAuthenticated, async (req: any, res) => {
+  app.put('/api/facilities/:facilityId', isAuthenticated, attachOrganizationContext, requireOrganization, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const organizationId = req.organizationId;
       const { facilityId } = req.params;
       const updateData = req.body;
       
       delete updateData.id;
-      delete updateData.userId;
+      delete updateData.organizationId;
       delete updateData.createdAt;
       delete updateData.updatedAt;
       
-      const userFacilities = await storage.getUserFacilities(userId);
+      const userFacilities = await storage.getUserFacilities(organizationId);
       const facility = userFacilities.find((f: any) => f.id === facilityId);
       
       if (!facility) {
         return res.status(404).json({ message: "Facility not found or access denied" });
       }
       
-      const facilityUpdateSchema = insertFacilitySchema.omit({ userId: true }).partial();
+      const facilityUpdateSchema = insertFacilitySchema.omit({ organizationId: true }).partial();
       const validatedData = facilityUpdateSchema.parse(updateData);
       
       const updatedFacility = await storage.updateFacility(facilityId, validatedData);
@@ -197,7 +198,7 @@ export function registerFacilitiesRoutes(app: Express, deps: AppDependencies) {
     }
   });
 
-  app.delete('/api/facilities/:facilityId', isAuthenticated, async (req: any, res) => {
+  app.delete('/api/facilities/:facilityId', isAuthenticated, attachOrganizationContext, requireOrganization, async (req: any, res) => {
     try {
       const { facilityId } = req.params;
       await storage.deleteFacility(facilityId);

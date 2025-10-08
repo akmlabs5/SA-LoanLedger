@@ -38,11 +38,11 @@ export function registerBanksRoutes(app: Express, deps: AppDependencies) {
     }
   });
 
-  app.get('/api/banks/:bankId/contacts', isAuthenticated, async (req: any, res) => {
+  app.get('/api/banks/:bankId/contacts', isAuthenticated, attachOrganizationContext, requireOrganization, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const organizationId = req.organizationId;
       const { bankId } = req.params;
-      const contacts = await storage.getBankContacts(bankId, userId);
+      const contacts = await storage.getBankContacts(bankId, organizationId);
       res.json(contacts);
     } catch (error) {
       console.error("Error fetching bank contacts:", error);
@@ -50,13 +50,13 @@ export function registerBanksRoutes(app: Express, deps: AppDependencies) {
     }
   });
 
-  app.post('/api/banks/:bankId/contacts', isAuthenticated, async (req: any, res) => {
+  app.post('/api/banks/:bankId/contacts', isAuthenticated, attachOrganizationContext, requireOrganization, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const organizationId = req.organizationId;
       const { bankId } = req.params;
       const contactData = insertBankContactSchema.parse({ 
         ...req.body, 
-        userId, 
+        organizationId, 
         bankId 
       });
       const contact = await storage.createBankContact(contactData);
@@ -67,12 +67,12 @@ export function registerBanksRoutes(app: Express, deps: AppDependencies) {
     }
   });
 
-  app.put('/api/bank-contacts/:contactId', isAuthenticated, async (req: any, res) => {
+  app.put('/api/bank-contacts/:contactId', isAuthenticated, attachOrganizationContext, requireOrganization, async (req: any, res) => {
     try {
       const { contactId } = req.params;
       const contactData = req.body;
       delete contactData.id;
-      delete contactData.userId;
+      delete contactData.organizationId;
       delete contactData.bankId;
       
       const contact = await storage.updateBankContact(contactId, contactData);
@@ -83,7 +83,7 @@ export function registerBanksRoutes(app: Express, deps: AppDependencies) {
     }
   });
 
-  app.delete('/api/bank-contacts/:contactId', isAuthenticated, async (req: any, res) => {
+  app.delete('/api/bank-contacts/:contactId', isAuthenticated, attachOrganizationContext, requireOrganization, async (req: any, res) => {
     try {
       const { contactId } = req.params;
       await storage.deleteBankContact(contactId);
@@ -94,13 +94,13 @@ export function registerBanksRoutes(app: Express, deps: AppDependencies) {
     }
   });
 
-  app.put('/api/bank-contacts/:contactId/set-primary', isAuthenticated, async (req: any, res) => {
+  app.put('/api/bank-contacts/:contactId/set-primary', isAuthenticated, attachOrganizationContext, requireOrganization, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const organizationId = req.organizationId;
       const { contactId } = req.params;
       const { bankId } = req.body;
       
-      const contact = await storage.setPrimaryContact(contactId, bankId, userId);
+      const contact = await storage.setPrimaryContact(contactId, bankId, organizationId);
       res.json(contact);
     } catch (error) {
       console.error("Error setting primary contact:", error);

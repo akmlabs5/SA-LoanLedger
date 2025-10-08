@@ -102,27 +102,27 @@ export interface IStorage {
   createBank(bank: InsertBank): Promise<Bank>;
   
   // Bank Contact operations
-  getBankContacts(bankId: string, userId: string): Promise<Array<BankContact & { bank: Bank }>>;
+  getBankContacts(bankId: string, organizationId: string): Promise<Array<BankContact & { bank: Bank }>>;
   createBankContact(contact: InsertBankContact): Promise<BankContact>;
   updateBankContact(contactId: string, contact: Partial<InsertBankContact>): Promise<BankContact>;
   deleteBankContact(contactId: string): Promise<void>;
-  setPrimaryContact(contactId: string, bankId: string, userId: string): Promise<BankContact>;
+  setPrimaryContact(contactId: string, bankId: string, organizationId: string): Promise<BankContact>;
   
   // Facility operations
-  getUserFacilities(userId: string): Promise<Array<Facility & { bank: Bank }>>;
+  getUserFacilities(organizationId: string): Promise<Array<Facility & { bank: Bank }>>;
   getFacilityWithBank(facilityId: string): Promise<(Facility & { bank: Bank }) | undefined>;
   createFacility(facility: InsertFacility): Promise<Facility>;
   updateFacility(facilityId: string, facility: Partial<InsertFacility>): Promise<Facility>;
   deleteFacility(facilityId: string): Promise<void>;
   
   // Collateral operations
-  getUserCollateral(userId: string): Promise<Collateral[]>;
+  getUserCollateral(organizationId: string): Promise<Collateral[]>;
   createCollateral(collateral: InsertCollateral): Promise<Collateral>;
   updateCollateral(collateralId: string, collateral: Partial<InsertCollateral>): Promise<Collateral>;
   deleteCollateral(collateralId: string): Promise<void>;
   
   // Collateral Assignment operations
-  getUserCollateralAssignments(userId: string): Promise<Array<CollateralAssignment & { 
+  getUserCollateralAssignments(organizationId: string): Promise<Array<CollateralAssignment & { 
     collateral: Collateral; 
     facility?: Facility & { bank: Bank }; 
     creditLine?: CreditLine & { facility: Facility & { bank: Bank } } 
@@ -132,14 +132,14 @@ export interface IStorage {
   deleteCollateralAssignment(assignmentId: string): Promise<void>;
   
   // Credit Line operations
-  getUserCreditLines(userId: string): Promise<Array<CreditLine & { facility: Facility & { bank: Bank } }>>;
+  getUserCreditLines(organizationId: string): Promise<Array<CreditLine & { facility: Facility & { bank: Bank } }>>;
   createCreditLine(creditLine: InsertCreditLine): Promise<CreditLine>;
   updateCreditLine(creditLineId: string, creditLine: Partial<InsertCreditLine>): Promise<CreditLine>;
   
   // Loan operations
-  getUserLoans(userId: string): Promise<Loan[]>;
-  getActiveLoansByUser(userId: string): Promise<(Loan & { facility: Facility & { bank: Bank } })[]>;
-  getSettledLoansByUser(userId: string): Promise<(Loan & { facility: Facility & { bank: Bank } })[]>;
+  getUserLoans(organizationId: string): Promise<Loan[]>;
+  getActiveLoansByUser(organizationId: string): Promise<(Loan & { facility: Facility & { bank: Bank } })[]>;
+  getSettledLoansByUser(organizationId: string): Promise<(Loan & { facility: Facility & { bank: Bank } })[]>;
   getLoanById(loanId: string): Promise<(Loan & { facility: Facility & { bank: Bank } }) | undefined>;
   createLoan(loan: InsertLoan): Promise<Loan>;
   updateLoan(loanId: string, loan: Partial<InsertLoan>, userId: string, reason?: string): Promise<Loan>;
@@ -327,14 +327,14 @@ export class DatabaseStorage implements IStorage {
   }
 
   // Bank Contact operations
-  async getBankContacts(bankId: string, userId: string): Promise<Array<BankContact & { bank: Bank }>> {
+  async getBankContacts(bankId: string, organizationId: string): Promise<Array<BankContact & { bank: Bank }>> {
     return await db
       .select()
       .from(bankContacts)
       .leftJoin(banks, eq(bankContacts.bankId, banks.id))
       .where(and(
         eq(bankContacts.bankId, bankId),
-        eq(bankContacts.userId, userId),
+        eq(bankContacts.organizationId, organizationId),
         eq(bankContacts.isActive, true)
       ))
       .orderBy(desc(bankContacts.isPrimary), asc(bankContacts.name))
@@ -374,8 +374,8 @@ export class DatabaseStorage implements IStorage {
       .where(eq(bankContacts.id, contactId));
   }
 
-  async setPrimaryContact(contactId: string, bankId: string, userId: string): Promise<BankContact> {
-    // First, unset any existing primary contact for this bank and user
+  async setPrimaryContact(contactId: string, bankId: string, organizationId: string): Promise<BankContact> {
+    // First, unset any existing primary contact for this bank and organization
     await db
       .update(bankContacts)
       .set({ 
@@ -384,7 +384,7 @@ export class DatabaseStorage implements IStorage {
       })
       .where(and(
         eq(bankContacts.bankId, bankId),
-        eq(bankContacts.userId, userId),
+        eq(bankContacts.organizationId, organizationId),
         eq(bankContacts.isPrimary, true)
       ));
 
@@ -402,12 +402,12 @@ export class DatabaseStorage implements IStorage {
   }
 
   // Facility operations
-  async getUserFacilities(userId: string): Promise<Array<Facility & { bank: Bank }>> {
+  async getUserFacilities(organizationId: string): Promise<Array<Facility & { bank: Bank }>> {
     const results = await db
       .select()
       .from(facilities)
       .innerJoin(banks, eq(facilities.bankId, banks.id))
-      .where(and(eq(facilities.userId, userId), eq(facilities.isActive, true)))
+      .where(and(eq(facilities.organizationId, organizationId), eq(facilities.isActive, true)))
       .orderBy(desc(facilities.createdAt));
 
     return results.map(result => ({
@@ -457,7 +457,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   // Credit Line operations
-  async getUserCreditLines(userId: string): Promise<Array<CreditLine & { facility: Facility & { bank: Bank } }>> {
+  async getUserCreditLines(organizationId: string): Promise<Array<CreditLine & { facility: Facility & { bank: Bank } }>> {
     const result = await db
       .select()
       .from(creditLines)
@@ -490,11 +490,11 @@ export class DatabaseStorage implements IStorage {
   }
 
   // Collateral operations
-  async getUserCollateral(userId: string): Promise<Collateral[]> {
+  async getUserCollateral(organizationId: string): Promise<Collateral[]> {
     return await db
       .select()
       .from(collateral)
-      .where(and(eq(collateral.userId, userId), eq(collateral.isActive, true)))
+      .where(and(eq(collateral.organizationId, organizationId), eq(collateral.isActive, true)))
       .orderBy(desc(collateral.createdAt));
   }
 
@@ -523,7 +523,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   // Collateral Assignment operations
-  async getUserCollateralAssignments(userId: string): Promise<Array<CollateralAssignment & { 
+  async getUserCollateralAssignments(organizationId: string): Promise<Array<CollateralAssignment & { 
     collateral: Collateral; 
     facility?: Facility & { bank: Bank }; 
     creditLine?: CreditLine & { facility: Facility & { bank: Bank } } 
@@ -535,7 +535,7 @@ export class DatabaseStorage implements IStorage {
       .leftJoin(facilities, eq(collateralAssignments.facilityId, facilities.id))
       .leftJoin(banks, eq(facilities.bankId, banks.id))
       .leftJoin(creditLines, eq(collateralAssignments.creditLineId, creditLines.id))
-      .where(and(eq(collateralAssignments.userId, userId), eq(collateralAssignments.isActive, true)))
+      .where(and(eq(collateralAssignments.organizationId, organizationId), eq(collateralAssignments.isActive, true)))
       .orderBy(desc(collateralAssignments.createdAt));
 
     return result.map(row => ({
@@ -571,21 +571,21 @@ export class DatabaseStorage implements IStorage {
   }
 
   // Loan operations
-  async getUserLoans(userId: string): Promise<Loan[]> {
+  async getUserLoans(organizationId: string): Promise<Loan[]> {
     return await db
       .select()
       .from(loans)
-      .where(eq(loans.userId, userId))
+      .where(eq(loans.organizationId, organizationId))
       .orderBy(desc(loans.createdAt));
   }
 
-  async getActiveLoansByUser(userId: string): Promise<(Loan & { facility: Facility & { bank: Bank } })[]> {
+  async getActiveLoansByUser(organizationId: string): Promise<(Loan & { facility: Facility & { bank: Bank } })[]> {
     const result = await db
       .select()
       .from(loans)
       .innerJoin(facilities, eq(loans.facilityId, facilities.id))
       .innerJoin(banks, eq(facilities.bankId, banks.id))
-      .where(and(eq(loans.userId, userId), eq(loans.status, 'active')))
+      .where(and(eq(loans.organizationId, organizationId), eq(loans.status, 'active')))
       .orderBy(asc(loans.dueDate));
 
     return result.map(row => ({
@@ -597,13 +597,13 @@ export class DatabaseStorage implements IStorage {
     }));
   }
 
-  async getSettledLoansByUser(userId: string): Promise<(Loan & { facility: Facility & { bank: Bank } })[]> {
+  async getSettledLoansByUser(organizationId: string): Promise<(Loan & { facility: Facility & { bank: Bank } })[]> {
     const result = await db
       .select()
       .from(loans)
       .innerJoin(facilities, eq(loans.facilityId, facilities.id))
       .innerJoin(banks, eq(facilities.bankId, banks.id))
-      .where(and(eq(loans.userId, userId), eq(loans.status, 'settled')))
+      .where(and(eq(loans.organizationId, organizationId), eq(loans.status, 'settled')))
       .orderBy(desc(loans.settledDate));
 
     return result.map(row => ({
@@ -1957,12 +1957,12 @@ Reference: {loanReference}`,
   }
 
   // Bank Contact operations
-  async getBankContacts(bankId: string, userId: string): Promise<Array<BankContact & { bank: Bank }>> {
+  async getBankContacts(bankId: string, organizationId: string): Promise<Array<BankContact & { bank: Bank }>> {
     const bank = this.banks.get(bankId);
     if (!bank) return [];
 
     return Array.from(this.bankContacts.values())
-      .filter(contact => contact.bankId === bankId && contact.userId === userId && contact.isActive)
+      .filter(contact => contact.bankId === bankId && contact.organizationId === organizationId && contact.isActive)
       .map(contact => ({ ...contact, bank }))
       .sort((a, b) => {
         if (a.isPrimary && !b.isPrimary) return -1;
@@ -2006,10 +2006,10 @@ Reference: {loanReference}`,
     }
   }
 
-  async setPrimaryContact(contactId: string, bankId: string, userId: string): Promise<BankContact> {
-    // First, unset all primary contacts for this bank/user
+  async setPrimaryContact(contactId: string, bankId: string, organizationId: string): Promise<BankContact> {
+    // First, unset all primary contacts for this bank/organization
     for (const contact of this.bankContacts.values()) {
-      if (contact.bankId === bankId && contact.userId === userId && contact.isPrimary) {
+      if (contact.bankId === bankId && contact.organizationId === organizationId && contact.isPrimary) {
         contact.isPrimary = false;
         contact.updatedAt = new Date();
       }
@@ -2026,9 +2026,9 @@ Reference: {loanReference}`,
   }
 
   // Stub implementations for other methods (simplified for core functionality)
-  async getUserFacilities(userId: string): Promise<Array<Facility & { bank: Bank }>> {
+  async getUserFacilities(organizationId: string): Promise<Array<Facility & { bank: Bank }>> {
     const userFacilities = Array.from(this.facilities.values())
-      .filter(facility => facility.userId === userId && (facility.isActive ?? true));
+      .filter(facility => facility.organizationId === organizationId && (facility.isActive ?? true));
     
     return userFacilities.map(facility => {
       const bank = this.banks.get(facility.bankId);
@@ -2090,7 +2090,7 @@ Reference: {loanReference}`,
     console.log(`✅ Deleted facility: ${existing.facilityType} for bank ${existing.bankId} (ID: ${facilityId})`);
   }
 
-  async getUserCollateral(userId: string): Promise<Collateral[]> {
+  async getUserCollateral(organizationId: string): Promise<Collateral[]> {
     return [];
   }
 
@@ -2127,7 +2127,7 @@ Reference: {loanReference}`,
   }
 
   // Collateral Assignment operations (simplified in-memory implementation)
-  async getUserCollateralAssignments(userId: string): Promise<Array<CollateralAssignment & { 
+  async getUserCollateralAssignments(organizationId: string): Promise<Array<CollateralAssignment & { 
     collateral: Collateral; 
     facility?: Facility & { bank: Bank }; 
     creditLine?: CreditLine & { facility: Facility & { bank: Bank } } 
@@ -2165,7 +2165,7 @@ Reference: {loanReference}`,
     }
   }
 
-  async getUserCreditLines(userId: string): Promise<Array<CreditLine & { facility: Facility & { bank: Bank } }>> {
+  async getUserCreditLines(organizationId: string): Promise<Array<CreditLine & { facility: Facility & { bank: Bank } }>> {
     return [];
   }
 
@@ -2193,12 +2193,12 @@ Reference: {loanReference}`,
     return updated;
   }
 
-  async getUserLoans(userId: string): Promise<Loan[]> {
-    return Array.from(this.loans.values()).filter(loan => loan.userId === userId);
+  async getUserLoans(organizationId: string): Promise<Loan[]> {
+    return Array.from(this.loans.values()).filter(loan => loan.organizationId === organizationId);
   }
 
-  async getActiveLoansByUser(userId: string): Promise<(Loan & { facility: Facility & { bank: Bank } })[]> {
-    const userLoans = Array.from(this.loans.values()).filter(loan => loan.userId === userId && loan.status === 'active');
+  async getActiveLoansByUser(organizationId: string): Promise<(Loan & { facility: Facility & { bank: Bank } })[]> {
+    const userLoans = Array.from(this.loans.values()).filter(loan => loan.organizationId === organizationId && loan.status === 'active');
     
     // Join with facility and bank data
     return userLoans.map(loan => {
@@ -2222,8 +2222,8 @@ Reference: {loanReference}`,
     });
   }
 
-  async getSettledLoansByUser(userId: string): Promise<(Loan & { facility: Facility & { bank: Bank } })[]> {
-    const userLoans = Array.from(this.loans.values()).filter(loan => loan.userId === userId && loan.status === 'settled');
+  async getSettledLoansByUser(organizationId: string): Promise<(Loan & { facility: Facility & { bank: Bank } })[]> {
+    const userLoans = Array.from(this.loans.values()).filter(loan => loan.organizationId === organizationId && loan.status === 'settled');
     
     // Join with facility and bank data
     return userLoans.map(loan => {
