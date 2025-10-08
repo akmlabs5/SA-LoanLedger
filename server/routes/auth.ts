@@ -20,7 +20,26 @@ export function registerAuthRoutes(app: Express, deps: AppDependencies) {
         });
       }
       
-      res.json(user);
+      // Get user's organization info
+      const userOrg = await storage.getUserOrganization(userId);
+      
+      let organizationData = {};
+      if (userOrg) {
+        // Check if user is owner
+        const members = await storage.getOrganizationMembers(userOrg.id);
+        const currentMember = members.find(m => m.userId === userId);
+        
+        organizationData = {
+          organizationId: userOrg.id,
+          organizationName: userOrg.name,
+          isOwner: currentMember?.isOwner || false,
+        };
+      }
+      
+      res.json({
+        ...user,
+        ...organizationData,
+      });
     } catch (error) {
       console.error("Error fetching user:", error);
       res.status(500).json({ message: "Failed to fetch user" });
