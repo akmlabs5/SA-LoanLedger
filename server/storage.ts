@@ -1179,7 +1179,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   // Dashboard analytics
-  async getUserPortfolioSummary(userId: string): Promise<{
+  async getUserPortfolioSummary(organizationId: string): Promise<{
     totalOutstanding: number;
     totalCreditLimit: number;
     availableCredit: number;
@@ -1198,14 +1198,14 @@ export class DatabaseStorage implements IStorage {
     }>;
   }> {
     // Get active loans with facilities and banks
-    const activeLoans = await this.getActiveLoansByUser(userId);
+    const activeLoans = await this.getActiveLoansByUser(organizationId);
     
     // Get user facilities
     const userFacilities = await db
       .select()
       .from(facilities)
       .innerJoin(banks, eq(facilities.bankId, banks.id))
-      .where(and(eq(facilities.userId, userId), eq(facilities.isActive, true)));
+      .where(and(eq(facilities.organizationId, organizationId), eq(facilities.isActive, true)));
 
     // Calculate totals
     const totalOutstanding = activeLoans.reduce((sum, loan) => sum + parseFloat(loan.amount), 0);
@@ -1213,7 +1213,7 @@ export class DatabaseStorage implements IStorage {
     const availableCredit = Math.max(0, totalCreditLimit - totalOutstanding);
 
     // Get total collateral value for LTV calculation (portfolio-level)
-    const userCollateralList = await this.getUserCollateral(userId);
+    const userCollateralList = await this.getUserCollateral(organizationId);
     const totalCollateralValue = userCollateralList.reduce((sum, col) => sum + parseFloat(col.currentValue), 0);
     const portfolioLtv = totalCollateralValue > 0 ? (totalOutstanding / totalCollateralValue) * 100 : 0;
     const portfolioFacilityLtv = totalCreditLimit > 0 ? (totalCollateralValue / totalCreditLimit) * 100 : 0;
@@ -1270,7 +1270,7 @@ export class DatabaseStorage implements IStorage {
       .from(collateralAssignments)
       .innerJoin(collateral, eq(collateralAssignments.collateralId, collateral.id))
       .where(and(
-        eq(collateral.userId, userId),
+        eq(collateral.organizationId, organizationId),
         eq(collateralAssignments.isActive, true)
       ));
 

@@ -36,7 +36,7 @@ import { Link } from "wouter";
 import { formatFacilityType } from "@/lib/formatters";
 import { ModernDatePicker } from "@/components/ui/date-picker";
 
-const facilityFormSchema = insertFacilitySchema.extend({
+const facilityFormSchema = z.object({
   bankId: z.string().min(1, "Please select a bank"),
   facilityType: z.string().min(1, "Please select a facility type"),
   creditLimit: z.string().min(1, "Credit limit is required"),
