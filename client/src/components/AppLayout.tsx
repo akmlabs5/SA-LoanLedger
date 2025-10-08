@@ -502,7 +502,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                   size={isMobile ? "sm" : "icon"} 
                   data-testid="button-notifications"
                   className={cn(
-                    "active:scale-95 transition-transform duration-100",
+                    "active:scale-95 transition-transform duration-100 text-foreground hover:text-foreground hover:bg-accent",
                     isMobile && "h-9 w-9"
                   )}
                 >

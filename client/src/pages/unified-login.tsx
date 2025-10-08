@@ -10,7 +10,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useLocation } from "wouter";
 import { Lock, Mail, Shield } from "lucide-react";
 import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp";
-import morounaLogo from "@assets/with_padding (1)_1759754533676.png";
+import morounaLogo from "@assets/noBgWhite_1759916796790.png";
 
 const loginSchema = z.object({
   identifier: z.string().min(1, "Email or username is required"),

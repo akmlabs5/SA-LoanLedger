@@ -1,8 +1,10 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'wouter';
 import { motion, AnimatePresence, useMotionValue, useTransform } from 'framer-motion';
-import { Mail, Lock, Eye, EyeClosed, ArrowRight, University } from 'lucide-react';
-import { cn } from "@/lib/utils"
+import { Mail, Lock, Eye, EyeClosed, ArrowRight } from 'lucide-react';
+import { SiReplit } from 'react-icons/si';
+import { cn } from "@/lib/utils";
+import morounaLogo from "@assets/noBgWhite_1759916796790.png";
 
 function Input({ className, type, ...props }: React.ComponentProps<"input">) {
   return (
@@ -293,12 +295,9 @@ export function SignInCard({ onSubmit, onReplitAuth, isLoading: externalLoading 
                   initial={{ scale: 0.5, opacity: 0 }}
                   animate={{ scale: 1, opacity: 1 }}
                   transition={{ type: "spring", duration: 0.8 }}
-                  className="mx-auto w-10 h-10 rounded-full border border-white/10 flex items-center justify-center relative overflow-hidden bg-gradient-to-br from-green-600 to-green-800"
+                  className="mx-auto mb-2"
                 >
-                  <University className="text-lg text-white" />
-                  
-                  {/* Inner lighting effect */}
-                  <div className="absolute inset-0 bg-gradient-to-br from-white/10 to-transparent opacity-50" />
+                  <img src={morounaLogo} alt="Morouna Loans" className="h-20 w-auto object-contain" />
                 </motion.div>
 
                 <motion.h1
@@ -533,7 +532,7 @@ export function SignInCard({ onSubmit, onReplitAuth, isLoading: externalLoading 
                   <div className="absolute inset-0 bg-green-500/10 rounded-lg blur opacity-0 group-hover/replit:opacity-70 transition-opacity duration-300" />
                   
                   <div className="relative overflow-hidden bg-white border-2 border-green-600 text-green-700 font-medium h-10 rounded-lg hover:bg-green-50 transition-all duration-300 flex items-center justify-center gap-2">
-                    <University className="w-4 h-4 text-green-600" />
+                    <SiReplit className="w-4 h-4 text-green-600" />
                     
                     <span className="text-sm">
                       Sign in with Replit Auth
