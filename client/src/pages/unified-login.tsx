@@ -328,9 +328,14 @@ export default function UnifiedLoginPage() {
       </Card>
 
       {/* Footer Tagline */}
-      <p className="text-white/80 text-sm mt-8 text-center max-w-md">
-        Intelligent loan portfolio management for the Saudi Arabian market
-      </p>
+      <div className="mt-8 text-center max-w-md">
+        <p className="text-white/80 text-sm">
+          Intelligent loan portfolio management for the Saudi Arabian market
+        </p>
+        <p className="text-white font-bold text-sm mt-2">
+          By AKM Labs
+        </p>
+      </div>
     </div>
   );
 }
