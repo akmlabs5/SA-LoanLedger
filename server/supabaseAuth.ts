@@ -28,8 +28,25 @@ export async function setupSupabaseAuth(app: Express, databaseAvailable = true) 
   
   app.post('/api/auth/supabase/signup', async (req, res) => {
     try {
-      const { email: rawEmail, password, firstName, lastName, enable2FA } = req.body;
+      const { 
+        email: rawEmail, 
+        password, 
+        firstName, 
+        lastName, 
+        enable2FA,
+        accountType,
+        organizationName 
+      } = req.body;
       const email = rawEmail.trim().toLowerCase();
+
+      const userAccountType = accountType || 'personal';
+
+      if (userAccountType === 'organization' && (!organizationName || !organizationName.trim())) {
+        return res.status(400).json({ 
+          success: false,
+          message: "Organization name is required for organization accounts" 
+        });
+      }
       
       const { data, error } = await supabase.auth.signUp({
         email,
@@ -54,8 +71,34 @@ export async function setupSupabaseAuth(app: Express, databaseAvailable = true) 
           email: data.user.email || email,
           firstName,
           lastName,
-          twoFactorEnabled: enable2FA || false
+          twoFactorEnabled: enable2FA || false,
+          accountType: userAccountType
         });
+
+        if (userAccountType === 'organization') {
+          const organization = await storage.createOrganization({
+            name: organizationName.trim(),
+            ownerId: data.user.id
+          });
+
+          await storage.addMember({
+            organizationId: organization.id,
+            userId: data.user.id,
+            isOwner: true
+          });
+        } else {
+          const defaultOrgName = `${firstName || 'My'}'s Organization`;
+          const organization = await storage.createOrganization({
+            name: defaultOrgName,
+            ownerId: data.user.id
+          });
+
+          await storage.addMember({
+            organizationId: organization.id,
+            userId: data.user.id,
+            isOwner: true
+          });
+        }
       }
       
       res.json({ 
