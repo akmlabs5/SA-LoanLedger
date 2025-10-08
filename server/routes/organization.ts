@@ -3,6 +3,7 @@ import type { AppDependencies } from "../types";
 import { nanoid } from "nanoid";
 import { storage } from "../storage";
 import { isAuthenticated } from "../replitAuth";
+import { attachOrganizationContext, requireOrganization, requireOrgOwner } from "../organizationMiddleware";
 import { config } from "../config";
 import { mailService, FROM_EMAIL } from "../emailService";
 
