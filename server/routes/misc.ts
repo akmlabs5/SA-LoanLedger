@@ -4,6 +4,7 @@ import { isAuthenticated } from "../replitAuth";
 import { sendLoanDueNotification } from "../emailService";
 import { transactionTypeZodEnum } from "@shared/schema";
 import { z } from "zod";
+import { MailService } from '@sendgrid/mail';
 
 export function registerMiscRoutes(app: Express, deps: AppDependencies) {
   const { storage } = deps;
@@ -337,6 +338,93 @@ export function registerMiscRoutes(app: Express, deps: AppDependencies) {
     } catch (error) {
       console.error("Error fetching loan settlement data:", error);
       res.status(500).json({ message: "Failed to fetch loan settlement data" });
+    }
+  });
+
+  // Test email endpoint
+  app.post('/api/test-emails', async (req, res) => {
+    try {
+      const { email } = req.body;
+      
+      if (!email) {
+        return res.status(400).json({ message: "Email address is required" });
+      }
+
+      const SENDGRID_API_KEY = process.env.SENDGRID_API_KEY;
+      if (!SENDGRID_API_KEY) {
+        return res.status(500).json({ message: "SendGrid API key not configured" });
+      }
+
+      const mailService = new MailService();
+      mailService.setApiKey(SENDGRID_API_KEY);
+
+      const results = [];
+
+      // Test 1: From reminder@akm-labs.com
+      try {
+        const msg1 = {
+          to: email,
+          from: 'reminder@akm-labs.com',
+          subject: 'Test Email from Reminder Service - Morouna Loans',
+          text: 'This is a test email from the reminder@akm-labs.com address. If you received this, the email service is working correctly!',
+          html: `
+            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+              <h2 style="color: #006600;">Test Email - Reminder Service</h2>
+              <p>This is a test email from <strong>reminder@akm-labs.com</strong></p>
+              <p>If you received this message, the reminder email service is configured correctly!</p>
+              <hr>
+              <p style="font-size: 12px; color: #666;">Morouna Loans by AKM Labs</p>
+            </div>
+          `,
+        };
+        
+        await mailService.send(msg1);
+        results.push({ from: 'reminder@akm-labs.com', status: 'sent' });
+      } catch (error: any) {
+        results.push({ 
+          from: 'reminder@akm-labs.com', 
+          status: 'failed', 
+          error: error.response ? error.response.body : error.message 
+        });
+      }
+
+      // Test 2: From noreply@akm-labs.com
+      try {
+        const msg2 = {
+          to: email,
+          from: 'noreply@akm-labs.com',
+          subject: 'Test Email from No-Reply Service - Morouna Loans',
+          text: 'This is a test email from the noreply@akm-labs.com address. If you received this, the email service is working correctly!',
+          html: `
+            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+              <h2 style="color: #006600;">Test Email - No-Reply Service</h2>
+              <p>This is a test email from <strong>noreply@akm-labs.com</strong></p>
+              <p>If you received this message, the system email service is configured correctly!</p>
+              <p><em>Note: This is a no-reply address. Please do not respond to this email.</em></p>
+              <hr>
+              <p style="font-size: 12px; color: #666;">Morouna Loans by AKM Labs</p>
+            </div>
+          `,
+        };
+        
+        await mailService.send(msg2);
+        results.push({ from: 'noreply@akm-labs.com', status: 'sent' });
+      } catch (error: any) {
+        results.push({ 
+          from: 'noreply@akm-labs.com', 
+          status: 'failed', 
+          error: error.response ? error.response.body : error.message 
+        });
+      }
+
+      res.json({ 
+        message: 'Test emails process complete',
+        results,
+        recipient: email
+      });
+    } catch (error) {
+      console.error("Error sending test emails:", error);
+      res.status(500).json({ message: "Failed to send test emails" });
     }
   });
 }
