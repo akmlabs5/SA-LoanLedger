@@ -9,6 +9,7 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { MessageCircle, Send, Bot, User, Plus, Trash2, Loader2, Paperclip, X, FileText, Download, Menu } from "lucide-react";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import { MobileHeader } from "@/components/mobile";
 import type { ChatConversation, ChatMessage } from "@shared/schema";
 
 interface ConversationWithMessages {
@@ -268,7 +269,7 @@ export default function AIChatPage() {
             {conversations.map((conv) => (
               <div
                 key={conv.id}
-                className={`p-4 cursor-pointer hover:bg-accent transition-colors group ${
+                className={`p-4 cursor-pointer active:bg-accent/70 lg:hover:bg-accent transition-colors group ${
                   selectedConversationId === conv.id ? "bg-accent" : ""
                 }`}
                 onClick={() => {
@@ -287,14 +288,14 @@ export default function AIChatPage() {
                   <Button
                     size="sm"
                     variant="ghost"
-                    className="opacity-0 group-hover:opacity-100 transition-opacity h-6 w-6 p-0 ml-2"
+                    className="lg:opacity-0 lg:group-hover:opacity-100 transition-opacity h-8 w-8 p-0 ml-2 active:bg-destructive/20"
                     onClick={(e) => {
                       e.stopPropagation();
                       handleDeleteConversation(conv.id);
                     }}
                     data-testid={`button-delete-${conv.id}`}
                   >
-                    <Trash2 className="h-3 w-3 text-destructive" />
+                    <Trash2 className="h-4 w-4 text-destructive" />
                   </Button>
                 </div>
               </div>
@@ -307,10 +308,30 @@ export default function AIChatPage() {
 
   return (
     <div className={`bg-gradient-to-br from-green-50 via-white to-emerald-50 dark:from-gray-900 dark:via-gray-900 dark:to-gray-800 ${
-      isMobile ? 'h-[calc(100vh-56px)]' : 'min-h-screen'
+      isMobile ? 'h-screen flex flex-col' : 'min-h-screen'
     }`}>
-      <div className={isMobile ? '' : 'p-6 max-w-7xl mx-auto'}>
-        {/* Header - Hidden on mobile */}
+      {/* Mobile Header */}
+      {isMobile && (
+        <MobileHeader
+          title="AI Assistant"
+          rightAction={
+            selectedConversationId && messages.length > 0 ? (
+              <Button
+                size="icon"
+                variant="ghost"
+                onClick={handleExportPDF}
+                className="h-9 w-9 active:bg-accent/50 active:scale-95"
+                data-testid="button-export-pdf-mobile"
+              >
+                <Download className="h-5 w-5" />
+              </Button>
+            ) : null
+          }
+        />
+      )}
+
+      <div className={isMobile ? 'flex-1 flex flex-col overflow-hidden' : 'p-6 max-w-7xl mx-auto'}>
+        {/* Header - Desktop only */}
         {!isMobile && (
           <div className="mb-6">
             <h1 className="text-3xl font-bold text-foreground mb-2">AI Portfolio Assistant</h1>
@@ -323,22 +344,21 @@ export default function AIChatPage() {
         <div className={`grid grid-cols-1 lg:grid-cols-4 gap-6 ${
           isMobile ? 'h-full' : 'h-[calc(100vh-200px)]'
         }`}>
-          {/* Conversations Sidebar - Desktop */}
-          {!isMobile && (
-            <Card className="lg:col-span-1">
-              <CardHeader className="border-b">
-                <div className="flex items-center justify-between">
-                  <CardTitle className="text-lg">Conversations</CardTitle>
-                  <Button
-                    size="sm"
-                    onClick={() => createConversationMutation.mutate()}
-                    disabled={createConversationMutation.isPending}
-                    data-testid="button-new-conversation"
-                  >
-                    <Plus className="h-4 w-4" />
-                  </Button>
-                </div>
-              </CardHeader>
+          {/* Conversations Sidebar - Desktop only, completely hidden on mobile */}
+          <Card className="lg:col-span-1 hidden lg:block">
+            <CardHeader className="border-b">
+              <div className="flex items-center justify-between">
+                <CardTitle className="text-lg">Conversations</CardTitle>
+                <Button
+                  size="sm"
+                  onClick={() => createConversationMutation.mutate()}
+                  disabled={createConversationMutation.isPending}
+                  data-testid="button-new-conversation"
+                >
+                  <Plus className="h-4 w-4" />
+                </Button>
+              </div>
+            </CardHeader>
               <CardContent className="p-0">
                 <ScrollArea className="h-[calc(100vh-320px)]">
                   {conversationsLoading ? (
@@ -356,7 +376,7 @@ export default function AIChatPage() {
                       {conversations.map((conv) => (
                         <div
                           key={conv.id}
-                          className={`p-4 cursor-pointer hover:bg-accent transition-colors group ${
+                          className={`p-4 cursor-pointer active:bg-accent/70 transition-colors group ${
                             selectedConversationId === conv.id ? "bg-accent" : ""
                           }`}
                           onClick={() => setSelectedConversationId(conv.id)}
@@ -372,14 +392,14 @@ export default function AIChatPage() {
                             <Button
                               size="sm"
                               variant="ghost"
-                              className="opacity-0 group-hover:opacity-100 transition-opacity h-6 w-6 p-0 ml-2"
+                              className="h-8 w-8 p-0 ml-2 active:bg-destructive/20"
                               onClick={(e) => {
                                 e.stopPropagation();
                                 handleDeleteConversation(conv.id);
                               }}
                               data-testid={`button-delete-${conv.id}`}
                             >
-                              <Trash2 className="h-3 w-3 text-destructive" />
+                              <Trash2 className="h-4 w-4 text-destructive" />
                             </Button>
                           </div>
                         </div>
@@ -388,59 +408,74 @@ export default function AIChatPage() {
                   )}
                 </ScrollArea>
               </CardContent>
-            </Card>
-          )}
+          </Card>
 
           {/* Chat Area */}
           <Card className={`lg:col-span-3 flex flex-col ${
             isMobile ? 'h-full rounded-none border-0' : ''
           }`}>
-            <CardHeader className={`border-b ${isMobile ? 'py-3 px-4' : ''}`}>
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  {isMobile && (
-                    <Sheet open={isSidebarOpen} onOpenChange={setIsSidebarOpen}>
-                      <SheetTrigger asChild>
-                        <Button size="icon" variant="ghost" data-testid="button-menu">
-                          <Menu className="h-5 w-5" />
-                        </Button>
-                      </SheetTrigger>
-                      <SheetContent side="left" className="p-0 w-[280px]">
-                        <ConversationsSidebar />
-                      </SheetContent>
-                    </Sheet>
-                  )}
-                  <CardTitle className={`flex items-center gap-2 ${isMobile ? 'text-base' : ''}`}>
+            {/* Desktop Header only */}
+            {!isMobile && (
+              <CardHeader className="border-b">
+                <div className="flex items-center justify-between">
+                  <CardTitle className="flex items-center gap-2">
                     <MessageCircle className="h-5 w-5 text-saudi" />
                     <span className="truncate">
                       {conversationData?.conversation.title || "Select a conversation"}
                     </span>
                   </CardTitle>
+                  {selectedConversationId && messages.length > 0 && (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={handleExportPDF}
+                      data-testid="button-export-pdf"
+                    >
+                      <Download className="h-4 w-4 mr-2" />
+                      Export PDF
+                    </Button>
+                  )}
                 </div>
-                {selectedConversationId && messages.length > 0 && (
-                  <Button
-                    size={isMobile ? "icon" : "sm"}
-                    variant="outline"
-                    onClick={handleExportPDF}
-                    data-testid="button-export-pdf"
-                  >
-                    <Download className={`h-4 w-4 ${!isMobile && 'mr-2'}`} />
-                    {!isMobile && "Export PDF"}
-                  </Button>
-                )}
+              </CardHeader>
+            )}
+
+            {/* Mobile: Conversations menu in sheet */}
+            {isMobile && (
+              <div className="border-b p-3 bg-background">
+                <Sheet open={isSidebarOpen} onOpenChange={setIsSidebarOpen}>
+                  <SheetTrigger asChild>
+                    <Button 
+                      variant="outline" 
+                      className="w-full justify-start gap-2 active:bg-accent/50 active:scale-95" 
+                      data-testid="button-menu"
+                    >
+                      <Menu className="h-4 w-4" />
+                      <span className="truncate">
+                        {conversationData?.conversation.title || "Select conversation"}
+                      </span>
+                    </Button>
+                  </SheetTrigger>
+                  <SheetContent side="left" className="p-0 w-[280px]">
+                    <ConversationsSidebar />
+                  </SheetContent>
+                </Sheet>
               </div>
-            </CardHeader>
+            )}
 
             <CardContent className="flex-1 flex flex-col p-0 overflow-hidden">
-              <ScrollArea className={`flex-1 ${isMobile ? 'p-3 pb-24' : 'p-4'}`}>
+              <ScrollArea className={`flex-1 ${isMobile ? 'p-3 pb-32' : 'p-4'}`}>
                 {!selectedConversationId ? (
                   <div className="flex flex-col items-center justify-center h-full text-center p-8">
-                    <MessageCircle className="h-16 w-16 text-muted-foreground mb-4" />
-                    <h3 className="text-lg font-semibold mb-2">Welcome to AI Portfolio Assistant</h3>
-                    <p className="text-muted-foreground mb-4">
+                    <MessageCircle className={`${isMobile ? 'h-12 w-12' : 'h-16 w-16'} text-muted-foreground mb-4`} />
+                    <h3 className={`${isMobile ? 'text-base' : 'text-lg'} font-semibold mb-2`}>Welcome to AI Portfolio Assistant</h3>
+                    <p className={`${isMobile ? 'text-sm' : ''} text-muted-foreground mb-4`}>
                       Create a new conversation to start chatting about your portfolio
                     </p>
-                    <Button onClick={() => createConversationMutation.mutate()} data-testid="button-start-chat">
+                    <Button 
+                      onClick={() => createConversationMutation.mutate()} 
+                      data-testid="button-start-chat"
+                      className={isMobile ? 'h-12 active:bg-accent/50 active:scale-95' : ''}
+                    >
                       <Plus className="h-4 w-4 mr-2" />
                       Start New Chat
                     </Button>
@@ -459,27 +494,27 @@ export default function AIChatPage() {
                         }`}
                       >
                         {message.role === "assistant" && (
-                          <div className="w-8 h-8 rounded-full bg-saudi text-white flex items-center justify-center flex-shrink-0">
-                            <Bot className="h-4 w-4" />
+                          <div className={`${isMobile ? 'w-10 h-10' : 'w-8 h-8'} rounded-full bg-saudi text-white flex items-center justify-center flex-shrink-0`}>
+                            <Bot className={`${isMobile ? 'h-5 w-5' : 'h-4 w-4'}`} />
                           </div>
                         )}
                         
                         <div
-                          className={`max-w-[80%] rounded-lg px-4 py-3 ${
+                          className={`${isMobile ? 'max-w-[85%]' : 'max-w-[80%]'} rounded-lg px-4 py-3 ${
                             message.role === "user"
                               ? "bg-saudi text-white"
                               : "bg-muted text-foreground"
                           }`}
                         >
-                          <p className="text-sm whitespace-pre-wrap">{message.content}</p>
+                          <p className={`${isMobile ? 'text-base' : 'text-sm'} whitespace-pre-wrap`}>{message.content}</p>
                           <span className="text-xs opacity-70 mt-2 block">
                             {message.createdAt ? new Date(message.createdAt).toLocaleTimeString() : 'N/A'}
                           </span>
                         </div>
 
                         {message.role === "user" && (
-                          <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center flex-shrink-0">
-                            <User className="h-4 w-4" />
+                          <div className={`${isMobile ? 'w-10 h-10' : 'w-8 h-8'} rounded-full bg-muted flex items-center justify-center flex-shrink-0`}>
+                            <User className={`${isMobile ? 'h-5 w-5' : 'h-4 w-4'}`} />
                           </div>
                         )}
                       </div>
@@ -504,9 +539,9 @@ export default function AIChatPage() {
                 )}
               </ScrollArea>
 
-              {/* Input Area - Fixed to bottom on mobile */}
+              {/* Input Area - Fixed to bottom on mobile, above bottom tab bar */}
               <div className={`border-t bg-background ${
-                isMobile ? 'fixed bottom-0 left-0 right-0 p-3 safe-bottom' : 'p-4'
+                isMobile ? 'fixed bottom-16 left-0 right-0 p-3 z-30' : 'p-4'
               }`}>
                 {uploadedFiles.length > 0 && (
                   <div className="mb-3 space-y-2">
@@ -522,7 +557,7 @@ export default function AIChatPage() {
                         <Button
                           size="sm"
                           variant="ghost"
-                          className="h-6 w-6 p-0"
+                          className="h-6 w-6 p-0 active:bg-accent/50 active:scale-95"
                           onClick={() => handleRemoveFile(file.attachmentId)}
                           data-testid={`button-remove-file-${file.attachmentId}`}
                         >
@@ -549,7 +584,7 @@ export default function AIChatPage() {
                     disabled={uploadFileMutation.isPending || !selectedConversationId}
                     data-testid="button-attach-file"
                     title="Upload file (PDF, DOCX, XLSX, TXT, CSV)"
-                    className={isMobile ? 'h-12 w-12' : ''}
+                    className={isMobile ? 'h-12 w-12 active:bg-accent/50 active:scale-95' : ''}
                   >
                     {uploadFileMutation.isPending ? (
                       <Loader2 className="h-4 w-4 animate-spin" />
@@ -564,13 +599,13 @@ export default function AIChatPage() {
                     onKeyPress={(e) => e.key === "Enter" && !e.shiftKey && handleSendMessage()}
                     disabled={sendMessageMutation.isPending || !selectedConversationId}
                     data-testid="input-ai-chat"
-                    className={`flex-1 ${isMobile ? 'h-12' : ''}`}
+                    className={`flex-1 ${isMobile ? 'h-12 text-base' : ''}`}
                   />
                   <Button
                     onClick={handleSendMessage}
                     disabled={sendMessageMutation.isPending || !inputMessage.trim() || !selectedConversationId}
                     data-testid="button-send-message"
-                    className={isMobile ? 'h-12 w-12' : ''}
+                    className={isMobile ? 'h-12 w-12 active:bg-accent/50 active:scale-95' : ''}
                     size={isMobile ? 'icon' : 'default'}
                   >
                     {sendMessageMutation.isPending ? (

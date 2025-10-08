@@ -5,6 +5,7 @@ import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { cn } from '@/lib/utils';
 import { apiRequest } from '@/lib/queryClient';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 interface Message {
   role: 'user' | 'assistant';
@@ -18,6 +19,7 @@ export function FloatingAgentChat() {
   const [isLoading, setIsLoading] = useState(false);
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const isMobile = useIsMobile();
 
   useEffect(() => {
     if (isOpen && inputRef.current) {
@@ -86,12 +88,17 @@ export function FloatingAgentChat() {
 
   return (
     <>
-      {/* Floating Button */}
+      {/* Floating Button - Repositioned on mobile to avoid bottom tab bar */}
       {!isOpen && (
         <button
           onClick={() => setIsOpen(true)}
           data-testid="button-open-agent-chat"
-          className="fixed bottom-6 right-6 z-50 flex items-center gap-2 px-4 py-3 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white rounded-full shadow-lg hover:shadow-xl transition-all duration-200 group"
+          className={cn(
+            "fixed z-50 flex items-center gap-2 px-4 py-3 bg-gradient-to-r from-green-600 to-emerald-600 text-white rounded-full shadow-lg transition-all duration-200 group",
+            isMobile 
+              ? "bottom-24 right-4 active:from-green-700 active:to-emerald-700 active:scale-95" 
+              : "bottom-6 right-6 hover:from-green-700 hover:to-emerald-700 hover:shadow-xl"
+          )}
         >
           <div className="relative">
             <Bot className="w-5 h-5" />
@@ -101,10 +108,13 @@ export function FloatingAgentChat() {
         </button>
       )}
 
-      {/* Chat Window */}
+      {/* Chat Window - Repositioned on mobile to avoid bottom tab bar */}
       {isOpen && (
         <div
-          className="fixed bottom-6 right-6 z-50 w-full max-w-md h-[600px] bg-white dark:bg-gray-900 rounded-2xl shadow-2xl flex flex-col border border-gray-200 dark:border-gray-700 overflow-hidden"
+          className={cn(
+            "fixed z-50 w-full max-w-md h-[600px] bg-white dark:bg-gray-900 rounded-2xl shadow-2xl flex flex-col border border-gray-200 dark:border-gray-700 overflow-hidden",
+            isMobile ? "bottom-24 right-4" : "bottom-6 right-6"
+          )}
           data-testid="container-agent-chat"
         >
           {/* Header */}
@@ -126,7 +136,10 @@ export function FloatingAgentChat() {
                   size="sm"
                   onClick={handleNewChat}
                   data-testid="button-new-chat"
-                  className="text-white hover:bg-white/20 h-8 px-2"
+                  className={cn(
+                    "text-white h-8 px-2",
+                    isMobile ? "active:bg-white/20" : "hover:bg-white/20"
+                  )}
                 >
                   <Sparkles className="w-4 h-4" />
                 </Button>
@@ -136,7 +149,10 @@ export function FloatingAgentChat() {
                 size="sm"
                 onClick={() => setIsOpen(false)}
                 data-testid="button-close-agent-chat"
-                className="text-white hover:bg-white/20 h-8 w-8 p-0"
+                className={cn(
+                  "text-white h-8 w-8 p-0",
+                  isMobile ? "active:bg-white/20" : "hover:bg-white/20"
+                )}
               >
                 <X className="w-4 h-4" />
               </Button>
@@ -163,21 +179,36 @@ export function FloatingAgentChat() {
                   <button
                     onClick={() => setInput("Show me all my active loans")}
                     data-testid="button-quick-action-1"
-                    className="w-full text-left px-3 py-2 text-sm bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-lg transition-colors"
+                    className={cn(
+                      "w-full text-left px-3 py-2 text-sm bg-gray-100 dark:bg-gray-800 rounded-lg transition-colors",
+                      isMobile 
+                        ? "active:bg-gray-200 dark:active:bg-gray-700" 
+                        : "hover:bg-gray-200 dark:hover:bg-gray-700"
+                    )}
                   >
                     "Show me all my active loans"
                   </button>
                   <button
                     onClick={() => setInput("What's my total debt?")}
                     data-testid="button-quick-action-2"
-                    className="w-full text-left px-3 py-2 text-sm bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-lg transition-colors"
+                    className={cn(
+                      "w-full text-left px-3 py-2 text-sm bg-gray-100 dark:bg-gray-800 rounded-lg transition-colors",
+                      isMobile 
+                        ? "active:bg-gray-200 dark:active:bg-gray-700" 
+                        : "hover:bg-gray-200 dark:hover:bg-gray-700"
+                    )}
                   >
                     "What's my total debt?"
                   </button>
                   <button
                     onClick={() => setInput("I took a 100K loan from Al Rajhi Bank today")}
                     data-testid="button-quick-action-3"
-                    className="w-full text-left px-3 py-2 text-sm bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-lg transition-colors"
+                    className={cn(
+                      "w-full text-left px-3 py-2 text-sm bg-gray-100 dark:bg-gray-800 rounded-lg transition-colors",
+                      isMobile 
+                        ? "active:bg-gray-200 dark:active:bg-gray-700" 
+                        : "hover:bg-gray-200 dark:hover:bg-gray-700"
+                    )}
                   >
                     "I took a 100K loan from Al Rajhi Bank today"
                   </button>
@@ -247,7 +278,12 @@ export function FloatingAgentChat() {
                 onClick={handleSend}
                 disabled={!input.trim() || isLoading}
                 data-testid="button-send-message"
-                className="bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white"
+                className={cn(
+                  "bg-gradient-to-r from-green-600 to-emerald-600 text-white",
+                  isMobile 
+                    ? "active:from-green-700 active:to-emerald-700 active:scale-95" 
+                    : "hover:from-green-700 hover:to-emerald-700"
+                )}
               >
                 {isLoading ? (
                   <Loader2 className="w-4 h-4 animate-spin" />

@@ -17,12 +17,22 @@ import {
   ArrowRight,
   TrendingUp,
   Target,
-  AlertTriangle
+  AlertTriangle,
+  ChevronDown,
+  ChevronUp,
+  MoreVertical,
+  BarChart3,
+  Edit,
+  CreditCard
 } from "lucide-react";
 import { Link, useLocation } from "wouter";
 import { isUnauthorizedError } from "@/lib/authUtils";
 import { PortfolioSummary } from "@shared/types";
 import backgroundImage from "@assets/loan_management_background_excel_green_1759302449019.png";
+import { useIsMobile } from "@/hooks/use-mobile";
+import { MobileHeader, FloatingActionButton, ActionSheet } from "@/components/mobile";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { formatFacilityType } from "@/lib/formatters";
 
 interface BankLoginCredentials {
   bankId: string;
@@ -38,6 +48,12 @@ export default function Banks() {
   const [, setLocation] = useLocation();
   const [bankCredentials, setBankCredentials] = useState<BankLoginCredentials[]>([]);
   const [showCredentials, setShowCredentials] = useState<Record<string, boolean>>({});
+  const isMobile = useIsMobile();
+  
+  // Mobile-specific state
+  const [expandedBanks, setExpandedBanks] = useState<Set<string>>(new Set());
+  const [actionSheetOpen, setActionSheetOpen] = useState(false);
+  const [selectedBankForAction, setSelectedBankForAction] = useState<any>(null);
 
   // Redirect to login if not authenticated
   useEffect(() => {
@@ -85,7 +101,6 @@ export default function Banks() {
   }, [facilitiesError, toast]);
 
   const handleBankLogin = (bankId: string) => {
-    // This would integrate with bank APIs securely
     toast({
       title: "Bank Login",
       description: "Bank integration coming soon. This will securely connect to your bank account.",
@@ -95,6 +110,23 @@ export default function Banks() {
 
   const formatCurrency = (amount: number) => {
     return (amount / 1000000).toFixed(3).replace(/\.?0+$/, '') + ",000";
+  };
+
+  const toggleBankExpanded = (bankId: string) => {
+    setExpandedBanks(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(bankId)) {
+        newSet.delete(bankId);
+      } else {
+        newSet.add(bankId);
+      }
+      return newSet;
+    });
+  };
+
+  const handleBankAction = (bank: any) => {
+    setSelectedBankForAction(bank);
+    setActionSheetOpen(true);
   };
 
   if (isLoading || banksLoading) {
@@ -117,6 +149,253 @@ export default function Banks() {
     available: bankExposures.reduce((sum: number, bank: any) => sum + (bank.creditLimit - bank.outstanding), 0),
   };
 
+  // Get facilities for each bank
+  const getBankFacilities = (bankId: string) => {
+    return (facilities as any[])?.filter((f: any) => f.bankId === bankId) || [];
+  };
+
+  // Mobile Layout
+  if (isMobile) {
+    return (
+      <div className="min-h-screen bg-background pb-24">
+        <MobileHeader 
+          title="Bank Exposures" 
+          backButton={false}
+        />
+
+        <div className="px-4 py-4 space-y-4">
+          {/* Summary Cards */}
+          <div className="grid grid-cols-2 gap-3">
+            <Card className="bg-card border border-border">
+              <CardContent className="p-4">
+                <p className="text-xs font-medium text-muted-foreground mb-1">Outstanding</p>
+                <p className="text-lg font-bold text-foreground">
+                  {formatCurrency(totalExposure.outstanding)}
+                </p>
+                <p className="text-xs text-muted-foreground mt-0.5">SAR Millions</p>
+              </CardContent>
+            </Card>
+
+            <Card className="bg-card border border-border">
+              <CardContent className="p-4">
+                <p className="text-xs font-medium text-muted-foreground mb-1">Available</p>
+                <p className="text-lg font-bold text-foreground">
+                  {formatCurrency(totalExposure.available)}
+                </p>
+                <p className="text-xs text-muted-foreground mt-0.5">SAR Millions</p>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Bank Cards */}
+          <div className="space-y-3">
+            {bankExposures.map((exposure: any) => {
+              const bankFacilities = getBankFacilities(exposure.bankId);
+              const isExpanded = expandedBanks.has(exposure.bankId);
+              const available = exposure.creditLimit - exposure.outstanding;
+
+              return (
+                <Card 
+                  key={exposure.bankId} 
+                  className="bg-card border border-border overflow-hidden"
+                >
+                  <div className="p-4 space-y-3">
+                    {/* Bank Header - Tappable to view bank details */}
+                    <button
+                      onClick={() => setLocation(`/banks/${exposure.bankId}`)}
+                      className="w-full flex items-start gap-3 active:bg-accent/50 active:scale-[0.98] transition-all rounded-lg p-2 -m-2"
+                      data-testid={`button-bank-card-${exposure.bankId}`}
+                    >
+                      <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center flex-shrink-0">
+                        <Building className="h-6 w-6 text-primary" />
+                      </div>
+                      <div className="flex-1 text-left min-w-0">
+                        <h3 className="font-semibold text-foreground truncate">{exposure.bankName}</h3>
+                        <p className="text-sm text-muted-foreground">
+                          {bankFacilities.length} {bankFacilities.length === 1 ? 'Facility' : 'Facilities'}
+                        </p>
+                      </div>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-12 w-12 flex-shrink-0"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleBankAction(exposure);
+                        }}
+                        data-testid={`button-bank-actions-${exposure.bankId}`}
+                      >
+                        <MoreVertical className="h-5 w-5" />
+                      </Button>
+                    </button>
+
+                    {/* Key Metrics */}
+                    <div className="grid grid-cols-3 gap-2">
+                      <div className="bg-muted/50 rounded-lg p-3">
+                        <p className="text-xs text-muted-foreground mb-1">Outstanding</p>
+                        <p className="text-sm font-bold text-foreground">
+                          {formatCurrency(exposure.outstanding)}
+                        </p>
+                      </div>
+                      <div className="bg-muted/50 rounded-lg p-3">
+                        <p className="text-xs text-muted-foreground mb-1">Available</p>
+                        <p className="text-sm font-bold text-foreground">
+                          {formatCurrency(available)}
+                        </p>
+                      </div>
+                      <div className="bg-muted/50 rounded-lg p-3">
+                        <p className="text-xs text-muted-foreground mb-1">Utilization</p>
+                        <Badge variant="outline" className={`${
+                          exposure.utilization > 80 ? 'border-destructive text-destructive' :
+                          exposure.utilization > 60 ? 'border-amber-500 text-amber-600 dark:text-amber-400' :
+                          'border-primary text-primary'
+                        } text-xs`}>
+                          {exposure.utilization.toFixed(1)}%
+                        </Badge>
+                      </div>
+                    </div>
+
+                    {/* Facilities Section */}
+                    {bankFacilities.length > 0 && (
+                      <Collapsible open={isExpanded} onOpenChange={() => toggleBankExpanded(exposure.bankId)}>
+                        <CollapsibleTrigger 
+                          className="flex items-center justify-between w-full h-12 px-3 rounded-lg bg-muted/30 active:bg-muted/50 transition-colors"
+                          data-testid={`button-toggle-facilities-${exposure.bankId}`}
+                        >
+                          <span className="text-sm font-medium text-foreground">
+                            Facilities ({bankFacilities.length})
+                          </span>
+                          {isExpanded ? (
+                            <ChevronUp className="h-5 w-5 text-muted-foreground" />
+                          ) : (
+                            <ChevronDown className="h-5 w-5 text-muted-foreground" />
+                          )}
+                        </CollapsibleTrigger>
+                        <CollapsibleContent className="mt-2 space-y-2">
+                          {bankFacilities.map((facility: any) => {
+                            const facilityOutstanding = facility.outstanding || 0;
+                            const facilityAvailable = facility.creditLimit - facilityOutstanding;
+                            const facilityUtilization = facility.creditLimit > 0 
+                              ? (facilityOutstanding / facility.creditLimit) * 100 
+                              : 0;
+
+                            return (
+                              <button
+                                key={facility.id}
+                                onClick={() => setLocation(`/banks/${exposure.bankId}?facilityId=${facility.id}`)}
+                                className="w-full bg-background border border-border rounded-lg p-3 active:bg-accent/50 active:scale-[0.98] transition-all"
+                                data-testid={`button-facility-${facility.id}`}
+                              >
+                                <div className="flex items-start justify-between mb-2">
+                                  <div className="flex items-center gap-2">
+                                    <CreditCard className="h-4 w-4 text-primary" />
+                                    <span className="text-sm font-medium text-foreground">
+                                      {formatFacilityType(facility.facilityType)}
+                                    </span>
+                                  </div>
+                                  <Badge 
+                                    variant={facility.isActive ? "default" : "secondary"}
+                                    className="text-xs"
+                                  >
+                                    {facility.isActive ? 'Active' : 'Inactive'}
+                                  </Badge>
+                                </div>
+                                <div className="grid grid-cols-2 gap-2 text-left">
+                                  <div>
+                                    <p className="text-xs text-muted-foreground">Credit Limit</p>
+                                    <p className="text-sm font-semibold text-foreground">
+                                      {formatCurrency(facility.creditLimit)}
+                                    </p>
+                                  </div>
+                                  <div>
+                                    <p className="text-xs text-muted-foreground">Available</p>
+                                    <p className="text-sm font-semibold text-foreground">
+                                      {formatCurrency(facilityAvailable)}
+                                    </p>
+                                  </div>
+                                </div>
+                                <div className="mt-2 pt-2 border-t border-border">
+                                  <div className="flex items-center justify-between">
+                                    <span className="text-xs text-muted-foreground">
+                                      Utilized: {facilityUtilization.toFixed(1)}%
+                                    </span>
+                                    <span className="text-xs text-muted-foreground">
+                                      Cost: {facility.costOfFunding}%
+                                    </span>
+                                  </div>
+                                </div>
+                              </button>
+                            );
+                          })}
+                        </CollapsibleContent>
+                      </Collapsible>
+                    )}
+                  </div>
+                </Card>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Floating Action Button for Add Facility */}
+        <FloatingActionButton
+          onClick={() => setLocation("/facility/create-general")}
+          label="Add Facility"
+        />
+
+        {/* Action Sheet for Bank Actions */}
+        <ActionSheet
+          open={actionSheetOpen}
+          onOpenChange={setActionSheetOpen}
+          title={selectedBankForAction?.bankName}
+          actions={[
+            {
+              id: "view-bank",
+              label: "View Bank Details",
+              icon: <Eye className="h-5 w-5" />,
+              onClick: () => {
+                if (selectedBankForAction) {
+                  setLocation(`/banks/${selectedBankForAction.bankId}`);
+                }
+              },
+            },
+            {
+              id: "add-facility",
+              label: "Add Facility",
+              icon: <Plus className="h-5 w-5" />,
+              onClick: () => {
+                if (selectedBankForAction) {
+                  setLocation(`/facility/create-general?bankId=${selectedBankForAction.bankId}`);
+                }
+              },
+            },
+            {
+              id: "view-analytics",
+              label: "View Analytics",
+              icon: <BarChart3 className="h-5 w-5" />,
+              onClick: () => {
+                if (selectedBankForAction) {
+                  setLocation(`/bank-analytics/${selectedBankForAction.bankId}`);
+                }
+              },
+            },
+            {
+              id: "edit-bank",
+              label: "Edit Bank",
+              icon: <Edit className="h-5 w-5" />,
+              onClick: () => {
+                if (selectedBankForAction) {
+                  setLocation(`/banks/${selectedBankForAction.bankId}?edit=true`);
+                }
+              },
+            },
+          ]}
+        />
+      </div>
+    );
+  }
+
+  // Desktop Layout (unchanged)
   return (
     <div className="min-h-screen bg-gradient-to-br from-green-50 via-white to-emerald-50 dark:from-gray-900 dark:via-gray-900 dark:to-gray-800">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6 space-y-6">

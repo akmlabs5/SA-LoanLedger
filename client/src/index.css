@@ -126,45 +126,31 @@
 
   /* 
    * ==================================================================================
-   * MOBILE DOUBLE-TAP MITIGATION (NOT A COMPLETE FIX)
+   * TOUCH-FIRST MOBILE REDESIGN - NO HOVER STATES
    * ==================================================================================
    * 
-   * PROBLEM:
-   * On touch devices, tapping triggers :hover pseudo-class which can persist,
-   * sometimes requiring a second tap to trigger click event.
+   * SOLUTION:
+   * Complete mobile UI overhaul using native mobile patterns - no hover states needed.
    * 
-   * LIMITATION:
-   * There is NO perfect CSS-only cross-browser solution. The :hover state itself
-   * cannot be removed with CSS - it's controlled by the browser.
+   * NEW ARCHITECTURE:
+   * 1. Bottom tab navigation (Dashboard, Loans, Banks, AI, More)
+   * 2. Card-based layouts with active (pressed) states only
+   * 3. Action sheets for menus (slides from bottom)
+   * 4. Floating action buttons (FAB) for quick actions
+   * 5. 48px minimum touch targets throughout
+   * 6. Horizontal scrolling with snap points for metrics
+   * 7. Full-screen mobile views with proper bottom padding for tab bar
    * 
-   * MITIGATION STRATEGY:
-   * 1. Instant transitions (0s) on interactive elements minimize visual hover artifacts
-   * 2. Strong active state feedback provides immediate tap confirmation
-   * 3. This reduces but does NOT eliminate the double-tap issue on all devices
-   * 
-   * This is an industry-standard mitigation approach, not a complete fix.
+   * This eliminates the double-tap issue by removing hover dependencies entirely.
    * ==================================================================================
    */
   
   /* 
-   * On touch devices: instant transitions minimize visual hover persistence
-   * Scoped to interactive elements - does not affect layout animations
+   * Global active state feedback for touch devices
+   * Provides immediate visual confirmation on tap
    */
-  html.touch-device button,
-  html.touch-device a,
-  html.touch-device [role="button"],
-  html.touch-device [role="tab"],
-  html.touch-device [role="menuitem"],
-  html.touch-device [role="link"],
-  html.touch-device input[type="button"],
-  html.touch-device input[type="submit"],
-  html.touch-device [class*="hover:"] {
-    transition-duration: 0s !important;
-  }
-  
-  /* Touch feedback using active states for immediate visual confirmation */
   @media (hover: none) {
-    button:active, 
+    button:not(:disabled):active, 
     a:active, 
     [role="button"]:active,
     [role="tab"]:active,

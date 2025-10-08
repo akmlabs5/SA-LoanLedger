@@ -85,8 +85,39 @@ Additional AI features include rules-based portfolio risk analysis, bank concent
 ## Data Storage Architecture
 The database schema is tailored for the Saudi banking context, storing information on Banks, Facilities, Loans (with SIBOR calculations), Collateral (with valuation history), Users, and Sessions. It uses UUID primary keys and proper foreign key relationships.
 
-## Mobile-First Design
-The application is optimized for mobile devices with responsive breakpoints, touch-friendly elements, mobile-specific navigation, and optimized form layouts for a seamless experience across devices. Mitigation for mobile hover persistence issues includes instant transitions and strong active state visual feedback.
+## Mobile-First Touch Redesign
+The application features a complete touch-first mobile redesign that eliminates hover dependencies entirely. The mobile experience uses native app patterns with:
+
+**Mobile Navigation:**
+- Bottom tab bar with 5 tabs: Dashboard, Loans, Banks, AI, More
+- Fixed positioning at bottom-0 (h-16) with proper z-indexing
+- Active tab indicators with Saudi green accent color
+- MobileLayout wrapper that conditionally renders mobile UI for viewports <1024px
+
+**Touch-First UI Patterns:**
+- Card-based layouts replace tables on mobile
+- Action sheets (bottom slide-up) replace dropdown menus
+- Floating Action Buttons (FAB) for quick actions positioned at bottom-20
+- Horizontal scrolling metrics with snap points
+- 48px minimum touch targets throughout
+- Active (pressed) states only - zero hover states on mobile
+- Active feedback: active:scale-[0.96-0.98], active:bg-accent/50
+
+**Page-Specific Mobile Optimizations:**
+- **Dashboard**: Horizontal scrolling stat cards, condensed bank/loan cards, hidden charts on mobile
+- **Loans**: Swipeable loan cards, ActionSheet for loan actions, FAB for create loan
+- **Banks**: Expandable facility sections, ActionSheet for bank actions, condensed metrics
+- **AI Chat**: Full-screen mobile chat, input at bottom-16, FloatingAgentChat at bottom-24, visible delete buttons
+- **More/Settings**: Native app-style settings list with profile section and grouped options
+
+**Mobile Components Library** (`client/src/components/mobile/`):
+- BottomTabBar: 5-tab navigation system
+- MobileHeader: Page headers with back button and actions
+- ActionSheet: Bottom slide-up menu system
+- FloatingActionButton: Quick action FAB component
+- MobileLayout: Conditional mobile wrapper
+
+**Responsive Breakpoint:** Mobile UI renders for `<lg` breakpoint (< 1024px), desktop UI completely unchanged for `≥lg` breakpoint.
 
 ## Admin Portal
 A comprehensive admin portal with its own authentication provides system oversight. Features include a dashboard for real-time statistics, analytics for platform usage and loan trends, user management with activity logs, database management, security monitoring, system alerts, global settings, and email template management. Security is maintained with separate authentication and Bearer token-based API protection.
