@@ -47,7 +47,7 @@ import { User as UserType } from "@shared/schema";
 import { cn } from "@/lib/utils";
 import morounaSymbol from "@assets/symbol_1759754524455.png";
 import { FloatingAgentChat } from "./FloatingAgentChat";
-import { HelpDeskChat } from "./HelpDeskChat";
+// import { HelpDeskChat } from "./HelpDeskChat"; // Removed - will be added to landing page later
 
 interface AppLayoutProps {
   children: React.ReactNode;
@@ -572,9 +572,6 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
       
       {/* Floating AI Agent Chat */}
       <FloatingAgentChat />
-      
-      {/* Help Desk Chat */}
-      <HelpDeskChat />
     </div>
   );
 }
