@@ -45,7 +45,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useSupabaseAuth } from "@/contexts/SupabaseAuthContext";
 import { User as UserType } from "@shared/schema";
 import { cn } from "@/lib/utils";
-import morounaLogo from "@assets/morouna-logo-transparent.png";
+import morounaLogo from "@assets/noBgWhite_1759916796790.png";
 import { FloatingAgentChat } from "./FloatingAgentChat";
 // import { HelpDeskChat } from "./HelpDeskChat"; // Removed - will be added to landing page later
 
