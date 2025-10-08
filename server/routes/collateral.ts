@@ -21,6 +21,7 @@ export function registerCollateralRoutes(app: Express, deps: AppDependencies) {
   app.post('/api/collateral', isAuthenticated, attachOrganizationContext, requireOrganization, async (req: any, res) => {
     try {
       const organizationId = req.organizationId;
+      const userId = req.user.claims.sub;
       
       const { facilityId, bankId, pledgeType, ...collateralFields } = req.body;
       
@@ -36,7 +37,7 @@ export function registerCollateralRoutes(app: Express, deps: AppDependencies) {
         return res.status(400).json({ message: "Pledge type is required for collateral creation" });
       }
       
-      const collateralData = insertCollateralSchema.parse({ ...collateralFields, organizationId });
+      const collateralData = insertCollateralSchema.parse({ ...collateralFields, organizationId, userId });
       
       if (facilityId) {
         const userFacilities = await storage.getUserFacilities(organizationId);
@@ -62,7 +63,8 @@ export function registerCollateralRoutes(app: Express, deps: AppDependencies) {
           pledgeType,
           effectiveDate: new Date().toISOString().split('T')[0],
           isActive: true,
-          organizationId
+          organizationId,
+          userId
         };
         
         if (facilityId) {
@@ -83,9 +85,10 @@ export function registerCollateralRoutes(app: Express, deps: AppDependencies) {
         throw assignmentError;
       }
       
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error creating collateral:", error);
-      res.status(400).json({ message: "Failed to create collateral and assignment" });
+      const errorMessage = error?.message || "Failed to create collateral and assignment";
+      res.status(400).json({ message: errorMessage, error: error?.toString() });
     }
   });
 

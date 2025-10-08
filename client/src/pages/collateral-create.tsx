@@ -54,6 +54,10 @@ const collateralFormSchema = z.object({
   facilityId: z.string().optional(),
   bankId: z.string().optional(),
   pledgeType: z.enum(["first_lien", "second_lien", "blanket"]).default("first_lien"),
+  desiredLtv: z.string().optional().refine(
+    (val) => !val || (!isNaN(Number(val)) && Number(val) > 0 && Number(val) <= 100),
+    "LTV must be between 0 and 100"
+  ),
 }).refine(
   (data) => {
     if (data.assignmentType === "facility") {
@@ -98,6 +102,7 @@ export default function CollateralCreatePage() {
       facilityId: "",
       bankId: "",
       pledgeType: "first_lien",
+      desiredLtv: "",
     },
   });
 
@@ -164,6 +169,7 @@ export default function CollateralCreatePage() {
   const currentValue = form.watch("currentValue");
   const selectedBankId = form.watch("bankId");
   const selectedFacilityId = form.watch("facilityId");
+  const desiredLtv = form.watch("desiredLtv");
 
   // Get the relevant bank for LTV calculation
   const relevantBank = (() => {
@@ -178,6 +184,12 @@ export default function CollateralCreatePage() {
 
   const bankTargetLtv = relevantBank?.targetLtv ? parseFloat(relevantBank.targetLtv) : 70;
   const bankName = relevantBank?.name || "Bank";
+  
+  // Use user's desired LTV if provided, otherwise fall back to bank target
+  const effectiveLtv = desiredLtv && !isNaN(Number(desiredLtv)) ? Number(desiredLtv) : bankTargetLtv;
+  const estimatedValue = currentValue && !isNaN(Number(currentValue)) 
+    ? (Number(currentValue) * (effectiveLtv / 100)).toString()
+    : "0";
 
   // Check if there are no facilities
   const noFacilities = !facilitiesLoading && (!facilities || facilities.length === 0);
@@ -531,6 +543,35 @@ export default function CollateralCreatePage() {
                       )}
                     />
 
+                    {/* Desired LTV Percentage */}
+                    <FormField
+                      control={form.control}
+                      name="desiredLtv"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Desired LTV (%)</FormLabel>
+                          <FormControl>
+                            <Input
+                              {...field}
+                              type="number"
+                              step="0.1"
+                              min="0"
+                              max="100"
+                              value={field.value || ""}
+                              placeholder={`e.g., ${bankTargetLtv} (Bank target: ${bankTargetLtv}%)`}
+                              data-testid="input-desired-ltv"
+                            />
+                          </FormControl>
+                          {desiredLtv && (
+                            <p className="text-xs text-blue-600 dark:text-blue-400 font-medium">
+                              Estimated value: {formatCurrency(estimatedValue)}
+                            </p>
+                          )}
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
                     {/* Description */}
                     <FormField
                       control={form.control}
@@ -699,9 +740,14 @@ export default function CollateralCreatePage() {
                         Estimated LTV ({bankName} Target: {bankTargetLtv}%):
                       </span>
                       <span className="text-sm font-semibold text-green-900 dark:text-green-100">
-                        {formatCurrency((Number(currentValue) * (bankTargetLtv / 100)).toString())}
+                        {formatCurrency(estimatedValue)}
                       </span>
                     </div>
+                    {desiredLtv && Number(desiredLtv) !== bankTargetLtv && (
+                      <div className="text-xs text-amber-600 dark:text-amber-400 italic mt-2">
+                        Using custom LTV: {effectiveLtv}%
+                      </div>
+                    )}
                     <div className="text-xs text-gray-500 dark:text-gray-400 italic mt-2">
                       *Actual loan-to-value ratios may vary based on asset type and bank policies
                     </div>
