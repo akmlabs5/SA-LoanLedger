@@ -201,40 +201,33 @@ export default function Banks() {
                 >
                   <div className="p-4 space-y-3">
                     {/* Bank Header - Tappable to view bank details */}
-                    <div
-                      onClick={() => setLocation(`/banks/${exposure.bankId}`)}
-                      role="button"
-                      tabIndex={0}
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter' || e.key === ' ') {
-                          e.preventDefault();
-                          setLocation(`/banks/${exposure.bankId}`);
-                        }
-                      }}
-                      className="w-full flex items-start gap-3 active:bg-accent/50 active:scale-[0.98] transition-all rounded-lg p-2 -m-2 cursor-pointer"
-                      data-testid={`button-bank-card-${exposure.bankId}`}
-                    >
-                      <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center flex-shrink-0">
+                    <div className="w-full flex items-start gap-3 rounded-lg p-2 -m-2 relative">
+                      <button
+                        onClick={() => setLocation(`/banks/${exposure.bankId}`)}
+                        className="absolute inset-0 w-full h-full active:bg-accent/50 active:scale-[0.98] transition-all rounded-lg"
+                        aria-label={`View ${exposure.bankName} details`}
+                        data-testid={`button-bank-card-${exposure.bankId}`}
+                      />
+                      <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center flex-shrink-0 pointer-events-none">
                         <Building className="h-6 w-6 text-primary" />
                       </div>
-                      <div className="flex-1 text-left min-w-0">
+                      <div className="flex-1 text-left min-w-0 pointer-events-none">
                         <h3 className="font-semibold text-foreground truncate">{exposure.bankName}</h3>
                         <p className="text-sm text-muted-foreground">
                           {bankFacilities.length} {bankFacilities.length === 1 ? 'Facility' : 'Facilities'}
                         </p>
                       </div>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-12 w-12 flex-shrink-0"
+                      <button
                         onClick={(e) => {
                           e.stopPropagation();
                           handleBankAction(exposure);
                         }}
+                        className="h-12 w-12 flex-shrink-0 rounded-lg flex items-center justify-center active:bg-accent transition-colors relative z-10"
+                        aria-label={`${exposure.bankName} actions`}
                         data-testid={`button-bank-actions-${exposure.bankId}`}
                       >
                         <MoreVertical className="h-5 w-5" />
-                      </Button>
+                      </button>
                     </div>
 
                     {/* Key Metrics */}
@@ -288,18 +281,10 @@ export default function Banks() {
                               : 0;
 
                             return (
-                              <div
+                              <button
                                 key={facility.id}
                                 onClick={() => setLocation(`/banks/${exposure.bankId}?facilityId=${facility.id}`)}
-                                role="button"
-                                tabIndex={0}
-                                onKeyDown={(e) => {
-                                  if (e.key === 'Enter' || e.key === ' ') {
-                                    e.preventDefault();
-                                    setLocation(`/banks/${exposure.bankId}?facilityId=${facility.id}`);
-                                  }
-                                }}
-                                className="w-full bg-background border border-border rounded-lg p-3 active:bg-accent/50 active:scale-[0.98] transition-all cursor-pointer"
+                                className="w-full bg-background border border-border rounded-lg p-3 active:bg-accent/50 active:scale-[0.98] transition-all text-left"
                                 data-testid={`button-facility-${facility.id}`}
                               >
                                 <div className="flex items-start justify-between mb-2">
@@ -340,7 +325,7 @@ export default function Banks() {
                                     </span>
                                   </div>
                                 </div>
-                              </div>
+                              </button>
                             );
                           })}
                         </CollapsibleContent>
