@@ -82,12 +82,12 @@ function ensureExactlyThreeInsights(insights: AIInsight[], portfolioSummary: any
   return result.slice(0, 3);
 }
 
-export async function generateAIInsights(userId: string, storage: IStorage): Promise<AIInsight[]> {
+export async function generateAIInsights(organizationId: string, storage: IStorage, userId?: string): Promise<AIInsight[]> {
   try {
-    const portfolioSummary = await storage.getUserPortfolioSummary(userId);
-    const activeLoans = await storage.getActiveLoansByUser(userId);
-    const userCollateral = await storage.getUserCollateral(userId);
-    const aiConfig = await storage.getUserAiConfig(userId);
+    const portfolioSummary = await storage.getUserPortfolioSummary(organizationId);
+    const activeLoans = await storage.getActiveLoansByUser(organizationId);
+    const userCollateral = await storage.getUserCollateral(organizationId);
+    const aiConfig = userId ? await storage.getUserAiConfig(userId) : undefined;
 
     const insights: AIInsight[] = [];
 

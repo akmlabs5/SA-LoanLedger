@@ -231,9 +231,16 @@ export function registerLoansRoutes(app: Express, deps: AppDependencies) {
     try {
       const loanId = req.params.id;
       const organizationId = req.organizationId;
+      const userId = req.user.claims.sub;
       const settlementData = settlementRequestSchema.parse(req.body);
       
-      const result = await storage.settleLoan(loanId, settlementData, organizationId);
+      // Verify loan belongs to organization before settling
+      const loan = await storage.getLoanById(loanId);
+      if (!loan || loan.organizationId !== organizationId) {
+        return res.status(404).json({ message: "Loan not found" });
+      }
+      
+      const result = await storage.settleLoan(loanId, settlementData, userId);
       res.json(result);
     } catch (error) {
       console.error("Error settling loan:", error);

@@ -40,7 +40,13 @@ export function registerFacilitiesRoutes(app: Express, deps: AppDependencies) {
   app.post('/api/facilities', isAuthenticated, attachOrganizationContext, requireOrganization, async (req: any, res) => {
     try {
       const organizationId = req.organizationId;
-      const facilityData = insertFacilitySchema.parse({ ...req.body, organizationId });
+      const userId = req.user.claims.sub;
+      const facilityData = insertFacilitySchema.parse({ 
+        ...req.body, 
+        organizationId,
+        userId,
+        isActive: true
+      });
       const facility = await storage.createFacility(facilityData);
       res.json(facility);
     } catch (error) {

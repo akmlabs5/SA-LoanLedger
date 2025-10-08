@@ -399,10 +399,11 @@ export function registerAiRoutes(app: Express, deps: AppDependencies) {
   });
 
   // AI Insights
-  app.get('/api/ai-insights', isAuthenticated, async (req: any, res) => {
+  app.get('/api/ai-insights', isAuthenticated, attachOrganizationContext, requireOrganization, async (req: any, res) => {
     try {
+      const organizationId = req.organizationId;
       const userId = req.user.claims.sub;
-      const insights = await generateAIInsights(userId, storage);
+      const insights = await generateAIInsights(organizationId, storage, userId);
       res.json(insights);
     } catch (error) {
       console.error("Error generating AI insights:", error);
