@@ -288,6 +288,14 @@ export default function GuaranteeCreatePage() {
                             data-testid="input-guarantee-amount" 
                           />
                         </FormControl>
+                        {field.value && (
+                          <p className="text-sm text-green-600 dark:text-green-400 mt-1">
+                            {parseFloat(field.value || "0").toLocaleString('en-US', { 
+                              minimumFractionDigits: 2, 
+                              maximumFractionDigits: 2 
+                            })} SAR
+                          </p>
+                        )}
                         <FormMessage />
                       </FormItem>
                     )}
@@ -349,6 +357,11 @@ export default function GuaranteeCreatePage() {
                           data-testid="input-fee-rate" 
                         />
                       </FormControl>
+                      {field.value && (
+                        <p className="text-sm text-green-600 dark:text-green-400 mt-1">
+                          {parseFloat(field.value || "0").toFixed(2)}%
+                        </p>
+                      )}
                       <FormMessage />
                     </FormItem>
                   )}
@@ -444,12 +457,21 @@ export default function GuaranteeCreatePage() {
                       <FormLabel>Security Amount (SAR)</FormLabel>
                       <FormControl>
                         <Input 
-                          type="number" 
-                          placeholder="10000" 
+                          type="number"
+                          step="0.01"
+                          placeholder="10000.00" 
                           {...field} 
                           data-testid="input-security-amount" 
                         />
                       </FormControl>
+                      {field.value && (
+                        <p className="text-sm text-green-600 dark:text-green-400 mt-1">
+                          {parseFloat(field.value || "0").toLocaleString('en-US', { 
+                            minimumFractionDigits: 2, 
+                            maximumFractionDigits: 2 
+                          })} SAR
+                        </p>
+                      )}
                       <FormMessage />
                     </FormItem>
                   )}

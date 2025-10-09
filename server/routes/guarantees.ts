@@ -38,7 +38,7 @@ export function registerGuaranteesRoutes(app: Express, deps: AppDependencies) {
   app.post('/api/guarantees', isAuthenticated, attachOrganizationContext, requireOrganization, async (req: any, res) => {
     try {
       const organizationId = req.organizationId;
-      const userId = req.user?.id;
+      const userId = req.user?.claims?.sub;
       
       const guaranteeData = insertGuaranteeSchema.parse({
         ...req.body,
