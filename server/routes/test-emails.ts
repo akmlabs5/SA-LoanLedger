@@ -1,9 +1,66 @@
 import type { Express } from "express";
-import { FROM_EMAIL_REMINDERS } from "../emailService";
+import { FROM_EMAIL_REMINDERS, FROM_EMAIL_AUTH } from "../emailService";
 import { mailService } from "../emailService";
 import { EmailTemplateService, EmailTemplateType } from "../emailTemplates/templates";
 
 export function registerTestEmailRoutes(app: Express) {
+  
+  // Test endpoint to send sample auth emails from noreply@akm-labs.com
+  app.post('/api/test/send-auth-emails', async (req, res) => {
+    const testEmail = req.body.email || 'abdullah@akm-labs.com';
+    
+    try {
+      // Test 1: Email Verification
+      const verificationTemplate = EmailTemplateService.getTemplate(
+        EmailTemplateType.EMAIL_VERIFICATION,
+        {
+          url: 'https://akm-labs.com/verify-email?token=sample123'
+        }
+      );
+
+      await mailService.send({
+        to: testEmail,
+        from: FROM_EMAIL_AUTH,
+        subject: verificationTemplate.subject,
+        text: verificationTemplate.text,
+        html: verificationTemplate.html
+      });
+
+      // Test 2: MFA Code
+      const mfaTemplate = EmailTemplateService.getTemplate(
+        EmailTemplateType.MFA_CODE,
+        {
+          code: '123456'
+        }
+      );
+
+      await mailService.send({
+        to: testEmail,
+        from: FROM_EMAIL_AUTH,
+        subject: mfaTemplate.subject,
+        text: mfaTemplate.text,
+        html: mfaTemplate.html
+      });
+
+      res.json({ 
+        success: true, 
+        message: `Auth test emails sent successfully to ${testEmail}`,
+        from: FROM_EMAIL_AUTH,
+        templates: [
+          'Email Verification',
+          'MFA Code'
+        ]
+      });
+
+    } catch (error) {
+      console.error('Error sending auth test emails:', error);
+      res.status(500).json({ 
+        success: false, 
+        error: 'Failed to send auth test emails',
+        details: error instanceof Error ? error.message : 'Unknown error'
+      });
+    }
+  });
   
   // Test endpoint to send sample reminder emails
   app.post('/api/test/send-reminder-emails', async (req, res) => {
