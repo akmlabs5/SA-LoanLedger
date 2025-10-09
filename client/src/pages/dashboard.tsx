@@ -985,7 +985,7 @@ export default function Dashboard() {
               <CardTitle className="text-lg font-semibold">Outstanding vs Limits</CardTitle>
             </CardHeader>
             <CardContent>
-              <OutstandingVsLimitsChart />
+              <OutstandingVsLimitsChart portfolioSummary={portfolioSummary} />
             </CardContent>
           </Card>
 
@@ -994,7 +994,7 @@ export default function Dashboard() {
               <CardTitle className="text-lg font-semibold">Portfolio Distribution</CardTitle>
             </CardHeader>
             <CardContent>
-              <PortfolioDistributionChart />
+              <PortfolioDistributionChart portfolioSummary={portfolioSummary} />
             </CardContent>
           </Card>
 

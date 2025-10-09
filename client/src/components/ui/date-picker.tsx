@@ -15,9 +15,14 @@ interface DatePickerProps {
 
 export const ModernDatePicker = forwardRef<HTMLInputElement, DatePickerProps>(
   ({ value, onChange, placeholder = "Pick a date", className = "", disabled = false, dataTestId }, ref) => {
+    // Limit year range to current year ± 15 years
+    const currentYear = new Date().getFullYear();
+    
     return (
       <div className={`w-full ${className}`}>
         <DatePicker.Root 
+          min={`${currentYear - 15}-01-01`}
+          max={`${currentYear + 15}-12-31`}
           onValueChange={(details) => {
             if (onChange) {
               if (details.valueAsString.length > 0) {

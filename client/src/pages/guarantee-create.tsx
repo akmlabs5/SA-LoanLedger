@@ -100,10 +100,12 @@ export default function GuaranteeCreatePage() {
       queryClient.invalidateQueries({ queryKey: ["/api/guarantees"] });
       setLocation("/guarantees");
     },
-    onError: (error) => {
+    onError: (error: any) => {
+      console.error("Guarantee creation error:", error);
+      const errorMessage = error?.message || error?.toString() || "Failed to create guarantee. Please try again.";
       toast({
         title: "Error",
-        description: "Failed to create guarantee. Please try again.",
+        description: errorMessage,
         variant: "destructive",
       });
     },
