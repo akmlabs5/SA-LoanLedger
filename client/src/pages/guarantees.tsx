@@ -99,7 +99,7 @@ export default function GuaranteesPage() {
     total: guarantees?.length || 0,
     active: guarantees?.filter(g => g.status === "active").length || 0,
     expiringSoon: guarantees?.filter(g => g.expiryDate && isExpiringSoon(g.expiryDate)).length || 0,
-    totalAmount: guarantees?.reduce((sum, g) => sum + (g.guaranteeAmount || 0), 0) || 0,
+    totalAmount: guarantees?.reduce((sum, g) => sum + (parseFloat(g.guaranteeAmount || '0')), 0) || 0,
   };
 
   if (isLoading) {
@@ -269,10 +269,10 @@ export default function GuaranteesPage() {
                         <h3 className="text-lg font-semibold text-gray-900 dark:text-white" data-testid={`text-reference-${guarantee.id}`}>
                           {guarantee.referenceNumber}
                         </h3>
-                        <Badge className={getStatusColor(guarantee.status)}>
+                        <Badge className={getStatusColor(guarantee.status || 'active')}>
                           <div className="flex items-center gap-1">
-                            {getStatusIcon(guarantee.status)}
-                            {guarantee.status.charAt(0).toUpperCase() + guarantee.status.slice(1)}
+                            {getStatusIcon(guarantee.status || 'active')}
+                            {(guarantee.status || 'active').charAt(0).toUpperCase() + (guarantee.status || 'active').slice(1)}
                           </div>
                         </Badge>
                         {guarantee.expiryDate && isExpiringSoon(guarantee.expiryDate) && (
