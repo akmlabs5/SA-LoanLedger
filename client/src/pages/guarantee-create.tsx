@@ -41,7 +41,9 @@ const guaranteeFormSchema = z.object({
     const amount = parseFloat(val);
     return amount > 0;
   }, "Amount must be greater than 0"),
-  securityType: z.enum(["cash", "non_cash"]),
+  securityType: z.enum(["cash_full", "cash_partial", "cash_none", "non_cash"], {
+    errorMap: () => ({ message: "Please select a valid security type" })
+  }),
   securityAmount: z.string().optional(),
   securityDetails: z.string().optional(),
   issueDate: z.string().min(1, "Issue date is required"),
@@ -74,7 +76,6 @@ export default function GuaranteeCreatePage() {
   const form = useForm<GuaranteeFormData>({
     resolver: zodResolver(guaranteeFormSchema),
     defaultValues: {
-      securityType: "non_cash",
       status: "active",
     },
   });
@@ -102,9 +103,27 @@ export default function GuaranteeCreatePage() {
     },
     onError: (error: any) => {
       console.error("Guarantee creation error:", error);
-      const errorMessage = error?.message || error?.toString() || "Failed to create guarantee. Please try again.";
+      
+      // Parse specific error messages
+      let errorMessage = "Failed to create guarantee. Please check all required fields.";
+      
+      if (error?.message) {
+        // Handle Zod validation errors
+        if (error.message.includes("facilityId")) {
+          errorMessage = "Please select a valid facility";
+        } else if (error.message.includes("securityType")) {
+          errorMessage = "Please select a valid security type";
+        } else if (error.message.includes("guaranteeAmount")) {
+          errorMessage = "Please enter a valid guarantee amount";
+        } else if (error.message.includes("issueDate") || error.message.includes("expiryDate")) {
+          errorMessage = "Please select valid dates";
+        } else {
+          errorMessage = error.message;
+        }
+      }
+      
       toast({
-        title: "Error",
+        title: "Error Creating Guarantee",
         description: errorMessage,
         variant: "destructive",
       });
@@ -440,7 +459,9 @@ export default function GuaranteeCreatePage() {
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          <SelectItem value="cash">Cash Security</SelectItem>
+                          <SelectItem value="cash_full">Full Cash Security (100%)</SelectItem>
+                          <SelectItem value="cash_partial">Partial Cash Security</SelectItem>
+                          <SelectItem value="cash_none">No Cash Security (Unsecured)</SelectItem>
                           <SelectItem value="non_cash">Non-Cash Security</SelectItem>
                         </SelectContent>
                       </Select>
