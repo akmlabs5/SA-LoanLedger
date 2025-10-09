@@ -979,6 +979,17 @@ export default function Dashboard() {
         </Card>
 
         {/* Charts Section - Desktop Only */}
+        {/* Upcoming Loans by Month - Full Width Large Chart */}
+        <Card className="bg-card border border-border shadow-sm lg:hover:shadow-md transition-shadow duration-200 mb-6 sm:mb-8">
+          <CardHeader>
+            <CardTitle className="text-lg font-semibold">Upcoming Loans by Month</CardTitle>
+          </CardHeader>
+          <CardContent className="h-96">
+            <UpcomingLoansByMonthChart allBanks={allBanks} />
+          </CardContent>
+        </Card>
+
+        {/* Other Charts Grid */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 mb-6 sm:mb-8">
           <Card className="bg-card border border-border shadow-sm lg:hover:shadow-md transition-shadow duration-200">
             <CardHeader>
@@ -998,21 +1009,12 @@ export default function Dashboard() {
             </CardContent>
           </Card>
 
-          <Card className="bg-card border border-border shadow-sm lg:hover:shadow-md transition-shadow duration-200">
+          <Card className="bg-card border border-border shadow-sm lg:hover:shadow-md transition-shadow duration-200 lg:col-span-2">
             <CardHeader>
               <CardTitle className="text-lg font-semibold">Loans Trend</CardTitle>
             </CardHeader>
-            <CardContent>
+            <CardContent className="h-80">
               <LoansTrendChart loans={activeLoans || []} isLoading={loansLoading} />
-            </CardContent>
-          </Card>
-
-          <Card className="bg-card border border-border shadow-sm lg:hover:shadow-md transition-shadow duration-200">
-            <CardHeader>
-              <CardTitle className="text-lg font-semibold">Upcoming Loans by Month</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <UpcomingLoansByMonthChart />
             </CardContent>
           </Card>
         </div>
