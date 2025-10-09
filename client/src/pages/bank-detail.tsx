@@ -19,6 +19,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { ModernDatePicker } from "@/components/ui/date-picker";
 import { 
   Building, 
   ArrowLeft, 
@@ -1110,7 +1111,12 @@ function PaymentDialog({ open, onOpenChange, loan, onSubmit, isPending }: any) {
                 <FormItem>
                   <FormLabel>Payment Date</FormLabel>
                   <FormControl>
-                    <Input {...field} type="date" data-testid="input-payment-date" />
+                    <ModernDatePicker
+                      value={field.value}
+                      onChange={field.onChange}
+                      placeholder="Select payment date"
+                      dataTestId="input-payment-date"
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -1186,7 +1192,12 @@ function SettleDialog({ open, onOpenChange, loan, onSubmit, isPending }: any) {
                 <FormItem>
                   <FormLabel>Settlement Date</FormLabel>
                   <FormControl>
-                    <Input {...field} type="date" data-testid="input-settlement-date" />
+                    <ModernDatePicker
+                      value={field.value}
+                      onChange={field.onChange}
+                      placeholder="Select settlement date"
+                      dataTestId="input-settlement-date"
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -1412,7 +1423,12 @@ function RevolveDialog({ open, onOpenChange, loan, onSubmit, isPending }: any) {
                 <FormItem>
                   <FormLabel>Due Date</FormLabel>
                   <FormControl>
-                    <Input {...field} type="date" data-testid="input-revolve-duedate" />
+                    <ModernDatePicker
+                      value={field.value}
+                      onChange={field.onChange}
+                      placeholder="Select due date"
+                      dataTestId="input-revolve-duedate"
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>

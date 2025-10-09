@@ -14,6 +14,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea";
 import { Separator } from "@/components/ui/separator";
 import { Switch } from "@/components/ui/switch";
+import { ModernDatePicker } from "@/components/ui/date-picker";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { insertFacilitySchema } from "@shared/schema";
@@ -265,11 +266,11 @@ export default function FacilityCreatePage() {
                           <FormItem>
                             <FormLabel>Start Date *</FormLabel>
                             <FormControl>
-                              <Input
-                                {...field}
-                                type="date"
-                                data-testid="input-start-date"
-                                className="h-12"
+                              <ModernDatePicker
+                                value={field.value}
+                                onChange={field.onChange}
+                                placeholder="Select start date"
+                                dataTestId="input-start-date"
                               />
                             </FormControl>
                             <FormMessage />
@@ -285,11 +286,11 @@ export default function FacilityCreatePage() {
                           <FormItem>
                             <FormLabel>Expiry Date *</FormLabel>
                             <FormControl>
-                              <Input
-                                {...field}
-                                type="date"
-                                data-testid="input-expiry-date"
-                                className="h-12"
+                              <ModernDatePicker
+                                value={field.value}
+                                onChange={field.onChange}
+                                placeholder="Select expiry date"
+                                dataTestId="input-expiry-date"
                               />
                             </FormControl>
                             <FormMessage />
@@ -400,11 +401,11 @@ export default function FacilityCreatePage() {
                               <FormItem>
                                 <FormLabel>Initial Drawdown Date (Optional)</FormLabel>
                                 <FormControl>
-                                  <Input
-                                    {...field}
-                                    type="date"
-                                    data-testid="input-initial-drawdown-date"
-                                    className="h-12"
+                                  <ModernDatePicker
+                                    value={field.value}
+                                    onChange={field.onChange}
+                                    placeholder="Select initial drawdown date"
+                                    dataTestId="input-initial-drawdown-date"
                                   />
                                 </FormControl>
                                 <div className="text-xs text-muted-foreground">

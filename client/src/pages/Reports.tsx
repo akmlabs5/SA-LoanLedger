@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
+import { ModernDatePicker } from "@/components/ui/date-picker";
 import { useToast } from "@/hooks/use-toast";
 import backgroundImage from "@assets/loan_management_background_excel_green_1759302449019.png";
 
@@ -154,22 +155,20 @@ export default function Reports() {
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="start-date">Start Date</Label>
-                <Input
-                  id="start-date"
-                  type="date"
+                <ModernDatePicker
                   value={startDate}
-                  onChange={(e) => setStartDate(e.target.value)}
-                  data-testid="input-start-date"
+                  onChange={(value) => setStartDate(value)}
+                  placeholder="Select start date"
+                  dataTestId="input-start-date"
                 />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="end-date">End Date</Label>
-                <Input
-                  id="end-date"
-                  type="date"
+                <ModernDatePicker
                   value={endDate}
-                  onChange={(e) => setEndDate(e.target.value)}
-                  data-testid="input-end-date"
+                  onChange={(value) => setEndDate(value)}
+                  placeholder="Select end date"
+                  dataTestId="input-end-date"
                 />
               </div>
             </div>

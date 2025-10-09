@@ -14,6 +14,7 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { ModernDatePicker } from "@/components/ui/date-picker";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { Loan, Bank, Facility } from "@shared/schema";
 import { z } from "zod";
@@ -278,7 +279,12 @@ export default function PaymentCreatePage() {
                           <FormItem>
                             <FormLabel>Payment Date *</FormLabel>
                             <FormControl>
-                              <Input type="date" {...field} data-testid="input-payment-date" />
+                              <ModernDatePicker
+                                value={field.value}
+                                onChange={field.onChange}
+                                placeholder="Select payment date"
+                                dataTestId="input-payment-date"
+                              />
                             </FormControl>
                             <FormMessage />
                           </FormItem>

@@ -18,6 +18,7 @@ import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import DocumentUpload from "@/components/DocumentUpload";
 import DocumentList from "@/components/DocumentList";
+import { ModernDatePicker } from "@/components/ui/date-picker";
 
 // Collateral types with descriptions and examples
 const collateralTypes = [
@@ -282,15 +283,12 @@ export default function CollateralEditPage() {
                         <FormItem>
                           <FormLabel>Valuation Date *</FormLabel>
                           <FormControl>
-                            <div className="relative">
-                              <Calendar className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                              <Input 
-                                {...field} 
-                                type="date"
-                                className="pl-10"
-                                data-testid="input-valuation-date"
-                              />
-                            </div>
+                            <ModernDatePicker 
+                              value={field.value} 
+                              onChange={field.onChange}
+                              placeholder="Select valuation date"
+                              dataTestId="input-valuation-date"
+                            />
                           </FormControl>
                           <FormMessage />
                         </FormItem>

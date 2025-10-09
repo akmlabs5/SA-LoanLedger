@@ -20,6 +20,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { ModernDatePicker } from "@/components/ui/date-picker";
 
 import { 
   ArrowLeft, 
@@ -658,11 +659,11 @@ export default function GeneralLoanCreatePage() {
                             <FormItem>
                               <FormLabel>Start Date *</FormLabel>
                               <FormControl>
-                                <Input 
-                                  className="h-12"
-                                  data-testid="input-start-date" 
-                                  type="date" 
-                                  {...field} 
+                                <ModernDatePicker
+                                  value={field.value}
+                                  onChange={field.onChange}
+                                  placeholder="Select start date"
+                                  dataTestId="input-start-date"
                                 />
                               </FormControl>
                               <FormMessage />
@@ -677,11 +678,11 @@ export default function GeneralLoanCreatePage() {
                             <FormItem>
                               <FormLabel>Due Date *</FormLabel>
                               <FormControl>
-                                <Input 
-                                  className="h-12"
-                                  data-testid="input-due-date" 
-                                  type="date" 
-                                  {...field} 
+                                <ModernDatePicker
+                                  value={field.value}
+                                  onChange={field.onChange}
+                                  placeholder="Select due date"
+                                  dataTestId="input-due-date"
                                 />
                               </FormControl>
                               <FormMessage />
@@ -696,11 +697,11 @@ export default function GeneralLoanCreatePage() {
                             <FormItem>
                               <FormLabel>Charges Due Date</FormLabel>
                               <FormControl>
-                                <Input 
-                                  className="h-12"
-                                  data-testid="input-charges-due-date" 
-                                  type="date" 
-                                  {...field} 
+                                <ModernDatePicker
+                                  value={field.value}
+                                  onChange={field.onChange}
+                                  placeholder="Select charges due date"
+                                  dataTestId="input-charges-due-date"
                                 />
                               </FormControl>
                               <FormMessage />

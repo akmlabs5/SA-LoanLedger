@@ -14,6 +14,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea";
 import { Separator } from "@/components/ui/separator";
 import { Switch } from "@/components/ui/switch";
+import { ModernDatePicker } from "@/components/ui/date-picker";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { insertFacilitySchema } from "@shared/schema";
@@ -283,11 +284,11 @@ export default function FacilityEditPage() {
                           <FormItem>
                             <FormLabel>Start Date *</FormLabel>
                             <FormControl>
-                              <Input 
-                                data-testid="input-start-date" 
-                                type="date"
-                                className="h-12"
-                                {...field} 
+                              <ModernDatePicker
+                                value={field.value}
+                                onChange={field.onChange}
+                                placeholder="Select start date"
+                                dataTestId="input-start-date"
                               />
                             </FormControl>
                             <FormMessage />
@@ -302,11 +303,11 @@ export default function FacilityEditPage() {
                           <FormItem>
                             <FormLabel>Expiry Date *</FormLabel>
                             <FormControl>
-                              <Input 
-                                data-testid="input-expiry-date" 
-                                type="date"
-                                className="h-12"
-                                {...field} 
+                              <ModernDatePicker
+                                value={field.value}
+                                onChange={field.onChange}
+                                placeholder="Select expiry date"
+                                dataTestId="input-expiry-date"
                               />
                             </FormControl>
                             <FormMessage />

@@ -37,6 +37,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { ModernDatePicker } from "@/components/ui/date-picker";
 import { 
   LineChart,
   Line,
@@ -606,22 +607,20 @@ export default function HistoryPage() {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="date-from">From Date</Label>
-                <Input
-                  id="date-from"
-                  type="date"
+                <ModernDatePicker
                   value={filters.dateFrom}
-                  onChange={(e) => setFilters(prev => ({ ...prev, dateFrom: e.target.value }))}
-                  data-testid="input-date-from"
+                  onChange={(value) => setFilters(prev => ({ ...prev, dateFrom: value }))}
+                  placeholder="Select from date"
+                  dataTestId="input-date-from"
                 />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="date-to">To Date</Label>
-                <Input
-                  id="date-to"
-                  type="date"
+                <ModernDatePicker
                   value={filters.dateTo}
-                  onChange={(e) => setFilters(prev => ({ ...prev, dateTo: e.target.value }))}
-                  data-testid="input-date-to"
+                  onChange={(value) => setFilters(prev => ({ ...prev, dateTo: value }))}
+                  placeholder="Select to date"
+                  dataTestId="input-date-to"
                 />
               </div>
               <div className="space-y-2">
