@@ -82,6 +82,13 @@ A dual AI chat system powered by DeepSeek API provides comprehensive support:
 
 Additional AI features include rules-based portfolio risk analysis, bank concentration monitoring, LTV tracking, email notifications via SendGrid, and user-configurable alert thresholds.
 
+**Email Reminders & Calendar Invites:**
+- Loan reminders sent via SendGrid with customizable templates
+- Optional calendar invite (.ics file) attachment when enabled
+- "Add to Calendar" button in reminder emails for one-click calendar integration
+- Compatible with Google Calendar, Outlook, Apple Calendar, and other iCalendar-compatible apps
+- Automatic event details: loan reference, amount, due date, and bank information
+
 ## Data Storage Architecture
 The database schema is tailored for the Saudi banking context, storing information on Banks, Facilities, Loans (with SIBOR calculations), Collateral (with valuation history), Users, and Sessions. It uses UUID primary keys and proper foreign key relationships.
 
