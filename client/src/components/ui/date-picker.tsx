@@ -3,6 +3,7 @@ import { DatePicker, parseDate } from "@ark-ui/react/date-picker"
 import { Portal } from "@ark-ui/react/portal"
 import { ChevronLeft, ChevronRight, Calendar, X } from "lucide-react"
 import { forwardRef } from "react"
+import { CalendarDate } from "@internationalized/date"
 
 interface DatePickerProps {
   value?: string

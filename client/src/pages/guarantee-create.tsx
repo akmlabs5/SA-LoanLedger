@@ -83,9 +83,9 @@ export default function GuaranteeCreatePage() {
     mutationFn: async (data: GuaranteeFormData) => {
       const guaranteeData = {
         ...data,
-        guaranteeAmount: parseFloat(data.guaranteeAmount),
-        securityAmount: data.securityAmount ? parseFloat(data.securityAmount) : null,
-        feeRate: data.feeRate ? parseFloat(data.feeRate) : null,
+        guaranteeAmount: String(data.guaranteeAmount),
+        securityAmount: data.securityAmount ? String(data.securityAmount) : "0.00",
+        feeRate: data.feeRate ? String(data.feeRate) : "0.00",
       };
 
       const response = await apiRequest("POST", "/api/guarantees", guaranteeData);
