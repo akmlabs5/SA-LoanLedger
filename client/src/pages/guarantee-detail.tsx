@@ -20,8 +20,7 @@ import {
   CheckCircle,
   AlertCircle
 } from "lucide-react";
-import { useAuth } from "@/hooks/use-auth";
-import { formatCurrency, formatDate } from "@/lib/utils";
+import { formatCurrency, formatDate } from "@/lib/formatters";
 
 interface GuaranteeWithDetails {
   id: string;
@@ -60,11 +59,10 @@ export default function GuaranteeDetailPage() {
   const guaranteeId = params?.id;
   const [, setLocation] = useLocation();
   const { toast } = useToast();
-  const { isAuthenticated } = useAuth();
 
   const { data: guarantee, isLoading, isError } = useQuery<GuaranteeWithDetails>({
     queryKey: ["/api/guarantees", guaranteeId],
-    enabled: !!guaranteeId && isAuthenticated,
+    enabled: !!guaranteeId,
   });
 
   const cancelGuaranteeMutation = useMutation({
@@ -241,7 +239,7 @@ export default function GuaranteeDetailPage() {
                         <div className="flex items-center gap-2">
                           <TrendingUp className="h-4 w-4 text-emerald-600" />
                           <p className="font-medium text-emerald-600 text-lg" data-testid="text-amount">
-                            {formatCurrency(guarantee.guaranteeAmount)} {guarantee.currency}
+                            {formatCurrency(parseFloat(guarantee.guaranteeAmount))} {guarantee.currency}
                           </p>
                         </div>
                       </div>
@@ -295,7 +293,7 @@ export default function GuaranteeDetailPage() {
                       <div className="space-y-2">
                         <label className="text-sm font-medium text-muted-foreground">Guarantee Amount</label>
                         <p className="text-2xl font-bold text-emerald-600" data-testid="text-financial-amount">
-                          {formatCurrency(guarantee.guaranteeAmount)}
+                          {formatCurrency(parseFloat(guarantee.guaranteeAmount))}
                         </p>
                       </div>
 
@@ -310,7 +308,7 @@ export default function GuaranteeDetailPage() {
                         <div className="space-y-2">
                           <label className="text-sm font-medium text-muted-foreground">Issuance Fees</label>
                           <p className="text-2xl font-bold" data-testid="text-issuance-fees">
-                            {formatCurrency(guarantee.issuanceFees)}
+                            {formatCurrency(parseFloat(guarantee.issuanceFees))}
                           </p>
                         </div>
                       )}
@@ -326,7 +324,7 @@ export default function GuaranteeDetailPage() {
                     <div className="space-y-2">
                       <label className="text-sm font-medium text-muted-foreground">Associated Facility Credit Limit</label>
                       <p className="text-xl font-semibold text-gray-700 dark:text-gray-300" data-testid="text-facility-limit">
-                        {formatCurrency(guarantee.facility.creditLimit)}
+                        {formatCurrency(parseFloat(guarantee.facility.creditLimit))}
                       </p>
                     </div>
                   </TabsContent>
@@ -428,7 +426,7 @@ export default function GuaranteeDetailPage() {
                 <div>
                   <p className="text-sm text-muted-foreground">Credit Limit</p>
                   <p className="font-medium text-emerald-600" data-testid="text-sidebar-limit">
-                    {formatCurrency(guarantee.facility.creditLimit)}
+                    {formatCurrency(parseFloat(guarantee.facility.creditLimit))}
                   </p>
                 </div>
                 <Button 
