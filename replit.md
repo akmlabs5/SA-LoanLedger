@@ -56,7 +56,8 @@ The platform now supports organizational team collaboration, enabling 2-5 member
 - API routes validate organization context on all mutations
 - AI Agent operations respect organization boundaries
 - Route-level validation ensures loans/facilities belong to requesting organization before access
-- Critical fixes applied: facility creation, loan settlement, and AI insights now properly enforce organizational boundaries
+- Critical fixes applied: facility creation, loan settlement, AI insights, and report generation now properly enforce organizational boundaries
+- **Report Security (Oct 2025)**: PDF/Excel export endpoints now filter all data by organizationId to prevent cross-tenant data leakage
 
 **User Context:**
 - User session includes `organizationId`, `organizationName`, and `isOwner` flags
