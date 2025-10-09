@@ -1,6 +1,3 @@
-import * as fs from 'fs';
-import * as path from 'path';
-
 export interface EmailTemplateVariables {
   url?: string;
   code?: string;
@@ -22,9 +19,6 @@ export enum EmailTemplateType {
   LOAN_PAYMENT_REMINDER = 'loan_payment_reminder',
   GENERAL_REMINDER = 'general_reminder',
 }
-
-// Simple text branding - no images to avoid spam filter issues
-export const EMAIL_LOGO_TEXT = 'Morouna Loans';
 
 export class EmailTemplateService {
   private static replaceVariables(template: string, variables: EmailTemplateVariables): string {
