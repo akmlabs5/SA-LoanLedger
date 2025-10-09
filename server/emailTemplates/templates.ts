@@ -169,9 +169,9 @@ Need help? Contact us at Abdullah@akm-labs.com
 
     const template = templates[type];
     return {
-      subject: template.subject,
+      subject: this.replaceVariables(template.subject, variables),
       html: this.replaceVariables(template.html, variables),
-      text: template.text,
+      text: this.replaceVariables(template.text, variables),
     };
   }
 }
