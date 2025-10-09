@@ -399,8 +399,9 @@ export default function GeneralLoanCreatePage() {
                                 <Input 
                                   className="h-12"
                                   data-testid="input-amount" 
-                                  type="number" 
-                                  placeholder="e.g., 500000" 
+                                  type="number"
+                                  step="0.01"
+                                  placeholder="e.g., 500000.00" 
                                   {...field} 
                                 />
                               </FormControl>

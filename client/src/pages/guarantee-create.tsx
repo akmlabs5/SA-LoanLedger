@@ -88,7 +88,7 @@ export default function GuaranteeCreatePage() {
         feeRate: data.feeRate ? parseFloat(data.feeRate) : null,
       };
 
-      const response = await apiRequest("/api/guarantees", "POST", guaranteeData);
+      const response = await apiRequest("POST", "/api/guarantees", guaranteeData);
       
       return response.json();
     },
@@ -282,7 +282,8 @@ export default function GuaranteeCreatePage() {
                         <FormControl>
                           <Input 
                             type="number" 
-                            placeholder="100000" 
+                            step="0.01"
+                            placeholder="100000.00" 
                             {...field} 
                             data-testid="input-guarantee-amount" 
                           />

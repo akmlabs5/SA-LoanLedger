@@ -196,7 +196,10 @@ export const isAuthenticated: RequestHandler = async (req, res, next) => {
           email: 'abdulrahman@example.com',
           first_name: 'Abdulrahman',
           last_name: ''
-        }
+        },
+        organizationId: 'test-org-abdulrahman',
+        organizationName: 'Abdulrahman Development Org',
+        isOwner: true
       };
       return next();
     }

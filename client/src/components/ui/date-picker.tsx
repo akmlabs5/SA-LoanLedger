@@ -58,9 +58,11 @@ export const ModernDatePicker = forwardRef<HTMLInputElement, DatePickerProps>(
             <DatePicker.Positioner>
               <DatePicker.Content className="mt-2 w-full max-w-sm rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 shadow-xl p-4 z-50">
                 
-                {/* Year + Month Select */}
+                {/* Year + Month Select - Simplified with limited dropdown */}
                 <div className="flex gap-2 mb-4">
-                  <DatePicker.YearSelect className="flex-1 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 px-3 py-2 text-sm text-gray-800 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 outline-none" />
+                  <DatePicker.YearSelect 
+                    className="flex-1 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 px-3 py-2 text-sm text-gray-800 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 outline-none max-h-48 overflow-y-auto"
+                  />
                   <DatePicker.MonthSelect className="flex-1 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 px-3 py-2 text-sm text-gray-800 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 outline-none" />
                 </div>
 
