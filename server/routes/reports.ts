@@ -36,14 +36,15 @@ export function registerReportsRoutes(app: Express, deps: AppDependencies) {
       const reportData = orgFacilities.map((facility: any) => {
         const bank = banks.find((b: any) => b.id === facility.bankId);
         const facilityLoans = orgLoans.filter((l: any) => l.facilityId === facility.id);
-        const totalOutstanding = facilityLoans.reduce((sum: number, loan: any) => sum + (loan.outstandingBalance || 0), 0);
+        const totalOutstanding = facilityLoans.reduce((sum: number, loan: any) => sum + parseFloat(loan.outstandingBalance || 0), 0);
+        const creditLimit = parseFloat(facility.creditLimit || 0);
         
         return {
           bankName: bank?.name || 'Unknown',
           facilityType: facility.facilityType || '-',
-          creditLimit: facility.creditLimit || 0,
+          creditLimit: creditLimit,
           outstanding: totalOutstanding,
-          utilization: facility.creditLimit > 0 ? ((totalOutstanding / facility.creditLimit) * 100).toFixed(2) : '0',
+          utilization: creditLimit > 0 ? ((totalOutstanding / creditLimit) * 100).toFixed(2) : '0',
           expiryDate: facility.expiryDate || '-',
         };
       });
@@ -134,12 +135,12 @@ export function registerReportsRoutes(app: Express, deps: AppDependencies) {
       // Calculate bank exposures - using organization-scoped data
       const bankExposures = banks.map((bank: any) => {
         const bankFacilities = orgFacilities.filter((f: any) => f.bankId === bank.id);
-        const totalLimit = bankFacilities.reduce((sum: number, f: any) => sum + (f.creditLimit || 0), 0);
+        const totalLimit = bankFacilities.reduce((sum: number, f: any) => sum + parseFloat(f.creditLimit || 0), 0);
         
         const bankLoans = orgLoans.filter((l: any) => 
           bankFacilities.some((f: any) => f.id === l.facilityId)
         );
-        const totalOutstanding = bankLoans.reduce((sum: number, loan: any) => sum + (loan.outstandingBalance || 0), 0);
+        const totalOutstanding = bankLoans.reduce((sum: number, loan: any) => sum + parseFloat(loan.outstandingBalance || 0), 0);
         
         return {
           bankName: bank.name,
