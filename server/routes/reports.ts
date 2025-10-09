@@ -9,7 +9,7 @@ import xlsx from "xlsx";
 export function registerReportsRoutes(app: Express, deps: AppDependencies) {
   const { storage } = deps;
 
-  // Facility Summary Report
+  // Facility Summary Report  
   app.get('/api/reports/facility-summary', isAuthenticated, attachOrganizationContext, requireOrganization, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
@@ -32,11 +32,16 @@ export function registerReportsRoutes(app: Express, deps: AppDependencies) {
       const orgLoans = loans.filter((l: any) => l.organizationId === organizationId);
       const banks = allBanks;
 
-      // Prepare report data
-      const reportData = orgFacilities.map((facility: any) => {
+      // Prepare report data - calculate outstanding balances
+      const reportData = await Promise.all(orgFacilities.map(async (facility: any) => {
         const bank = banks.find((b: any) => b.id === facility.bankId);
         const facilityLoans = orgLoans.filter((l: any) => l.facilityId === facility.id);
-        const totalOutstanding = facilityLoans.reduce((sum: number, loan: any) => sum + parseFloat(loan.outstandingBalance || 0), 0);
+        
+        // Calculate outstanding balance for each loan
+        const balancePromises = facilityLoans.map(loan => storage.calculateLoanBalance(loan.id));
+        const balances = await Promise.all(balancePromises);
+        const totalOutstanding = balances.reduce((sum: number, balance: any) => sum + balance.total, 0);
+        
         const creditLimit = parseFloat(facility.creditLimit || 0);
         
         return {
@@ -47,7 +52,7 @@ export function registerReportsRoutes(app: Express, deps: AppDependencies) {
           utilization: creditLimit > 0 ? ((totalOutstanding / creditLimit) * 100).toFixed(2) : '0',
           expiryDate: facility.expiryDate || '-',
         };
-      });
+      }));
 
       if (format === 'pdf') {
         const doc = new jsPDF();
@@ -133,14 +138,18 @@ export function registerReportsRoutes(app: Express, deps: AppDependencies) {
       const banks = allBanks;
 
       // Calculate bank exposures - using organization-scoped data
-      const bankExposures = banks.map((bank: any) => {
+      const bankExposures = await Promise.all(banks.map(async (bank: any) => {
         const bankFacilities = orgFacilities.filter((f: any) => f.bankId === bank.id);
         const totalLimit = bankFacilities.reduce((sum: number, f: any) => sum + parseFloat(f.creditLimit || 0), 0);
         
         const bankLoans = orgLoans.filter((l: any) => 
           bankFacilities.some((f: any) => f.id === l.facilityId)
         );
-        const totalOutstanding = bankLoans.reduce((sum: number, loan: any) => sum + parseFloat(loan.outstandingBalance || 0), 0);
+        
+        // Calculate outstanding balance for each loan
+        const balancePromises = bankLoans.map(loan => storage.calculateLoanBalance(loan.id));
+        const balances = await Promise.all(balancePromises);
+        const totalOutstanding = balances.reduce((sum: number, balance: any) => sum + balance.total, 0);
         
         return {
           bankName: bank.name,
@@ -150,7 +159,9 @@ export function registerReportsRoutes(app: Express, deps: AppDependencies) {
           utilization: totalLimit > 0 ? ((totalOutstanding / totalLimit) * 100).toFixed(2) : '0',
           activeLoans: bankLoans.length
         };
-      }).filter((exposure: any) => exposure.totalLimit > 0 || exposure.totalOutstanding > 0);
+      }));
+      
+      const filteredExposures = bankExposures.filter((exposure: any) => exposure.totalLimit > 0 || exposure.totalOutstanding > 0);
 
       if (format === 'pdf') {
         const doc = new jsPDF();
@@ -168,7 +179,7 @@ export function registerReportsRoutes(app: Express, deps: AppDependencies) {
         autoTable(doc, {
           startY: startDate && endDate ? 40 : 35,
           head: [['Bank', 'Facilities', 'Total Limit (SAR)', 'Outstanding (SAR)', 'Utilization %', 'Active Loans']],
-          body: bankExposures.map((row: any) => [
+          body: filteredExposures.map((row: any) => [
             row.bankName,
             row.totalFacilities,
             row.totalLimit.toLocaleString(),
@@ -187,7 +198,7 @@ export function registerReportsRoutes(app: Express, deps: AppDependencies) {
         res.send(pdfBuffer);
 
       } else if (format === 'excel') {
-        const worksheet = xlsx.utils.json_to_sheet(bankExposures.map((row: any) => ({
+        const worksheet = xlsx.utils.json_to_sheet(filteredExposures.map((row: any) => ({
           'Bank': row.bankName,
           'Total Facilities': row.totalFacilities,
           'Total Limit (SAR)': row.totalLimit,
