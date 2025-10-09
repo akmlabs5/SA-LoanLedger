@@ -49,8 +49,22 @@ export function registerFacilitiesRoutes(app: Express, deps: AppDependencies) {
       });
       const facility = await storage.createFacility(facilityData);
       res.json(facility);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error creating facility:", error);
+      
+      // Handle Zod validation errors with specific messages
+      if (error.name === 'ZodError') {
+        const firstError = error.issues?.[0];
+        if (firstError) {
+          const field = firstError.path.join('.');
+          return res.status(400).json({ 
+            message: `Validation error: ${firstError.message}`,
+            field: field,
+            error: firstError.message 
+          });
+        }
+      }
+      
       res.status(400).json({ message: "Failed to create facility" });
     }
   });

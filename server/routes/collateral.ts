@@ -106,6 +106,20 @@ export function registerCollateralRoutes(app: Express, deps: AppDependencies) {
       
     } catch (error: any) {
       console.error("Error creating collateral:", error);
+      
+      // Handle Zod validation errors with specific messages
+      if (error.name === 'ZodError') {
+        const firstError = error.issues?.[0];
+        if (firstError) {
+          const field = firstError.path.join('.');
+          return res.status(400).json({ 
+            message: `Validation error: ${firstError.message}`,
+            field: field,
+            error: firstError.message 
+          });
+        }
+      }
+      
       const errorMessage = error?.message || "Failed to create collateral and assignment";
       res.status(400).json({ message: errorMessage, error: error?.toString() });
     }
