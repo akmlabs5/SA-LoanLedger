@@ -1,3 +1,6 @@
+import * as fs from 'fs';
+import * as path from 'path';
+
 export interface EmailTemplateVariables {
   url?: string;
   code?: string;
@@ -20,7 +23,8 @@ export enum EmailTemplateType {
   GENERAL_REMINDER = 'general_reminder',
 }
 
-export const EMAIL_LOGO_URL = process.env.EMAIL_LOGO_URL || 'https://i.imgur.com/PLACEHOLDER.png';
+// Simple text branding - no images to avoid spam filter issues
+export const EMAIL_LOGO_TEXT = 'Morouna Loans';
 
 export class EmailTemplateService {
   private static replaceVariables(template: string, variables: EmailTemplateVariables): string {
@@ -39,7 +43,7 @@ export class EmailTemplateService {
       }
     });
     
-    result = result.replace(/{{EMAIL_LOGO_URL}}/g, EMAIL_LOGO_URL);
+    // No image replacement needed - templates use text branding
     
     return result;
   }
@@ -192,7 +196,7 @@ const EMAIL_VERIFICATION_TEMPLATE = `<!DOCTYPE html>
                     <!-- Header with Background -->
                     <tr>
                         <td style="background: linear-gradient(135deg, #5FD4B3 0%, #3BA88F 100%); padding: 50px 40px; text-align: center; position: relative;">
-                            <img src="{{EMAIL_LOGO_URL}}" alt="Morouna Loans" style="width: 200px; height: auto; margin-bottom: 10px;" />
+                            <h1 style="color: #ffffff; font-size: 36px; margin: 0 0 10px 0; font-weight: 700; letter-spacing: -1px;">Morouna Loans</h1>
                             <p style="color: #ffffff; font-size: 14px; margin: 0; opacity: 0.9;">by AKM Labs</p>
                             <h1 style="color: #ffffff; font-size: 28px; margin: 15px 0 0 0; font-weight: 600;">Welcome to Morouna Loans!</h1>
                         </td>
@@ -272,7 +276,7 @@ const PASSWORD_RESET_TEMPLATE = `<!DOCTYPE html>
                     <!-- Header with Background -->
                     <tr>
                         <td style="background: linear-gradient(135deg, #5FD4B3 0%, #3BA88F 100%); padding: 50px 40px; text-align: center;">
-                            <img src="{{EMAIL_LOGO_URL}}" alt="Morouna Loans" style="width: 200px; height: auto; margin-bottom: 10px;" />
+                            <h1 style="color: #ffffff; font-size: 36px; margin: 0 0 10px 0; font-weight: 700; letter-spacing: -1px;">Morouna Loans</h1>
                             <p style="color: #ffffff; font-size: 14px; margin: 0; opacity: 0.9;">by AKM Labs</p>
                             <h1 style="color: #ffffff; font-size: 28px; margin: 15px 0 0 0; font-weight: 600;">Password Reset Request</h1>
                         </td>
@@ -364,7 +368,7 @@ const MFA_CODE_TEMPLATE = `<!DOCTYPE html>
                     <!-- Header with Background -->
                     <tr>
                         <td style="background: linear-gradient(135deg, #5FD4B3 0%, #3BA88F 100%); padding: 50px 40px; text-align: center;">
-                            <img src="{{EMAIL_LOGO_URL}}" alt="Morouna Loans" style="width: 200px; height: auto; margin-bottom: 10px;" />
+                            <h1 style="color: #ffffff; font-size: 36px; margin: 0 0 10px 0; font-weight: 700; letter-spacing: -1px;">Morouna Loans</h1>
                             <p style="color: #ffffff; font-size: 14px; margin: 0; opacity: 0.9;">by AKM Labs</p>
                             <h1 style="color: #ffffff; font-size: 28px; margin: 15px 0 0 0; font-weight: 600;">Two-Factor Authentication</h1>
                         </td>
@@ -445,7 +449,7 @@ const WELCOME_TEMPLATE = `<!DOCTYPE html>
                     <!-- Header with Background -->
                     <tr>
                         <td style="background: linear-gradient(135deg, #5FD4B3 0%, #3BA88F 100%); padding: 50px 40px; text-align: center;">
-                            <img src="{{EMAIL_LOGO_URL}}" alt="Morouna Loans" style="width: 200px; height: auto; margin-bottom: 10px;" />
+                            <h1 style="color: #ffffff; font-size: 36px; margin: 0 0 10px 0; font-weight: 700; letter-spacing: -1px;">Morouna Loans</h1>
                             <p style="color: #ffffff; font-size: 14px; margin: 0; opacity: 0.9;">by AKM Labs</p>
                             <h1 style="color: #ffffff; font-size: 32px; margin: 15px 0 0 0; font-weight: 600;">Welcome Aboard! 🎉</h1>
                         </td>
@@ -464,70 +468,32 @@ const WELCOME_TEMPLATE = `<!DOCTYPE html>
                                 Thank you for choosing Morouna Loans! Your account has been successfully created and verified. We're excited to help you manage your loan portfolio with powerful tools and insights.
                             </p>
                             
-                            <!-- Feature Cards -->
-                            <div style="margin: 30px 0;">
-                                <table role="presentation" style="width: 100%; border-collapse: collapse;">
-                                    <tr>
-                                        <td style="padding: 20px; background-color: #F7FAFC; border-radius: 8px; margin-bottom: 15px;">
-                                            <h3 style="color: #2D3748; font-size: 18px; margin: 0 0 10px 0; font-weight: 600;">🏦 Bank Management</h3>
-                                            <p style="color: #718096; font-size: 14px; line-height: 1.6; margin: 0;">
-                                                Manage relationships with all Saudi banks, track contacts, and monitor facility agreements across your entire banking portfolio.
-                                            </p>
-                                        </td>
-                                    </tr>
-                                </table>
-                                
-                                <div style="height: 15px;"></div>
-                                
-                                <table role="presentation" style="width: 100%; border-collapse: collapse;">
-                                    <tr>
-                                        <td style="padding: 20px; background-color: #F7FAFC; border-radius: 8px; margin-bottom: 15px;">
-                                            <h3 style="color: #2D3748; font-size: 18px; margin: 0 0 10px 0; font-weight: 600;">🤖 AI Chat Assistant</h3>
-                                            <p style="color: #718096; font-size: 14px; line-height: 1.6; margin: 0;">
-                                                Natural language conversations about your portfolio with context-aware responses and intelligent recommendations powered by AI.
-                                            </p>
-                                        </td>
-                                    </tr>
-                                </table>
-                                
-                                <div style="height: 15px;"></div>
-                                
-                                <table role="presentation" style="width: 100%; border-collapse: collapse;">
-                                    <tr>
-                                        <td style="padding: 20px; background-color: #F7FAFC; border-radius: 8px;">
-                                            <h3 style="color: #2D3748; font-size: 18px; margin: 0 0 10px 0; font-weight: 600;">📊 Portfolio Dashboard</h3>
-                                            <p style="color: #718096; font-size: 14px; line-height: 1.6; margin: 0;">
-                                                Real-time overview of total exposure, credit utilization, upcoming maturities, and key performance indicators all in one place.
-                                            </p>
-                                        </td>
-                                    </tr>
-                                </table>
-                            </div>
-                            
-                            <!-- CTA Button -->
-                            <div style="text-align: center; margin: 40px 0;">
-                                <table role="presentation" style="margin: 0 auto;">
-                                    <tr>
-                                        <td style="border-radius: 8px; background: linear-gradient(135deg, #5FD4B3 0%, #3BA88F 100%);">
-                                            <a href="https://akm-labs.com" target="_blank" style="display: inline-block; padding: 16px 40px; color: #ffffff; text-decoration: none; font-size: 16px; font-weight: 600; border-radius: 8px;">
-                                                Go to Dashboard
-                                            </a>
-                                        </td>
-                                    </tr>
-                                </table>
-                            </div>
-                            
-                            <div style="margin-top: 30px; padding-top: 30px; border-top: 1px solid #E2E8F0;">
-                                <p style="color: #4A5568; font-size: 16px; line-height: 1.6; margin: 0 0 15px 0;">
-                                    <strong>Next Steps:</strong>
+                            <div style="background-color: #F0FFF4; border-left: 4px solid #48BB78; border-radius: 4px; padding: 20px; margin: 30px 0;">
+                                <p style="color: #22543D; font-size: 14px; margin: 0 0 15px 0; font-weight: 600;">
+                                    ✨ Key Features You'll Love:
                                 </p>
-                                <ol style="color: #718096; font-size: 14px; line-height: 1.8; margin: 0; padding-left: 20px;">
-                                    <li>Complete your profile and add your banking relationships</li>
+                                <ul style="color: #22543D; font-size: 14px; line-height: 1.8; margin: 0; padding-left: 20px;">
+                                    <li><strong>Bank Management:</strong> Track all Saudi banks and facility agreements</li>
+                                    <li><strong>AI Chat Assistant:</strong> Natural language conversations about your portfolio</li>
+                                    <li><strong>Portfolio Dashboard:</strong> Real-time overview of exposure and utilization</li>
+                                </ul>
+                            </div>
+                            
+                            <div style="margin-top: 30px; padding: 25px; background-color: #EDF2F7; border-radius: 8px;">
+                                <p style="color: #2D3748; font-size: 16px; margin: 0 0 15px 0; font-weight: 600;">
+                                    🚀 Get Started in 4 Easy Steps:
+                                </p>
+                                <ol style="color: #4A5568; font-size: 14px; line-height: 1.8; margin: 0; padding-left: 20px;">
+                                    <li>Complete your profile and add banking relationships</li>
                                     <li>Import your existing loan facilities</li>
-                                    <li>Explore AI-powered insights and recommendations</li>
+                                    <li>Explore AI-powered insights</li>
                                     <li>Set up automated alerts and reminders</li>
                                 </ol>
                             </div>
+                            
+                            <p style="color: #4A5568; font-size: 16px; line-height: 1.6; margin: 30px 0 0 0;">
+                                Questions? We're here to help! Our support team is just an email away.
+                            </p>
                         </td>
                     </tr>
                     
@@ -535,7 +501,7 @@ const WELCOME_TEMPLATE = `<!DOCTYPE html>
                     <tr>
                         <td style="background-color: #F7FAFC; padding: 30px 40px; text-align: center;">
                             <p style="color: #718096; font-size: 14px; margin: 0 0 10px 0;">
-                                Questions? We're here to help! <a href="mailto:Abdullah@akm-labs.com" style="color: #5FD4B3; text-decoration: none;">Abdullah@akm-labs.com</a>
+                                Need help? Contact us at <a href="mailto:Abdullah@akm-labs.com" style="color: #5FD4B3; text-decoration: none;">Abdullah@akm-labs.com</a>
                             </p>
                             <p style="color: #A0AEC0; font-size: 12px; margin: 0;">
                                 © 2025 Morouna Loans by AKM Labs. All rights reserved.
@@ -566,7 +532,7 @@ const PASSWORD_CHANGED_TEMPLATE = `<!DOCTYPE html>
                     <!-- Header with Background -->
                     <tr>
                         <td style="background: linear-gradient(135deg, #5FD4B3 0%, #3BA88F 100%); padding: 50px 40px; text-align: center;">
-                            <img src="{{EMAIL_LOGO_URL}}" alt="Morouna Loans" style="width: 200px; height: auto; margin-bottom: 10px;" />
+                            <h1 style="color: #ffffff; font-size: 36px; margin: 0 0 10px 0; font-weight: 700; letter-spacing: -1px;">Morouna Loans</h1>
                             <p style="color: #ffffff; font-size: 14px; margin: 0; opacity: 0.9;">by AKM Labs</p>
                             <h1 style="color: #ffffff; font-size: 28px; margin: 15px 0 0 0; font-weight: 600;">Password Changed Successfully</h1>
                         </td>
@@ -575,64 +541,34 @@ const PASSWORD_CHANGED_TEMPLATE = `<!DOCTYPE html>
                     <!-- Content -->
                     <tr>
                         <td style="padding: 40px;">
-                            <div style="text-align: center; margin-bottom: 30px;">
-                                <div style="display: inline-block; width: 80px; height: 80px; background-color: #C6F6D5; border-radius: 50%; line-height: 80px; font-size: 40px;">
-                                    ✓
-                                </div>
-                            </div>
+                            <h2 style="color: #2D3748; font-size: 24px; margin: 0 0 20px 0; font-weight: 600;">Security Update Confirmation</h2>
                             
-                            <h2 style="color: #2D3748; font-size: 24px; margin: 0 0 20px 0; font-weight: 600; text-align: center;">Your Password Has Been Updated</h2>
-                            
-                            <p style="color: #4A5568; font-size: 16px; line-height: 1.6; margin: 0 0 20px 0; text-align: center;">
-                                The password for your Morouna Loans account was successfully changed.
+                            <p style="color: #4A5568; font-size: 16px; line-height: 1.6; margin: 0 0 20px 0;">
+                                Your Morouna Loans password has been successfully changed.
                             </p>
                             
-                            <div style="background-color: #F7FAFC; border-radius: 8px; padding: 20px; margin: 30px 0;">
-                                <table role="presentation" style="width: 100%;">
-                                    <tr>
-                                        <td style="color: #718096; font-size: 14px; padding: 8px 0;">
-                                            <strong>Account:</strong>
-                                        </td>
-                                        <td style="color: #2D3748; font-size: 14px; text-align: right; padding: 8px 0;">
-                                            {{user.email}}
-                                        </td>
-                                    </tr>
-                                    <tr>
-                                        <td style="color: #718096; font-size: 14px; padding: 8px 0;">
-                                            <strong>Changed on:</strong>
-                                        </td>
-                                        <td style="color: #2D3748; font-size: 14px; text-align: right; padding: 8px 0;">
-                                            {{date}}
-                                        </td>
-                                    </tr>
-                                    <tr>
-                                        <td style="color: #718096; font-size: 14px; padding: 8px 0;">
-                                            <strong>IP Address:</strong>
-                                        </td>
-                                        <td style="color: #2D3748; font-size: 14px; text-align: right; padding: 8px 0;">
-                                            {{ip}}
-                                        </td>
-                                    </tr>
-                                </table>
+                            <div style="background-color: #F0FFF4; border-left: 4px solid #48BB78; border-radius: 4px; padding: 20px; margin: 30px 0;">
+                                <p style="color: #22543D; font-size: 14px; margin: 0 0 10px 0; font-weight: 600;">
+                                    ✅ Change Details:
+                                </p>
+                                <ul style="color: #22543D; font-size: 14px; line-height: 1.8; margin: 0; padding-left: 20px; list-style: none;">
+                                    <li><strong>Account:</strong> {{user.email}}</li>
+                                    <li><strong>Changed on:</strong> {{date}}</li>
+                                    <li><strong>IP Address:</strong> {{ip}}</li>
+                                </ul>
                             </div>
                             
                             <div style="margin-top: 30px; padding: 20px; background-color: #FFF5F5; border-left: 4px solid #FC8181; border-radius: 4px;">
                                 <p style="color: #C53030; font-size: 14px; line-height: 1.6; margin: 0;">
-                                    <strong>⚠️ Didn't make this change?</strong><br>
-                                    If you didn't change your password, your account may be compromised. Please contact our support team immediately at <a href="mailto:Abdullah@akm-labs.com" style="color: #C53030; text-decoration: underline;">Abdullah@akm-labs.com</a>
+                                    <strong>⚠️ Didn't make this change?</strong><br/>
+                                    If you didn't change your password, your account may be compromised. Please contact our support team immediately at Abdullah@akm-labs.com
                                 </p>
                             </div>
                             
-                            <div style="margin-top: 30px; padding-top: 30px; border-top: 1px solid #E2E8F0; text-align: center;">
-                                <table role="presentation" style="margin: 0 auto;">
-                                    <tr>
-                                        <td style="border-radius: 8px; background: linear-gradient(135deg, #5FD4B3 0%, #3BA88F 100%);">
-                                            <a href="https://akm-labs.com/login" target="_blank" style="display: inline-block; padding: 16px 40px; color: #ffffff; text-decoration: none; font-size: 16px; font-weight: 600; border-radius: 8px;">
-                                                Sign In to Your Account
-                                            </a>
-                                        </td>
-                                    </tr>
-                                </table>
+                            <div style="margin-top: 30px; padding-top: 30px; border-top: 1px solid #E2E8F0;">
+                                <p style="color: #718096; font-size: 14px; line-height: 1.6; margin: 0;">
+                                    <strong>Security Tip:</strong> We recommend changing your password regularly and never sharing it with anyone.
+                                </p>
                             </div>
                         </td>
                     </tr>
@@ -672,9 +608,9 @@ const LOAN_PAYMENT_REMINDER_TEMPLATE = `<!DOCTYPE html>
                     <!-- Header with Background -->
                     <tr>
                         <td style="background: linear-gradient(135deg, #5FD4B3 0%, #3BA88F 100%); padding: 50px 40px; text-align: center;">
-                            <img src="{{EMAIL_LOGO_URL}}" alt="Morouna Loans" style="width: 200px; height: auto; margin-bottom: 10px;" />
-                            <p style="color: #ffffff; font-size: 14px; margin: 0 0 15px 0; opacity: 0.9;">by AKM Labs</p>
-                            <h1 style="color: #ffffff; font-size: 28px; margin: 0; font-weight: 600;">Loan Payment Reminder</h1>
+                            <h1 style="color: #ffffff; font-size: 36px; margin: 0 0 10px 0; font-weight: 700; letter-spacing: -1px;">Morouna Loans</h1>
+                            <p style="color: #ffffff; font-size: 14px; margin: 0; opacity: 0.9;">by AKM Labs</p>
+                            <h1 style="color: #ffffff; font-size: 28px; margin: 15px 0 0 0; font-weight: 600;">Payment Reminder</h1>
                         </td>
                     </tr>
                     
@@ -688,122 +624,37 @@ const LOAN_PAYMENT_REMINDER_TEMPLATE = `<!DOCTYPE html>
                             </p>
                             
                             <p style="color: #4A5568; font-size: 16px; line-height: 1.6; margin: 0 0 30px 0;">
-                                This is a friendly reminder that you have a loan payment coming up soon. Please review the details below:
+                                This is a friendly reminder that you have a loan payment coming up soon.
                             </p>
                             
-                            <!-- Payment Details Card -->
-                            <div style="background: linear-gradient(135deg, #E6F7F3 0%, #D1F2E8 100%); border: 2px solid #5FD4B3; border-radius: 12px; padding: 30px; margin: 30px 0;">
-                                <table role="presentation" style="width: 100%; border-collapse: collapse;">
+                            <div style="background: linear-gradient(135deg, #E6F7F3 0%, #D1F2E8 100%); border: 2px solid #5FD4B3; border-radius: 12px; padding: 25px; margin: 30px 0;">
+                                <table style="width: 100%; border-collapse: collapse;">
                                     <tr>
-                                        <td style="padding: 12px 0; border-bottom: 1px solid #B8E6D5;">
-                                            <table role="presentation" style="width: 100%;">
-                                                <tr>
-                                                    <td style="color: #2D3748; font-size: 14px; font-weight: 600;">
-                                                        Loan Facility:
-                                                    </td>
-                                                    <td style="color: #2D3748; font-size: 14px; text-align: right;">
-                                                        {{loan_name}}
-                                                    </td>
-                                                </tr>
-                                            </table>
-                                        </td>
+                                        <td style="padding: 10px 0; color: #2D3748; font-size: 14px; font-weight: 600;">Loan Facility:</td>
+                                        <td style="padding: 10px 0; color: #2D3748; font-size: 14px; text-align: right;">{{loan_name}}</td>
                                     </tr>
                                     <tr>
-                                        <td style="padding: 12px 0; border-bottom: 1px solid #B8E6D5;">
-                                            <table role="presentation" style="width: 100%;">
-                                                <tr>
-                                                    <td style="color: #2D3748; font-size: 14px; font-weight: 600;">
-                                                        Bank:
-                                                    </td>
-                                                    <td style="color: #2D3748; font-size: 14px; text-align: right;">
-                                                        {{bank_name}}
-                                                    </td>
-                                                </tr>
-                                            </table>
-                                        </td>
+                                        <td style="padding: 10px 0; color: #2D3748; font-size: 14px; font-weight: 600;">Bank:</td>
+                                        <td style="padding: 10px 0; color: #2D3748; font-size: 14px; text-align: right;">{{bank_name}}</td>
+                                    </tr>
+                                    <tr style="border-top: 1px solid #5FD4B3;">
+                                        <td style="padding: 15px 0 10px 0; color: #2D3748; font-size: 16px; font-weight: 700;">Payment Amount:</td>
+                                        <td style="padding: 15px 0 10px 0; color: #2D3748; font-size: 20px; font-weight: 700; text-align: right;">{{payment_amount}}</td>
                                     </tr>
                                     <tr>
-                                        <td style="padding: 12px 0; border-bottom: 1px solid #B8E6D5;">
-                                            <table role="presentation" style="width: 100%;">
-                                                <tr>
-                                                    <td style="color: #2D3748; font-size: 14px; font-weight: 600;">
-                                                        Payment Amount:
-                                                    </td>
-                                                    <td style="color: #2D3748; font-size: 18px; font-weight: 700; text-align: right;">
-                                                        {{payment_amount}}
-                                                    </td>
-                                                </tr>
-                                            </table>
-                                        </td>
+                                        <td style="padding: 10px 0; color: #2D3748; font-size: 14px; font-weight: 600;">Due Date:</td>
+                                        <td style="padding: 10px 0; color: #2D3748; font-size: 14px; text-align: right;">{{due_date}}</td>
                                     </tr>
                                     <tr>
-                                        <td style="padding: 12px 0; border-bottom: 1px solid #B8E6D5;">
-                                            <table role="presentation" style="width: 100%;">
-                                                <tr>
-                                                    <td style="color: #2D3748; font-size: 14px; font-weight: 600;">
-                                                        Due Date:
-                                                    </td>
-                                                    <td style="color: #C53030; font-size: 16px; font-weight: 700; text-align: right;">
-                                                        {{due_date}}
-                                                    </td>
-                                                </tr>
-                                            </table>
-                                        </td>
-                                    </tr>
-                                    <tr>
-                                        <td style="padding: 12px 0;">
-                                            <table role="presentation" style="width: 100%;">
-                                                <tr>
-                                                    <td style="color: #2D3748; font-size: 14px; font-weight: 600;">
-                                                        Days Until Due:
-                                                    </td>
-                                                    <td style="color: #2D3748; font-size: 14px; text-align: right;">
-                                                        {{days_remaining}} days
-                                                    </td>
-                                                </tr>
-                                            </table>
-                                        </td>
+                                        <td style="padding: 10px 0; color: #C53030; font-size: 14px; font-weight: 600;">Days Until Due:</td>
+                                        <td style="padding: 10px 0; color: #C53030; font-size: 18px; font-weight: 700; text-align: right;">{{days_remaining}} days</td>
                                     </tr>
                                 </table>
                             </div>
                             
-                            <!-- Calendar Invite Section -->
-                            <div style="background-color: #EBF8FF; border-left: 4px solid #4299E1; border-radius: 4px; padding: 20px; margin: 30px 0;">
-                                <p style="color: #2C5282; font-size: 14px; line-height: 1.6; margin: 0 0 15px 0;">
-                                    <strong>📅 Add to Calendar</strong>
-                                </p>
-                                <p style="color: #2C5282; font-size: 14px; line-height: 1.6; margin: 0;">
-                                    A calendar invite has been attached to this email. Click the attachment to add this payment reminder to your calendar.
-                                </p>
-                            </div>
-                            
-                            <!-- Action Buttons -->
-                            <div style="text-align: center; margin: 40px 0;">
-                                <table role="presentation" style="margin: 0 auto;">
-                                    <tr>
-                                        <td style="border-radius: 8px; background: linear-gradient(135deg, #5FD4B3 0%, #3BA88F 100%); padding-right: 10px;">
-                                            <a href="{{dashboard_url}}" target="_blank" style="display: inline-block; padding: 16px 40px; color: #ffffff; text-decoration: none; font-size: 16px; font-weight: 600; border-radius: 8px;">
-                                                View in Dashboard
-                                            </a>
-                                        </td>
-                                        <td style="border-radius: 8px; background-color: #F7FAFC; border: 2px solid #5FD4B3;">
-                                            <a href="{{payment_url}}" target="_blank" style="display: inline-block; padding: 16px 40px; color: #3BA88F; text-decoration: none; font-size: 16px; font-weight: 600; border-radius: 8px;">
-                                                Make Payment
-                                            </a>
-                                        </td>
-                                    </tr>
-                                </table>
-                            </div>
-                            
-                            <div style="margin-top: 30px; padding-top: 30px; border-top: 1px solid #E2E8F0;">
-                                <p style="color: #718096; font-size: 14px; line-height: 1.6; margin: 0;">
-                                    <strong>Note:</strong> This is an automated reminder. If you've already made this payment, please disregard this email. Payment status updates may take 24-48 hours to reflect in the system.
-                                </p>
-                            </div>
-                            
-                            <div style="margin-top: 20px; padding: 20px; background-color: #FFFAF0; border-left: 4px solid #F6AD55; border-radius: 4px;">
-                                <p style="color: #7C2D12; font-size: 14px; line-height: 1.6; margin: 0;">
-                                    <strong>⚠️ Important:</strong> Late payments may incur additional fees and affect your credit standing. Please ensure timely payment to avoid penalties.
+                            <div style="margin-top: 30px; padding: 20px; background-color: #FFF5F5; border-left: 4px solid #FC8181; border-radius: 4px;">
+                                <p style="color: #C53030; font-size: 14px; line-height: 1.6; margin: 0;">
+                                    <strong>⏰ Important:</strong> Please ensure timely payment to avoid late fees and penalties.
                                 </p>
                             </div>
                         </td>
@@ -813,7 +664,7 @@ const LOAN_PAYMENT_REMINDER_TEMPLATE = `<!DOCTYPE html>
                     <tr>
                         <td style="background-color: #F7FAFC; padding: 30px 40px; text-align: center;">
                             <p style="color: #718096; font-size: 14px; margin: 0 0 10px 0;">
-                                Questions about this payment? Contact us at <a href="mailto:Abdullah@akm-labs.com" style="color: #5FD4B3; text-decoration: none;">Abdullah@akm-labs.com</a>
+                                Need help? Contact us at <a href="mailto:Abdullah@akm-labs.com" style="color: #5FD4B3; text-decoration: none;">Abdullah@akm-labs.com</a>
                             </p>
                             <p style="color: #A0AEC0; font-size: 12px; margin: 0;">
                                 © 2025 Morouna Loans by AKM Labs. All rights reserved.
@@ -844,17 +695,15 @@ const GENERAL_REMINDER_TEMPLATE = `<!DOCTYPE html>
                     <!-- Header with Background -->
                     <tr>
                         <td style="background: linear-gradient(135deg, #5FD4B3 0%, #3BA88F 100%); padding: 50px 40px; text-align: center;">
-                            <img src="{{EMAIL_LOGO_URL}}" alt="Morouna Loans" style="width: 200px; height: auto; margin-bottom: 10px;" />
-                            <p style="color: #ffffff; font-size: 14px; margin: 0 0 15px 0; opacity: 0.9;">by AKM Labs</p>
-                            <h1 style="color: #ffffff; font-size: 28px; margin: 0; font-weight: 600;">{{reminder_title}}</h1>
+                            <h1 style="color: #ffffff; font-size: 36px; margin: 0 0 10px 0; font-weight: 700; letter-spacing: -1px;">Morouna Loans</h1>
+                            <p style="color: #ffffff; font-size: 14px; margin: 0; opacity: 0.9;">by AKM Labs</p>
+                            <h1 style="color: #ffffff; font-size: 28px; margin: 15px 0 0 0; font-weight: 600;">{{reminder_heading}}</h1>
                         </td>
                     </tr>
                     
                     <!-- Content -->
                     <tr>
                         <td style="padding: 40px;">
-                            <h2 style="color: #2D3748; font-size: 24px; margin: 0 0 20px 0; font-weight: 600;">{{reminder_heading}}</h2>
-                            
                             <p style="color: #4A5568; font-size: 16px; line-height: 1.6; margin: 0 0 20px 0;">
                                 Hi <strong>{{user_name}}</strong>,
                             </p>
@@ -863,121 +712,9 @@ const GENERAL_REMINDER_TEMPLATE = `<!DOCTYPE html>
                                 {{reminder_message}}
                             </p>
                             
-                            <!-- Details Card (Optional - can be hidden if not needed) -->
-                            <div style="background-color: #F7FAFC; border-radius: 8px; padding: 25px; margin: 30px 0;">
-                                <h3 style="color: #2D3748; font-size: 18px; margin: 0 0 20px 0; font-weight: 600;">{{details_title}}</h3>
-                                
-                                <table role="presentation" style="width: 100%; border-collapse: collapse;">
-                                    <tr>
-                                        <td style="padding: 10px 0; border-bottom: 1px solid #E2E8F0;">
-                                            <table role="presentation" style="width: 100%;">
-                                                <tr>
-                                                    <td style="color: #718096; font-size: 14px;">
-                                                        {{detail_label_1}}
-                                                    </td>
-                                                    <td style="color: #2D3748; font-size: 14px; font-weight: 600; text-align: right;">
-                                                        {{detail_value_1}}
-                                                    </td>
-                                                </tr>
-                                            </table>
-                                        </td>
-                                    </tr>
-                                    <tr>
-                                        <td style="padding: 10px 0; border-bottom: 1px solid #E2E8F0;">
-                                            <table role="presentation" style="width: 100%;">
-                                                <tr>
-                                                    <td style="color: #718096; font-size: 14px;">
-                                                        {{detail_label_2}}
-                                                    </td>
-                                                    <td style="color: #2D3748; font-size: 14px; font-weight: 600; text-align: right;">
-                                                        {{detail_value_2}}
-                                                    </td>
-                                                </tr>
-                                            </table>
-                                        </td>
-                                    </tr>
-                                    <tr>
-                                        <td style="padding: 10px 0; border-bottom: 1px solid #E2E8F0;">
-                                            <table role="presentation" style="width: 100%;">
-                                                <tr>
-                                                    <td style="color: #718096; font-size: 14px;">
-                                                        {{detail_label_3}}
-                                                    </td>
-                                                    <td style="color: #2D3748; font-size: 14px; font-weight: 600; text-align: right;">
-                                                        {{detail_value_3}}
-                                                    </td>
-                                                </tr>
-                                            </table>
-                                        </td>
-                                    </tr>
-                                    <tr>
-                                        <td style="padding: 10px 0;">
-                                            <table role="presentation" style="width: 100%;">
-                                                <tr>
-                                                    <td style="color: #718096; font-size: 14px;">
-                                                        {{detail_label_4}}
-                                                    </td>
-                                                    <td style="color: #2D3748; font-size: 14px; font-weight: 600; text-align: right;">
-                                                        {{detail_value_4}}
-                                                    </td>
-                                                </tr>
-                                            </table>
-                                        </td>
-                                    </tr>
-                                </table>
+                            <div style="background: linear-gradient(135deg, #E6F7F3 0%, #D1F2E8 100%); border: 2px solid #5FD4B3; border-radius: 12px; padding: 25px; margin: 30px 0;">
+                                {{additional_info}}
                             </div>
-                            
-                            <!-- Highlighted Info Box (Optional) -->
-                            <div style="background: linear-gradient(135deg, #E6F7F3 0%, #D1F2E8 100%); border: 2px solid #5FD4B3; border-radius: 12px; padding: 25px; text-align: center; margin: 30px 0;">
-                                <p style="color: #2D3748; font-size: 14px; margin: 0 0 10px 0; text-transform: uppercase; letter-spacing: 1px; font-weight: 600;">
-                                    {{highlight_label}}
-                                </p>
-                                <p style="color: #2D3748; font-size: 32px; font-weight: 700; margin: 0;">
-                                    {{highlight_value}}
-                                </p>
-                            </div>
-                            
-                            <!-- Calendar Section (Optional) -->
-                            <div style="background-color: #EBF8FF; border-left: 4px solid #4299E1; border-radius: 4px; padding: 20px; margin: 30px 0;">
-                                <p style="color: #2C5282; font-size: 14px; line-height: 1.6; margin: 0 0 10px 0;">
-                                    <strong>📅 {{calendar_title}}</strong>
-                                </p>
-                                <p style="color: #2C5282; font-size: 14px; line-height: 1.6; margin: 0;">
-                                    {{calendar_message}}
-                                </p>
-                            </div>
-                            
-                            <!-- Action Button -->
-                            <div style="text-align: center; margin: 40px 0;">
-                                <table role="presentation" style="margin: 0 auto;">
-                                    <tr>
-                                        <td style="border-radius: 8px; background: linear-gradient(135deg, #5FD4B3 0%, #3BA88F 100%);">
-                                            <a href="{{action_url}}" target="_blank" style="display: inline-block; padding: 16px 40px; color: #ffffff; text-decoration: none; font-size: 16px; font-weight: 600; border-radius: 8px;">
-                                                {{action_button_text}}
-                                            </a>
-                                        </td>
-                                    </tr>
-                                </table>
-                            </div>
-                            
-                            <!-- Additional Info Section (Optional) -->
-                            <div style="margin-top: 30px; padding-top: 30px; border-top: 1px solid #E2E8F0;">
-                                <p style="color: #4A5568; font-size: 14px; line-height: 1.6; margin: 0 0 15px 0;">
-                                    <strong>{{additional_info_title}}</strong>
-                                </p>
-                                <p style="color: #718096; font-size: 14px; line-height: 1.6; margin: 0;">
-                                    {{additional_info_text}}
-                                </p>
-                            </div>
-                            
-                            <!-- Alert Box -->
-                            <div style="margin-top: 20px; padding: 20px; background-color: #EBF8FF; border-left: 4px solid #4299E1; border-radius: 4px;">
-                                <p style="color: #2C5282; font-size: 14px; line-height: 1.6; margin: 0;">
-                                    <strong>ℹ️ {{alert_title}}</strong><br>
-                                    {{alert_message}}
-                                </p>
-                            </div>
-                            
                         </td>
                     </tr>
                     
@@ -985,7 +722,7 @@ const GENERAL_REMINDER_TEMPLATE = `<!DOCTYPE html>
                     <tr>
                         <td style="background-color: #F7FAFC; padding: 30px 40px; text-align: center;">
                             <p style="color: #718096; font-size: 14px; margin: 0 0 10px 0;">
-                                Questions? Contact us at <a href="mailto:Abdullah@akm-labs.com" style="color: #5FD4B3; text-decoration: none;">Abdullah@akm-labs.com</a>
+                                Need help? Contact us at <a href="mailto:Abdullah@akm-labs.com" style="color: #5FD4B3; text-decoration: none;">Abdullah@akm-labs.com</a>
                             </p>
                             <p style="color: #A0AEC0; font-size: 12px; margin: 0;">
                                 © 2025 Morouna Loans by AKM Labs. All rights reserved.
