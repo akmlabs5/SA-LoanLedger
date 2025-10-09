@@ -306,16 +306,35 @@ export default function GeneralLoanCreatePage() {
                                   </SelectTrigger>
                                 </FormControl>
                                 <SelectContent>
-                                  {facilities?.map((facility) => (
-                                    <SelectItem key={facility.id} value={facility.id}>
-                                      <div className="flex flex-col">
-                                        <span>{facility.bank?.name || 'Unknown Bank'} - {formatFacilityType(facility.facilityType)}</span>
-                                        <span className="text-xs text-muted-foreground">
-                                          Credit Limit: {parseFloat(facility.creditLimit).toLocaleString()} SAR | SIBOR + {facility.costOfFunding}%
-                                        </span>
-                                      </div>
-                                    </SelectItem>
-                                  ))}
+                                  {!facilities || facilities.length === 0 ? (
+                                    <div className="p-4 text-center">
+                                      <p className="text-sm text-muted-foreground mb-3">
+                                        No facilities available. Create a facility first to start drawing loans.
+                                      </p>
+                                      <Link href="/facilities/create">
+                                        <Button 
+                                          type="button" 
+                                          variant="outline" 
+                                          size="sm" 
+                                          className="w-full"
+                                          data-testid="button-create-facility"
+                                        >
+                                          Create Facility
+                                        </Button>
+                                      </Link>
+                                    </div>
+                                  ) : (
+                                    facilities.map((facility) => (
+                                      <SelectItem key={facility.id} value={facility.id}>
+                                        <div className="flex flex-col">
+                                          <span>{facility.bank?.name || 'Unknown Bank'} - {formatFacilityType(facility.facilityType)}</span>
+                                          <span className="text-xs text-muted-foreground">
+                                            Credit Limit: {parseFloat(facility.creditLimit).toLocaleString()} SAR | SIBOR + {facility.costOfFunding}%
+                                          </span>
+                                        </div>
+                                      </SelectItem>
+                                    ))
+                                  )}
                                 </SelectContent>
                               </Select>
                               <FormMessage />
