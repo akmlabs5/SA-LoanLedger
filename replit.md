@@ -15,6 +15,16 @@ The backend is built with Express.js, employing Drizzle ORM with Neon (PostgreSQ
 ## Authentication
 A unified login page detects user (email) or admin (username) credentials. User authentication includes email/password login with optional 2FA OTP verification via SendGrid, while admin uses username/password. The signup experience features transparent branding, account type selection (Personal/Organization), an optional 2FA toggle, and green-themed professional forms. All preferences are saved to the database.
 
+### Email Template System
+A professional email template system provides 5 beautiful HTML templates with Saudi-themed teal/green gradient branding:
+- **Email Verification**: For confirming user email addresses during signup
+- **Password Reset**: For secure password reset flows
+- **MFA Code**: For 2FA OTP verification with large, centered code display
+- **Welcome Email**: For new user onboarding
+- **Password Changed**: For security notifications
+
+The `EmailTemplateService` supports variable substitution for {{url}}, {{code}}, and {{user.name}} placeholders. All templates include the Morouna logo and "by AKM Labs" branding. 2FA OTP emails and team invitations use these templates for a polished, professional experience.
+
 ## Multi-Tenant Team Collaboration
 The platform supports organizational team collaboration for 2-5 members with complete data isolation. Organizations can be 'Personal' or 'Organization'. Team management includes an email-based invitation system via SendGrid with secure token-based acceptance, role-based access (Owner/Member), and team settings. All data (loan, facility, collateral, guarantee, bank) is scoped by `organizationId` with SQL-level enforcement and API route validation to ensure cross-tenant data isolation, including for AI Agent operations and report generation. User sessions include `organizationId`, `organizationName`, and `isOwner` flags.
 
