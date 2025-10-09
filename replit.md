@@ -11,6 +11,13 @@ Preferred communication style: Simple, everyday language.
 ## Frontend Architecture
 The frontend is a React TypeScript single-page application using Wouter for routing, TanStack Query for state management, and Shadcn/ui (built on Radix UI) for components. Styling is managed with Tailwind CSS, featuring a Saudi-themed color scheme and mobile-first design. Forms utilize React Hook Form with Zod validation, and Recharts is used for data visualization.
 
+**Unified Date Picker System:**
+- All forms use ModernDatePicker component (@ark-ui/react date-picker) for consistent UI/UX
+- Beautiful dropdown calendar with year/month selectors, navigation controls, and clear button
+- Replaces all native HTML date inputs across 13+ pages (collateral, facility, guarantee, loan, payment, reports, bank, history forms)
+- Consistent props API: `value`, `onChange`, `placeholder`, `dataTestId`
+- Fully accessible with proper ARIA labels and keyboard navigation
+
 ## Backend Architecture
 The backend is built with Express.js, employing Drizzle ORM with Neon (PostgreSQL) for type-safe database operations. Authentication uses Replit Auth (OpenID Connect) with Passport.js and Supabase Auth for email-based Two-Factor Authentication (2FA). PostgreSQL-backed sessions ensure scalability. It follows a REST API pattern with an organized endpoint structure and a storage abstraction layer.
 
