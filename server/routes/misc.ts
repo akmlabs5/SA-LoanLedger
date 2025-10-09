@@ -113,7 +113,8 @@ export function registerMiscRoutes(app: Express, deps: AppDependencies) {
     return true;
   }, "From date must be before or equal to To date");
 
-  // History routes
+  // History routes - NOTE: exposureSnapshots and transactions are user-specific, not org-wide
+  // They track individual user's historical snapshots and transactions
   app.get('/api/history/exposures', isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;

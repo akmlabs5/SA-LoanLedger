@@ -11,9 +11,9 @@ export function registerAiRoutes(app: Express, deps: AppDependencies) {
   const { storage } = deps;
 
   // Natural Language Query
-  app.post('/api/ai/natural-query', isAuthenticated, async (req: any, res) => {
+  app.post('/api/ai/natural-query', isAuthenticated, attachOrganizationContext, requireOrganization, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const organizationId = req.organizationId;
       const { query } = req.body;
       
       if (!query || typeof query !== 'string') {
@@ -21,7 +21,7 @@ export function registerAiRoutes(app: Express, deps: AppDependencies) {
       }
       
       const nlqProcessor = new NLQProcessor(storage);
-      const result = await nlqProcessor.processQuery(query, userId);
+      const result = await nlqProcessor.processQuery(query, organizationId);
       
       res.json(result);
     } catch (error) {

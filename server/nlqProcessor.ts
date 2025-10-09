@@ -15,37 +15,37 @@ export class NLQProcessor {
     this.storage = storage;
   }
 
-  async processQuery(query: string, userId: string): Promise<QueryResult> {
+  async processQuery(query: string, organizationId: string): Promise<QueryResult> {
     const lowerQuery = query.toLowerCase();
 
     // Bank exposure queries
     if (this.matchesPattern(lowerQuery, ['exposure', 'bank', 'how much', 'owe'])) {
-      return await this.handleBankExposureQuery(lowerQuery, userId);
+      return await this.handleBankExposureQuery(lowerQuery, organizationId);
     }
 
     // Due date queries
     if (this.matchesPattern(lowerQuery, ['due', 'when', 'upcoming', 'this month', 'this week'])) {
-      return await this.handleDueDateQuery(lowerQuery, userId);
+      return await this.handleDueDateQuery(lowerQuery, organizationId);
     }
 
     // Interest rate queries
     if (this.matchesPattern(lowerQuery, ['interest', 'rate', 'highest', 'lowest', 'average'])) {
-      return await this.handleInterestRateQuery(lowerQuery, userId);
+      return await this.handleInterestRateQuery(lowerQuery, organizationId);
     }
 
     // Portfolio metrics queries
     if (this.matchesPattern(lowerQuery, ['total', 'outstanding', 'portfolio', 'how many loans'])) {
-      return await this.handlePortfolioMetricsQuery(lowerQuery, userId);
+      return await this.handlePortfolioMetricsQuery(lowerQuery, organizationId);
     }
 
     // LTV queries
     if (this.matchesPattern(lowerQuery, ['ltv', 'loan to value', 'collateral'])) {
-      return await this.handleLTVQuery(lowerQuery, userId);
+      return await this.handleLTVQuery(lowerQuery, organizationId);
     }
 
     // Facility queries
     if (this.matchesPattern(lowerQuery, ['facility', 'facilities', 'credit line', 'available credit'])) {
-      return await this.handleFacilityQuery(lowerQuery, userId);
+      return await this.handleFacilityQuery(lowerQuery, organizationId);
     }
 
     // Default: query not understood
@@ -82,8 +82,8 @@ export class NLQProcessor {
     return null;
   }
 
-  private async handleBankExposureQuery(query: string, userId: string): Promise<QueryResult> {
-    const loans = await this.storage.getActiveLoansByUser(userId);
+  private async handleBankExposureQuery(query: string, organizationId: string): Promise<QueryResult> {
+    const loans = await this.storage.getActiveLoansByUser(organizationId);
     const banks = await this.storage.getAllBanks();
     
     const bankName = this.extractBankName(query);
@@ -143,8 +143,8 @@ export class NLQProcessor {
     }
   }
 
-  private async handleDueDateQuery(query: string, userId: string): Promise<QueryResult> {
-    const loans = await this.storage.getActiveLoansByUser(userId);
+  private async handleDueDateQuery(query: string, organizationId: string): Promise<QueryResult> {
+    const loans = await this.storage.getActiveLoansByUser(organizationId);
     const now = new Date();
     
     let filteredLoans: any[] = [];
@@ -195,8 +195,8 @@ export class NLQProcessor {
     };
   }
 
-  private async handleInterestRateQuery(query: string, userId: string): Promise<QueryResult> {
-    const loans = await this.storage.getActiveLoansByUser(userId);
+  private async handleInterestRateQuery(query: string, organizationId: string): Promise<QueryResult> {
+    const loans = await this.storage.getActiveLoansByUser(organizationId);
     
     if (loans.length === 0) {
       return {
@@ -271,9 +271,9 @@ export class NLQProcessor {
     }
   }
 
-  private async handlePortfolioMetricsQuery(query: string, userId: string): Promise<QueryResult> {
-    const loans = await this.storage.getActiveLoansByUser(userId);
-    const facilities = await this.storage.getUserFacilities(userId);
+  private async handlePortfolioMetricsQuery(query: string, organizationId: string): Promise<QueryResult> {
+    const loans = await this.storage.getActiveLoansByUser(organizationId);
+    const facilities = await this.storage.getUserFacilities(organizationId);
     
     const totalOutstanding = loans.reduce((sum: number, l: any) => 
       sum + parseFloat(l.amount.toString()), 0);
@@ -303,9 +303,9 @@ export class NLQProcessor {
     };
   }
 
-  private async handleLTVQuery(query: string, userId: string): Promise<QueryResult> {
-    const loans = await this.storage.getActiveLoansByUser(userId);
-    const collateral = await this.storage.getUserCollateral(userId);
+  private async handleLTVQuery(query: string, organizationId: string): Promise<QueryResult> {
+    const loans = await this.storage.getActiveLoansByUser(organizationId);
+    const collateral = await this.storage.getUserCollateral(organizationId);
     
     const totalOutstanding = loans.reduce((sum: number, l: any) => 
       sum + parseFloat(l.amount.toString()), 0);
@@ -329,9 +329,9 @@ export class NLQProcessor {
     };
   }
 
-  private async handleFacilityQuery(query: string, userId: string): Promise<QueryResult> {
-    const facilities = await this.storage.getUserFacilities(userId);
-    const loans = await this.storage.getActiveLoansByUser(userId);
+  private async handleFacilityQuery(query: string, organizationId: string): Promise<QueryResult> {
+    const facilities = await this.storage.getUserFacilities(organizationId);
+    const loans = await this.storage.getActiveLoansByUser(organizationId);
     
     const facilityData = facilities.map((f: any) => {
       const facilityLoans = loans.filter((l: any) => l.facilityId === f.id);
