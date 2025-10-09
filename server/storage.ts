@@ -280,6 +280,7 @@ export interface IStorage {
   addMember(member: InsertOrganizationMember): Promise<OrganizationMember>;
   removeMember(userId: string, organizationId: string): Promise<void>;
   getOrganizationMembers(organizationId: string): Promise<Array<OrganizationMember & { user: User }>>;
+  getOrganizationMembership(userId: string): Promise<OrganizationMember | undefined>;
   isUserInOrganization(userId: string, organizationId: string): Promise<boolean>;
   
   // Organization Invitation operations
@@ -1708,6 +1709,14 @@ export class DatabaseStorage implements IStorage {
       joinedAt: r.joinedAt,
       user: r.user,
     }));
+  }
+
+  async getOrganizationMembership(userId: string): Promise<OrganizationMember | undefined> {
+    const [result] = await db
+      .select()
+      .from(organizationMembers)
+      .where(eq(organizationMembers.userId, userId));
+    return result;
   }
 
   async isUserInOrganization(userId: string, organizationId: string): Promise<boolean> {
@@ -3174,6 +3183,11 @@ Reference: {loanReference}`,
       if (!user) throw new Error(`User ${m.userId} not found`);
       return { ...m, user };
     });
+  }
+
+  async getOrganizationMembership(userId: string): Promise<OrganizationMember | undefined> {
+    return Array.from(this.organizationMembers.values())
+      .find(m => m.userId === userId);
   }
 
   async isUserInOrganization(userId: string, organizationId: string): Promise<boolean> {
