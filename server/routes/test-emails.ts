@@ -1,5 +1,6 @@
 import type { Express } from "express";
-import { sendEmail } from "../emailService";
+import { FROM_EMAIL_REMINDERS } from "../emailService";
+import { mailService } from "../emailService";
 import { EmailTemplateService, EmailTemplateType } from "../emailTemplates/templates";
 
 export function registerTestEmailRoutes(app: Express) {
@@ -24,8 +25,9 @@ export function registerTestEmailRoutes(app: Express) {
         }
       );
 
-      await sendEmail({
+      await mailService.send({
         to: testEmail,
+        from: FROM_EMAIL_REMINDERS,
         subject: loanReminderTemplate.subject,
         text: loanReminderTemplate.text,
         html: loanReminderTemplate.html
@@ -61,8 +63,9 @@ export function registerTestEmailRoutes(app: Express) {
         }
       );
 
-      await sendEmail({
+      await mailService.send({
         to: testEmail,
+        from: FROM_EMAIL_REMINDERS,
         subject: generalReminderTemplate.subject,
         text: generalReminderTemplate.text,
         html: generalReminderTemplate.html

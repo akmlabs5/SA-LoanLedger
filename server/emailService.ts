@@ -14,7 +14,10 @@ if (sendgridKey) {
   mailService.setApiKey(sendgridKey);
 }
 
-export const FROM_EMAIL: string = config.get('SENDGRID_FROM_EMAIL') || 'noreply@morouna-loans.com';
+// Different FROM addresses for different email types
+export const FROM_EMAIL_AUTH: string = 'noreply@akm-labs.com';  // For authentication emails
+export const FROM_EMAIL_REMINDERS: string = 'reminders@akm-labs.com';  // For reminder emails
+export const FROM_EMAIL: string = FROM_EMAIL_AUTH;  // Default to auth email
 
 /**
  * Generate a calendar invite (.ics file) for a loan reminder
@@ -47,8 +50,8 @@ export function generateCalendarInvite(
       organizer: { name: 'Morouna Loans', email: FROM_EMAIL },
       attendees: [
         {
-          name: user.name || user.email,
-          email: user.email,
+          name: (user.firstName && user.lastName) ? `${user.firstName} ${user.lastName}` : (user.email || 'User'),
+          email: user.email || '',
           rsvp: true,
           partstat: 'ACCEPTED',
           role: 'REQ-PARTICIPANT'
@@ -150,7 +153,7 @@ export async function sendLoanDueNotification(
 
     await mailService.send({
       to: userEmail,
-      from: FROM_EMAIL,
+      from: FROM_EMAIL_REMINDERS,
       subject: `Loan Payment Due Alert - ${dueLoans.length} loan(s) due soon`,
       html: emailHtml,
     });
@@ -200,7 +203,7 @@ export async function sendAIAlertNotification(
 
     await mailService.send({
       to: userEmail,
-      from: FROM_EMAIL,
+      from: FROM_EMAIL_REMINDERS,
       subject: `AI Portfolio Alert - ${alertType}`,
       html: emailHtml,
     });
@@ -293,7 +296,7 @@ Note: This is an automated reminder generated on {currentDate}`,
     // Generate calendar invite if calendar is enabled
     const emailData: any = {
       to: user.email,
-      from: FROM_EMAIL,
+      from: FROM_EMAIL_REMINDERS,
       subject: renderedEmail.subject || 'Loan Payment Reminder',
       html: htmlBody,
     };
@@ -384,7 +387,7 @@ export async function sendSimpleReminderEmail(
 
     await mailService.send({
       to: userEmail,
-      from: FROM_EMAIL,
+      from: FROM_EMAIL_REMINDERS,
       subject: reminderTitle,
       html: emailHtml,
     });
