@@ -347,17 +347,36 @@ export default function LoanCreatePage() {
                               </SelectTrigger>
                             </FormControl>
                             <SelectContent>
-                              {bankFacilities?.map((facility) => (
-                                <SelectItem key={facility.id} value={facility.id}>
-                                  <div className="flex flex-col">
-                                    <span>{formatFacilityType(facility.facilityType).toUpperCase()}</span>
-                                    <span className="text-xs text-muted-foreground">
-                                      {!bankId && facility.bank ? `${facility.bank.name} | ` : ''}
-                                      Credit Limit: {parseFloat(facility.creditLimit).toLocaleString()} SAR | SIBOR + {facility.costOfFunding}%
-                                    </span>
-                                  </div>
-                                </SelectItem>
-                              ))}
+                              {!bankFacilities || bankFacilities.length === 0 ? (
+                                <div className="p-4 text-center">
+                                  <p className="text-sm text-muted-foreground mb-3">
+                                    No facilities available. Create a facility first to start drawing loans.
+                                  </p>
+                                  <Link href={bankId ? `/banks/${bankId}/facilities/create` : "/facilities/create"}>
+                                    <Button 
+                                      type="button" 
+                                      variant="outline" 
+                                      size="sm" 
+                                      className="w-full"
+                                      data-testid="button-create-facility"
+                                    >
+                                      Create Facility
+                                    </Button>
+                                  </Link>
+                                </div>
+                              ) : (
+                                bankFacilities.map((facility) => (
+                                  <SelectItem key={facility.id} value={facility.id}>
+                                    <div className="flex flex-col">
+                                      <span>{formatFacilityType(facility.facilityType).toUpperCase()}</span>
+                                      <span className="text-xs text-muted-foreground">
+                                        {!bankId && facility.bank ? `${facility.bank.name} | ` : ''}
+                                        Credit Limit: {parseFloat(facility.creditLimit).toLocaleString()} SAR | SIBOR + {facility.costOfFunding}%
+                                      </span>
+                                    </div>
+                                  </SelectItem>
+                                ))
+                              )}
                             </SelectContent>
                           </Select>
                           <FormMessage />
