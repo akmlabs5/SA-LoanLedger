@@ -1,6 +1,7 @@
 import type { Express } from "express";
 import type { AppDependencies } from "../types";
 import { isAuthenticated } from "../replitAuth";
+import { attachOrganizationContext, requireOrganization } from "../organizationMiddleware";
 import { sendLoanDueNotification } from "../emailService";
 import { transactionTypeZodEnum } from "@shared/schema";
 import { z } from "zod";
@@ -28,16 +29,17 @@ export function registerMiscRoutes(app: Express, deps: AppDependencies) {
   });
 
   // Email notifications
-  app.post('/api/notifications/due-loans', isAuthenticated, async (req: any, res) => {
+  app.post('/api/notifications/due-loans', isAuthenticated, attachOrganizationContext, requireOrganization, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
+      const organizationId = req.organizationId;
       const user = await storage.getUser(userId);
       
       if (!user?.email) {
         return res.status(400).json({ message: "User email not found" });
       }
 
-      const activeLoans = await storage.getActiveLoansByUser(userId);
+      const activeLoans = await storage.getActiveLoansByUser(organizationId);
       const currentDate = new Date();
       const dueLoans = activeLoans.filter(loan => {
         const dueDate = new Date(loan.dueDate);
@@ -166,9 +168,9 @@ export function registerMiscRoutes(app: Express, deps: AppDependencies) {
   });
 
   // Loan settlement data endpoint for Transaction History enhancements
-  app.get('/api/history/loan-settlements', isAuthenticated, async (req: any, res) => {
+  app.get('/api/history/loan-settlements', isAuthenticated, attachOrganizationContext, requireOrganization, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const organizationId = req.organizationId;
       
       // Validate query parameters
       const querySchema = z.object({
@@ -186,9 +188,9 @@ export function registerMiscRoutes(app: Express, deps: AppDependencies) {
         });
       }
 
-      // Get all user loans with related data
-      const loans = await storage.getActiveLoansByUser(userId);
-      const settledLoans = await storage.getSettledLoansByUser(userId);
+      // Get all organization loans with related data
+      const loans = await storage.getActiveLoansByUser(organizationId);
+      const settledLoans = await storage.getSettledLoansByUser(organizationId);
       const allLoans = [...loans, ...settledLoans];
 
       // Calculate settlement data for each loan

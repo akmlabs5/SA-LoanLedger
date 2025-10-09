@@ -237,18 +237,18 @@ export function registerAiRoutes(app: Express, deps: AppDependencies) {
   });
 
   // Smart Loan Matcher - recommend optimal facility for new loan
-  app.post('/api/ai/loan-matcher', isAuthenticated, async (req: any, res) => {
+  app.post('/api/ai/loan-matcher', isAuthenticated, attachOrganizationContext, requireOrganization, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const organizationId = req.organizationId;
       const { loanAmount, facilityType, duration } = req.body;
       
       if (!loanAmount || loanAmount <= 0) {
         return res.status(400).json({ message: "Valid loan amount is required" });
       }
       
-      // Get all user facilities with their loans
-      const facilities = await storage.getUserFacilities(userId);
-      const loans = await storage.getActiveLoansByUser(userId);
+      // Get all organization facilities with their loans
+      const facilities = await storage.getUserFacilities(organizationId);
+      const loans = await storage.getActiveLoansByUser(organizationId);
       
       if (facilities.length === 0) {
         return res.json({
