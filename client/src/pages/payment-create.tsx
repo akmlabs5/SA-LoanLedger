@@ -233,16 +233,35 @@ export default function PaymentCreatePage() {
                               </SelectTrigger>
                             </FormControl>
                             <SelectContent>
-                              {Array.isArray(activeLoans) && activeLoans.map((loan: any) => (
-                                <SelectItem key={loan.id} value={loan.id}>
-                                  <div className="flex flex-col">
-                                    <span>{loan.referenceNumber}</span>
-                                    <span className="text-xs text-muted-foreground">
-                                      {loan.facility?.bank?.name} | {parseFloat(loan.amount).toLocaleString()} SAR
-                                    </span>
-                                  </div>
-                                </SelectItem>
-                              ))}
+                              {!Array.isArray(activeLoans) || activeLoans.length === 0 ? (
+                                <div className="p-4 text-center">
+                                  <p className="text-sm text-muted-foreground mb-3">
+                                    No active loans available. Create a loan first to process payments.
+                                  </p>
+                                  <Link href="/loans/create">
+                                    <Button 
+                                      type="button" 
+                                      variant="outline" 
+                                      size="sm" 
+                                      className="w-full"
+                                      data-testid="button-create-loan"
+                                    >
+                                      Create Loan
+                                    </Button>
+                                  </Link>
+                                </div>
+                              ) : (
+                                activeLoans.map((loan: any) => (
+                                  <SelectItem key={loan.id} value={loan.id}>
+                                    <div className="flex flex-col">
+                                      <span>{loan.referenceNumber}</span>
+                                      <span className="text-xs text-muted-foreground">
+                                        {loan.facility?.bank?.name} | {parseFloat(loan.amount).toLocaleString()} SAR
+                                      </span>
+                                    </div>
+                                  </SelectItem>
+                                ))
+                              )}
                             </SelectContent>
                           </Select>
                           <FormMessage />
