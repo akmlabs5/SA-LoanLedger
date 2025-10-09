@@ -38,14 +38,14 @@ export class DailyAlertsService {
     this.storage = storage;
   }
 
-  async generateDailyAlerts(userId: string): Promise<Alert[]> {
+  async generateDailyAlerts(organizationId: string): Promise<Alert[]> {
     const alerts: Alert[] = [];
     const now = new Date();
     
-    // Get user's active data
-    const loans = await this.storage.getActiveLoansByUser(userId);
-    const facilities = await this.storage.getUserFacilities(userId);
-    const collateral = await this.storage.getUserCollateral(userId);
+    // Get organization's active data
+    const loans = await this.storage.getActiveLoansByUser(organizationId);
+    const facilities = await this.storage.getUserFacilities(organizationId);
+    const collateral = await this.storage.getUserCollateral(organizationId);
     
     // 1. CRITICAL: Loans overdue
     const overdueLoans = loans.filter((l: any) => {
@@ -303,8 +303,8 @@ export class DailyAlertsService {
     return alerts;
   }
 
-  async generateAndSendDailyDigest(userId: string, userEmail: string): Promise<void> {
-    const alerts = await this.generateDailyAlerts(userId);
+  async generateAndSendDailyDigest(organizationId: string, userId: string, userEmail: string): Promise<void> {
+    const alerts = await this.generateDailyAlerts(organizationId);
     
     if (alerts.length === 0) {
       // No alerts, skip sending email

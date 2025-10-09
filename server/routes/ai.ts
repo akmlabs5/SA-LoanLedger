@@ -31,12 +31,12 @@ export function registerAiRoutes(app: Express, deps: AppDependencies) {
   });
 
   // Daily Alerts - Generate alerts for current user
-  app.get('/api/ai/daily-alerts', isAuthenticated, async (req: any, res) => {
+  app.get('/api/ai/daily-alerts', isAuthenticated, attachOrganizationContext, requireOrganization, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const organizationId = req.organizationId;
       
       const alertsService = new DailyAlertsService(storage);
-      const alerts = await alertsService.generateDailyAlerts(userId);
+      const alerts = await alertsService.generateDailyAlerts(organizationId);
       
       res.json({ alerts, count: alerts.length });
     } catch (error) {
@@ -46,8 +46,9 @@ export function registerAiRoutes(app: Express, deps: AppDependencies) {
   });
 
   // Daily Alerts - Send digest email
-  app.post('/api/ai/daily-alerts/send', isAuthenticated, async (req: any, res) => {
+  app.post('/api/ai/daily-alerts/send', isAuthenticated, attachOrganizationContext, requireOrganization, async (req: any, res) => {
     try {
+      const organizationId = req.organizationId;
       const userId = req.user.claims.sub;
       const userEmail = req.user.claims.email || req.body.email;
       
@@ -56,7 +57,7 @@ export function registerAiRoutes(app: Express, deps: AppDependencies) {
       }
       
       const alertsService = new DailyAlertsService(storage);
-      await alertsService.generateAndSendDailyDigest(userId, userEmail);
+      await alertsService.generateAndSendDailyDigest(organizationId, userId, userEmail);
       
       res.json({ message: "Daily digest sent successfully" });
     } catch (error) {
