@@ -2,6 +2,7 @@ import { MailService } from '@sendgrid/mail';
 import { TemplateService } from './templateService';
 import { Loan, LoanReminder, ReminderTemplate, User, Bank, Facility } from '@shared/schema';
 import { config } from './config';
+import { createEvent, EventAttributes } from 'ics';
 
 if (!config.has('SENDGRID_API_KEY')) {
   console.warn("SENDGRID_API_KEY environment variable not set - email notifications disabled");
@@ -14,6 +15,60 @@ if (sendgridKey) {
 }
 
 export const FROM_EMAIL: string = config.get('SENDGRID_FROM_EMAIL') || 'noreply@morouna-loans.com';
+
+/**
+ * Generate a calendar invite (.ics file) for a loan reminder
+ */
+export function generateCalendarInvite(
+  reminder: LoanReminder,
+  loan: Loan,
+  user: User,
+  bank?: Bank,
+  facility?: Facility
+): string | null {
+  try {
+    const reminderDate = new Date(reminder.reminderDate);
+    
+    // Create event attributes
+    const event: EventAttributes = {
+      start: [
+        reminderDate.getFullYear(),
+        reminderDate.getMonth() + 1,
+        reminderDate.getDate(),
+        reminderDate.getHours(),
+        reminderDate.getMinutes()
+      ],
+      duration: { hours: 0, minutes: 30 }, // 30-minute reminder
+      title: reminder.title || `Loan Payment Reminder - ${loan.referenceNumber}`,
+      description: reminder.message || `Payment reminder for loan ${loan.referenceNumber}. Amount: ${loan.amount} SAR. Due: ${new Date(loan.dueDate).toLocaleDateString('en-SA')}`,
+      location: bank?.name || 'Morouna Loans',
+      status: 'CONFIRMED',
+      busyStatus: 'FREE',
+      organizer: { name: 'Morouna Loans', email: FROM_EMAIL },
+      attendees: [
+        {
+          name: user.name || user.email,
+          email: user.email,
+          rsvp: true,
+          partstat: 'ACCEPTED',
+          role: 'REQ-PARTICIPANT'
+        }
+      ]
+    };
+
+    const { error, value } = createEvent(event);
+    
+    if (error) {
+      console.error('Error creating calendar event:', error);
+      return null;
+    }
+    
+    return value || null;
+  } catch (error) {
+    console.error('Error generating calendar invite:', error);
+    return null;
+  }
+}
 
 export async function sendEmail(options: {
   to: string;
@@ -229,18 +284,52 @@ Note: This is an automated reminder generated on {currentDate}`,
 
     // Convert plain text to HTML with basic formatting
     const emailBody = renderedEmail.body || 'No content available';
-    const htmlBody = emailBody
+    let htmlBody = emailBody
       .replace(/\n\n/g, '</p><p>')
       .replace(/\n/g, '<br>')
       .replace(/^/, '<div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; line-height: 1.6;"><p>')
       .replace(/$/, '</p></div>');
 
-    const emailData = {
+    // Generate calendar invite if calendar is enabled
+    const emailData: any = {
       to: user.email,
       from: FROM_EMAIL,
       subject: renderedEmail.subject || 'Loan Payment Reminder',
-      html: htmlBody as string,
+      html: htmlBody,
     };
+
+    // Add calendar invite attachment if enabled
+    if (reminder.calendarEnabled) {
+      const calendarInvite = generateCalendarInvite(reminder, loan, user, bank, facility);
+      
+      if (calendarInvite) {
+        // Add calendar button to email HTML
+        const calendarButton = `
+          <div style="text-align: center; margin: 30px 0;">
+            <a href="cid:calendar-invite.ics" style="display: inline-block; background-color: #059669; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold;">
+              📅 Add to Calendar
+            </a>
+          </div>
+        `;
+        
+        // Insert button before closing div
+        htmlBody = htmlBody.replace('</div>', `${calendarButton}</div>`);
+        emailData.html = htmlBody;
+        
+        // Attach .ics file
+        emailData.attachments = [
+          {
+            content: Buffer.from(calendarInvite).toString('base64'),
+            filename: 'loan-reminder.ics',
+            type: 'text/calendar',
+            disposition: 'attachment',
+            contentId: 'calendar-invite.ics'
+          }
+        ];
+        
+        console.log('Calendar invite attached to email');
+      }
+    }
 
     await mailService.send(emailData);
 

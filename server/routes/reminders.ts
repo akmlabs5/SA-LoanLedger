@@ -50,6 +50,7 @@ export function registerRemindersRoutes(app: Express, deps: AppDependencies) {
         ...req.body,
         loanId,
         userId,
+        organizationId,
         reminderDate: new Date(req.body.reminderDate),
       });
       
