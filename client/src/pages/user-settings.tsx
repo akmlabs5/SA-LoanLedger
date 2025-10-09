@@ -124,7 +124,10 @@ function TwoFactorAuthCard() {
     queryKey: ['/api/auth/supabase/2fa-status'],
     queryFn: async () => {
       const session = localStorage.getItem('supabase_session');
-      if (!session) return null;
+      if (!session) {
+        setIsLoading(false);
+        return null;
+      }
       
       const sessionData = JSON.parse(session);
       const response = await fetch('/api/auth/supabase/2fa-status', {
@@ -134,6 +137,7 @@ function TwoFactorAuthCard() {
       });
       
       if (!response.ok) {
+        setIsLoading(false);
         throw new Error('Failed to fetch 2FA status');
       }
       
@@ -142,7 +146,7 @@ function TwoFactorAuthCard() {
       setIsLoading(false);
       return data;
     },
-    enabled: !!localStorage.getItem('supabase_session'),
+    enabled: true,
   });
 
   const toggle2FA = async (enabled: boolean) => {
