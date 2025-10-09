@@ -15,6 +15,7 @@ import { registerMiscRoutes } from "./misc";
 import { registerAgentRoutes } from "./agent";
 import { registerHelpDeskRoutes } from "./helpDesk";
 import { registerOrganizationRoutes } from "./organization";
+import { registerReportsRoutes } from "./reports";
 
 export function registerAllRoutes(app: Express, deps: AppDependencies) {
   registerAuthRoutes(app, deps);
@@ -32,4 +33,5 @@ export function registerAllRoutes(app: Express, deps: AppDependencies) {
   registerAttachmentsRoutes(app, deps);
   registerMiscRoutes(app, deps);
   registerOrganizationRoutes(app, deps);
+  registerReportsRoutes(app, deps);
 }
