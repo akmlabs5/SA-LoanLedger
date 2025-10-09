@@ -24,6 +24,7 @@ import CollateralCreatePage from "@/pages/collateral-create";
 import CollateralEditPage from "@/pages/collateral-edit";
 import GuaranteesPage from "@/pages/guarantees";
 import GuaranteeCreatePage from "@/pages/guarantee-create";
+import GuaranteeDetailPage from "@/pages/guarantee-detail";
 import HistoryPage from "@/pages/history";
 import ReportsPage from "@/pages/Reports";
 import AIChatPage from "@/pages/ai-chat";
@@ -156,6 +157,7 @@ function App() {
           <Route path="/collateral/:id/edit" component={CollateralEditPage} />
           <Route path="/guarantees" component={GuaranteesPage} />
           <Route path="/guarantees/create" component={GuaranteeCreatePage} />
+          <Route path="/guarantees/:id" component={GuaranteeDetailPage} />
           <Route path="/history" component={HistoryPage} />
           <Route path="/reports" component={ReportsPage} />
           <Route path="/ai-chat" component={AIChatPage} />
