@@ -29,6 +29,7 @@ import {
   Plus
 } from "lucide-react";
 import { Link } from "wouter";
+import { ModernDatePicker } from "@/components/ui/date-picker";
 
 const guaranteeFormSchema = z.object({
   facilityId: z.string().min(1, "Please select a facility"),
@@ -298,10 +299,11 @@ export default function GuaranteeCreatePage() {
                       <FormItem>
                         <FormLabel>Issue Date *</FormLabel>
                         <FormControl>
-                          <Input 
-                            type="date" 
-                            {...field} 
-                            data-testid="input-issue-date" 
+                          <ModernDatePicker 
+                            value={field.value} 
+                            onChange={field.onChange}
+                            placeholder="Select issue date"
+                            dataTestId="input-issue-date"
                           />
                         </FormControl>
                         <FormMessage />
@@ -316,10 +318,11 @@ export default function GuaranteeCreatePage() {
                       <FormItem>
                         <FormLabel>Expiry Date *</FormLabel>
                         <FormControl>
-                          <Input 
-                            type="date" 
-                            {...field} 
-                            data-testid="input-expiry-date" 
+                          <ModernDatePicker 
+                            value={field.value} 
+                            onChange={field.onChange}
+                            placeholder="Select expiry date"
+                            dataTestId="input-expiry-date"
                           />
                         </FormControl>
                         <FormMessage />
