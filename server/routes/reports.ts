@@ -1,6 +1,7 @@
 import type { Express } from "express";
 import type { AppDependencies } from "../types";
 import { isAuthenticated } from "../replitAuth";
+import { attachOrganizationContext, requireOrganization } from "../organizationMiddleware";
 import { jsPDF } from "jspdf";
 import autoTable from "jspdf-autotable";
 import xlsx from "xlsx";
@@ -9,10 +10,10 @@ export function registerReportsRoutes(app: Express, deps: AppDependencies) {
   const { storage } = deps;
 
   // Facility Summary Report
-  app.get('/api/reports/facility-summary', isAuthenticated, async (req: any, res) => {
+  app.get('/api/reports/facility-summary', isAuthenticated, attachOrganizationContext, requireOrganization, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
-      const organizationId = req.user.organizationId;
+      const organizationId = req.organizationId;
       const format = req.query.format || 'pdf';
       const startDate = req.query.startDate;
       const endDate = req.query.endDate;
@@ -108,10 +109,10 @@ export function registerReportsRoutes(app: Express, deps: AppDependencies) {
   });
 
   // Bank Exposures Report
-  app.get('/api/reports/bank-exposures', isAuthenticated, async (req: any, res) => {
+  app.get('/api/reports/bank-exposures', isAuthenticated, attachOrganizationContext, requireOrganization, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
-      const organizationId = req.user.organizationId;
+      const organizationId = req.organizationId;
       const format = req.query.format || 'pdf';
       const startDate = req.query.startDate;
       const endDate = req.query.endDate;
