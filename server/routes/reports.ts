@@ -1,7 +1,7 @@
 import type { Express } from "express";
 import type { AppDependencies } from "../types";
 import { isAuthenticated } from "../replitAuth";
-import { jsPDF } from "jspdf";
+import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import xlsx from "xlsx";
 
@@ -22,9 +22,9 @@ export function registerReportsRoutes(app: Express, deps: AppDependencies) {
       }
 
       // Fetch data for the report - organization-scoped
-      const facilities = await storage.getUserFacilities(userId);
+      const facilities = await storage.getUserFacilities(organizationId);
       const allBanks = await storage.getAllBanks();
-      const loans = await storage.getActiveLoansByUser(userId);
+      const loans = await storage.getActiveLoansByUser(organizationId);
       
       // Filter to ensure only organization data
       const orgFacilities = facilities.filter((f: any) => f.organizationId === organizationId);
@@ -121,9 +121,9 @@ export function registerReportsRoutes(app: Express, deps: AppDependencies) {
       }
 
       // Fetch exposure data - organization-scoped
-      const facilities = await storage.getUserFacilities(userId);
+      const facilities = await storage.getUserFacilities(organizationId);
       const allBanks = await storage.getAllBanks();
-      const loans = await storage.getActiveLoansByUser(userId);
+      const loans = await storage.getActiveLoansByUser(organizationId);
       
       // Filter to ensure only organization data
       const orgFacilities = facilities.filter((f: any) => f.organizationId === organizationId);
