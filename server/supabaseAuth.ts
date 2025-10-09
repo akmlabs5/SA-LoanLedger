@@ -3,6 +3,7 @@ import type { Express, RequestHandler } from "express";
 import { supabase, verifySupabaseToken } from "./supabaseClient";
 import { storage } from "./storage";
 import { sendEmail } from "./emailService";
+import { EmailTemplateService, EmailTemplateType } from "./emailTemplates/templates";
 
 const otpStore = new Map<string, { code: string; expiry: Date; password: string; attempts: number }>();
 const otpRequestTracker = new Map<string, { count: number; lastRequest: Date; lockoutUntil?: Date }>();
@@ -174,21 +175,15 @@ export async function setupSupabaseAuth(app: Express, databaseAvailable = true) 
           const otpExpiry = new Date(Date.now() + 10 * 60 * 1000);
           
           try {
+            const emailTemplate = EmailTemplateService.getTemplate(EmailTemplateType.MFA_CODE, {
+              code: otp
+            });
+            
             await sendEmail({
               to: email,
-              subject: "Your Verification Code",
-              text: `Your verification code is: ${otp}\n\nThis code will expire in 10 minutes.\n\nIf you didn't request this code, please ignore this email.`,
-              html: `
-                <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-                  <h2 style="color: #2563eb;">Your Verification Code</h2>
-                  <p>Your verification code is:</p>
-                  <div style="background: #f3f4f6; padding: 20px; border-radius: 8px; margin: 20px 0;">
-                    <h1 style="color: #1f2937; font-size: 36px; letter-spacing: 8px; text-align: center; margin: 0;">${otp}</h1>
-                  </div>
-                  <p style="color: #6b7280;">This code will expire in 10 minutes.</p>
-                  <p style="color: #6b7280; font-size: 14px;">If you didn't request this code, please ignore this email.</p>
-                </div>
-              `
+              subject: emailTemplate.subject,
+              text: emailTemplate.text,
+              html: emailTemplate.html
             });
             
             otpStore.set(email, { code: otp, expiry: otpExpiry, password, attempts: 0 });

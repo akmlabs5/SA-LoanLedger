@@ -6,6 +6,7 @@ import { isAuthenticated } from "../replitAuth";
 import { attachOrganizationContext, requireOrganization, requireOrgOwner } from "../organizationMiddleware";
 import { config } from "../config";
 import { mailService, FROM_EMAIL } from "../emailService";
+import { EmailTemplateService, EmailTemplateType } from "../emailTemplates/templates";
 
 async function sendInvitationEmail(
   email: string,
@@ -19,27 +20,32 @@ async function sendInvitationEmail(
   }
 
   try {
+    const emailTemplate = EmailTemplateService.getTemplate(EmailTemplateType.EMAIL_VERIFICATION, {
+      url: inviteUrl
+    });
+    
+    const customHtml = emailTemplate.html
+      .replace('Welcome to Morouna Loans!', 'Team Invitation')
+      .replace('Verify Your Email Address', `Join ${organizationName}`)
+      .replace('Thank you for signing up with Morouna Loans! We\'re excited to have you on board.', 
+        `<strong>${inviterName}</strong> has invited you to join <strong>${organizationName}</strong> on Morouna Loans.`)
+      .replace('To complete your registration and secure your account, please verify your email address by clicking the button below:', 
+        `As a team member, you'll be able to:<br>
+        <ul style="color: #4A5568; font-size: 16px; line-height: 1.6; margin: 15px 0 15px 20px;">
+          <li>Access shared loan portfolios</li>
+          <li>Manage facilities and collateral</li>
+          <li>Collaborate on financial insights</li>
+        </ul>
+        Click the button below to accept your invitation:`)
+      .replace('Verify Email Address', 'Accept Invitation')
+      .replace('This link will expire in 24 hours. If you didn\'t create an account with Morouna Loans, please ignore this email.', 
+        'This invitation will expire in 7 days. If you didn\'t expect this invitation, you can safely ignore this email.');
+
     await mailService.send({
       to: email,
       from: FROM_EMAIL,
       subject: `You've been invited to join ${organizationName} on Morouna Loans`,
-      html: `
-        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-          <h2 style="color: #059669;">Team Invitation</h2>
-          <p><strong>${inviterName}</strong> has invited you to join <strong>${organizationName}</strong> on Morouna Loans.</p>
-          <p>As a team member, you'll be able to:</p>
-          <ul>
-            <li>Access shared loan portfolios</li>
-            <li>Manage facilities and collateral</li>
-            <li>Collaborate on financial insights</li>
-          </ul>
-          <div style="margin: 30px 0;">
-            <a href="${inviteUrl}" style="background: linear-gradient(135deg, #059669 0%, #10b981 100%); color: white; padding: 12px 30px; text-decoration: none; border-radius: 6px; display: inline-block;">Accept Invitation</a>
-          </div>
-          <p style="color: #6b7280; font-size: 14px;">This invitation will expire in 7 days.</p>
-          <p style="color: #6b7280; font-size: 14px;">If you didn't expect this invitation, you can safely ignore this email.</p>
-        </div>
-      `
+      html: customHtml
     });
 
     console.log('Invitation email sent successfully to:', email);
