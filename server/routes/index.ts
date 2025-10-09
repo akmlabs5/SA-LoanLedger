@@ -18,6 +18,7 @@ import { registerOrganizationRoutes } from "./organization";
 import { registerReportsRoutes } from "./reports";
 import { registerObjectStorageRoutes } from "./objectStorage";
 import { registerDocumentsRoutes } from "./documents";
+import { registerTestEmailRoutes } from "./test-emails";
 
 export function registerAllRoutes(app: Express, deps: AppDependencies) {
   registerAuthRoutes(app, deps);
@@ -38,4 +39,5 @@ export function registerAllRoutes(app: Express, deps: AppDependencies) {
   registerOrganizationRoutes(app, deps);
   registerReportsRoutes(app, deps);
   registerObjectStorageRoutes(app, deps);
+  registerTestEmailRoutes(app);
 }
