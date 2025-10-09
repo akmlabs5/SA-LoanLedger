@@ -1,5 +1,5 @@
 "use client"
-import { DatePicker } from "@ark-ui/react/date-picker"
+import { DatePicker, parseDate } from "@ark-ui/react/date-picker"
 import { Portal } from "@ark-ui/react/portal"
 import { ChevronLeft, ChevronRight, Calendar, X } from "lucide-react"
 import { forwardRef } from "react"
@@ -15,21 +15,18 @@ interface DatePickerProps {
 
 export const ModernDatePicker = forwardRef<HTMLInputElement, DatePickerProps>(
   ({ value, onChange, placeholder = "Pick a date", className = "", disabled = false, dataTestId }, ref) => {
-    // Limit year range to current year ± 15 years
-    const currentYear = new Date().getFullYear();
+    // Convert string value (YYYY-MM-DD) to DateValue for Ark UI
+    const dateValue = value ? [parseDate(value)] : [];
     
     return (
       <div className={`w-full ${className}`}>
         <DatePicker.Root 
-          min={`${currentYear - 15}-01-01`}
-          max={`${currentYear + 15}-12-31`}
+          value={dateValue}
           onValueChange={(details) => {
             if (onChange) {
-              if (details.valueAsString.length > 0) {
-                onChange(details.valueAsString[0]);
-              } else {
-                onChange(""); // Handle clear action
-              }
+              // Use details.value instead of valueAsString to get proper DateValue
+              const newValue = details.value && details.value[0] ? details.value[0].toString() : "";
+              onChange(newValue);
             }
           }}
           disabled={disabled}
@@ -38,7 +35,6 @@ export const ModernDatePicker = forwardRef<HTMLInputElement, DatePickerProps>(
           <DatePicker.Control className="flex items-center gap-2 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 px-3 py-2 shadow-sm focus-within:ring-2 focus-within:ring-blue-500 transition-all duration-200">
             <DatePicker.Input
               ref={ref}
-              value={value || ""}
               className="flex-1 bg-transparent outline-none text-sm text-gray-900 dark:text-gray-100 placeholder:text-gray-500 dark:placeholder:text-gray-400"
               placeholder={placeholder}
               data-testid={dataTestId}
