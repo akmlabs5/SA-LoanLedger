@@ -49,8 +49,23 @@ The application features a complete touch-first mobile redesign, eliminating hov
 ## Admin Portal
 A comprehensive admin portal with separate authentication provides system oversight, including a dashboard, analytics, user management, database management, security monitoring, system alerts, global settings, and email template management, secured with Bearer token-based API protection.
 
+## Production Security & Monitoring
+The platform includes enterprise-grade production security and monitoring:
+- **Security Headers**: HSTS, X-Frame-Options, X-Content-Type-Options, XSS Protection, Referrer-Policy
+- **HTTPS Enforcement**: Automatic HTTP to HTTPS redirect with x-forwarded-proto monitoring
+- **CORS Protection**: Strict origin control for akm-labs.com and www.akm-labs.com
+- **Automated Smoke Tests**: Verifies security headers, CORS, API health, and HTTPS redirects (`./smoke-test.sh`)
+- **Real-Time Log Monitor**: Detects errors, security issues, redirect loops, CORS problems, database failures, and SSL issues with actionable alerts (`./monitor-logs.sh`)
+- **Production Hardening**: Test endpoints disabled in production, comprehensive error logging, session security
+
 ## Key Features
 The system supports bank-level collateral assignment, optional facility durations, and a revolving period tracking system. Users can create loans that exceed facility credit limits with warning notifications, allowing for flexible credit management. User settings include daily alerts and feature showcases.
+
+## Deployment & Domain
+- **Production URL**: https://akm-labs.com (custom domain with SSL)
+- **Email Domains**: noreply@akm-labs.com (auth), reminders@akm-labs.com (alerts)
+- **SendGrid Authentication**: Fully authenticated domain with SPF/DKIM records
+- **Email Branding**: Text-based "Morouna Loans" header (spam-filter safe, no external images)
 
 # External Dependencies
 
