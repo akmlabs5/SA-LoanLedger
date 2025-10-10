@@ -153,6 +153,31 @@ export const invitationStatusEnum = pgEnum('invitation_status', [
   'cancelled'
 ]);
 
+export const alertSeverityEnum = pgEnum('alert_severity', [
+  'info',
+  'warning',
+  'error',
+  'critical'
+]);
+
+export const alertTypeEnum = pgEnum('alert_type', [
+  'security',
+  'database',
+  'email',
+  'ssl',
+  'cors',
+  'redirect',
+  'performance',
+  'system'
+]);
+
+export const alertStatusEnum = pgEnum('alert_status', [
+  'unread',
+  'read',
+  'resolved',
+  'ignored'
+]);
+
 // Session storage table.
 // (IMPORTANT) This table is mandatory for Replit Auth, don't drop it.
 export const sessions = pgTable(
@@ -217,6 +242,25 @@ export const organizationInvitations = pgTable("organization_invitations", {
   index("idx_org_invitations_org").on(table.organizationId),
   index("idx_org_invitations_token").on(table.token),
   index("idx_org_invitations_email").on(table.email),
+]);
+
+// System Alerts for Admin Portal
+export const systemAlerts = pgTable("system_alerts", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  severity: alertSeverityEnum("severity").notNull(),
+  type: alertTypeEnum("type").notNull(),
+  status: alertStatusEnum("status").default('unread'),
+  title: varchar("title", { length: 255 }).notNull(),
+  message: text("message").notNull(),
+  details: jsonb("details"), // For stack traces, request info, etc.
+  source: varchar("source", { length: 100 }), // e.g., 'smokeTests', 'logMonitor', 'server'
+  createdAt: timestamp("created_at").defaultNow(),
+  resolvedAt: timestamp("resolved_at"),
+  resolvedBy: varchar("resolved_by"),
+}, (table) => [
+  index("idx_alerts_severity").on(table.severity),
+  index("idx_alerts_status").on(table.status),
+  index("idx_alerts_created").on(table.createdAt),
 ]);
 
 // Saudi Banks
@@ -1443,3 +1487,23 @@ export const insertOrganizationInvitationSchema = createInsertSchema(organizatio
 
 export type InsertOrganizationInvitation = z.infer<typeof insertOrganizationInvitationSchema>;
 export type OrganizationInvitation = typeof organizationInvitations.$inferSelect;
+
+// System Alert Schemas
+export const insertSystemAlertSchema = createInsertSchema(systemAlerts).omit({
+  id: true,
+  createdAt: true,
+}).extend({
+  severity: z.enum(['info', 'warning', 'error', 'critical']),
+  type: z.enum(['security', 'database', 'email', 'ssl', 'cors', 'redirect', 'performance', 'system']),
+  title: z.string().min(1).max(255),
+  message: z.string().min(1),
+});
+
+export const updateSystemAlertSchema = insertSystemAlertSchema.partial().extend({
+  id: z.string(),
+  status: z.enum(['unread', 'read', 'resolved', 'ignored']).optional(),
+});
+
+export type InsertSystemAlert = z.infer<typeof insertSystemAlertSchema>;
+export type UpdateSystemAlert = z.infer<typeof updateSystemAlertSchema>;
+export type SystemAlert = typeof systemAlerts.$inferSelect;
