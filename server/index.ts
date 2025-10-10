@@ -10,9 +10,21 @@ app.use(express.urlencoded({ extended: false }));
 
 // Security headers middleware
 app.use((req, res, next) => {
-  // HTTPS redirect in production
-  if (config.get('NODE_ENV') === 'production' && req.headers['x-forwarded-proto'] !== 'https') {
-    return res.redirect(301, `https://${req.headers.host}${req.url}`);
+  // HTTPS redirect in production with monitoring
+  if (config.get('NODE_ENV') === 'production') {
+    const forwardedProto = req.headers['x-forwarded-proto'];
+    
+    // Log x-forwarded-proto status for monitoring
+    if (!forwardedProto) {
+      log(`⚠️  Missing x-forwarded-proto header from ${req.ip} to ${req.path}`);
+    }
+    
+    // Redirect HTTP to HTTPS
+    if (forwardedProto !== 'https') {
+      const redirectUrl = `https://${req.headers.host}${req.url}`;
+      log(`🔒 HTTPS redirect: ${req.method} ${req.url} → ${redirectUrl}`);
+      return res.redirect(301, redirectUrl);
+    }
   }
   
   // Security headers
