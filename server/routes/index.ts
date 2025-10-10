@@ -39,5 +39,9 @@ export function registerAllRoutes(app: Express, deps: AppDependencies) {
   registerOrganizationRoutes(app, deps);
   registerReportsRoutes(app, deps);
   registerObjectStorageRoutes(app, deps);
-  registerTestEmailRoutes(app);
+  
+  // Only register test endpoints in development
+  if (process.env.NODE_ENV !== 'production') {
+    registerTestEmailRoutes(app);
+  }
 }
