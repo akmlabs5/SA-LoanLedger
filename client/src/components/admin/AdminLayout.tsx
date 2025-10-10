@@ -1,4 +1,4 @@
-import { useLocation } from "wouter";
+import { useLocation, Link as WouterLink } from "wouter";
 import { 
   LayoutDashboard, 
   Users, 
@@ -13,6 +13,8 @@ import {
   BarChart3,
   FileText
 } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+import { Badge } from "@/components/ui/badge";
 import {
   Sidebar,
   SidebarContent,
@@ -36,6 +38,15 @@ import { Link } from "wouter";
 
 interface AdminLayoutProps {
   children: React.ReactNode;
+}
+
+interface AlertCounts {
+  total: number;
+  unread: number;
+  read: number;
+  resolved: number;
+  byType: Record<string, number>;
+  bySeverity: Record<string, number>;
 }
 
 const adminNavigation = [
@@ -102,7 +113,13 @@ const adminNavigation = [
 ];
 
 export default function AdminLayout({ children }: AdminLayoutProps) {
-  const [location] = useLocation();
+  const [location, setLocation] = useLocation();
+
+  // Fetch alert counts for notification badge
+  const { data: alertCounts } = useQuery<AlertCounts>({
+    queryKey: ['/api/admin/alerts/counts'],
+    refetchInterval: 30000, // Refresh every 30 seconds
+  });
 
   const handleSignOut = () => {
     // Clear admin session
@@ -190,11 +207,20 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
             <Button 
               variant="ghost" 
               size="sm" 
-              onClick={() => {/* notification center */}} 
-              className="h-12 w-12 p-0 lg:hover:bg-red-100 dark:hover:bg-red-900/20"
+              onClick={() => setLocation('/admin-portal/alerts')}
+              className="h-12 w-12 p-0 lg:hover:bg-red-100 dark:hover:bg-red-900/20 relative"
               data-testid="button-admin-notifications"
             >
               <Bell className="h-4 w-4 text-red-600 dark:text-red-400" />
+              {alertCounts && alertCounts.unread > 0 && (
+                <Badge 
+                  variant="destructive" 
+                  className="absolute -top-1 -right-1 h-5 min-w-5 flex items-center justify-center p-1 text-[10px] font-bold"
+                  data-testid="badge-alert-count"
+                >
+                  {alertCounts.unread > 99 ? '99+' : alertCounts.unread}
+                </Badge>
+              )}
             </Button>
           </div>
           
