@@ -98,9 +98,32 @@ app.use((req, res, next) => {
   // Register all modular routes
   registerAllRoutes(app, deps);
 
-  app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
+  app.use(async (err: any, req: Request, res: Response, _next: NextFunction) => {
     const status = err.status || err.statusCode || 500;
     const message = err.message || "Internal Server Error";
+
+    // Log critical errors to alert system (500s only, not 4xxs)
+    if (status >= 500 && config.get('NODE_ENV') === 'production') {
+      try {
+        const { AlertService } = await import('./alertService.js');
+        await AlertService.createAlert({
+          severity: 'error',
+          type: 'system',
+          title: `Server Error: ${status}`,
+          message: message,
+          details: {
+            stack: err.stack,
+            path: req.path,
+            method: req.method,
+            statusCode: status
+          },
+          source: 'server',
+          status: 'unread'
+        });
+      } catch (alertError) {
+        log('Failed to log error to alert system:', String(alertError));
+      }
+    }
 
     res.status(status).json({ message });
     throw err;

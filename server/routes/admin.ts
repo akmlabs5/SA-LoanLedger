@@ -526,39 +526,14 @@ export function registerAdminRoutes(app: Express, deps: AppDependencies) {
     }
   });
 
-  // System alerts endpoint
+  // System alerts endpoint  
   app.get('/api/admin/alerts', isAdminAuthenticated, async (req: any, res) => {
     try {
-      const alerts = [
-        {
-          id: 'alert_1',
-          type: 'warning',
-          title: 'High Memory Usage',
-          message: 'System memory usage at 78%',
-          timestamp: new Date(Date.now() - 1000 * 60 * 30).toISOString(),
-          acknowledged: false,
-          severity: 'medium'
-        },
-        {
-          id: 'alert_2',
-          type: 'info',
-          title: 'Backup Completed',
-          message: 'Daily database backup completed successfully',
-          timestamp: new Date(Date.now() - 1000 * 60 * 60 * 12).toISOString(),
-          acknowledged: true,
-          severity: 'low'
-        },
-        {
-          id: 'alert_3',
-          type: 'error',
-          title: 'Failed Login Attempts',
-          message: '5 failed login attempts from IP 192.168.1.45',
-          timestamp: new Date(Date.now() - 1000 * 60 * 120).toISOString(),
-          acknowledged: false,
-          severity: 'high'
-        }
-      ];
-
+      const { hours } = req.query;
+      const hoursNum = hours ? parseInt(hours as string) : 24;
+      
+      const { AlertService } = await import('../alertService.js');
+      const alerts = await AlertService.getRecentAlerts(hoursNum);
       res.json(alerts);
     } catch (error) {
       console.error("Error fetching alerts:", error);
@@ -566,14 +541,51 @@ export function registerAdminRoutes(app: Express, deps: AppDependencies) {
     }
   });
 
-  // Acknowledge alert endpoint
-  app.post('/api/admin/alerts/:alertId/acknowledge', isAdminAuthenticated, async (req: any, res) => {
+  // Get alert counts
+  app.get('/api/admin/alerts/counts', isAdminAuthenticated, async (req: any, res) => {
+    try {
+      const { AlertService } = await import('../alertService.js');
+      const counts = await AlertService.getAlertCounts();
+      res.json(counts);
+    } catch (error) {
+      console.error("Error fetching alert counts:", error);
+      res.status(500).json({ message: "Failed to fetch alert counts" });
+    }
+  });
+
+  // Mark alert as read
+  app.post('/api/admin/alerts/:alertId/read', isAdminAuthenticated, async (req: any, res) => {
     try {
       const { alertId } = req.params;
-      res.json({ message: 'Alert acknowledged', alertId });
+      const { AlertService } = await import('../alertService.js');
+      const alert = await AlertService.markAsRead(alertId);
+      
+      if (!alert) {
+        return res.status(404).json({ message: "Alert not found" });
+      }
+      
+      res.json(alert);
     } catch (error) {
-      console.error("Error acknowledging alert:", error);
-      res.status(500).json({ message: "Failed to acknowledge alert" });
+      console.error("Error marking alert as read:", error);
+      res.status(500).json({ message: "Failed to mark alert as read" });
+    }
+  });
+
+  // Resolve alert
+  app.post('/api/admin/alerts/:alertId/resolve', isAdminAuthenticated, async (req: any, res) => {
+    try {
+      const { alertId } = req.params;
+      const { AlertService } = await import('../alertService.js');
+      const alert = await AlertService.resolveAlert(alertId, req.adminUser?.username);
+      
+      if (!alert) {
+        return res.status(404).json({ message: "Alert not found" });
+      }
+      
+      res.json(alert);
+    } catch (error) {
+      console.error("Error resolving alert:", error);
+      res.status(500).json({ message: "Failed to resolve alert" });
     }
   });
 
