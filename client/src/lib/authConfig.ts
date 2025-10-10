@@ -4,10 +4,7 @@ export const AUTH_CONFIG = {
   // Test account that uses Replit Auth
   TEST_ACCOUNT_EMAIL: 'test@morounaloans.com',
   TEST_ACCOUNT_USERNAME: 'testuser',
-  
-  // Admin identification (will use Replit Auth)
-  // Set this to your Replit user ID after first login
-  ADMIN_REPLIT_ID: process.env.VITE_ADMIN_REPLIT_ID || '',
+  TEST_ACCOUNT_PASSWORD: 'Testuser123', // For reference only, actual auth via Replit
   
   // Auth provider detection
   isTestAccount: (identifier: string): boolean => {
