@@ -640,4 +640,31 @@ export function registerAdminRoutes(app: Express, deps: AppDependencies) {
       res.status(500).json({ message: "Failed to update settings" });
     }
   });
+
+  // Test endpoint: Create sample alert (development only)
+  app.post('/api/admin/test/create-alert', isAdminAuthenticated, async (req: any, res) => {
+    try {
+      const { AlertService } = await import('../alertService.js');
+      const { severity, type, title, message, details } = req.body;
+
+      const alert = await AlertService.createAlert({
+        severity: severity || 'warning',
+        type: type || 'system',
+        title: title || 'Test Alert',
+        message: message || 'This is a test alert created for testing purposes',
+        details: details || { test: true, createdBy: req.adminUser?.username },
+        source: 'test-endpoint',
+        status: 'unread'
+      });
+
+      res.json({ 
+        success: true, 
+        alert,
+        message: 'Test alert created successfully'
+      });
+    } catch (error) {
+      console.error("Error creating test alert:", error);
+      res.status(500).json({ message: "Failed to create test alert" });
+    }
+  });
 }
