@@ -256,6 +256,15 @@ export async function setupSupabaseAuth(app: Express, databaseAvailable = true) 
       // Create backend session for non-2FA users
       await createBackendSessionFromSupabaseUser(req, data.user, databaseAvailable);
       
+      // Clear development logout cookie if it exists
+      if (process.env.NODE_ENV === 'development') {
+        res.clearCookie('dev_logged_out', {
+          httpOnly: true,
+          secure: true,
+          sameSite: 'lax'
+        });
+      }
+      
       res.json({ 
         success: true,
         user: data.user, 
@@ -326,6 +335,15 @@ export async function setupSupabaseAuth(app: Express, databaseAvailable = true) 
       
       // Create backend session after successful 2FA verification
       await createBackendSessionFromSupabaseUser(req, data.user, databaseAvailable);
+      
+      // Clear development logout cookie if it exists
+      if (process.env.NODE_ENV === 'development') {
+        res.clearCookie('dev_logged_out', {
+          httpOnly: true,
+          secure: true,
+          sameSite: 'lax'
+        });
+      }
       
       res.json({ 
         success: true,

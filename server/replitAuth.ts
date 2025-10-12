@@ -179,56 +179,65 @@ export async function setupAuth(app: Express, databaseAvailable = true) {
 }
 
 export const isAuthenticated: RequestHandler = async (req, res, next) => {
-  // Development mode bypass when database is unavailable
+  const user = req.user as any;
+
+  // First, check if user is authenticated via Passport
+  if (req.isAuthenticated() && user?.expires_at) {
+    // Valid authenticated session exists - clear logout cookie if present
+    if (process.env.NODE_ENV === 'development' && req.cookies?.['dev_logged_out']) {
+      res.clearCookie('dev_logged_out', {
+        httpOnly: true,
+        secure: true,
+        sameSite: 'lax'
+      });
+    }
+    
+    // Check token expiry
+    const now = Math.floor(Date.now() / 1000);
+    if (now <= user.expires_at) {
+      return next();
+    }
+
+    // Try to refresh token
+    const refreshToken = user.refresh_token;
+    if (!refreshToken) {
+      return res.status(401).json({ message: "Unauthorized" });
+    }
+
+    try {
+      const config = await getOidcConfig();
+      const tokenResponse = await client.refreshTokenGrant(config, refreshToken);
+      updateUserSession(user, tokenResponse);
+      return next();
+    } catch (error) {
+      return res.status(401).json({ message: "Unauthorized" });
+    }
+  }
+
+  // No valid authenticated session - check development mode bypass
   if (process.env.NODE_ENV === 'development') {
-    // Check if user has explicitly logged out using httpOnly cookie
-    if (req.cookies && req.cookies['dev_logged_out']) {
+    // Check if user has explicitly logged out
+    if (req.cookies?.['dev_logged_out']) {
       console.log("🔧 Development mode: user has logged out, not bypassing authentication");
       return res.status(401).json({ message: "Unauthorized" });
     }
     
-    if (!req.isAuthenticated()) {
-      console.log("🔧 Development mode: bypassing authentication for Abdulrahman");
-      // Create a mock user for development testing using Abdulrahman's account
-      (req as any).user = {
-        claims: {
-          sub: 'abdulrahman-user-main',
-          email: 'abdulrahman@example.com',
-          first_name: 'Abdulrahman',
-          last_name: ''
-        },
-        organizationId: 'test-org-abdulrahman',
-        organizationName: 'Abdulrahman Development Org',
-        isOwner: true
-      };
-      return next();
-    }
-  }
-
-  const user = req.user as any;
-
-  if (!req.isAuthenticated() || !user.expires_at) {
-    return res.status(401).json({ message: "Unauthorized" });
-  }
-
-  const now = Math.floor(Date.now() / 1000);
-  if (now <= user.expires_at) {
+    // Development mode: bypass authentication for testing
+    console.log("🔧 Development mode: bypassing authentication for Abdulrahman");
+    (req as any).user = {
+      claims: {
+        sub: 'abdulrahman-user-main',
+        email: 'abdulrahman@example.com',
+        first_name: 'Abdulrahman',
+        last_name: ''
+      },
+      organizationId: 'test-org-abdulrahman',
+      organizationName: 'Abdulrahman Development Org',
+      isOwner: true
+    };
     return next();
   }
 
-  const refreshToken = user.refresh_token;
-  if (!refreshToken) {
-    res.status(401).json({ message: "Unauthorized" });
-    return;
-  }
-
-  try {
-    const config = await getOidcConfig();
-    const tokenResponse = await client.refreshTokenGrant(config, refreshToken);
-    updateUserSession(user, tokenResponse);
-    return next();
-  } catch (error) {
-    res.status(401).json({ message: "Unauthorized" });
-    return;
-  }
+  // No session and not in dev mode
+  return res.status(401).json({ message: "Unauthorized" });
 };
