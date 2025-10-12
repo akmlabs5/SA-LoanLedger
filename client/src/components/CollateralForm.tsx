@@ -3,7 +3,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -264,7 +264,7 @@ export default function CollateralForm({ collateral, onSuccess, onCancel }: Coll
             />
 
             {/* Current Value and Valuation Date */}
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <FormField
                 control={form.control}
                 name="currentValue"
@@ -328,7 +328,7 @@ export default function CollateralForm({ collateral, onSuccess, onCancel }: Coll
             {form.watch("currentValue") && (
               <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
                 <h4 className="font-medium text-green-800 mb-2">Asset Value Summary</h4>
-                <div className="grid grid-cols-2 gap-4 text-sm text-green-700">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm text-green-700">
                   <div>
                     <span>Current Value:</span>
                     <span className="ml-2 font-medium">
@@ -500,7 +500,7 @@ export default function CollateralForm({ collateral, onSuccess, onCancel }: Coll
             </Card>
 
             {/* Form Actions */}
-            <div className="flex justify-end space-x-3 pt-6 border-t">
+            <DialogFooter className="flex justify-end space-x-2">
               <Button 
                 type="button" 
                 variant="outline" 
@@ -520,7 +520,7 @@ export default function CollateralForm({ collateral, onSuccess, onCancel }: Coll
                   : (isEditing ? "Update Asset" : "Create Asset")
                 }
               </Button>
-            </div>
+            </DialogFooter>
           </form>
         </Form>
       </DialogContent>

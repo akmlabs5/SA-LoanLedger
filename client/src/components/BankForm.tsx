@@ -3,7 +3,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -213,7 +213,7 @@ export default function BankForm({ banks, onSuccess, onCancel }: BankFormProps) 
             />
 
             {/* Financial Details */}
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <FormField
                 control={form.control}
                 name="creditLimit"
@@ -256,7 +256,7 @@ export default function BankForm({ banks, onSuccess, onCancel }: BankFormProps) 
             </div>
 
             {/* Date Range */}
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <FormField
                 control={form.control}
                 name="startDate"
@@ -335,7 +335,7 @@ export default function BankForm({ banks, onSuccess, onCancel }: BankFormProps) 
             )}
 
             {/* Form Actions */}
-            <div className="flex justify-end space-x-3 pt-6 border-t">
+            <DialogFooter className="flex justify-end space-x-2">
               <Button 
                 type="button" 
                 variant="outline" 
@@ -358,7 +358,7 @@ export default function BankForm({ banks, onSuccess, onCancel }: BankFormProps) 
               >
                 {createFacilityMutation.isPending ? "Creating..." : "Create Facility"}
               </Button>
-            </div>
+            </DialogFooter>
           </form>
         </Form>
       </DialogContent>

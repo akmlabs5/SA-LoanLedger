@@ -3,7 +3,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -256,7 +256,7 @@ export default function LoanForm({ onSuccess, onCancel }: LoanFormProps) {
                 <div className="flex items-center gap-2 mb-3">
                   <h4 className="font-medium text-green-800">Credit Facility Information</h4>
                 </div>
-                <div className="grid grid-cols-3 gap-4 text-sm">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
                   <div>
                     <span className="text-green-700">Total Credit Limit:</span>
                     <div className="font-medium">{creditInfo.totalCreditLimit.toLocaleString()} SAR</div>
@@ -328,7 +328,7 @@ export default function LoanForm({ onSuccess, onCancel }: LoanFormProps) {
             )}
 
             {/* Loan Details */}
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <FormField
                 control={form.control}
                 name="referenceNumber"
@@ -470,7 +470,7 @@ export default function LoanForm({ onSuccess, onCancel }: LoanFormProps) {
                 </div>
               )}
 
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <FormField
                   control={form.control}
                   name="dueDate"
@@ -512,7 +512,7 @@ export default function LoanForm({ onSuccess, onCancel }: LoanFormProps) {
             </div>
 
             {/* Interest Rates */}
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <FormField
                 control={form.control}
                 name="siborRate"
@@ -548,7 +548,7 @@ export default function LoanForm({ onSuccess, onCancel }: LoanFormProps) {
             {calculateInterest() > 0 && (
               <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
                 <h4 className="font-medium text-blue-800 mb-2">Interest Calculation</h4>
-                <div className="grid grid-cols-2 gap-4 text-sm">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
                   <div>
                     <span className="text-blue-700">Total Interest Rate:</span>
                     <span className="ml-2 font-medium">
@@ -587,7 +587,7 @@ export default function LoanForm({ onSuccess, onCancel }: LoanFormProps) {
             />
 
             {/* Form Actions */}
-            <div className="flex justify-end space-x-3 pt-6 border-t">
+            <DialogFooter className="flex justify-end space-x-2">
               <Button 
                 type="button" 
                 variant="outline" 
@@ -604,7 +604,7 @@ export default function LoanForm({ onSuccess, onCancel }: LoanFormProps) {
               >
                 {createLoanMutation.isPending ? "Creating..." : "Create Loan"}
               </Button>
-            </div>
+            </DialogFooter>
           </form>
         </Form>
       </DialogContent>
