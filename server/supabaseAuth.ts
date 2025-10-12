@@ -24,6 +24,54 @@ setInterval(() => {
   }
 }, 60000);
 
+/**
+ * Session Bridge: Creates backend session from Supabase user
+ * This allows Supabase-authenticated users to work with existing /api/auth/user endpoint
+ */
+async function createBackendSessionFromSupabaseUser(
+  req: any,
+  supabaseUser: any,
+  databaseAvailable: boolean
+): Promise<void> {
+  return new Promise((resolve, reject) => {
+    // Upsert user to database if available
+    if (databaseAvailable) {
+      storage.upsertUser({
+        id: supabaseUser.id,
+        email: supabaseUser.email,
+        firstName: supabaseUser.user_metadata?.first_name || supabaseUser.email?.split('@')[0] || 'User',
+        lastName: supabaseUser.user_metadata?.last_name || '',
+        profileImageUrl: null
+      }).catch(err => {
+        console.error('Failed to upsert Supabase user to database:', err);
+      });
+    }
+
+    // Create session object compatible with passport serialization
+    const sessionUser = {
+      claims: {
+        sub: supabaseUser.id,
+        email: supabaseUser.email,
+        first_name: supabaseUser.user_metadata?.first_name || supabaseUser.email?.split('@')[0] || 'User',
+        last_name: supabaseUser.user_metadata?.last_name || '',
+        profile_image_url: null
+      },
+      access_token: 'supabase_session', // Placeholder - actual token in Supabase client
+      expires_at: Math.floor(Date.now() / 1000) + (7 * 24 * 60 * 60) // 7 days
+    };
+
+    // Use passport's login method to create backend session
+    req.login(sessionUser, (err: any) => {
+      if (err) {
+        console.error('Failed to create backend session:', err);
+        reject(err);
+      } else {
+        resolve();
+      }
+    });
+  });
+}
+
 export async function setupSupabaseAuth(app: Express, databaseAvailable = true) {
   console.log("🔧 Supabase Auth setup initialized");
   
@@ -133,6 +181,7 @@ export async function setupSupabaseAuth(app: Express, databaseAvailable = true) 
         return res.status(401).json({ success: false, message: "Invalid credentials" });
       }
       
+      // Check for 2FA before creating session
       let user = null;
       if (databaseAvailable) {
         user = await storage.getUser(data.user.id);
@@ -203,6 +252,9 @@ export async function setupSupabaseAuth(app: Express, databaseAvailable = true) 
           });
         }
       }
+      
+      // Create backend session for non-2FA users
+      await createBackendSessionFromSupabaseUser(req, data.user, databaseAvailable);
       
       res.json({ 
         success: true,
