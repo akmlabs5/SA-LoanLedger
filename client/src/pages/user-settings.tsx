@@ -583,8 +583,11 @@ export default function UserSettingsPage() {
                         <FormItem>
                           <FormLabel>Email Address</FormLabel>
                           <FormControl>
-                            <Input {...field} type="email" className="h-12" data-testid="input-email" />
+                            <Input {...field} type="email" className="h-12 bg-muted" disabled data-testid="input-email" />
                           </FormControl>
+                          <FormDescription className="text-xs">
+                            Email cannot be changed as it's linked to your authentication account
+                          </FormDescription>
                           <FormMessage />
                         </FormItem>
                       )}

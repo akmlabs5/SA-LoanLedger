@@ -47,6 +47,7 @@ import { User as UserType } from "@shared/schema";
 import { cn } from "@/lib/utils";
 import morounaLogo from "@assets/with_padding_1759917358345.png";
 import { FloatingAgentChat } from "./FloatingAgentChat";
+import { useQuery } from "@tanstack/react-query";
 // import { HelpDeskChat } from "./HelpDeskChat"; // Removed - will be added to landing page later
 
 interface AppLayoutProps {
@@ -151,6 +152,39 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   
   // Only use Supabase auth if enabled
   const supabaseAuth = USE_SUPABASE_AUTH ? useSupabaseAuth() : null;
+  
+  // Fetch user preferences for theme
+  const { data: preferences } = useQuery({
+    queryKey: ['/api/user/preferences'],
+    enabled: !!user,
+  });
+  
+  // Apply theme based on user preferences
+  useEffect(() => {
+    const applyTheme = (isDark: boolean) => {
+      if (isDark) {
+        document.documentElement.classList.add('dark');
+      } else {
+        document.documentElement.classList.remove('dark');
+      }
+    };
+    
+    if (preferences?.theme === 'dark') {
+      applyTheme(true);
+    } else if (preferences?.theme === 'light') {
+      applyTheme(false);
+    } else if (preferences?.theme === 'system') {
+      // Check OS preference
+      const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+      applyTheme(mediaQuery.matches);
+      
+      // Listen for OS theme changes
+      const listener = (e: MediaQueryListEvent) => applyTheme(e.matches);
+      mediaQuery.addEventListener('change', listener);
+      
+      return () => mediaQuery.removeEventListener('change', listener);
+    }
+  }, [preferences?.theme]);
   
   // Close mobile menu when location changes
   useEffect(() => {
