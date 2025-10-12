@@ -84,7 +84,7 @@ When user gives specific commands with data, ALWAYS follow this flow:
 CRITICAL EXAMPLES:
 
 ❌ WRONG: User: "Create loan for ANB" → AI: "Okay, created!" (No confirmation!)
-✅ RIGHT: User: "Create loan for ANB" → AI: "Let me check ANB facilities first..." [calls checkFacilityAvailability] → "I found no active facility for Arab National Bank. You'll need to create a facility first in Bank Exposures → ANB → Add Facility."
+✅ RIGHT: User: "Create loan for ANB" → AI: "Let me check ANB facilities first..." [calls checkFacilityAvailability] → "I found no active facility for Arab National Bank. I can create one for you. What's the credit limit?"
 
 ❌ WRONG: User: "Draw 50000 from ANB" → AI: "Done!" (Didn't recognize ANB, didn't confirm)
 ✅ RIGHT: User: "Draw 50000 from ANB" → AI: [checks facility] "I found an active facility for Arab National Bank. I can create a 50,000 SAR loan. Missing info: due date, purpose. Should I proceed with just the amount and you can add details later?"
@@ -101,12 +101,13 @@ CRITICAL EXAMPLES:
 - SNB = Saudi National Bank
 
 📋 PRE-FLIGHT CHECKS:
-- Before creating loan: ALWAYS check facility availability first
+- Before creating loan: ALWAYS check facility availability first - if none exists, offer to create facility
 - Before settling loan: Verify loan exists and is active
 - Before setting reminder: Verify loan exists
-- Be transparent about what's missing: "I notice there's no active facility for [bank]. Let me help you create one first."
+- Be transparent about what's missing: "I notice there's no active facility for [bank]. I can create one for you. What's the credit limit?"
 
 Your dual capabilities:
+- Create and manage facilities (with confirmation)
 - Create and manage loans (with confirmation)
 - Settle loans and process payments (with confirmation)
 - Set reminders for due dates (with confirmation)
@@ -119,16 +120,17 @@ Your dual capabilities:
 Important guidelines:
 - Detect user intent: question = teach, command = confirm then execute
 - ALWAYS confirm before ANY destructive/create action
-- Check prerequisites (like facility existence) BEFORE confirming
+- Check prerequisites BEFORE confirming
 - Recognize bank codes and full names interchangeably
-- Only ask for clarification if critical data is missing (loan amount, bank name, dates)
-- If user says "I'll fill the rest later", confirm what you have then create partial record
+- Only ask for clarification if critical data is missing (amounts, bank names, dates)
+- If user says "I'll fill the rest later", confirm what you have then create partial record with smart defaults
 - Always report results transparently - success or error
 - Use Saudi currency (SAR) and date formats
 - Be conversational and natural, not robotic
 - When teaching, provide clear step-by-step instructions and mention where features are located
 
-When creating loans: Check facility first, confirm with user, then execute
+When creating facilities: Ask for bank name and credit limit (minimum), use smart defaults for other fields
+When creating loans: Check facility exists (or offer to create one), confirm with user, then execute
 When settling loans: Verify loan exists, confirm settlement details, then execute
 When setting reminders: Verify loan exists, confirm reminder details, then execute`;
   }
@@ -442,6 +444,8 @@ When setting reminders: Verify loan exists, confirm reminder details, then execu
     switch (functionName) {
       case 'createLoan':
         return await this.createLoan(args, userId, organizationId);
+      case 'createFacility':
+        return await this.createFacility(args, userId, organizationId);
       case 'settleLoan':
         return await this.settleLoan(args, userId, organizationId);
       case 'setReminder':
@@ -543,6 +547,55 @@ When setting reminders: Verify loan exists, confirm reminder details, then execu
     }
 
     return { success: false, error: 'Either facilityId or bankName is required' };
+  }
+
+  private async createFacility(args: any, userId: string, organizationId: string) {
+    const { bankName, facilityType, creditLimit, costOfFunding, startDate, expiryDate, terms } = args;
+
+    // Convert creditLimit to number and validate
+    const creditLimitNum = Number(creditLimit);
+    if (isNaN(creditLimitNum) || creditLimitNum <= 0) {
+      return { success: false, error: 'Credit limit must be a valid positive number' };
+    }
+
+    // Find bank by name or code
+    const banks = await this.storage.getAllBanks(organizationId);
+    const bank = banks.find((b: Bank) => 
+      b.name.toLowerCase().includes(bankName.toLowerCase()) || 
+      b.code.toLowerCase() === bankName.toLowerCase()
+    );
+
+    if (!bank) {
+      return { success: false, error: `Bank '${bankName}' not found` };
+    }
+
+    // Set smart defaults for missing fields
+    const today = new Date().toISOString().split('T')[0];
+    const facilityData = {
+      organizationId,
+      bankId: bank.id,
+      userId,
+      facilityType: facilityType || 'revolving', // Default to revolving
+      creditLimit: creditLimitNum.toString(),
+      costOfFunding: costOfFunding?.toString() || '5.5', // Default to 5.5% if not specified
+      startDate: startDate || today, // Default to today
+      expiryDate: expiryDate || null,
+      terms: terms || 'Created via AI Assistant',
+      isActive: true,
+      enableRevolvingTracking: false
+    };
+
+    try {
+      const facility = await this.storage.createFacility(facilityData);
+      return { 
+        success: true, 
+        facilityId: facility.id, 
+        bankName: bank.name,
+        message: `Facility created successfully for ${bank.name} with ${creditLimitNum.toLocaleString()} SAR credit limit` 
+      };
+    } catch (error) {
+      return { success: false, error: `Failed to create facility: ${error instanceof Error ? error.message : 'Unknown error'}` };
+    }
   }
 
   private async settleLoan(args: any, userId: string, organizationId: string) {
