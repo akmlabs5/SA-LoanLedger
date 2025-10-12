@@ -41,7 +41,7 @@ export function RevolvingPeriodTracker({
         <CardHeader className="pb-3">
           <CardTitle className="text-base flex items-center space-x-2">
             <Clock className="h-4 w-4" />
-            <span>Revolving Period Tracking</span>
+            <span>Facility Revolving Period</span>
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -60,13 +60,13 @@ export function RevolvingPeriodTracker({
         <CardHeader className="pb-3">
           <CardTitle className="text-base flex items-center space-x-2">
             <Clock className="h-4 w-4" />
-            <span>Revolving Period Tracking</span>
+            <span>Facility Revolving Period</span>
           </CardTitle>
         </CardHeader>
         <CardContent>
           <Alert className="border-red-200 bg-red-50 dark:bg-red-950 dark:border-red-800" data-testid="alert-error-state">
             <AlertDescription className="text-sm text-red-800 dark:text-red-200">
-              Unable to load revolving period data. Please try refreshing the page.
+              Unable to load facility period data. Please try refreshing the page.
             </AlertDescription>
           </Alert>
         </CardContent>
@@ -83,13 +83,13 @@ export function RevolvingPeriodTracker({
         <CardHeader className="pb-3">
           <CardTitle className="text-base flex items-center space-x-2">
             <Clock className="h-4 w-4 text-muted-foreground" />
-            <span>Revolving Period Tracking</span>
+            <span>Facility Revolving Period</span>
           </CardTitle>
         </CardHeader>
         <CardContent>
           <Alert className="border-blue-200 bg-blue-50 dark:bg-blue-950 dark:border-blue-800" data-testid="alert-waiting-state">
             <AlertDescription className="text-sm text-blue-800 dark:text-blue-200">
-              Tracking will begin with the first loan drawdown under this facility.
+              Period tracking starts when you draw the first loan from this facility. The {maxRevolvingPeriod}-day countdown begins then.
             </AlertDescription>
           </Alert>
         </CardContent>
@@ -108,7 +108,7 @@ export function RevolvingPeriodTracker({
           progressColor: 'bg-green-500',
           icon: CheckCircle2,
           label: 'Available',
-          message: 'You can continue to drawdown and revolve loans.'
+          message: 'Facility period available. You can continue drawing new loans and revolving existing ones.'
         };
       case 'warning':
         return {
@@ -118,7 +118,7 @@ export function RevolvingPeriodTracker({
           progressColor: 'bg-yellow-500',
           icon: AlertTriangle,
           label: 'Warning',
-          message: 'Approaching maximum period limit. Plan for settlement soon.'
+          message: 'Facility period running low. Settle active loans soon to extend the revolving period.'
         };
       case 'critical':
         return {
@@ -128,7 +128,7 @@ export function RevolvingPeriodTracker({
           progressColor: 'bg-orange-500',
           icon: AlertTriangle,
           label: 'Critical',
-          message: 'Very few days remaining. Settlement required soon.'
+          message: 'Facility period almost expired. Settle all loans immediately to reset the period.'
         };
       case 'expired':
         return {
@@ -138,7 +138,7 @@ export function RevolvingPeriodTracker({
           progressColor: 'bg-red-500',
           icon: XCircle,
           label: 'Expired',
-          message: 'Maximum period reached. Full settlement required.'
+          message: 'Facility period expired. No new loans allowed until all active loans are settled.'
         };
     }
   };
@@ -156,10 +156,10 @@ export function RevolvingPeriodTracker({
           <StatusIcon className={`h-5 w-5 ${statusConfig.color}`} />
           <div>
             <p className="text-sm font-medium" data-testid="text-days-used-compact">
-              <span data-testid="value-days-used">{daysUsed}</span> / {maxRevolvingPeriod} days used
+              Facility: <span data-testid="value-days-used">{daysUsed}</span> / {maxRevolvingPeriod} days active
             </p>
             <p className="text-xs text-muted-foreground" data-testid="text-days-remaining-compact">
-              <span data-testid="value-days-remaining">{daysRemaining}</span> days remaining
+              <span data-testid="value-days-remaining">{daysRemaining}</span> days left in period
             </p>
           </div>
         </div>
@@ -176,7 +176,7 @@ export function RevolvingPeriodTracker({
         <div className="flex items-center justify-between">
           <CardTitle className="text-base flex items-center space-x-2">
             <Clock className="h-4 w-4" />
-            <span>Revolving Period Tracking</span>
+            <span>Facility Revolving Period</span>
           </CardTitle>
           <Badge 
             variant={status === 'available' ? 'default' : status === 'expired' ? 'destructive' : 'outline'}
@@ -186,8 +186,8 @@ export function RevolvingPeriodTracker({
             {statusConfig.label}
           </Badge>
         </div>
-        <CardDescription className="text-xs">
-          Facility-level tracking: {maxRevolvingPeriod} days max from first drawdown
+        <CardDescription className="text-xs text-muted-foreground">
+          This tracks how long the facility has been active (not your loan's due date). Maximum {maxRevolvingPeriod} days from first loan.
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
@@ -209,17 +209,11 @@ export function RevolvingPeriodTracker({
             <span className="text-muted-foreground">Usage</span>
             <span className="font-medium" data-testid="text-usage-percent">{percentageUsed.toFixed(1)}%</span>
           </div>
-          <div className="relative">
-            <Progress 
-              value={percentageUsed} 
-              className="h-2"
-              data-testid="progress-revolving-usage"
-            />
-            <div 
-              className={`absolute top-0 left-0 h-2 rounded-full transition-all ${statusConfig.progressColor}`}
-              style={{ width: `${percentageUsed}%` }}
-            />
-          </div>
+          <Progress 
+            value={percentageUsed} 
+            className="h-2"
+            data-testid="progress-revolving-usage"
+          />
         </div>
 
         {/* Status Alert */}
