@@ -50,6 +50,7 @@ export default function UnifiedLoginPage() {
         const response = await fetch('/api/auth/supabase/signin', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
+          credentials: 'include', // Important: allows session cookie to be set
           body: JSON.stringify({
             email: values.identifier,
             password: values.password,
@@ -79,7 +80,8 @@ export default function UnifiedLoginPage() {
             description: "Successfully signed in",
           });
           
-          setLocation('/');
+          // Force page reload to ensure session is properly loaded
+          window.location.href = '/';
         }
       } else {
         // Admin login
@@ -140,6 +142,7 @@ export default function UnifiedLoginPage() {
       const response = await fetch('/api/auth/supabase/verify-otp', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
+        credentials: 'include', // Important: allows session cookie to be set
         body: JSON.stringify({
           email: userEmail,
           token: otpValue,
@@ -161,7 +164,8 @@ export default function UnifiedLoginPage() {
         description: "Successfully signed in with 2FA",
       });
 
-      setLocation('/');
+      // Force page reload to ensure session is properly loaded
+      window.location.href = '/';
     } catch (error: any) {
       console.error('OTP verification error:', error);
       toast({
