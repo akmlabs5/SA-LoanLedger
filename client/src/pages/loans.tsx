@@ -474,7 +474,7 @@ export default function Loans() {
   const MobileLoanCard = ({ loan }: { loan: any }) => {
     const urgency = getLoanUrgency(loan.dueDate);
     const loanAmount = Number(loan.amount) || 0;
-    const totalRate = (Number(loan.siborRate) || 0) + (Number(loan.bankRate) || 0);
+    const totalRate = Number(loan.bankRate) || 0;
     const dailyInterest = (loanAmount * totalRate / 100) / 365;
 
     return (
@@ -959,7 +959,7 @@ export default function Loans() {
                   {filteredAndSortedActiveLoans.slice(0, visibleActiveLoans).map((loan: any) => {
                     const urgency = getLoanUrgency(loan.dueDate);
                     const loanAmount = Number(loan.amount) || 0;
-                    const totalRate = (Number(loan.siborRate) || 0) + (Number(loan.bankRate) || 0);
+                    const totalRate = Number(loan.bankRate) || 0;
                     const dailyInterest = (loanAmount * totalRate / 100) / 365;
                     
                     return (
