@@ -291,11 +291,11 @@ export default function Loans() {
           break;
         case 'dailyInterest':
           const aAmount = Number(a.amount) || 0;
-          const aRates = (Number(a.siborRate) || 0) + (Number(a.bankRate) || 0);
+          const aRates = Number(a.bankRate) || 0; // bankRate already includes SIBOR + margin
           const aDailyInterest = (aAmount * aRates / 100) / 365;
           
           const bAmount = Number(b.amount) || 0;
-          const bRates = (Number(b.siborRate) || 0) + (Number(b.bankRate) || 0);
+          const bRates = Number(b.bankRate) || 0; // bankRate already includes SIBOR + margin
           const bDailyInterest = (bAmount * bRates / 100) / 365;
           
           comparison = aDailyInterest - bDailyInterest;
