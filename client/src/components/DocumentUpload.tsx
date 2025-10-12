@@ -216,12 +216,14 @@ export default function DocumentUpload({
       const response = await fetch('/api/documents/upload', {
         method: 'POST',
         body: formData,
+        credentials: 'include', // Include authentication cookies
       });
 
       clearInterval(progressInterval);
 
       if (!response.ok) {
-        throw new Error(`Upload failed: ${response.statusText}`);
+        const errorData = await response.json().catch(() => ({ message: response.statusText }));
+        throw new Error(errorData.message || errorData.error || `Upload failed: ${response.statusText}`);
       }
 
       const result = await response.json();
