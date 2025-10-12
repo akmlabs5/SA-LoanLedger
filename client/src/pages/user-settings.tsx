@@ -71,6 +71,7 @@ const preferencesSchema = z.object({
   theme: z.enum(['light', 'dark', 'system']),
   dashboardLayout: z.enum(['grid', 'list']),
   itemsPerPage: z.coerce.number().min(5).max(100),
+  enableNotifications: z.boolean().default(true),
   enableSounds: z.boolean(),
   compactView: z.boolean(),
 });
@@ -297,6 +298,7 @@ export default function UserSettingsPage() {
       theme: preferences?.theme || 'light',
       dashboardLayout: preferences?.dashboardLayout || 'grid',
       itemsPerPage: preferences?.itemsPerPage || 10,
+      enableNotifications: preferences?.enableNotifications ?? true,
       enableSounds: preferences?.enableSounds ?? false,
       compactView: preferences?.compactView ?? false,
     },

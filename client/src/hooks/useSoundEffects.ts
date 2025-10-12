@@ -19,7 +19,7 @@ Object.entries(soundUrls).forEach(([key, url]) => {
 
 export function useSoundEffects() {
   const { preferences } = usePreferences();
-  const soundsEnabled = preferences?.enableSounds !== false;
+  const soundsEnabled = preferences?.enableSounds === true;
 
   const playSound = (effect: SoundEffect) => {
     if (!soundsEnabled) return;
