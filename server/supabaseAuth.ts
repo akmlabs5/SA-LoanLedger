@@ -343,10 +343,29 @@ export async function setupSupabaseAuth(app: Express, databaseAvailable = true) 
 
   app.post('/api/auth/supabase/signout', async (req, res) => {
     try {
+      // Clear Supabase session
       const { error } = await supabase.auth.signOut();
       if (error) throw error;
       
-      res.json({ success: true, message: "Signed out successfully" });
+      // Clear backend session
+      req.logout(() => {
+        if (req.session) {
+          req.session.destroy((err) => {
+            if (err) {
+              console.error('Error destroying session:', err);
+            }
+          });
+        }
+        
+        // Clear session cookie
+        res.clearCookie('connect.sid', { 
+          httpOnly: true, 
+          secure: true, 
+          sameSite: 'lax' 
+        });
+        
+        res.json({ success: true, message: "Signed out successfully" });
+      });
     } catch (error: any) {
       console.error("Signout error:", error);
       res.status(500).json({ 
