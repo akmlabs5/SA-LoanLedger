@@ -15,7 +15,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
-import { apiRequest, queryClient } from "@/lib/queryClient";
+import { apiRequest, queryClient, invalidateLoans } from "@/lib/queryClient";
 import { insertLoanSchema } from "@shared/schema";
 import { ModernDatePicker } from "@/components/ui/date-picker";
 
@@ -94,8 +94,8 @@ export default function LoanEditPage() {
       });
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/loans"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/dashboard/portfolio"] });
+      invalidateLoans(); // Invalidates all loan-related queries
+      queryClient.invalidateQueries({ queryKey: ["/api/loans", loanId] }); // Also invalidate specific loan detail
       toast({ 
         title: "Loan updated successfully",
         description: "Your loan changes have been saved."

@@ -117,3 +117,14 @@ export function invalidateBanks() {
   queryClient.invalidateQueries({ queryKey: ['/api/banks'] });
   queryClient.invalidateQueries({ queryKey: ['/api/dashboard/portfolio'] });
 }
+
+export function invalidateReminders() {
+  queryClient.invalidateQueries({ queryKey: ['/api/reminders'] });
+  queryClient.invalidateQueries({ queryKey: ['/api/loans'] }); // Reminders affect loan display
+}
+
+export function invalidateCollateral() {
+  queryClient.invalidateQueries({ queryKey: ['/api/collateral'] });
+  queryClient.invalidateQueries({ queryKey: ['/api/loans'] }); // Collateral affects loan display
+  queryClient.invalidateQueries({ queryKey: ['/api/dashboard/portfolio'] });
+}

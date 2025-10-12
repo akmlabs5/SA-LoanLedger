@@ -32,6 +32,8 @@ export interface AgentResponse {
     facilityUpdated?: boolean;
     bankCreated?: boolean;
     bankUpdated?: boolean;
+    reminderCreated?: boolean;
+    collateralUpdated?: boolean;
   };
 }
 
@@ -437,7 +439,9 @@ When setting reminders: Verify loan exists, confirm reminder details, then execu
         } else if (functionName === 'createFacility') {
           metadata.facilityCreated = true;
         } else if (functionName === 'updateCollateral') {
-          metadata.loanUpdated = true; // Collateral changes affect loan display
+          metadata.collateralUpdated = true;
+        } else if (functionName === 'setReminder') {
+          metadata.reminderCreated = true;
         }
         
         return {

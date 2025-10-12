@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { cn } from '@/lib/utils';
-import { apiRequest, invalidateLoans, invalidateFacilities, invalidateBanks } from '@/lib/queryClient';
+import { apiRequest, invalidateLoans, invalidateFacilities, invalidateBanks, invalidateReminders, invalidateCollateral } from '@/lib/queryClient';
 import { useIsMobile } from '@/hooks/use-mobile';
 
 interface Message {
@@ -71,6 +71,12 @@ export function FloatingAgentChat() {
         }
         if (data.metadata.bankCreated || data.metadata.bankUpdated) {
           invalidateBanks();
+        }
+        if (data.metadata.reminderCreated) {
+          invalidateReminders();
+        }
+        if (data.metadata.collateralUpdated) {
+          invalidateCollateral();
         }
       }
     } catch (error) {
