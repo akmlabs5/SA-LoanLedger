@@ -306,7 +306,7 @@ export const facilities = pgTable("facilities", {
   userId: varchar("user_id").references(() => users.id).notNull(),
   facilityType: facilityTypeEnum("facility_type").notNull(),
   creditLimit: decimal("credit_limit", { precision: 15, scale: 2 }).notNull(),
-  costOfFunding: decimal("cost_of_funding", { precision: 5, scale: 2 }).notNull(), // SIBOR + margin
+  costOfFunding: decimal("cost_of_funding", { precision: 5, scale: 2 }).notNull(), // Margin over SIBOR (e.g., 1.5 for 1.5%)
   startDate: date("start_date").notNull(),
   expiryDate: date("expiry_date"), // Optional - for facilities with flexible terms
   terms: text("terms"),

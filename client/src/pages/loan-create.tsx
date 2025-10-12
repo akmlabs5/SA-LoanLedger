@@ -138,8 +138,8 @@ export default function LoanCreatePage() {
         ...data,
         amount: data.amount.toString(), // Convert to string
         siborRate: data.siborRate.toString(), // Convert to string
-        margin: facilityMargin.toString(), // Ensure margin is set as string
-        bankRate: (parseFloat(data.siborRate) + parseFloat(facilityMargin)).toString(),
+        margin: facilityMargin.toString(), // Margin from facility (costOfFunding is margin only)
+        bankRate: (parseFloat(data.siborRate) + parseFloat(facilityMargin)).toString(), // Total rate = SIBOR + margin
         // Convert custom months to siborTermMonths for backend
         siborTermMonths: data.customSiborMonths ? parseInt(data.customSiborMonths) : 
                         data.siborTerm === "1M" ? 1 :
@@ -268,8 +268,8 @@ export default function LoanCreatePage() {
   const calculateInterest = () => {
     const amount = parseFloat(form.watch("amount") || "0");
     const siborRate = parseFloat(form.watch("siborRate") || "0");
-    const bankRate = selectedFacility ? parseFloat(selectedFacility.costOfFunding) : 0;
-    const totalRate = siborRate + bankRate;
+    const margin = selectedFacility ? parseFloat(selectedFacility.costOfFunding) : 0; // costOfFunding is margin only
+    const totalRate = siborRate + margin;
     
     if (amount > 0 && totalRate > 0) {
       const startDate = new Date(form.watch("startDate"));
