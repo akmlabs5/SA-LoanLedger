@@ -59,6 +59,7 @@ import { apiRequest } from "@/lib/queryClient";
 import backgroundImage from "@assets/loan_management_background_excel_green_1759302449019.png";
 import { MobileHeader, FloatingActionButton, ActionSheet } from "@/components/mobile";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { PageContainer, PageHeader, Section } from "@/components/PageContainer";
 
 type SortField = 'dueDate' | 'amount' | 'bank' | 'startDate' | 'status' | 'dailyInterest';
 type SortOrder = 'asc' | 'desc';
@@ -609,7 +610,7 @@ export default function Loans() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-green-50 via-white to-emerald-50 dark:from-gray-900 dark:via-gray-900 dark:to-gray-800">
+    <PageContainer className={isMobile ? "pb-20" : ""}>
       {isMobile ? (
         <>
           <MobileHeader 
@@ -627,7 +628,7 @@ export default function Loans() {
             }
           />
 
-          <div className="px-4 py-4 space-y-4">
+          <Section>
             <div className="relative">
               <Search className="absolute left-3 h-5 w-5 text-muted-foreground top-1/2 -translate-y-1/2" />
               <Input
@@ -731,7 +732,7 @@ export default function Loans() {
                 )}
               </TabsContent>
             </Tabs>
-          </div>
+          </Section>
 
           <FloatingActionButton 
             onClick={() => setLocation("/loans/create")}
@@ -754,37 +755,42 @@ export default function Loans() {
           />
         </>
       ) : (
-        <div className="px-4 sm:px-6 py-6 space-y-6">
-          <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between space-y-4 lg:space-y-0">
-            <div>
-              <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Loan Management</h1>
+        <>
+          <PageHeader
+            title="Loan Management"
+            subtitle={
               <div className="flex items-center space-x-6 mt-2">
-                <p className="text-gray-600 dark:text-gray-300">
+                <span className="text-muted-foreground">
                   Total Active: {formatCurrency(totalActiveAmount)}
-                </p>
+                </span>
                 {criticalLoans > 0 && (
-                  <div className="flex items-center space-x-1 text-red-600 dark:text-red-400">
+                  <div className="flex items-center space-x-1 text-destructive">
                     <AlertTriangle className="h-4 w-4" />
                     <span className="text-sm font-medium">{criticalLoans} urgent loans</span>
                   </div>
                 )}
               </div>
-            </div>
-            <div className="flex flex-col sm:flex-row gap-2">
-              <Button variant="outline" onClick={exportLoans} className="h-10 w-full sm:w-auto">
-                <Download className="mr-2 h-4 w-4" />
-                Export
-              </Button>
-              <Button 
-                onClick={() => setLocation("/loans/create")}
-                className="h-10 w-full sm:w-auto bg-gradient-to-r from-blue-600 to-blue-700 lg:hover:from-blue-700 lg:hover:to-blue-800 text-white shadow-lg lg:hover:shadow-xl transition-all duration-300"
-                data-testid="button-add-loan"
-              >
-                <Plus className="mr-2 h-4 w-4" />
-                New Loan
-              </Button>
-            </div>
-          </div>
+            }
+            icon={<FileText className="h-6 w-6" />}
+            actions={
+              <div className="flex gap-2">
+                <Button variant="outline" onClick={exportLoans} className="h-10">
+                  <Download className="mr-2 h-4 w-4" />
+                  Export
+                </Button>
+                <Button 
+                  onClick={() => setLocation("/loans/create")}
+                  className="h-10 bg-gradient-to-r from-blue-600 to-blue-700 lg:hover:from-blue-700 lg:hover:to-blue-800 text-white shadow-lg"
+                  data-testid="button-add-loan"
+                >
+                  <Plus className="mr-2 h-4 w-4" />
+                  New Loan
+                </Button>
+              </div>
+            }
+          />
+
+          <Section>
 
           <Card className="border-0 shadow-lg bg-white/50 dark:bg-gray-800/50 backdrop-blur-sm">
             <CardContent className="p-4 sm:p-6">
@@ -1261,7 +1267,8 @@ export default function Loans() {
               )}
             </TabsContent>
           </Tabs>
-        </div>
+          </Section>
+        </>
       )}
 
       <AlertDialog open={!!loanToDelete} onOpenChange={(open) => !open && setLoanToDelete(null)}>
@@ -1283,7 +1290,6 @@ export default function Loans() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-
-    </div>
+    </PageContainer>
   );
 }

@@ -44,6 +44,7 @@ import { usePreferences } from "@/contexts/PreferencesContext";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { LayoutGrid, LayoutList } from "lucide-react";
 import backgroundImage from "@assets/loan_management_background_excel_green_1759302449019.png";
+import { PageContainer, PageHeader, Section } from "@/components/PageContainer";
 
 export default function Dashboard() {
   const { user, isLoading, isAuthenticated } = useAuth();
@@ -224,7 +225,7 @@ export default function Dashboard() {
   // Mobile Layout
   if (isMobile) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-green-50 via-white to-emerald-50 dark:from-gray-900 dark:via-gray-900 dark:to-gray-800 pb-20">
+      <PageContainer className="pb-20">
         <MobileHeader 
           title="Dashboard" 
           rightAction={
@@ -232,7 +233,7 @@ export default function Dashboard() {
           }
         />
 
-        <div className="px-4 py-4 space-y-4">
+        <Section>
           {/* Mobile: Horizontal Scrolling Metrics with Snap Points */}
           <div className="overflow-x-auto -mx-4 px-4 pb-2">
             <div className="flex gap-3 snap-x snap-mandatory" style={{ scrollbarWidth: 'none' }}>
@@ -560,7 +561,7 @@ export default function Dashboard() {
               </Card>
             </div>
           </div>
-        </div>
+        </Section>
 
         {/* Mobile FAB for Add Loan */}
         <FloatingActionButton 
@@ -568,14 +569,14 @@ export default function Dashboard() {
           icon={<Plus className="h-6 w-6" />}
           label="Add Loan"
         />
-      </div>
+      </PageContainer>
     );
   }
 
-  // Desktop Layout (unchanged)
+  // Desktop Layout
   return (
-    <div className="min-h-screen bg-gradient-to-br from-green-50 via-white to-emerald-50 dark:from-gray-900 dark:via-gray-900 dark:to-gray-800">
-      <div className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-6 py-4 sm:py-6 space-y-4 sm:space-y-6">
+    <PageContainer>
+      <Section>
         {/* Welcome Header */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4">
           <div>
@@ -1071,7 +1072,7 @@ export default function Dashboard() {
             </CardContent>
           </Card>
         </div>
-      </div>
-    </div>
+      </Section>
+    </PageContainer>
   );
 }

@@ -33,6 +33,7 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { MobileHeader, FloatingActionButton, ActionSheet } from "@/components/mobile";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { formatFacilityType } from "@/lib/formatters";
+import { PageContainer, PageHeader, Section } from "@/components/PageContainer";
 
 interface BankLoginCredentials {
   bankId: string;
@@ -157,13 +158,13 @@ export default function Banks() {
   // Mobile Layout
   if (isMobile) {
     return (
-      <div className="min-h-screen bg-background pb-24">
+      <PageContainer className="pb-24">
         <MobileHeader 
           title="Bank Exposures" 
           backButton={false}
         />
 
-        <div className="px-4 py-4 space-y-4">
+        <Section>
           {/* Summary Cards */}
           <div className="grid grid-cols-2 gap-3">
             <Card className="bg-card border border-border">
@@ -336,7 +337,7 @@ export default function Banks() {
               );
             })}
           </div>
-        </div>
+        </Section>
 
         {/* Floating Action Button for Add Facility */}
         <FloatingActionButton
@@ -392,24 +393,19 @@ export default function Banks() {
             },
           ]}
         />
-      </div>
+      </PageContainer>
     );
   }
 
-  // Desktop Layout (unchanged)
+  // Desktop Layout
   return (
-    <div className="min-h-screen bg-gradient-to-br from-green-50 via-white to-emerald-50 dark:from-gray-900 dark:via-gray-900 dark:to-gray-800">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6 space-y-6">
-        {/* Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <h1 className="text-3xl font-bold text-foreground">Bank Exposures</h1>
-            <p className="text-muted-foreground mt-1">
-              Manage your banking relationships and credit facilities • <span className="font-semibold text-primary">All amounts in SAR Millions</span>
-            </p>
-          </div>
-          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 mt-4 sm:mt-0">
-            {/* Quick Bank Access */}
+    <PageContainer>
+      <PageHeader
+        title="Bank Exposures"
+        subtitle="Manage your banking relationships and credit facilities • All amounts in SAR Millions"
+        icon={<Building className="h-6 w-6" />}
+        actions={
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
             {banks && Array.isArray(banks) && banks.length > 0 && (
               <div className="flex items-center space-x-2 w-full sm:w-auto">
                 <span className="text-sm text-muted-foreground hidden sm:inline">Quick Access:</span>
@@ -446,7 +442,10 @@ export default function Banks() {
               Add Facility
             </Button>
           </div>
-        </div>
+        }
+      />
+
+      <Section>
 
         {/* Enhanced Bank Exposure Tables */}
         <div className="grid grid-cols-1 gap-8">
@@ -637,8 +636,7 @@ export default function Banks() {
             </CardContent>
           </Card>
         </div>
-      </div>
-
-    </div>
+      </Section>
+    </PageContainer>
   );
 }
