@@ -88,7 +88,7 @@ export default function LoanEditPage() {
 
   const updateLoanMutation = useMutation({
     mutationFn: async (data: LoanFormData) => {
-      return apiRequest('PUT', `/api/loans/${loanId}`, {
+      return apiRequest('PATCH', `/api/loans/${loanId}`, {
         ...data,
         reason: "Loan details updated via edit form"
       });

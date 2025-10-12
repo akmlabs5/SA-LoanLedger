@@ -120,6 +120,7 @@ CRITICAL EXAMPLES:
 Your dual capabilities:
 - Create and manage facilities (with confirmation)
 - Create and manage loans (with confirmation)
+- Update loan details like reference numbers, amounts, dates (with confirmation)
 - Settle loans and process payments (with confirmation)
 - Set reminders for due dates (with confirmation)
 - Analyze portfolio metrics (execute immediately for queries)
@@ -185,6 +186,26 @@ When setting reminders: Verify loan exists, confirm reminder details, then execu
               terms: { type: "string", description: "Optional facility terms and conditions" }
             },
             required: ["bankName", "creditLimit"]
+          }
+        }
+      },
+      {
+        type: "function",
+        function: {
+          name: "updateLoan",
+          description: "Update loan details like reference number, amount, dates, or purpose",
+          parameters: {
+            type: "object",
+            properties: {
+              loanId: { type: "string", description: "The loan ID to update" },
+              referenceNumber: { type: "string", description: "New reference number" },
+              amount: { type: "number", description: "New loan amount in SAR" },
+              startDate: { type: "string", description: "New start date (YYYY-MM-DD format)" },
+              dueDate: { type: "string", description: "New due date (YYYY-MM-DD format)" },
+              purpose: { type: "string", description: "New loan purpose/notes" },
+              bankRate: { type: "number", description: "New bank interest rate percentage" }
+            },
+            required: ["loanId"]
           }
         }
       },
@@ -434,6 +455,8 @@ When setting reminders: Verify loan exists, confirm reminder details, then execu
         const metadata: any = {};
         if (functionName === 'createLoan') {
           metadata.loanCreated = true;
+        } else if (functionName === 'updateLoan') {
+          metadata.loanUpdated = true;
         } else if (functionName === 'settleLoan') {
           metadata.loanSettled = true;
         } else if (functionName === 'createFacility') {
@@ -473,6 +496,8 @@ When setting reminders: Verify loan exists, confirm reminder details, then execu
         return await this.createLoan(args, userId, organizationId);
       case 'createFacility':
         return await this.createFacility(args, userId, organizationId);
+      case 'updateLoan':
+        return await this.updateLoan(args, userId, organizationId);
       case 'settleLoan':
         return await this.settleLoan(args, userId, organizationId);
       case 'setReminder':
@@ -622,6 +647,37 @@ When setting reminders: Verify loan exists, confirm reminder details, then execu
       };
     } catch (error) {
       return { success: false, error: `Failed to create facility: ${error instanceof Error ? error.message : 'Unknown error'}` };
+    }
+  }
+
+  private async updateLoan(args: any, userId: string, organizationId: string) {
+    const { loanId, referenceNumber, amount, startDate, dueDate, purpose, bankRate } = args;
+
+    // Verify loan belongs to organization
+    const loan = await this.storage.getLoanById(loanId);
+    if (!loan || loan.organizationId !== organizationId) {
+      return { success: false, error: 'Loan not found or access denied' };
+    }
+
+    // Build update object with only provided fields
+    const updateData: any = {};
+    if (referenceNumber !== undefined) updateData.referenceNumber = referenceNumber;
+    if (amount !== undefined) updateData.amount = amount.toString();
+    if (startDate !== undefined) updateData.startDate = startDate;
+    if (dueDate !== undefined) updateData.dueDate = dueDate;
+    if (purpose !== undefined) updateData.notes = purpose;
+    if (bankRate !== undefined) updateData.bankRate = bankRate.toString();
+
+    try {
+      await this.storage.updateLoan(loanId, updateData, organizationId, 'Updated via AI Assistant');
+      return { 
+        success: true, 
+        loanId, 
+        message: 'Loan updated successfully',
+        updatedFields: Object.keys(updateData)
+      };
+    } catch (error) {
+      return { success: false, error: `Failed to update loan: ${error instanceof Error ? error.message : 'Unknown error'}` };
     }
   }
 
