@@ -158,6 +158,26 @@ When setting reminders: Verify loan exists, confirm reminder details, then execu
       {
         type: "function",
         function: {
+          name: "createFacility",
+          description: "Create a new banking facility/credit line. Can work with minimal information - user can edit details later.",
+          parameters: {
+            type: "object",
+            properties: {
+              bankName: { type: "string", description: "Bank name (e.g., 'ANB', 'Arab National Bank')" },
+              facilityType: { type: "string", enum: ["revolving", "term", "bullet", "bridge", "working_capital", "non_cash_guarantee"], description: "Type of facility" },
+              creditLimit: { type: "number", description: "Credit limit amount in SAR (e.g., 200000000 for 200 million)" },
+              costOfFunding: { type: "number", description: "Cost of funding percentage (SIBOR + margin, e.g., 5.5 for 5.5%)" },
+              startDate: { type: "string", description: "Facility start date (YYYY-MM-DD format)" },
+              expiryDate: { type: "string", description: "Optional facility expiry date (YYYY-MM-DD format)" },
+              terms: { type: "string", description: "Optional facility terms and conditions" }
+            },
+            required: ["bankName", "creditLimit"]
+          }
+        }
+      },
+      {
+        type: "function",
+        function: {
           name: "settleLoan",
           description: "Mark a loan as settled/paid off",
           parameters: {
