@@ -58,8 +58,19 @@ The platform includes enterprise-grade production security and monitoring:
 - **Real-Time Log Monitor**: Detects errors, security issues, redirect loops, CORS problems, database failures, and SSL issues with actionable alerts (`./monitor-logs.sh`)
 - **Production Hardening**: Test endpoints disabled in production, comprehensive error logging, session security
 
+## User Settings & Preferences
+A comprehensive user settings system provides full customization of the platform experience. The settings include:
+- **Profile Management**: Update first/last name (email locked to authentication provider)
+- **Theme Switching**: Light, Dark, and System modes with OS preference detection and automatic updates
+- **Preferences**: Timezone, language (EN/AR), currency (SAR), date format, items per page (5-100)
+- **AI Insights Configuration**: Customizable thresholds for risk analysis, concentration monitoring, and LTV tracking
+- **Daily Alerts**: Configurable alert timing and severity filters
+- **Security**: Password reset and 2FA management for Supabase users
+
+All settings persist to the database with Zod validation, and preferences are applied system-wide. The History page respects the items-per-page setting for pagination. Theme preferences are merged with defaults to ensure null-safe operation, with fallbacks to 'light' mode when unset.
+
 ## Key Features
-The system supports bank-level collateral assignment, optional facility durations, and a revolving period tracking system. Users can create loans that exceed facility credit limits with warning notifications, allowing for flexible credit management. User settings include daily alerts and feature showcases.
+The system supports bank-level collateral assignment, optional facility durations, and a revolving period tracking system. Users can create loans that exceed facility credit limits with warning notifications, allowing for flexible credit management.
 
 ## Deployment & Domain
 - **Production URL**: https://akm-labs.com (custom domain with SSL)
