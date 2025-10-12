@@ -187,18 +187,18 @@ export function RevolvingPeriodTracker({
           </Badge>
         </div>
         <CardDescription className="text-xs">
-          Maximum period: {maxRevolvingPeriod} days from initial drawdown
+          Facility-level tracking: {maxRevolvingPeriod} days max from first drawdown
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
         {/* Usage Stats */}
         <div className="grid grid-cols-2 gap-4">
           <div className="space-y-1">
-            <p className="text-xs text-muted-foreground">Days Used</p>
+            <p className="text-xs text-muted-foreground">Facility Days Used</p>
             <p className="text-2xl font-bold" data-testid="text-days-used">{daysUsed}</p>
           </div>
           <div className="space-y-1">
-            <p className="text-xs text-muted-foreground">Days Remaining</p>
+            <p className="text-xs text-muted-foreground">Facility Days Left</p>
             <p className="text-2xl font-bold" data-testid="text-days-remaining">{daysRemaining}</p>
           </div>
         </div>

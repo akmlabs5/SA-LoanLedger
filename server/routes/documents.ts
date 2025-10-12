@@ -1,6 +1,7 @@
 import type { Express } from "express";
 import type { AppDependencies } from "../types";
 import { isAuthenticated } from "../replitAuth";
+import { attachOrganizationContext, requireOrganization } from "../organizationMiddleware";
 import multer from "multer";
 import { ObjectStorageService } from "../objectStorage";
 import { ObjectAccessGroupType, ObjectPermission } from "../objectAcl";
@@ -16,7 +17,7 @@ export function registerDocumentsRoutes(app: Express, deps: AppDependencies) {
   const { storage } = deps;
 
   // Upload document endpoint (connects existing DocumentUpload component to object storage)
-  app.post("/api/documents/upload", isAuthenticated, upload.single('file'), async (req, res) => {
+  app.post("/api/documents/upload", isAuthenticated, attachOrganizationContext, requireOrganization, upload.single('file'), async (req: any, res) => {
     try {
       if (!req.file) {
         return res.status(400).json({ error: "No file provided" });
