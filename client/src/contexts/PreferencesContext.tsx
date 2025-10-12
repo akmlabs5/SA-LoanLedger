@@ -1,4 +1,4 @@
-import { createContext, useContext, ReactNode } from 'react';
+import { createContext, useContext, ReactNode, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 
 interface UserPreferences {
@@ -25,6 +25,26 @@ export function PreferencesProvider({ children }: { children: ReactNode }) {
   const { data: preferences, isLoading } = useQuery<UserPreferences>({
     queryKey: ['/api/user/preferences'],
   });
+
+  // Apply theme to document
+  useEffect(() => {
+    const theme = preferences?.theme || 'light';
+    const root = document.documentElement;
+
+    if (theme === 'dark') {
+      root.classList.add('dark');
+    } else if (theme === 'light') {
+      root.classList.remove('dark');
+    } else if (theme === 'system') {
+      // Check system preference
+      const systemPrefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+      if (systemPrefersDark) {
+        root.classList.add('dark');
+      } else {
+        root.classList.remove('dark');
+      }
+    }
+  }, [preferences?.theme]);
 
   const value = {
     preferences: preferences || {},

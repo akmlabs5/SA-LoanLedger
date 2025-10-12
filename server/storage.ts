@@ -181,7 +181,7 @@ export interface IStorage {
   
   // User Preferences operations
   getUserPreferences(userId: string): Promise<UserPreferences | undefined>;
-  upsertUserPreferences(preferences: InsertUserPreferences): Promise<UserPreferences>;
+  upsertUserPreferences(preferences: Partial<InsertUserPreferences> & { userId: string }): Promise<UserPreferences>;
   
   // Daily Alerts Preferences operations
   getDailyAlertsPreferences(userId: string): Promise<DailyAlertsPreferences | undefined>;
@@ -1024,12 +1024,12 @@ export class DatabaseStorage implements IStorage {
     return result;
   }
 
-  async upsertUserPreferences(preferences: InsertUserPreferences): Promise<UserPreferences> {
+  async upsertUserPreferences(preferences: Partial<InsertUserPreferences> & { userId: string }): Promise<UserPreferences> {
     console.log("🔧 upsertUserPreferences called with:", JSON.stringify(preferences, null, 2));
     
     const [result] = await db
       .insert(userPreferences)
-      .values(preferences)
+      .values(preferences as InsertUserPreferences)
       .onConflictDoUpdate({
         target: userPreferences.userId,
         set: {
@@ -3062,11 +3062,24 @@ Reference: {loanReference}`,
     return Array.from(this.userPreferences.values()).find(preferences => preferences.userId === userId);
   }
 
-  async upsertUserPreferences(preferences: InsertUserPreferences): Promise<UserPreferences> {
+  async upsertUserPreferences(preferences: Partial<InsertUserPreferences> & { userId: string }): Promise<UserPreferences> {
     const existing = Array.from(this.userPreferences.values()).find(p => p.userId === preferences.userId);
     const newPreferences: UserPreferences = {
+      ...(existing || {}),
       ...preferences,
       id: existing?.id || this.generateId(),
+      userId: preferences.userId,
+      timezone: preferences.timezone || existing?.timezone || 'Asia/Riyadh',
+      language: preferences.language || existing?.language || 'en',
+      currency: preferences.currency || existing?.currency || 'SAR',
+      dateFormat: preferences.dateFormat || existing?.dateFormat || 'DD/MM/YYYY',
+      numberFormat: preferences.numberFormat || existing?.numberFormat || 'en-SA',
+      theme: preferences.theme || existing?.theme || 'light',
+      dashboardLayout: preferences.dashboardLayout || existing?.dashboardLayout || 'grid',
+      itemsPerPage: preferences.itemsPerPage || existing?.itemsPerPage || 10,
+      enableNotifications: preferences.enableNotifications ?? existing?.enableNotifications ?? true,
+      enableSounds: preferences.enableSounds ?? existing?.enableSounds ?? false,
+      compactView: preferences.compactView ?? existing?.compactView ?? false,
       createdAt: existing?.createdAt || new Date(),
       updatedAt: new Date(),
     };

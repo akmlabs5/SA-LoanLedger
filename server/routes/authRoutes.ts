@@ -143,13 +143,8 @@ export function registerAuthRoutes(app: Express, storage: IStorage) {
     try {
       const userId = req.user.claims.sub;
       
-      // Validate input data
-      const validatedData = insertUserPreferencesSchema.omit({ 
-        id: true, 
-        userId: true, 
-        createdAt: true, 
-        updatedAt: true 
-      }).parse(req.body);
+      // Validate input data with partial to allow optional fields
+      const validatedData = insertUserPreferencesSchema.partial().parse(req.body);
       
       const preferences = await storage.upsertUserPreferences({
         userId,
@@ -196,12 +191,8 @@ export function registerAuthRoutes(app: Express, storage: IStorage) {
     try {
       const userId = req.user.claims.sub;
       
-      // Validate input data
-      const validatedData = insertAiInsightConfigSchema.omit({ 
-        id: true, 
-        userId: true, 
-        updatedAt: true 
-      }).parse(req.body);
+      // Validate input data with partial to allow optional fields
+      const validatedData = insertAiInsightConfigSchema.partial().parse(req.body);
       
       const config = await storage.upsertAiConfig({
         userId,
@@ -252,13 +243,8 @@ export function registerAuthRoutes(app: Express, storage: IStorage) {
     try {
       const userId = req.user.claims.sub;
       
-      // Validate input data
-      const validatedData = insertDailyAlertsPreferencesSchema.omit({ 
-        id: true, 
-        userId: true, 
-        createdAt: true, 
-        updatedAt: true 
-      }).parse(req.body);
+      // Validate input data with partial to allow optional fields
+      const validatedData = insertDailyAlertsPreferencesSchema.partial().parse(req.body);
       
       const preferences = await storage.upsertDailyAlertsPreferences({
         userId,

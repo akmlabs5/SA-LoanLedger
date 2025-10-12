@@ -13,12 +13,12 @@ let db: any = null;
 // Initialize database connection with health check
 async function initializeDatabase() {
   if (!process.env.DATABASE_URL) {
-    console.warn("DATABASE_URL not set. Running with in-memory storage only.");
+    console.error("❌ DATABASE_URL not set. Running with in-memory storage only.");
     return false;
   }
 
   try {
-    console.log("Attempting to connect to database...");
+    console.log("🔌 Attempting to connect to database...");
     pool = new Pool({ connectionString: process.env.DATABASE_URL });
     
     // Test connection with longer timeout for Replit environment
@@ -29,10 +29,12 @@ async function initializeDatabase() {
     
     db = drizzle({ client: pool, schema });
     dbAvailable = true;
-    console.log("✅ Database connection successful");
+    console.log("✅ Database connection successful - Using PostgreSQL");
     return true;
   } catch (error) {
-    console.warn("⚠️ Database connection failed, falling back to in-memory storage:", (error as Error).message);
+    console.error("❌ Database connection failed, falling back to in-memory storage:");
+    console.error("   Error:", (error as Error).message);
+    console.error("   DATABASE_URL exists:", !!process.env.DATABASE_URL);
     dbAvailable = false;
     pool = null;
     db = null;
