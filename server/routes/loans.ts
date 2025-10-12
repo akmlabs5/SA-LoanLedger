@@ -204,7 +204,36 @@ export function registerLoansRoutes(app: Express, deps: AppDependencies) {
         return res.status(404).json({ message: "Loan not found" });
       }
       
-      res.json(loan);
+      // Calculate accrued interest (to date) and projected total interest
+      const calculateInterest = (amount: number, rate: number, startDate: Date, endDate: Date, basis: string = 'actual_365') => {
+        const daysDiff = Math.ceil((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24));
+        const daysInYear = basis === 'actual_360' ? 360 : 365;
+        
+        if (daysDiff > 0 && rate > 0) {
+          return (amount * rate / 100) * (daysDiff / daysInYear);
+        }
+        return 0;
+      };
+      
+      const loanAmount = parseFloat(loan.amount);
+      const totalRate = parseFloat(loan.siborRate) + parseFloat(loan.margin);
+      const startDate = new Date(loan.startDate);
+      const dueDate = new Date(loan.dueDate);
+      const today = new Date();
+      
+      // Accrued interest: from start date to today (for active loans only)
+      const accruedInterest = loan.status === 'active' 
+        ? calculateInterest(loanAmount, totalRate, startDate, today, loan.interestBasis)
+        : 0;
+      
+      // Projected total interest: from start date to due date (full tenor)
+      const projectedTotalInterest = calculateInterest(loanAmount, totalRate, startDate, dueDate, loan.interestBasis);
+      
+      res.json({
+        ...loan,
+        accruedInterest: accruedInterest.toFixed(2),
+        projectedTotalInterest: projectedTotalInterest.toFixed(2)
+      });
     } catch (error) {
       console.error("Error fetching loan:", error);
       res.status(500).json({ message: "Failed to fetch loan" });
