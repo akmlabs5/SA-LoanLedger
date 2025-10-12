@@ -4,6 +4,25 @@ import { supabase, verifySupabaseToken } from "./supabaseClient";
 import { storage } from "./storage";
 import { sendEmail } from "./emailService";
 import { EmailTemplateService, EmailTemplateType } from "./emailTemplates/templates";
+import { createClient } from '@supabase/supabase-js';
+
+// Create admin client for user management (requires service role key)
+const getSupabaseAdmin = () => {
+  const supabaseUrl = process.env.SUPABASE_URL;
+  const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  
+  if (!supabaseUrl || !serviceRoleKey) {
+    console.warn('Supabase admin client not available - missing SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY');
+    return null;
+  }
+  
+  return createClient(supabaseUrl, serviceRoleKey, {
+    auth: {
+      autoRefreshToken: false,
+      persistSession: false
+    }
+  });
+};
 
 const otpStore = new Map<string, { code: string; expiry: Date; password: string; attempts: number }>();
 const otpRequestTracker = new Map<string, { count: number; lastRequest: Date; lockoutUntil?: Date }>();
@@ -97,27 +116,94 @@ export async function setupSupabaseAuth(app: Express, databaseAvailable = true) 
         });
       }
       
-      const { data, error } = await supabase.auth.signUp({
+      // Use admin client to create user WITHOUT sending automatic email
+      const adminClient = getSupabaseAdmin();
+      
+      if (!adminClient) {
+        // Fallback to regular signup if admin client not available
+        const { data, error } = await supabase.auth.signUp({
+          email,
+          password,
+          options: {
+            data: {
+              first_name: firstName,
+              last_name: lastName
+            }
+          }
+        });
+        
+        if (error) throw error;
+        if (!data.user) {
+          return res.status(400).json({ message: "Failed to create account" });
+        }
+        
+        // Continue with database setup...
+        if (databaseAvailable) {
+          await storage.upsertUser({
+            id: data.user.id,
+            email: data.user.email || email,
+            firstName,
+            lastName,
+            twoFactorEnabled: enable2FA || false,
+            accountType: userAccountType
+          });
+
+          if (userAccountType === 'organization') {
+            const organization = await storage.createOrganization({
+              name: organizationName.trim(),
+              ownerId: data.user.id
+            });
+
+            await storage.addMember({
+              organizationId: organization.id,
+              userId: data.user.id,
+              isOwner: true
+            });
+          } else {
+            const defaultOrgName = `${firstName || 'My'}'s Organization`;
+            const organization = await storage.createOrganization({
+              name: defaultOrgName,
+              ownerId: data.user.id
+            });
+
+            await storage.addMember({
+              organizationId: organization.id,
+              userId: data.user.id,
+              isOwner: true
+            });
+          }
+        }
+        
+        return res.json({ 
+          success: true,
+          user: data.user,
+          session: data.session,
+          message: "Account created successfully. Please check your email to verify your account."
+        });
+      }
+      
+      // Create user with admin client (no automatic email)
+      const { data: adminData, error: adminError } = await adminClient.auth.admin.createUser({
         email,
         password,
-        options: {
-          data: {
-            first_name: firstName,
-            last_name: lastName
-          }
+        email_confirm: false, // Don't auto-confirm, we'll send custom email
+        user_metadata: {
+          first_name: firstName,
+          last_name: lastName
         }
       });
       
-      if (error) throw error;
+      if (adminError) throw adminError;
       
-      if (!data.user) {
+      if (!adminData.user) {
         return res.status(400).json({ message: "Failed to create account" });
       }
       
+      // Save to database
       if (databaseAvailable) {
         await storage.upsertUser({
-          id: data.user.id,
-          email: data.user.email || email,
+          id: adminData.user.id,
+          email: adminData.user.email || email,
           firstName,
           lastName,
           twoFactorEnabled: enable2FA || false,
@@ -127,34 +213,72 @@ export async function setupSupabaseAuth(app: Express, databaseAvailable = true) 
         if (userAccountType === 'organization') {
           const organization = await storage.createOrganization({
             name: organizationName.trim(),
-            ownerId: data.user.id
+            ownerId: adminData.user.id
           });
 
           await storage.addMember({
             organizationId: organization.id,
-            userId: data.user.id,
+            userId: adminData.user.id,
             isOwner: true
           });
         } else {
           const defaultOrgName = `${firstName || 'My'}'s Organization`;
           const organization = await storage.createOrganization({
             name: defaultOrgName,
-            ownerId: data.user.id
+            ownerId: adminData.user.id
           });
 
           await storage.addMember({
             organizationId: organization.id,
-            userId: data.user.id,
+            userId: adminData.user.id,
             isOwner: true
           });
         }
       }
       
+      // Generate email verification link using Supabase
+      const { data: linkData, error: linkError } = await adminClient.auth.admin.generateLink({
+        type: 'signup',
+        email: email,
+        password: password, // Required for signup type
+        options: {
+          redirectTo: `${process.env.REPLIT_DEV_DOMAIN || 'https://akm-labs.com'}/dashboard`
+        }
+      });
+      
+      if (linkError) {
+        console.error('Error generating verification link:', linkError);
+        throw linkError;
+      }
+      
+      // Send beautiful custom verification email via SendGrid
+      const verificationUrl = linkData.properties.action_link;
+      const emailTemplate = EmailTemplateService.getTemplate(EmailTemplateType.EMAIL_VERIFICATION, {
+        url: verificationUrl,
+        user: {
+          name: firstName || 'there'
+        }
+      });
+      
+      try {
+        await sendEmail({
+          to: email,
+          subject: emailTemplate.subject,
+          text: emailTemplate.text,
+          html: emailTemplate.html
+        });
+        
+        console.log(`✅ Custom verification email sent to ${email} via SendGrid`);
+      } catch (emailError) {
+        console.error('Failed to send verification email:', emailError);
+        // Don't fail the signup if email fails, but warn the user
+      }
+      
       res.json({ 
         success: true,
-        user: data.user,
-        session: data.session,
-        message: "Account created successfully. Please check your email to verify your account."
+        user: adminData.user,
+        session: null, // No session until email is verified
+        message: "Account created successfully! Please check your email to verify your account."
       });
     } catch (error: any) {
       console.error("Signup error:", error);
