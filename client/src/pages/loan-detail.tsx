@@ -89,7 +89,7 @@ export default function LoanDetailPage() {
   // Settlement mutation
   const settleLoanMutation = useMutation({
     mutationFn: async ({ loanId, settledAmount }: { loanId: string; settledAmount: number }) => {
-      await apiRequest("PUT", `/api/loans/${loanId}/settle`, { settledAmount });
+      await apiRequest("POST", `/api/loans/${loanId}/settle`, { date: new Date().toISOString().split('T')[0], amount: settledAmount.toString() });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/loans"] });

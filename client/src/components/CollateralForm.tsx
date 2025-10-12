@@ -69,7 +69,7 @@ export default function CollateralForm({ collateral, onSuccess, onCancel }: Coll
   });
 
   // Fetch current assignment if editing existing collateral
-  const { data: currentAssignment } = useQuery<{facilityId: string; creditLineId?: string}>({ 
+  const { data: currentAssignment } = useQuery<{id: string; facilityId: string; creditLineId?: string}>({ 
     queryKey: ["/api/collateral-assignments", { collateralId: collateral?.id }],
     enabled: !!collateral?.id,
     queryFn: async () => {
@@ -130,16 +130,24 @@ export default function CollateralForm({ collateral, onSuccess, onCancel }: Coll
       const hasNewAssignment = data.facilityId && data.facilityId !== "no-assignment";
       
       if (hasNewAssignment) {
-        // Create or update assignment
         const assignmentData = {
           collateralId,
           facilityId: data.facilityId,
           creditLineId: data.creditLineId && data.creditLineId !== "entire-facility" ? data.creditLineId : null,
         };
-        await apiRequest("PUT", `/api/collateral-assignments`, assignmentData);
+        
+        if (currentAssignment?.id) {
+          // Update existing assignment
+          await apiRequest("PUT", `/api/collateral-assignments/${currentAssignment.id}`, assignmentData);
+        } else {
+          // Create new assignment
+          await apiRequest("POST", `/api/collateral-assignments`, assignmentData);
+        }
       } else if (hasCurrentAssignment && !hasNewAssignment) {
         // Remove existing assignment (user selected "No Assignment")
-        await apiRequest("DELETE", `/api/collateral-assignments/${collateralId}`);
+        if (currentAssignment?.id) {
+          await apiRequest("DELETE", `/api/collateral-assignments/${currentAssignment.id}`);
+        }
       }
     },
     onSuccess: () => {
