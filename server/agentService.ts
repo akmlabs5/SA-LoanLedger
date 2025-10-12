@@ -24,6 +24,15 @@ export interface AgentResponse {
   executed?: boolean;
   data?: any;
   error?: string;
+  metadata?: {
+    loanCreated?: boolean;
+    loanUpdated?: boolean;
+    loanSettled?: boolean;
+    facilityCreated?: boolean;
+    facilityUpdated?: boolean;
+    bankCreated?: boolean;
+    bankUpdated?: boolean;
+  };
 }
 
 export class AgentService {
@@ -418,10 +427,24 @@ When setting reminders: Verify loan exists, confirm reminder details, then execu
         });
 
         const finalData = await finalResponse.json();
+        
+        // Build metadata for cache invalidation
+        const metadata: any = {};
+        if (functionName === 'createLoan') {
+          metadata.loanCreated = true;
+        } else if (functionName === 'settleLoan') {
+          metadata.loanSettled = true;
+        } else if (functionName === 'createFacility') {
+          metadata.facilityCreated = true;
+        } else if (functionName === 'updateCollateral') {
+          metadata.loanUpdated = true; // Collateral changes affect loan display
+        }
+        
         return {
           message: finalData.choices[0].message.content,
           executed: true,
-          data: result
+          data: result,
+          metadata: Object.keys(metadata).length > 0 ? metadata : undefined
         };
       }
 
