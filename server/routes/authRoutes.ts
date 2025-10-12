@@ -105,23 +105,33 @@ export function registerAuthRoutes(app: Express, storage: IStorage) {
       const userId = req.user.claims.sub;
       const preferences = await storage.getUserPreferences(userId);
       
+      const defaults = {
+        timezone: 'Asia/Riyadh',
+        language: 'en',
+        currency: 'SAR',
+        dateFormat: 'DD/MM/YYYY',
+        theme: 'light',
+        dashboardLayout: 'grid',
+        itemsPerPage: 10,
+        enableNotifications: true,
+        enableSounds: false,
+        compactView: false,
+      };
+      
       // Return defaults if no preferences set
       if (!preferences) {
-        return res.json({
-          timezone: 'Asia/Riyadh',
-          language: 'en',
-          currency: 'SAR',
-          dateFormat: 'DD/MM/YYYY',
-          theme: 'light',
-          dashboardLayout: 'grid',
-          itemsPerPage: 10,
-          enableNotifications: true,
-          enableSounds: false,
-          compactView: false,
-        });
+        return res.json(defaults);
       }
       
-      res.json(preferences);
+      // Merge preferences with defaults to ensure no null values
+      const mergedPreferences = {
+        ...defaults,
+        ...preferences,
+        // Ensure theme is never null
+        theme: preferences.theme || 'light',
+      };
+      
+      res.json(mergedPreferences);
     } catch (error) {
       console.error("Error fetching preferences:", error);
       res.status(500).json({ message: "Failed to fetch preferences" });

@@ -169,11 +169,14 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
       }
     };
     
-    if (preferences?.theme === 'dark') {
+    // Get theme with fallback to 'light' if null/undefined
+    const theme = preferences?.theme || 'light';
+    
+    if (theme === 'dark') {
       applyTheme(true);
-    } else if (preferences?.theme === 'light') {
+    } else if (theme === 'light') {
       applyTheme(false);
-    } else if (preferences?.theme === 'system') {
+    } else if (theme === 'system') {
       // Check OS preference
       const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
       applyTheme(mediaQuery.matches);

@@ -122,7 +122,13 @@ interface SettlementResponse {
 type TimeframeType = '30D' | '6M' | '1Y' | 'MAX';
 
 export default function HistoryPage() {
-  const [visibleTransactions, setVisibleTransactions] = useState(8);
+  // Fetch user preferences for items per page
+  const { data: userPreferences } = useQuery({
+    queryKey: ['/api/user/preferences'],
+  });
+  
+  const itemsPerPage = userPreferences?.itemsPerPage || 10;
+  const [visibleTransactions, setVisibleTransactions] = useState(itemsPerPage);
   
   // Bank visibility controls for interactive chart
   const [visibleBanks, setVisibleBanks] = useState<Set<string>>(new Set());
@@ -183,8 +189,8 @@ export default function HistoryPage() {
 
   // Reset visible transactions when filters change
   useEffect(() => {
-    setVisibleTransactions(8);
-  }, [filters]);
+    setVisibleTransactions(itemsPerPage);
+  }, [filters, itemsPerPage]);
 
   // Fetch banks for filtering
   const { data: banks = [] } = useQuery<Bank[]>({
@@ -921,7 +927,7 @@ export default function HistoryPage() {
                   <div className="mt-4 flex justify-center">
                     <Button 
                       variant="outline" 
-                      onClick={() => setVisibleTransactions(prev => prev + 8)}
+                      onClick={() => setVisibleTransactions(prev => prev + itemsPerPage)}
                       data-testid="button-load-more-transactions"
                     >
                       <ChevronDown className="mr-2 h-4 w-4" />
