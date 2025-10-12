@@ -19,7 +19,35 @@ export function registerAuthRoutes(app: Express, storage: IStorage) {
         });
       }
       
-      res.json(user);
+      // Fetch organization membership
+      const membership = await storage.getOrganizationMembership(userId);
+      
+      if (!membership) {
+        console.log('No organization found for user', userId);
+        return res.status(404).json({ 
+          success: false,
+          message: "Organization not found. Please complete your account setup."
+        });
+      }
+      
+      // Fetch organization details
+      const organization = await storage.getOrganization(membership.organizationId);
+      
+      if (!organization) {
+        console.log('Organization record not found:', membership.organizationId);
+        return res.status(404).json({ 
+          success: false,
+          message: "Organization not found. Please contact support."
+        });
+      }
+      
+      // Return user with organization info
+      res.json({
+        ...user,
+        organizationId: organization.id,
+        organizationName: organization.name,
+        isOwner: membership.isOwner
+      });
     } catch (error) {
       console.error("Error fetching user:", error);
       res.status(500).json({ message: "Failed to fetch user" });
