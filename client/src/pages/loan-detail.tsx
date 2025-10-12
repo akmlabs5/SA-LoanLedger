@@ -301,6 +301,32 @@ export default function LoanDetailPage() {
                       {loan.status}
                     </Badge>
                   </div>
+                  {(loan as any).accruedInterest !== undefined && loan.status === 'active' && (
+                    <div>
+                      <label className="text-sm font-medium text-muted-foreground">Accrued Interest (to date)</label>
+                      <p className="text-lg font-semibold text-amber-600 dark:text-amber-400" data-testid="text-accrued-interest">
+                        {parseFloat((loan as any).accruedInterest).toLocaleString('en-SA', {
+                          style: 'currency',
+                          currency: 'SAR',
+                          minimumFractionDigits: 2,
+                          maximumFractionDigits: 2
+                        })}
+                      </p>
+                    </div>
+                  )}
+                  {(loan as any).projectedTotalInterest !== undefined && (
+                    <div>
+                      <label className="text-sm font-medium text-muted-foreground">Projected Total Interest (full tenor)</label>
+                      <p className="text-lg font-semibold text-blue-600 dark:text-blue-400" data-testid="text-projected-interest">
+                        {parseFloat((loan as any).projectedTotalInterest).toLocaleString('en-SA', {
+                          style: 'currency',
+                          currency: 'SAR',
+                          minimumFractionDigits: 2,
+                          maximumFractionDigits: 2
+                        })}
+                      </p>
+                    </div>
+                  )}
                 </div>
                 
                 {loan.notes && (

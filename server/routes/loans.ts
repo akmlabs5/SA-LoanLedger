@@ -223,11 +223,11 @@ export function registerLoansRoutes(app: Express, deps: AppDependencies) {
       
       // Accrued interest: from start date to today (for active loans only)
       const accruedInterest = loan.status === 'active' 
-        ? calculateInterest(loanAmount, totalRate, startDate, today, loan.interestBasis)
+        ? calculateInterest(loanAmount, totalRate, startDate, today, loan.interestBasis || 'actual_365')
         : 0;
       
       // Projected total interest: from start date to due date (full tenor)
-      const projectedTotalInterest = calculateInterest(loanAmount, totalRate, startDate, dueDate, loan.interestBasis);
+      const projectedTotalInterest = calculateInterest(loanAmount, totalRate, startDate, dueDate, loan.interestBasis || 'actual_365');
       
       res.json({
         ...loan,
