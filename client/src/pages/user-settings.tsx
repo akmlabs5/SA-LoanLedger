@@ -54,6 +54,7 @@ import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { useSoundEffects } from "@/hooks/useSoundEffects";
 import { apiRequest, queryClient } from "@/lib/queryClient";
+import { PageContainer, PageHeader, Section } from "@/components/PageContainer";
 
 // Profile schema
 const profileSchema = z.object({
@@ -508,16 +509,14 @@ export default function UserSettingsPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-green-50 via-white to-emerald-50 dark:from-gray-900 dark:via-gray-900 dark:to-gray-800">
-      <div className="container mx-auto px-4 sm:px-6 py-6 max-w-6xl">
-        <div className="flex items-center gap-3 mb-6">
-          <Settings className="h-8 w-8 text-primary" />
-          <div>
-            <h1 className="text-3xl font-bold text-foreground" data-testid="text-page-title">User Settings</h1>
-            <p className="text-muted-foreground">Manage your account settings and preferences</p>
-          </div>
-        </div>
+    <PageContainer>
+      <PageHeader
+        title="User Settings"
+        subtitle="Manage your account settings and preferences"
+        icon={<Settings className="h-6 w-6" />}
+      />
 
+      <Section>
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
           <TabsList className="grid w-full grid-cols-2 sm:grid-cols-4 md:grid-cols-7" data-testid="tabs-settings">
             <TabsTrigger value="profile" className="flex items-center gap-2 h-12" data-testid="tab-profile">
@@ -551,7 +550,8 @@ export default function UserSettingsPage() {
           </TabsList>
 
           {/* Profile Tab */}
-          <TabsContent value="profile" className="space-y-6">
+          <TabsContent value="profile">
+            <Section className="space-y-6">
             <Card data-testid="card-profile">
               <CardHeader>
                 <CardTitle>Profile Information</CardTitle>
@@ -620,10 +620,12 @@ export default function UserSettingsPage() {
                 </Form>
               </CardContent>
             </Card>
+            </Section>
           </TabsContent>
 
           {/* Preferences Tab */}
-          <TabsContent value="preferences" className="space-y-6">
+          <TabsContent value="preferences">
+            <Section className="space-y-6">
             <Card data-testid="card-regional">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
@@ -863,10 +865,12 @@ export default function UserSettingsPage() {
                 </Form>
               </CardContent>
             </Card>
+            </Section>
           </TabsContent>
 
           {/* Notifications Tab */}
-          <TabsContent value="notifications" className="space-y-6">
+          <TabsContent value="notifications">
+            <Section className="space-y-6">
             <Card data-testid="card-reminder-intervals">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
@@ -998,10 +1002,12 @@ export default function UserSettingsPage() {
                 </Form>
               </CardContent>
             </Card>
+            </Section>
           </TabsContent>
 
           {/* Daily Alerts Tab */}
-          <TabsContent value="daily-alerts" className="space-y-6">
+          <TabsContent value="daily-alerts">
+            <Section className="space-y-6">
             <Card data-testid="card-daily-alerts">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
@@ -1314,10 +1320,12 @@ export default function UserSettingsPage() {
                 )}
               </CardContent>
             </Card>
+            </Section>
           </TabsContent>
 
           {/* AI Insights Tab */}
-          <TabsContent value="ai-insights" className="space-y-6">
+          <TabsContent value="ai-insights">
+            <Section className="space-y-6">
             <Card data-testid="card-ai-thresholds">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
@@ -1442,10 +1450,12 @@ export default function UserSettingsPage() {
                 </Form>
               </CardContent>
             </Card>
+            </Section>
           </TabsContent>
 
           {/* Security Tab */}
-          <TabsContent value="security" className="space-y-6">
+          <TabsContent value="security">
+            <Section className="space-y-6">
             <TwoFactorAuthCard />
             
             <Card data-testid="card-security">
@@ -1546,15 +1556,18 @@ export default function UserSettingsPage() {
                 </div>
               </CardContent>
             </Card>
+            </Section>
           </TabsContent>
 
           {/* Team Management Tab */}
-          <TabsContent value="team" className="space-y-6">
-            <TeamManagementSection />
+          <TabsContent value="team">
+            <Section className="space-y-6">
+              <TeamManagementSection />
+            </Section>
           </TabsContent>
         </Tabs>
-        </div>
-    </div>
+      </Section>
+    </PageContainer>
   );
 }
 

@@ -21,6 +21,7 @@ import {
   CheckCircle2,
   XCircle
 } from "lucide-react";
+import { PageContainer, PageHeader, Section } from "@/components/PageContainer";
 
 interface SystemSettings {
   general: {
@@ -112,18 +113,13 @@ export default function AdminSettingsPage() {
   return (
     <RequireAdminAuth>
       <AdminLayout>
-        <div className="space-y-6 p-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-3xl font-bold text-gray-900 dark:text-white" data-testid="text-page-title">
-                System Settings
-              </h1>
-              <p className="text-muted-foreground mt-1">
-                Configure global system preferences and features
-              </p>
-            </div>
-          </div>
+        <PageHeader
+          title="System Settings"
+          subtitle="Configure global system preferences and features"
+          icon={<Settings className="h-6 w-6" />}
+        />
 
+        <Section className="space-y-6">
           {/* General Settings */}
           <Card data-testid="card-general-settings">
             <CardHeader>
@@ -521,7 +517,7 @@ export default function AdminSettingsPage() {
               )}
             </CardContent>
           </Card>
-        </div>
+        </Section>
       </AdminLayout>
     </RequireAdminAuth>
   );
