@@ -324,6 +324,9 @@ export async function setupSupabaseAuth(app: Express, databaseAvailable = true) 
         });
       }
       
+      // Create backend session after successful 2FA verification
+      await createBackendSessionFromSupabaseUser(req, data.user, databaseAvailable);
+      
       res.json({ 
         success: true,
         user: data.user, 
