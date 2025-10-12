@@ -22,10 +22,17 @@ async function initializeDatabase() {
     pool = new Pool({ connectionString: process.env.DATABASE_URL });
     
     // Test connection with longer timeout for Replit environment
+    let timeoutId: NodeJS.Timeout;
+    const timeoutPromise = new Promise<never>((_, reject) => {
+      timeoutId = setTimeout(() => reject(new Error('Database connection timeout')), 15000);
+    });
+    
     const testQuery = await Promise.race([
       pool.query('SELECT 1'),
-      new Promise((_, reject) => setTimeout(() => reject(new Error('Database connection timeout')), 15000))
+      timeoutPromise
     ]);
+    
+    clearTimeout(timeoutId!);
     
     db = drizzle({ client: pool, schema });
     dbAvailable = true;
