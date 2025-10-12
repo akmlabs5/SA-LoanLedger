@@ -63,7 +63,7 @@ A comprehensive user settings system provides full customization of the platform
 
 ### Profile & Theme
 - **Profile Management**: Update first/last name (email locked to authentication provider)
-- **Theme Switching**: Light, Dark, and System modes with OS preference detection and automatic updates, fallback to 'light' when unset
+- **Theme Switching**: Light, Dark, and System modes with OS preference detection and live updates. System mode automatically responds to OS theme changes. Ref-based listener management prevents memory leaks during theme transitions.
 
 ### Display Preferences  
 - **Dashboard Layout**: Grid or List view toggle for loan cards on dashboard, persists user's choice
