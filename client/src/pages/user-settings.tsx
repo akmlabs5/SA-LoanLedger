@@ -1462,17 +1462,59 @@ export default function UserSettingsPage() {
                 <CardDescription>Manage your account security and authentication</CardDescription>
               </CardHeader>
               <CardContent className="space-y-6">
-                <div className="rounded-lg border p-4 bg-muted/50">
-                  <h3 className="font-semibold mb-2">Authentication Provider</h3>
-                  <p className="text-sm text-muted-foreground mb-4">
-                    Your account is secured using Replit Authentication. Password management and two-factor authentication
-                    are handled through your Replit account settings.
+                <div className="rounded-lg border p-4 bg-green-50 dark:bg-green-900/10">
+                  <h3 className="font-semibold mb-2 text-green-900 dark:text-green-100">Account Security</h3>
+                  <p className="text-sm text-green-800 dark:text-green-200 mb-4">
+                    Your account is secured with email-based authentication and optional two-factor authentication (2FA). 
+                    Manage your password and security settings below.
                   </p>
-                  <Button variant="outline" asChild className="h-12" data-testid="button-replit-security">
-                    <a href="https://replit.com/account" target="_blank" rel="noopener noreferrer">
-                      Manage Replit Security Settings
-                    </a>
-                  </Button>
+                  <div className="flex flex-wrap gap-3">
+                    <Button 
+                      variant="outline" 
+                      className="h-12 border-green-200 dark:border-green-800 hover:bg-green-100 dark:hover:bg-green-900/20" 
+                      data-testid="button-change-password"
+                      onClick={async () => {
+                        try {
+                          const session = localStorage.getItem('supabase_session');
+                          if (!session) {
+                            toast({
+                              title: "Error",
+                              description: "Please log in to change your password.",
+                              variant: "destructive",
+                            });
+                            return;
+                          }
+                          
+                          const sessionData = JSON.parse(session);
+                          const response = await fetch('/api/auth/supabase/reset-password', {
+                            method: 'POST',
+                            headers: {
+                              'Authorization': `Bearer ${sessionData.access_token}`
+                            }
+                          });
+                          
+                          const data = await response.json();
+                          
+                          if (data.success) {
+                            toast({
+                              title: "Password Reset Email Sent",
+                              description: data.message || "Check your email for the password reset link.",
+                            });
+                          } else {
+                            throw new Error(data.message || 'Failed to send reset email');
+                          }
+                        } catch (error: any) {
+                          toast({
+                            title: "Error",
+                            description: error.message || "Failed to send password reset email.",
+                            variant: "destructive",
+                          });
+                        }
+                      }}
+                    >
+                      Change Password
+                    </Button>
+                  </div>
                 </div>
 
                 <Separator />
@@ -1480,14 +1522,29 @@ export default function UserSettingsPage() {
                 <div className="space-y-4">
                   <h3 className="font-semibold">Active Sessions</h3>
                   <p className="text-sm text-muted-foreground">
-                    You are currently logged in. Your session will expire after 24 hours of inactivity.
+                    You are currently logged in. Your session will expire after 7 days of inactivity.
                   </p>
                   <div className="flex items-center justify-between p-4 border rounded-lg">
                     <div>
                       <p className="font-medium">Current Session</p>
                       <p className="text-sm text-muted-foreground">Active now</p>
                     </div>
-                    <Button variant="outline" className="h-12" data-testid="button-logout">
+                    <Button 
+                      variant="outline" 
+                      className="h-12" 
+                      data-testid="button-logout"
+                      onClick={async () => {
+                        try {
+                          await fetch('/api/logout', {
+                            method: 'GET',
+                            credentials: 'include'
+                          });
+                          window.location.href = '/unified-login';
+                        } catch (error) {
+                          console.error('Logout error:', error);
+                        }
+                      }}
+                    >
                       Sign Out
                     </Button>
                   </div>

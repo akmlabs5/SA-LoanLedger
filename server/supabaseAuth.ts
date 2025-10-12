@@ -465,6 +465,43 @@ export async function setupSupabaseAuth(app: Express, databaseAvailable = true) 
       });
     }
   });
+
+  app.post('/api/auth/supabase/reset-password', async (req, res) => {
+    try {
+      const authHeader = req.headers.authorization;
+      
+      if (!authHeader || !authHeader.startsWith('Bearer ')) {
+        return res.status(401).json({ success: false, message: "No token provided" });
+      }
+      
+      const token = authHeader.split(' ')[1];
+      const user = await verifySupabaseToken(token);
+      
+      if (!user || !user.email) {
+        return res.status(401).json({ success: false, message: "Invalid token or no email found" });
+      }
+      
+      // Trigger Supabase password reset email
+      const { error } = await supabase.auth.resetPasswordForEmail(user.email, {
+        redirectTo: `${process.env.REPLIT_DEV_DOMAIN || 'http://localhost:5000'}/reset-password`
+      });
+      
+      if (error) {
+        throw error;
+      }
+      
+      res.json({ 
+        success: true,
+        message: "Password reset link has been sent to your email address"
+      });
+    } catch (error: any) {
+      console.error("Password reset error:", error);
+      res.status(500).json({ 
+        success: false,
+        message: error.message || "Failed to send password reset email" 
+      });
+    }
+  });
 }
 
 export const isSupabaseAuthenticated: RequestHandler = async (req, res, next) => {
