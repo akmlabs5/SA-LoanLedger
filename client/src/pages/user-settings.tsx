@@ -52,6 +52,7 @@ import { Separator } from "@/components/ui/separator";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
+import { useSoundEffects } from "@/hooks/useSoundEffects";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 
 // Profile schema
@@ -68,9 +69,8 @@ const preferencesSchema = z.object({
   currency: z.string().min(1, "Currency is required"),
   dateFormat: z.string().min(1, "Date format is required"),
   theme: z.enum(['light', 'dark', 'system']),
-  dashboardLayout: z.enum(['grid', 'list', 'compact']),
+  dashboardLayout: z.enum(['grid', 'list']),
   itemsPerPage: z.coerce.number().min(5).max(100),
-  enableNotifications: z.boolean(),
   enableSounds: z.boolean(),
   compactView: z.boolean(),
 });
@@ -248,6 +248,7 @@ function TwoFactorAuthCard() {
 
 export default function UserSettingsPage() {
   const { toast } = useToast();
+  const { playSuccess, playError, playClick } = useSoundEffects();
   const [activeTab, setActiveTab] = useState("profile");
 
   // Fetch user data
@@ -296,7 +297,6 @@ export default function UserSettingsPage() {
       theme: preferences?.theme || 'light',
       dashboardLayout: preferences?.dashboardLayout || 'grid',
       itemsPerPage: preferences?.itemsPerPage || 10,
-      enableNotifications: preferences?.enableNotifications ?? true,
       enableSounds: preferences?.enableSounds ?? false,
       compactView: preferences?.compactView ?? false,
     },
@@ -349,6 +349,7 @@ export default function UserSettingsPage() {
       return await apiRequest("PATCH", "/api/auth/user", data);
     },
     onSuccess: () => {
+      playSuccess();
       queryClient.invalidateQueries({ queryKey: ['/api/auth/user'] });
       toast({
         title: "Profile Updated",
@@ -356,6 +357,7 @@ export default function UserSettingsPage() {
       });
     },
     onError: (error: any) => {
+      playError();
       toast({
         title: "Error",
         description: error.message || "Failed to update profile",
@@ -370,6 +372,7 @@ export default function UserSettingsPage() {
       return await apiRequest("POST", "/api/user/preferences", data);
     },
     onSuccess: () => {
+      playSuccess();
       queryClient.invalidateQueries({ queryKey: ['/api/user/preferences'] });
       toast({
         title: "Preferences Saved",
@@ -377,6 +380,7 @@ export default function UserSettingsPage() {
       });
     },
     onError: (error: any) => {
+      playError();
       toast({
         title: "Error",
         description: error.message || "Failed to save preferences",
@@ -396,6 +400,7 @@ export default function UserSettingsPage() {
       });
     },
     onSuccess: () => {
+      playSuccess();
       queryClient.invalidateQueries({ queryKey: ['/api/user/reminder-settings'] });
       toast({
         title: "Notification Settings Saved",
@@ -403,6 +408,7 @@ export default function UserSettingsPage() {
       });
     },
     onError: (error: any) => {
+      playError();
       toast({
         title: "Error",
         description: error.message || "Failed to save notification settings",
@@ -417,6 +423,7 @@ export default function UserSettingsPage() {
       return await apiRequest("POST", "/api/user/ai-insights", data);
     },
     onSuccess: () => {
+      playSuccess();
       queryClient.invalidateQueries({ queryKey: ['/api/user/ai-insights'] });
       toast({
         title: "AI Insights Settings Saved",
@@ -424,6 +431,7 @@ export default function UserSettingsPage() {
       });
     },
     onError: (error: any) => {
+      playError();
       toast({
         title: "Error",
         description: error.message || "Failed to save AI insights settings",
@@ -438,6 +446,7 @@ export default function UserSettingsPage() {
       return await apiRequest("POST", "/api/user/daily-alerts-preferences", data);
     },
     onSuccess: () => {
+      playSuccess();
       queryClient.invalidateQueries({ queryKey: ['/api/user/daily-alerts-preferences'] });
       toast({
         title: "Daily Alerts Saved",
@@ -445,6 +454,7 @@ export default function UserSettingsPage() {
       });
     },
     onError: (error: any) => {
+      playError();
       toast({
         title: "Error",
         description: error.message || "Failed to save daily alerts preferences",
@@ -808,26 +818,6 @@ export default function UserSettingsPage() {
                                   checked={field.value}
                                   onCheckedChange={field.onChange}
                                   data-testid="switch-compact-view"
-                                />
-                              </FormControl>
-                            </FormItem>
-                          )}
-                        />
-
-                        <FormField
-                          control={preferencesForm.control}
-                          name="enableNotifications"
-                          render={({ field }) => (
-                            <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
-                              <div className="space-y-0.5">
-                                <FormLabel className="text-base">Enable Notifications</FormLabel>
-                                <FormDescription>Receive notifications for important updates</FormDescription>
-                              </div>
-                              <FormControl>
-                                <Switch
-                                  checked={field.value}
-                                  onCheckedChange={field.onChange}
-                                  data-testid="switch-enable-notifications"
                                 />
                               </FormControl>
                             </FormItem>

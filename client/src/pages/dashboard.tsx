@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
@@ -40,6 +40,9 @@ import { PortfolioSummary, LoanWithDetails } from "@shared/types";
 import { SAUDI_CHART_COLORS } from "@/lib/chart-colors";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { MobileHeader, FloatingActionButton } from "@/components/mobile";
+import { usePreferences } from "@/contexts/PreferencesContext";
+import { apiRequest, queryClient } from "@/lib/queryClient";
+import { LayoutGrid, LayoutList } from "lucide-react";
 import backgroundImage from "@assets/loan_management_background_excel_green_1759302449019.png";
 
 export default function Dashboard() {
@@ -49,6 +52,35 @@ export default function Dashboard() {
   const [visibleLoans, setVisibleLoans] = useState(8);
   const [visibleBanks, setVisibleBanks] = useState(3);
   const isMobile = useIsMobile();
+  const { preferences } = usePreferences();
+  const [currentLayout, setCurrentLayout] = useState<'grid' | 'list'>(preferences?.dashboardLayout || 'grid');
+  const compactView = preferences?.compactView === true;
+
+  // Sync layout when preferences change
+  useEffect(() => {
+    if (preferences?.dashboardLayout) {
+      setCurrentLayout(preferences.dashboardLayout);
+    }
+  }, [preferences?.dashboardLayout]);
+
+  // Mutation to save dashboard layout preference
+  const updateLayoutMutation = useMutation({
+    mutationFn: async (layout: 'grid' | 'list') => {
+      return await apiRequest("POST", "/api/user/preferences", {
+        ...preferences,
+        dashboardLayout: layout,
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/user/preferences'] });
+    },
+  });
+
+  // Handle layout change with persistence
+  const handleLayoutChange = (layout: 'grid' | 'list') => {
+    setCurrentLayout(layout);
+    updateLayoutMutation.mutate(layout);
+  };
 
   // Redirect to login if not authenticated
   useEffect(() => {
@@ -699,6 +731,26 @@ export default function Dashboard() {
                     <p className="text-sm text-muted-foreground">Loans requiring attention, sorted by urgency</p>
                   </div>
                   <div className="flex gap-2">
+                    <div className="flex border rounded-md">
+                      <Button
+                        variant={currentLayout === 'grid' ? 'default' : 'ghost'}
+                        size="sm"
+                        onClick={() => handleLayoutChange('grid')}
+                        className="rounded-r-none"
+                        data-testid="button-layout-grid"
+                      >
+                        <LayoutGrid className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant={currentLayout === 'list' ? 'default' : 'ghost'}
+                        size="sm"
+                        onClick={() => handleLayoutChange('list')}
+                        className="rounded-l-none"
+                        data-testid="button-layout-list"
+                      >
+                        <LayoutList className="h-4 w-4" />
+                      </Button>
+                    </div>
                     <SmartLoanMatcher />
                     <Link href="/loans">
                       <Button className="bg-primary lg:hover:bg-primary/90 text-primary-foreground" data-testid="button-add-loan">
@@ -729,7 +781,7 @@ export default function Dashboard() {
                   </div>
                 ) : (
                   <>
-                    <div className="space-y-2 overflow-y-auto pr-2 flex-1 max-h-[500px]">
+                    <div className={currentLayout === 'grid' ? 'grid grid-cols-1 md:grid-cols-2 gap-3 overflow-y-auto pr-2 flex-1 max-h-[500px]' : 'space-y-2 overflow-y-auto pr-2 flex-1 max-h-[500px]'}>
                       {sortedLoans.slice(0, visibleLoans).map((loan) => {
                         const urgency = getLoanUrgency(loan.dueDate);
                         const urgencyBorderClass = urgency.color === 'red' 
@@ -737,9 +789,10 @@ export default function Dashboard() {
                           : urgency.color === 'yellow' 
                             ? 'border-l-amber-500'
                             : 'border-l-primary';
+                        const paddingClass = compactView ? 'p-3' : 'p-4';
                         
                         return (
-                          <div key={loan.id} className={`bg-card border border-border ${urgencyBorderClass} border-l-4 p-4 rounded-lg shadow-sm lg:hover:shadow-md transition-shadow duration-200`} data-testid={`card-loan-${loan.id}`}>
+                          <div key={loan.id} className={`bg-card border border-border ${urgencyBorderClass} border-l-4 ${paddingClass} rounded-lg shadow-sm lg:hover:shadow-md transition-shadow duration-200`} data-testid={`card-loan-${loan.id}`}>
                             <div className="flex items-center justify-between">
                               <div className="flex items-center space-x-3 min-w-0 flex-1">
                                 <Badge 

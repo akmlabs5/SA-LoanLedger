@@ -59,6 +59,7 @@ import { MobileLayout } from "@/components/mobile";
 import { useAuth } from "@/hooks/useAuth";
 import { queryClient } from "@/lib/queryClient";
 import { SupabaseAuthProvider } from "@/contexts/SupabaseAuthContext";
+import { PreferencesProvider } from "@/contexts/PreferencesContext";
 import { PWAInstallPrompt } from "@/components/PWAInstallPrompt";
 
 function App() {
@@ -177,9 +178,11 @@ export default function AppWrapper() {
   return (
     <QueryClientProvider client={queryClient}>
       <SupabaseAuthProvider>
-        <App />
-        <Toaster />
-        <PWAInstallPrompt />
+        <PreferencesProvider>
+          <App />
+          <Toaster />
+          <PWAInstallPrompt />
+        </PreferencesProvider>
       </SupabaseAuthProvider>
     </QueryClientProvider>
   );
