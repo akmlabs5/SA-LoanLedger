@@ -59,15 +59,30 @@ The platform includes enterprise-grade production security and monitoring:
 - **Production Hardening**: Test endpoints disabled in production, comprehensive error logging, session security
 
 ## User Settings & Preferences
-A comprehensive user settings system provides full customization of the platform experience. The settings include:
+A comprehensive user settings system provides full customization of the platform experience. All settings are fully functional and persist across sessions:
+
+### Profile & Theme
 - **Profile Management**: Update first/last name (email locked to authentication provider)
-- **Theme Switching**: Light, Dark, and System modes with OS preference detection and automatic updates
-- **Preferences**: Timezone, language (EN/AR), currency (SAR), date format, items per page (5-100)
+- **Theme Switching**: Light, Dark, and System modes with OS preference detection and automatic updates, fallback to 'light' when unset
+
+### Display Preferences  
+- **Dashboard Layout**: Grid or List view toggle for loan cards on dashboard, persists user's choice
+- **Compact View**: Toggle for condensed spacing throughout the app (reduces padding when enabled)
+- **Items Per Page**: Pagination control (5-100 items) applied to History page and other lists
+- **Enable Sounds**: Audio feedback for success/error actions (plays sounds on save, mutations)
+- **Localization**: Timezone, language (EN/AR), currency (SAR), date format customization
+
+### Notifications & Reminders
+- **Default Reminder Intervals**: Pre-configured days before loan due date (e.g., 7, 3, 1 days)
+- **Email/Calendar Reminders**: Toggle email and calendar invite generation for reminders
+- **Auto-Apply to New Loans**: Automatically creates reminders for new loans based on default intervals
+- **Daily Alerts**: Configurable alert timing and severity filters (Critical, High, Medium, Low)
+
+### AI & Security
 - **AI Insights Configuration**: Customizable thresholds for risk analysis, concentration monitoring, and LTV tracking
-- **Daily Alerts**: Configurable alert timing and severity filters
 - **Security**: Password reset and 2FA management for Supabase users
 
-All settings persist to the database with Zod validation, and preferences are applied system-wide. The History page respects the items-per-page setting for pagination. Theme preferences are merged with defaults to ensure null-safe operation, with fallbacks to 'light' mode when unset.
+All settings persist to the database with Zod validation and are applied system-wide immediately. A PreferencesContext provides global access to user preferences across the application.
 
 ## Key Features
 The system supports bank-level collateral assignment, optional facility durations, and a revolving period tracking system. Users can create loans that exceed facility credit limits with warning notifications, allowing for flexible credit management.
