@@ -15,9 +15,12 @@ The backend is built with Express.js, employing Drizzle ORM with Neon (PostgreSQ
 ## Authentication
 A unified login page detects user (email) or admin (username) credentials. User authentication uses Supabase Auth with email/password login and optional 2FA OTP verification via SendGrid, while admin uses simple username/password. The signup experience features transparent branding, account type selection (Personal/Organization), an optional 2FA toggle, and green-themed professional forms. All preferences are saved to the database. A session bridge connects Supabase authentication to Express sessions, automatically creating organizations for all new users and including organization data (organizationId, organizationName, isOwner) in user sessions. The Security settings tab provides password reset functionality and 2FA management for all Supabase users.
 
+### Custom Email Verification System
+The platform implements a custom email verification flow using SendGrid instead of Supabase's default mailer, ensuring all authentication emails use branded HTML templates from noreply@akm-labs.com. During signup, the Supabase Admin API creates users with `email_confirm: false`, suppressing automatic emails. Custom verification links are generated via `admin.generateLink()` and sent through SendGrid with beautiful HTML templates featuring Saudi-themed teal/green gradient branding. This approach provides complete control over email design while maintaining Supabase's secure authentication flow.
+
 ### Email Template System
 A professional email template system provides 7 beautiful HTML templates with Saudi-themed teal/green gradient branding:
-- **Email Verification**: For confirming user email addresses during signup
+- **Email Verification**: For confirming user email addresses during signup (sent via custom flow using SendGrid)
 - **Password Reset**: For secure password reset flows
 - **MFA Code**: For 2FA OTP verification with large, centered code display
 - **Welcome Email**: For new user onboarding
@@ -25,7 +28,7 @@ A professional email template system provides 7 beautiful HTML templates with Sa
 - **Loan Payment Reminder**: For upcoming payment notifications with payment details and calendar integration
 - **General Reminder**: Flexible template for any type of reminder with customizable sections
 
-The `EmailTemplateService` supports variable substitution for placeholders like {{url}}, {{code}}, {{user.name}}, {{loan_name}}, {{payment_amount}}, and many more. All templates include the Morouna logo (via EMAIL_LOGO_URL environment variable) and "by AKM Labs" branding. 2FA OTP emails, team invitations, and payment reminders use these templates for a polished, professional experience.
+The `EmailTemplateService` supports variable substitution for placeholders like {{url}}, {{code}}, {{user.name}}, {{loan_name}}, {{payment_amount}}, and many more. All templates include text-based "Morouna Loans by AKM Labs" branding (no external images for spam-filter safety). 2FA OTP emails, team invitations, email verification, and payment reminders use these templates for a polished, professional experience sent from noreply@akm-labs.com.
 
 ## Multi-Tenant Team Collaboration
 The platform supports organizational team collaboration for 2-5 members with complete data isolation. Organizations can be 'Personal' or 'Organization'. Team management includes an email-based invitation system via SendGrid with secure token-based acceptance, role-based access (Owner/Member), and team settings. All data (loan, facility, collateral, guarantee, bank) is scoped by `organizationId` with SQL-level enforcement and API route validation to ensure cross-tenant data isolation, including for AI Agent operations and report generation. User sessions include `organizationId`, `organizationName`, and `isOwner` flags.
