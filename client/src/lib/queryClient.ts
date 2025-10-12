@@ -100,3 +100,20 @@ export const queryClient = new QueryClient({
     },
   },
 });
+
+// Cache invalidation helpers for consistent cache management
+export function invalidateLoans() {
+  queryClient.invalidateQueries({ queryKey: ['/api/loans'] });
+  queryClient.invalidateQueries({ queryKey: ['/api/dashboard/portfolio'] });
+  queryClient.invalidateQueries({ queryKey: ['/api/dashboard/upcoming-loans-by-month'] });
+}
+
+export function invalidateFacilities() {
+  queryClient.invalidateQueries({ queryKey: ['/api/facilities'] });
+  queryClient.invalidateQueries({ queryKey: ['/api/dashboard/portfolio'] });
+}
+
+export function invalidateBanks() {
+  queryClient.invalidateQueries({ queryKey: ['/api/banks'] });
+  queryClient.invalidateQueries({ queryKey: ['/api/dashboard/portfolio'] });
+}

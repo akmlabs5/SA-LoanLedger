@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { cn } from '@/lib/utils';
-import { apiRequest } from '@/lib/queryClient';
+import { apiRequest, invalidateLoans, invalidateFacilities, invalidateBanks } from '@/lib/queryClient';
 import { useIsMobile } from '@/hooks/use-mobile';
 
 interface Message {
@@ -60,6 +60,19 @@ export function FloatingAgentChat() {
       };
 
       setMessages(prev => [...prev, assistantMessage]);
+
+      // Invalidate cache when AI performs mutations
+      if (data.metadata) {
+        if (data.metadata.loanCreated || data.metadata.loanUpdated || data.metadata.loanSettled) {
+          invalidateLoans();
+        }
+        if (data.metadata.facilityCreated || data.metadata.facilityUpdated) {
+          invalidateFacilities();
+        }
+        if (data.metadata.bankCreated || data.metadata.bankUpdated) {
+          invalidateBanks();
+        }
+      }
     } catch (error) {
       console.error('Agent chat error:', error);
       
