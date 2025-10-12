@@ -131,13 +131,41 @@ export default function LoanDetailPage() {
     }
   };
 
+  const deleteLoanMutation = useMutation({
+    mutationFn: async (loanId: string) => {
+      await apiRequest("DELETE", `/api/loans/${loanId}`, { reason: "Cancelled by user" });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/loans"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/dashboard/portfolio"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/facilities"] });
+      toast({
+        title: "Success",
+        description: "Loan cancelled successfully",
+      });
+      setLocation("/loans");
+    },
+    onError: (error) => {
+      if (isUnauthorizedError(error as Error)) {
+        toast({
+          title: "Unauthorized",
+          description: "You are logged out. Logging in again...",
+          variant: "destructive",
+        });
+        setTimeout(() => window.location.href = "/api/login", 500);
+        return;
+      }
+      toast({
+        title: "Cancellation Failed",
+        description: error instanceof Error ? error.message : "Failed to cancel loan",
+        variant: "destructive",
+      });
+    },
+  });
+
   const handleDeleteLoan = () => {
     if (window.confirm("Are you sure you want to cancel this loan? This action cannot be undone.")) {
-      // Delete loan mutation would go here
-      toast({
-        title: "Feature Coming Soon",
-        description: "Loan cancellation functionality will be available soon.",
-      });
+      deleteLoanMutation.mutate(loan.id);
     }
   };
 

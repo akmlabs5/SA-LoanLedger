@@ -143,7 +143,7 @@ export interface IStorage {
   getLoanById(loanId: string): Promise<(Loan & { facility: Facility & { bank: Bank } }) | undefined>;
   createLoan(loan: InsertLoan): Promise<Loan>;
   updateLoan(loanId: string, loan: Partial<InsertLoan>, userId: string, reason?: string): Promise<Loan>;
-  deleteLoan(loanId: string, userId: string, reason?: string): Promise<void>;
+  deleteLoan(loanId: string, organizationId: string, reason?: string): Promise<void>;
   
   // Payment and settlement operations
   processPayment(loanId: string, payment: PaymentRequest, userId: string): Promise<{ loan: Loan; transactions: Transaction[] }>;
@@ -742,14 +742,20 @@ export class DatabaseStorage implements IStorage {
     });
   }
 
-  async deleteLoan(loanId: string): Promise<void> {
+  async deleteLoan(loanId: string, organizationId: string, reason?: string): Promise<void> {
+    // First verify the loan belongs to the organization
+    const loan = await this.getLoanById(loanId);
+    if (!loan || loan.organizationId !== organizationId) {
+      throw new Error('Loan not found or access denied');
+    }
+
     await db
       .update(loans)
       .set({
         status: 'cancelled',
         updatedAt: new Date()
       })
-      .where(eq(loans.id, loanId));
+      .where(and(eq(loans.id, loanId), eq(loans.organizationId, organizationId)));
   }
 
   async calculateLoanBalance(loanId: string): Promise<{ principal: number; interest: number; fees: number; total: number }> {
@@ -2348,8 +2354,15 @@ Reference: {loanReference}`,
   }
 
 
-  async deleteLoan(loanId: string): Promise<void> {
-    this.loans.delete(loanId);
+  async deleteLoan(loanId: string, organizationId: string, reason?: string): Promise<void> {
+    const loan = this.loans.get(loanId);
+    if (loan && loan.organizationId === organizationId) {
+      loan.status = 'cancelled';
+      loan.updatedAt = new Date();
+      this.loans.set(loanId, loan);
+    } else {
+      throw new Error('Loan not found or access denied');
+    }
   }
 
   async createDocument(document: InsertDocument): Promise<Document> {
