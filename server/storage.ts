@@ -1025,6 +1025,8 @@ export class DatabaseStorage implements IStorage {
   }
 
   async upsertUserPreferences(preferences: InsertUserPreferences): Promise<UserPreferences> {
+    console.log("🔧 upsertUserPreferences called with:", JSON.stringify(preferences, null, 2));
+    
     const [result] = await db
       .insert(userPreferences)
       .values(preferences)
@@ -1036,6 +1038,8 @@ export class DatabaseStorage implements IStorage {
         },
       })
       .returning();
+    
+    console.log("✅ upsertUserPreferences result:", result ? "SUCCESS" : "FAILED");
     return result;
   }
 
