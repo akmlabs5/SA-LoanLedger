@@ -30,6 +30,13 @@ export function RevolvingPeriodTracker({
 }: RevolvingPeriodTrackerProps) {
   const { data: usageData, isLoading, error } = useQuery<RevolvingUsageData>({
     queryKey: ["/api/loans", loanId, "revolving-usage"],
+    queryFn: async () => {
+      const response = await fetch(`/api/loans/${loanId}/revolving-usage`);
+      if (!response.ok) {
+        throw new Error('Failed to fetch revolving usage data');
+      }
+      return response.json();
+    },
     enabled: !!loanId,
   });
 
