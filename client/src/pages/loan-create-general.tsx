@@ -21,6 +21,7 @@ import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ModernDatePicker } from "@/components/ui/date-picker";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 import { 
   ArrowLeft, 
@@ -126,13 +127,11 @@ export default function GeneralLoanCreatePage() {
 
   // Calculate used credit for selected facility
   const calculateUsedCredit = (facilityId: string) => {
-    if (!activeLoans || !creditLines) return 0;
+    if (!activeLoans) return 0;
     
-    const facilityCreditLines = creditLines.filter(cl => cl.facilityId === facilityId);
-    const facilityCreditLineIds = facilityCreditLines.map(cl => cl.id);
-    
+    // Filter active loans directly by facilityId
     return activeLoans
-      .filter(loan => loan.creditLineId && facilityCreditLineIds.includes(loan.creditLineId))
+      .filter(loan => loan.facilityId === facilityId)
       .reduce((sum, loan) => sum + parseFloat(loan.amount), 0);
   };
 
@@ -153,6 +152,11 @@ export default function GeneralLoanCreatePage() {
   };
   
   const creditInfo = getCreditInfo();
+
+  // Check if loan amount exceeds available credit
+  const loanAmount = parseFloat(form.watch("amount") || "0");
+  const exceedsLimit = creditInfo && loanAmount > 0 && (loanAmount > creditInfo.availableCredit);
+  const exceedAmount = exceedsLimit ? loanAmount - creditInfo.availableCredit : 0;
 
   // Calculate interest based on form values
   const calculateInterest = () => {
@@ -376,26 +380,39 @@ export default function GeneralLoanCreatePage() {
 
                       {/* Credit Limit Information */}
                       {creditInfo && (
-                        <div className="p-4 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg">
-                          <div className="flex items-center gap-2 mb-3">
-                            <DollarSign className="h-4 w-4 text-green-600" />
-                            <h4 className="font-medium text-green-800 dark:text-green-200">Credit Facility Information</h4>
+                        <>
+                          <div className="p-4 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg">
+                            <div className="flex items-center gap-2 mb-3">
+                              <DollarSign className="h-4 w-4 text-green-600" />
+                              <h4 className="font-medium text-green-800 dark:text-green-200">Credit Facility Information</h4>
+                            </div>
+                            <div className="grid grid-cols-3 gap-4 text-sm">
+                              <div>
+                                <span className="text-green-700 dark:text-green-300">Total Credit Limit:</span>
+                                <div className="font-medium">{creditInfo.totalCreditLimit.toLocaleString()} SAR</div>
+                              </div>
+                              <div>
+                                <span className="text-green-700 dark:text-green-300">Used Credit:</span>
+                                <div className="font-medium">{creditInfo.usedCredit.toLocaleString()} SAR</div>
+                              </div>
+                              <div>
+                                <span className="text-green-700 dark:text-green-300">Available Credit:</span>
+                                <div className="font-medium text-green-900 dark:text-green-100">{creditInfo.availableCredit.toLocaleString()} SAR</div>
+                              </div>
+                            </div>
                           </div>
-                          <div className="grid grid-cols-3 gap-4 text-sm">
-                            <div>
-                              <span className="text-green-700 dark:text-green-300">Total Credit Limit:</span>
-                              <div className="font-medium">{creditInfo.totalCreditLimit.toLocaleString()} SAR</div>
-                            </div>
-                            <div>
-                              <span className="text-green-700 dark:text-green-300">Used Credit:</span>
-                              <div className="font-medium">{creditInfo.usedCredit.toLocaleString()} SAR</div>
-                            </div>
-                            <div>
-                              <span className="text-green-700 dark:text-green-300">Available Credit:</span>
-                              <div className="font-medium text-green-900 dark:text-green-100">{creditInfo.availableCredit.toLocaleString()} SAR</div>
-                            </div>
-                          </div>
-                        </div>
+
+                          {/* Warning when exceeding limit */}
+                          {exceedsLimit && (
+                            <Alert className="border-orange-300 bg-orange-50 dark:bg-orange-900/20 dark:border-orange-800">
+                              <AlertTriangle className="h-4 w-4 text-orange-600 dark:text-orange-400" />
+                              <AlertDescription className="text-orange-800 dark:text-orange-200">
+                                <strong>Warning:</strong> This loan amount exceeds the available credit by{' '}
+                                <strong>{exceedAmount.toLocaleString()} SAR</strong>. The facility limit will be exceeded.
+                              </AlertDescription>
+                            </Alert>
+                          )}
+                        </>
                       )}
                     </div>
 
