@@ -240,6 +240,77 @@ export function registerLoansRoutes(app: Express, deps: AppDependencies) {
     }
   });
 
+  app.get('/api/loans/:id/revolving-usage', isAuthenticated, attachOrganizationContext, requireOrganization, async (req: any, res) => {
+    try {
+      const loanId = req.params.id;
+      const organizationId = req.organizationId;
+      
+      const loan = await storage.getLoanById(loanId);
+      
+      if (!loan || loan.organizationId !== organizationId) {
+        return res.status(404).json({ message: "Loan not found" });
+      }
+
+      const facility = loan.facility;
+      if (!facility || !facility.enableRevolvingTracking || !facility.maxRevolvingPeriod) {
+        return res.status(400).json({ message: "Revolving period tracking is not enabled for this loan's facility" });
+      }
+
+      const startDate = new Date(loan.startDate);
+      const today = new Date();
+      
+      let endDate: Date;
+      if (loan.status === 'settled' && loan.settledDate) {
+        endDate = new Date(loan.settledDate);
+      } else {
+        endDate = today;
+      }
+      
+      if (isNaN(startDate.getTime()) || isNaN(endDate.getTime())) {
+        return res.status(400).json({ message: "Invalid dates for loan" });
+      }
+      
+      const daysUsed = Math.max(0, Math.ceil((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24)));
+      
+      const maxPeriod = facility.maxRevolvingPeriod;
+      const daysRemaining = Math.max(0, Math.round(maxPeriod - daysUsed));
+      
+      let percentageUsed = (daysUsed / maxPeriod) * 100;
+      if (!isFinite(percentageUsed)) {
+        percentageUsed = 0;
+      }
+      percentageUsed = Math.min(100, Math.max(0, Math.round(percentageUsed * 10) / 10));
+      
+      let status: 'available' | 'warning' | 'critical' | 'expired';
+      if (percentageUsed >= 100) {
+        status = 'expired';
+      } else if (percentageUsed >= 90) {
+        status = 'critical';
+      } else if (percentageUsed >= 70) {
+        status = 'warning';
+      } else {
+        status = 'available';
+      }
+      
+      const canRevolve = daysRemaining > 0;
+      
+      const usageData = {
+        daysUsed: Math.round(daysUsed),
+        daysRemaining,
+        percentageUsed,
+        status,
+        canRevolve,
+        maxRevolvingPeriod: maxPeriod,
+        loanStatus: loan.status,
+      };
+      
+      res.json(usageData);
+    } catch (error) {
+      console.error("Error calculating loan revolving usage:", error);
+      res.status(500).json({ message: "Failed to calculate loan revolving usage" });
+    }
+  });
+
   app.patch('/api/loans/:id', isAuthenticated, attachOrganizationContext, requireOrganization, async (req: any, res) => {
     try {
       const loanId = req.params.id;
