@@ -51,7 +51,8 @@ import {
   Trash2,
   Edit,
   Banknote,
-  ChevronDown
+  ChevronDown,
+  Undo2
 } from "lucide-react";
 import { Link, useLocation } from "wouter";
 import { isUnauthorizedError } from "@/lib/authUtils";
@@ -92,6 +93,9 @@ export default function Loans() {
   const [selectedLoanForAction, setSelectedLoanForAction] = useState<any | null>(null);
   const [isActionSheetOpen, setIsActionSheetOpen] = useState(false);
   const [isFilterSheetOpen, setIsFilterSheetOpen] = useState(false);
+
+  // Undo settlement state
+  const [loanToUndo, setLoanToUndo] = useState<string | null>(null);
 
   // Reset visible loans when filters change
   useEffect(() => {
@@ -200,6 +204,41 @@ export default function Loans() {
       toast({
         title: "Error",
         description: "Failed to cancel loan",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const reverseSettlementMutation = useMutation({
+    mutationFn: async (loanId: string) => {
+      return apiRequest('POST', `/api/loans/${loanId}/reverse-settlement`, { reason: '' });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/loans"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/loans", "settled"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/dashboard/portfolio"] });
+      setLoanToUndo(null);
+      setActiveTab("active"); // Switch to active tab to see the reverted loan
+      toast({
+        title: "Success",
+        description: "Settlement reversed - loan is now active again",
+      });
+    },
+    onError: (error) => {
+      if (isUnauthorizedError(error as Error)) {
+        toast({
+          title: "Unauthorized",
+          description: "You are logged out. Logging in again...",
+          variant: "destructive",
+        });
+        setTimeout(() => {
+          window.location.href = "/api/login";
+        }, 500);
+        return;
+      }
+      toast({
+        title: "Error",
+        description: "Failed to reverse settlement",
         variant: "destructive",
       });
     },
@@ -602,6 +641,21 @@ export default function Loans() {
               <span className="text-sm font-semibold text-emerald-600 dark:text-emerald-400">
                 {loan.settledDate ? new Date(loan.settledDate).toLocaleDateString() : 'Recently'}
               </span>
+            </div>
+            <div className="pt-2 border-t border-gray-200 dark:border-gray-700">
+              <Button
+                variant="outline"
+                size="sm"
+                className="w-full h-9 border-red-300 text-red-700 lg:hover:bg-red-50 dark:border-red-800 dark:text-red-400 dark:lg:hover:bg-red-950/20"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setLoanToUndo(loan.id);
+                }}
+                data-testid={`button-undo-settlement-${loan.id}`}
+              >
+                <Undo2 className="mr-2 h-4 w-4" />
+                Undo Settlement
+              </Button>
             </div>
           </div>
         </CardContent>
@@ -1286,6 +1340,30 @@ export default function Loans() {
               className="bg-red-600 lg:hover:bg-red-700 text-white"
             >
               Delete Loan
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog open={!!loanToUndo} onOpenChange={(open) => !open && setLoanToUndo(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2">
+              <Undo2 className="h-5 w-5 text-red-600" />
+              Undo Settlement
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              This will revert the loan back to active status. Are you sure you want to undo the settlement?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => setLoanToUndo(null)}>Cancel</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={() => loanToUndo && reverseSettlementMutation.mutate(loanToUndo)}
+              className="bg-red-600 lg:hover:bg-red-700 text-white"
+              disabled={reverseSettlementMutation.isPending}
+            >
+              {reverseSettlementMutation.isPending ? 'Undoing...' : 'Undo Settlement'}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
