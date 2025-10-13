@@ -413,6 +413,9 @@ export const loans = pgTable("loans", {
   status: loanStatusEnum("status").default('active'),
   settledDate: date("settled_date"),
   settledAmount: decimal("settled_amount", { precision: 15, scale: 2 }),
+  reversedAt: timestamp("reversed_at"), // When settlement was reversed
+  reversalReason: text("reversal_reason"), // Why settlement was reversed
+  reversedBy: varchar("reversed_by"), // User ID who reversed the settlement
   isDeleted: boolean("is_deleted").default(false), // Soft delete for audit trail
   updatedAt: timestamp("updated_at").defaultNow(),
   createdAt: timestamp("created_at").defaultNow(),
