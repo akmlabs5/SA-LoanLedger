@@ -75,7 +75,7 @@ export function registerDocumentsRoutes(app: Express, deps: AppDependencies) {
         fileSize: req.file.size,
         fileUrl: objectPath, // Store the object storage path
         userId: userId!,
-        category: category || 'general',
+        category: category || 'other',
         description: description || null,
       });
 
