@@ -409,9 +409,7 @@ export default function Loans() {
   };
 
   const handleLoanCardClick = (loanId: string) => {
-    if (isMobile) {
-      setLocation(`/loans/${loanId}`);
-    }
+    setLocation(`/loans/${loanId}`);
   };
 
   const openLoanActions = (loan: any, e?: React.MouseEvent) => {
