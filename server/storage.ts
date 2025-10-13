@@ -148,6 +148,7 @@ export interface IStorage {
   // Payment and settlement operations
   processPayment(loanId: string, payment: PaymentRequest, userId: string): Promise<{ loan: Loan; transactions: Transaction[] }>;
   settleLoan(loanId: string, settlement: SettlementRequest, userId: string): Promise<{ loan: Loan; transactions: Transaction[] }>;
+  reverseLoanSettlement(loanId: string, reason: string, userId: string): Promise<Loan>;
   revolveLoan(loanId: string, revolve: RevolveRequest, userId: string): Promise<{ oldLoan: Loan; newLoan: Loan; transactions: Transaction[] }>;
   
   // Ledger operations
@@ -739,6 +740,56 @@ export class DatabaseStorage implements IStorage {
         .returning();
 
       return { loan: settledLoan, transactions: [transaction] };
+    });
+  }
+
+  async reverseLoanSettlement(loanId: string, reason: string, userId: string): Promise<Loan> {
+    return await db.transaction(async (tx) => {
+      // Get loan to verify it's settled
+      const [loan] = await tx
+        .select()
+        .from(loans)
+        .where(eq(loans.id, loanId))
+        .limit(1);
+
+      if (!loan) {
+        throw new Error('Loan not found');
+      }
+
+      if (loan.status !== 'settled') {
+        throw new Error('Loan is not settled - cannot reverse settlement');
+      }
+
+      // Create audit log for the reversal
+      await tx.insert(auditLogs).values({
+        userId,
+        entityType: 'loan',
+        entityId: loanId,
+        action: 'settlement_reversed',
+        changes: {
+          previousStatus: 'settled',
+          previousSettledDate: loan.settledDate,
+          previousSettledAmount: loan.settledAmount,
+          reversalReason: reason,
+        },
+      });
+
+      // Update loan: revert to active, record reversal details
+      const [reversedLoan] = await tx
+        .update(loans)
+        .set({
+          status: 'active',
+          settledDate: null,
+          settledAmount: null,
+          reversedAt: new Date(),
+          reversalReason: reason,
+          reversedBy: userId,
+          updatedAt: new Date(),
+        })
+        .where(eq(loans.id, loanId))
+        .returning();
+
+      return reversedLoan;
     });
   }
 
@@ -2772,6 +2823,34 @@ Reference: {loanReference}`,
     this.transactions.set(settlementTransaction.id, settlementTransaction);
 
     return { loan: updatedLoan, transactions: [settlementTransaction] };
+  }
+
+  async reverseLoanSettlement(loanId: string, reason: string, userId: string): Promise<Loan> {
+    const loan = this.loans.get(loanId);
+    if (!loan) throw new Error('Loan not found');
+
+    if (loan.status !== 'settled') {
+      throw new Error('Loan is not settled - cannot reverse settlement');
+    }
+
+    // Create audit log
+    console.log(`🔍 AUDIT: settlement_reversed on loan:${loanId} by ${userId} - Reason: ${reason}`);
+
+    // Revert loan to active status
+    const reversedLoan: Loan = {
+      ...loan,
+      status: 'active',
+      settledDate: null,
+      settledAmount: null,
+      reversedAt: new Date(),
+      reversalReason: reason,
+      reversedBy: userId,
+      updatedAt: new Date(),
+    };
+
+    this.loans.set(loanId, reversedLoan);
+
+    return reversedLoan;
   }
 
   async revolveLoan(loanId: string, revolve: RevolveRequest, userId: string): Promise<{ oldLoan: Loan; newLoan: Loan; transactions: Transaction[] }> {

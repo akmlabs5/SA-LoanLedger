@@ -298,6 +298,31 @@ export function registerLoansRoutes(app: Express, deps: AppDependencies) {
     }
   });
 
+  app.post('/api/loans/:id/reverse-settlement', isAuthenticated, attachOrganizationContext, requireOrganization, async (req: any, res) => {
+    try {
+      const loanId = req.params.id;
+      const organizationId = req.organizationId;
+      const userId = req.user.claims.sub;
+      const { reason } = req.body;
+      
+      if (!reason || reason.trim().length === 0) {
+        return res.status(400).json({ message: "Reversal reason is required" });
+      }
+      
+      // Verify loan belongs to organization before reversing
+      const loan = await storage.getLoanById(loanId);
+      if (!loan || loan.organizationId !== organizationId) {
+        return res.status(404).json({ message: "Loan not found" });
+      }
+      
+      const reversedLoan = await storage.reverseLoanSettlement(loanId, reason, userId);
+      res.json(reversedLoan);
+    } catch (error: any) {
+      console.error("Error reversing settlement:", error);
+      res.status(400).json({ message: error.message || "Failed to reverse settlement" });
+    }
+  });
+
   app.post('/api/loans/:id/revolve', isAuthenticated, attachOrganizationContext, requireOrganization, async (req: any, res) => {
     try {
       const loanId = req.params.id;
