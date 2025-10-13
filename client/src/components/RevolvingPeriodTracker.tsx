@@ -69,9 +69,9 @@ export function RevolvingPeriodTracker({
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <Alert className="border-red-200 bg-red-50 dark:bg-red-950 dark:border-red-800" data-testid="alert-error-state">
-            <AlertDescription className="text-sm text-red-800 dark:text-red-200">
-              Unable to load loan period data. Please try refreshing the page.
+          <Alert className="border-blue-200 bg-blue-50 dark:bg-blue-950 dark:border-blue-800" data-testid="alert-error-state">
+            <AlertDescription className="text-sm text-blue-800 dark:text-blue-200">
+              This facility doesn't have revolving period tracking enabled. You can still monitor your loan normally.
             </AlertDescription>
           </Alert>
         </CardContent>
