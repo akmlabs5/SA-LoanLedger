@@ -387,44 +387,44 @@ export default function LoanDetailPage() {
           <div className="lg:col-span-2 space-y-6">
             {/* Loan Overview */}
             <Card className="shadow-lg">
-              <CardHeader className="pb-4">
-                <CardTitle className="flex items-center space-x-2 text-lg">
+              <CardHeader className="pb-3">
+                <CardTitle className="flex items-center space-x-2 text-base">
                   <Building2 className="h-5 w-5 text-primary" />
                   <span>Loan Overview</span>
                 </CardTitle>
               </CardHeader>
-              <CardContent className="space-y-6">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div>
+              <CardContent className="space-y-5">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                  <div className="space-y-1">
                     <label className="text-sm font-medium text-muted-foreground">Bank</label>
-                    <p className="text-lg font-semibold">{loan.facility?.bank?.name || 'Unknown Bank'}</p>
+                    <p className="text-base font-semibold">{loan.facility?.bank?.name || 'Unknown Bank'}</p>
                   </div>
-                  <div>
+                  <div className="space-y-1">
                     <label className="text-sm font-medium text-muted-foreground">Amount</label>
-                    <p className="text-lg font-semibold">{formatCurrency(parseFloat(loan.amount))}</p>
+                    <p className="text-base font-semibold">{formatCurrency(parseFloat(loan.amount))}</p>
                   </div>
-                  <div>
+                  <div className="space-y-1">
                     <label className="text-sm font-medium text-muted-foreground">Start Date</label>
                     <p className="text-base">{new Date(loan.startDate).toLocaleDateString()}</p>
                   </div>
-                  <div>
+                  <div className="space-y-1">
                     <label className="text-sm font-medium text-muted-foreground">Due Date</label>
                     <p className="text-base">{new Date(loan.dueDate).toLocaleDateString()}</p>
                   </div>
-                  <div>
+                  <div className="space-y-1">
                     <label className="text-sm font-medium text-muted-foreground">Loan Rate</label>
                     <p className="text-base">{loan.siborRate}% + {loan.margin}% = {parseFloat(loan.siborRate) + parseFloat(loan.margin)}%</p>
                   </div>
-                  <div>
+                  <div className="space-y-1">
                     <label className="text-sm font-medium text-muted-foreground">Status</label>
-                    <Badge className={`mt-2 px-3 py-1 ${loan.status === 'active' ? 'bg-blue-100 text-blue-800' : 'bg-emerald-100 text-emerald-800'}`}>
+                    <Badge className={`mt-1 px-3 py-1 ${loan.status === 'active' ? 'bg-blue-100 text-blue-800' : 'bg-emerald-100 text-emerald-800'}`}>
                       {loan.status}
                     </Badge>
                   </div>
                   {(loan as any).accruedInterest !== undefined && loan.status === 'active' && (
-                    <div>
+                    <div className="space-y-1">
                       <label className="text-sm font-medium text-muted-foreground">Accrued Interest (to date)</label>
-                      <p className="text-lg font-semibold text-amber-600 dark:text-amber-400" data-testid="text-accrued-interest">
+                      <p className="text-base font-semibold text-amber-600 dark:text-amber-400" data-testid="text-accrued-interest">
                         {parseFloat((loan as any).accruedInterest).toLocaleString('en-SA', {
                           style: 'currency',
                           currency: 'SAR',
@@ -435,9 +435,9 @@ export default function LoanDetailPage() {
                     </div>
                   )}
                   {(loan as any).projectedTotalInterest !== undefined && (
-                    <div>
+                    <div className="space-y-1">
                       <label className="text-sm font-medium text-muted-foreground">Projected Total Interest (full tenor)</label>
-                      <p className="text-lg font-semibold text-blue-600 dark:text-blue-400" data-testid="text-projected-interest">
+                      <p className="text-base font-semibold text-blue-600 dark:text-blue-400" data-testid="text-projected-interest">
                         {parseFloat((loan as any).projectedTotalInterest).toLocaleString('en-SA', {
                           style: 'currency',
                           currency: 'SAR',
@@ -450,9 +450,9 @@ export default function LoanDetailPage() {
                 </div>
                 
                 {loan.notes && (
-                  <div>
+                  <div className="space-y-2 pt-2">
                     <label className="text-sm font-medium text-muted-foreground">Notes</label>
-                    <p className="text-base mt-1 p-3 bg-muted rounded-lg">{loan.notes}</p>
+                    <p className="text-sm p-3 bg-muted/50 rounded-lg leading-relaxed">{loan.notes}</p>
                   </div>
                 )}
               </CardContent>
@@ -500,7 +500,7 @@ export default function LoanDetailPage() {
                   
                   <TabsContent value="transactions" className="p-6">
                     <div className="space-y-4">
-                      <h3 className="text-lg font-semibold">Transaction History</h3>
+                      <h3 className="text-base font-semibold">Transaction History</h3>
                       {transactionsLoading ? (
                         <div className="text-center py-8">
                           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600 mx-auto mb-4"></div>
@@ -539,8 +539,8 @@ export default function LoanDetailPage() {
                   </TabsContent>
                   
                   <TabsContent value="documents" className="p-6">
-                    <div className="space-y-6">
-                      <h3 className="text-lg font-semibold">Related Documents</h3>
+                    <div className="space-y-5">
+                      <h3 className="text-base font-semibold">Related Documents</h3>
                       
                       {documentsLoading ? (
                         <div className="text-center py-8">
@@ -571,7 +571,7 @@ export default function LoanDetailPage() {
                   
                   <TabsContent value="analysis" className="p-6">
                     <div className="space-y-4">
-                      <h3 className="text-lg font-semibold">Loan Analysis</h3>
+                      <h3 className="text-base font-semibold">Loan Analysis</h3>
                       {balanceLoading ? (
                         <div className="text-center py-8">
                           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600 mx-auto mb-4"></div>
@@ -691,27 +691,30 @@ export default function LoanDetailPage() {
             {balance && (
               <Card className="shadow-lg">
                 <CardHeader className="pb-3">
-                  <CardTitle className="text-base">Balance Breakdown</CardTitle>
+                  <CardTitle className="text-base flex items-center space-x-2">
+                    <DollarSign className="h-4 w-4" />
+                    <span>Balance Breakdown</span>
+                  </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  <div className="space-y-3">
+                  <div className="space-y-2.5">
                     <div className="flex justify-between items-center">
                       <span className="text-sm text-muted-foreground">Principal:</span>
-                      <span className="font-semibold">{formatCurrency(balance.principal)}</span>
+                      <span className="text-sm font-semibold">{formatCurrency(balance.principal)}</span>
                     </div>
                     <div className="flex justify-between items-center">
                       <span className="text-sm text-muted-foreground">Interest:</span>
-                      <span className="font-semibold">{formatCurrency(balance.interest)}</span>
+                      <span className="text-sm font-semibold">{formatCurrency(balance.interest)}</span>
                     </div>
                     <div className="flex justify-between items-center">
                       <span className="text-sm text-muted-foreground">Fees:</span>
-                      <span className="font-semibold">{formatCurrency(balance.fees)}</span>
+                      <span className="text-sm font-semibold">{formatCurrency(balance.fees)}</span>
                     </div>
                   </div>
                   <Separator />
                   <div className="flex justify-between items-center pt-1">
                     <span className="text-sm font-bold">Total:</span>
-                    <span className="text-lg font-bold">{formatCurrency(balance.total)}</span>
+                    <span className="text-base font-bold">{formatCurrency(balance.total)}</span>
                   </div>
                 </CardContent>
               </Card>
