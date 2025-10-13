@@ -198,7 +198,7 @@ export async function generateAIInsights(organizationId: string, storage: IStora
             type: 'savings',
             category: 'Cost Efficiency',
             title: 'Interest Rate Arbitrage Opportunity',
-            description: `Rate Differential: ${lowRateBank.bankName} at SIBOR+${lowRateBank.avgRate.toFixed(1)}% vs ${highRateBank.bankName} at SIBOR+${highRateBank.avgRate.toFixed(1)}%`,
+            description: `Rate Differential: ${lowRateBank.bankName} at ${lowRateBank.avgRate.toFixed(2)}% total cost vs ${highRateBank.bankName} at ${highRateBank.avgRate.toFixed(2)}% total cost (${(highRateBank.avgRate - lowRateBank.avgRate).toFixed(2)}% difference)`,
             savings: annualSavings,
             recommendation: `Consider refinancing ${highRateBank.bankName} loan with ${lowRateBank.bankName} facility. Available: ${((lowRateBank.creditLimit - lowRateBank.outstanding) / 1000000).toFixed(1)}M SAR`,
           });
