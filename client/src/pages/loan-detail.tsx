@@ -387,8 +387,8 @@ export default function LoanDetailPage() {
           <div className="lg:col-span-2 space-y-6">
             {/* Loan Overview */}
             <Card className="shadow-lg">
-              <CardHeader>
-                <CardTitle className="flex items-center space-x-2">
+              <CardHeader className="pb-4">
+                <CardTitle className="flex items-center space-x-2 text-lg">
                   <Building2 className="h-5 w-5 text-primary" />
                   <span>Loan Overview</span>
                 </CardTitle>
@@ -607,10 +607,10 @@ export default function LoanDetailPage() {
           <div className="space-y-6">
             {/* Quick Actions */}
             <Card className="shadow-lg">
-              <CardHeader>
-                <CardTitle>Quick Actions</CardTitle>
+              <CardHeader className="pb-3">
+                <CardTitle className="text-base">Quick Actions</CardTitle>
               </CardHeader>
-              <CardContent className="space-y-3">
+              <CardContent className="space-y-2.5">
                 {loan.status === 'active' ? (
                   <>
                     <Button 
@@ -683,32 +683,35 @@ export default function LoanDetailPage() {
               <RevolvingPeriodTracker 
                 loanId={loan.id}
                 maxRevolvingPeriod={facility.maxRevolvingPeriod}
+                className="shadow-lg"
               />
             )}
 
             {/* Balance Information */}
             {balance && (
               <Card className="shadow-lg">
-                <CardHeader>
-                  <CardTitle>Balance Breakdown</CardTitle>
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-base">Balance Breakdown</CardTitle>
                 </CardHeader>
-                <CardContent className="space-y-3">
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Principal:</span>
-                    <span className="font-medium">{formatCurrency(balance.principal)}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Interest:</span>
-                    <span className="font-medium">{formatCurrency(balance.interest)}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Fees:</span>
-                    <span className="font-medium">{formatCurrency(balance.fees)}</span>
+                <CardContent className="space-y-4">
+                  <div className="space-y-3">
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm text-muted-foreground">Principal:</span>
+                      <span className="font-semibold">{formatCurrency(balance.principal)}</span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm text-muted-foreground">Interest:</span>
+                      <span className="font-semibold">{formatCurrency(balance.interest)}</span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm text-muted-foreground">Fees:</span>
+                      <span className="font-semibold">{formatCurrency(balance.fees)}</span>
+                    </div>
                   </div>
                   <Separator />
-                  <div className="flex justify-between font-bold">
-                    <span>Total:</span>
-                    <span>{formatCurrency(balance.total)}</span>
+                  <div className="flex justify-between items-center pt-1">
+                    <span className="text-sm font-bold">Total:</span>
+                    <span className="text-lg font-bold">{formatCurrency(balance.total)}</span>
                   </div>
                 </CardContent>
               </Card>
