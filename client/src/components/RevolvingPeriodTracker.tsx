@@ -6,9 +6,8 @@ import { Clock, CheckCircle2, AlertTriangle, XCircle } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 
 interface RevolvingPeriodTrackerProps {
-  facilityId: string;
+  loanId: string;
   maxRevolvingPeriod: number;
-  initialDrawdownDate: string | null;
   className?: string;
   compact?: boolean;
 }
@@ -19,20 +18,19 @@ interface RevolvingUsageData {
   percentageUsed: number;
   status: 'available' | 'warning' | 'critical' | 'expired';
   canRevolve: boolean;
-  activeLoans: number;
-  totalLoans: number;
+  maxRevolvingPeriod: number;
+  loanStatus: string;
 }
 
 export function RevolvingPeriodTracker({ 
-  facilityId, 
+  loanId, 
   maxRevolvingPeriod, 
-  initialDrawdownDate,
   className,
   compact = false 
 }: RevolvingPeriodTrackerProps) {
   const { data: usageData, isLoading, error } = useQuery<RevolvingUsageData>({
-    queryKey: ["/api/facilities", facilityId, "revolving-usage"],
-    enabled: !!facilityId,
+    queryKey: ["/api/loans", loanId, "revolving-usage"],
+    enabled: !!loanId,
   });
 
   if (isLoading) {
@@ -41,7 +39,7 @@ export function RevolvingPeriodTracker({
         <CardHeader className="pb-3">
           <CardTitle className="text-base flex items-center space-x-2">
             <Clock className="h-4 w-4" />
-            <span>Facility Revolving Period</span>
+            <span>Loan Revolving Period</span>
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -60,13 +58,13 @@ export function RevolvingPeriodTracker({
         <CardHeader className="pb-3">
           <CardTitle className="text-base flex items-center space-x-2">
             <Clock className="h-4 w-4" />
-            <span>Facility Revolving Period</span>
+            <span>Loan Revolving Period</span>
           </CardTitle>
         </CardHeader>
         <CardContent>
           <Alert className="border-red-200 bg-red-50 dark:bg-red-950 dark:border-red-800" data-testid="alert-error-state">
             <AlertDescription className="text-sm text-red-800 dark:text-red-200">
-              Unable to load facility period data. Please try refreshing the page.
+              Unable to load loan period data. Please try refreshing the page.
             </AlertDescription>
           </Alert>
         </CardContent>
@@ -74,28 +72,7 @@ export function RevolvingPeriodTracker({
     );
   }
 
-  const { daysUsed, daysRemaining, percentageUsed, status, canRevolve, activeLoans, totalLoans } = usageData;
-
-  // If no loans yet, show waiting state
-  if (totalLoans === 0 && daysUsed === 0) {
-    return (
-      <Card className={className} data-testid="card-revolving-tracker-waiting">
-        <CardHeader className="pb-3">
-          <CardTitle className="text-base flex items-center space-x-2">
-            <Clock className="h-4 w-4 text-muted-foreground" />
-            <span>Facility Revolving Period</span>
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <Alert className="border-blue-200 bg-blue-50 dark:bg-blue-950 dark:border-blue-800" data-testid="alert-waiting-state">
-            <AlertDescription className="text-sm text-blue-800 dark:text-blue-200">
-              Period tracking starts when you draw the first loan from this facility. The {maxRevolvingPeriod}-day countdown begins then.
-            </AlertDescription>
-          </Alert>
-        </CardContent>
-      </Card>
-    );
-  }
+  const { daysUsed, daysRemaining, percentageUsed, status, canRevolve, loanStatus } = usageData;
 
   // Status color and icon
   const getStatusConfig = () => {
@@ -107,8 +84,8 @@ export function RevolvingPeriodTracker({
           borderColor: 'border-green-200 dark:border-green-800',
           progressColor: 'bg-green-500',
           icon: CheckCircle2,
-          label: 'Available',
-          message: 'Facility period available. You can continue drawing new loans and revolving existing ones.'
+          label: 'On Track',
+          message: 'This loan is within the allowed revolving period limit set by the bank.'
         };
       case 'warning':
         return {
@@ -118,7 +95,7 @@ export function RevolvingPeriodTracker({
           progressColor: 'bg-yellow-500',
           icon: AlertTriangle,
           label: 'Warning',
-          message: 'Facility period running low. Settle active loans soon to extend the revolving period.'
+          message: 'This loan is approaching the maximum allowed duration. Consider settling soon.'
         };
       case 'critical':
         return {
@@ -128,7 +105,7 @@ export function RevolvingPeriodTracker({
           progressColor: 'bg-orange-500',
           icon: AlertTriangle,
           label: 'Critical',
-          message: 'Facility period almost expired. Settle all loans immediately to reset the period.'
+          message: 'This loan is very close to exceeding the maximum allowed duration. Settle immediately.'
         };
       case 'expired':
         return {
@@ -138,7 +115,7 @@ export function RevolvingPeriodTracker({
           progressColor: 'bg-red-500',
           icon: XCircle,
           label: 'Expired',
-          message: 'Facility period expired. No new loans allowed until all active loans are settled.'
+          message: 'This loan has exceeded the maximum allowed revolving period. Please settle this loan.'
         };
     }
   };
@@ -156,15 +133,15 @@ export function RevolvingPeriodTracker({
           <StatusIcon className={`h-5 w-5 ${statusConfig.color}`} />
           <div>
             <p className="text-sm font-medium" data-testid="text-days-used-compact">
-              Facility: <span data-testid="value-days-used">{daysUsed}</span> / {maxRevolvingPeriod} days active
+              Loan Duration: <span data-testid="value-days-used">{daysUsed}</span> / {maxRevolvingPeriod} days
             </p>
             <p className="text-xs text-muted-foreground" data-testid="text-days-remaining-compact">
-              <span data-testid="value-days-remaining">{daysRemaining}</span> days left in period
+              <span data-testid="value-days-remaining">{daysRemaining}</span> days remaining before limit
             </p>
           </div>
         </div>
-        <Badge variant={canRevolve ? "default" : "destructive"} className="text-xs" data-testid="badge-revolve-status-compact">
-          {canRevolve ? "Can Revolve" : "Must Settle"}
+        <Badge variant={status === 'available' ? "default" : status === 'expired' ? "destructive" : "outline"} className="text-xs" data-testid="badge-revolve-status-compact">
+          {statusConfig.label}
         </Badge>
       </div>
     );
@@ -176,7 +153,7 @@ export function RevolvingPeriodTracker({
         <div className="flex items-center justify-between">
           <CardTitle className="text-base flex items-center space-x-2">
             <Clock className="h-4 w-4" />
-            <span>Facility Revolving Period</span>
+            <span>Loan Revolving Period</span>
           </CardTitle>
           <Badge 
             variant={status === 'available' ? 'default' : status === 'expired' ? 'destructive' : 'outline'}
@@ -187,18 +164,18 @@ export function RevolvingPeriodTracker({
           </Badge>
         </div>
         <CardDescription className="text-xs text-muted-foreground">
-          This tracks how long the facility has been active (not your loan's due date). Maximum {maxRevolvingPeriod} days from first loan.
+          This tracks how long this loan has been active (not your loan's due date). Maximum {maxRevolvingPeriod} days from first loan.
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
         {/* Usage Stats */}
         <div className="grid grid-cols-2 gap-4">
           <div className="space-y-1">
-            <p className="text-xs text-muted-foreground">Facility Days Used</p>
+            <p className="text-xs text-muted-foreground">Loan Days Used</p>
             <p className="text-2xl font-bold" data-testid="text-days-used">{daysUsed}</p>
           </div>
           <div className="space-y-1">
-            <p className="text-xs text-muted-foreground">Facility Days Left</p>
+            <p className="text-xs text-muted-foreground">Days Remaining</p>
             <p className="text-2xl font-bold" data-testid="text-days-remaining">{daysRemaining}</p>
           </div>
         </div>
@@ -206,7 +183,7 @@ export function RevolvingPeriodTracker({
         {/* Progress Bar */}
         <div className="space-y-2">
           <div className="flex items-center justify-between text-xs">
-            <span className="text-muted-foreground">Usage</span>
+            <span className="text-muted-foreground">Duration Used</span>
             <span className="font-medium" data-testid="text-usage-percent">{percentageUsed.toFixed(1)}%</span>
           </div>
           <Progress 
@@ -224,25 +201,14 @@ export function RevolvingPeriodTracker({
           </AlertDescription>
         </Alert>
 
-        {/* Loan Summary */}
+        {/* Loan Status */}
         <div className="pt-2 border-t">
           <div className="flex items-center justify-between text-sm">
-            <span className="text-muted-foreground">Active Loans</span>
-            <span className="font-medium" data-testid="text-active-loans">
-              <span data-testid="value-active-loans">{activeLoans}</span> of <span data-testid="value-total-loans">{totalLoans}</span> total
-            </span>
+            <span className="text-muted-foreground">Loan Status</span>
+            <Badge variant={loanStatus === 'active' ? 'default' : 'secondary'} data-testid="badge-loan-status">
+              {loanStatus.charAt(0).toUpperCase() + loanStatus.slice(1)}
+            </Badge>
           </div>
-        </div>
-
-        {/* Action Badge */}
-        <div className="flex items-center justify-center pt-2">
-          <Badge 
-            variant={canRevolve ? "default" : "destructive"}
-            className="text-sm px-4 py-2"
-            data-testid="badge-revolve-status"
-          >
-            {canRevolve ? "✓ Can Revolve" : "⚠ Must Settle"}
-          </Badge>
         </div>
       </CardContent>
     </Card>

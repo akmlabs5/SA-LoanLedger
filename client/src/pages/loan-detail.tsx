@@ -681,9 +681,8 @@ export default function LoanDetailPage() {
             {/* Revolving Period Tracker - Show only if facility has tracking enabled */}
             {facility?.enableRevolvingTracking && (
               <RevolvingPeriodTracker 
-                facilityId={loan.facilityId}
+                loanId={loan.id}
                 maxRevolvingPeriod={facility.maxRevolvingPeriod}
-                initialDrawdownDate={facility.initialDrawdownDate}
               />
             )}
 
