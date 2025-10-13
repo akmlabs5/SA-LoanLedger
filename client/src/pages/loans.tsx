@@ -812,19 +812,7 @@ export default function Loans() {
         <>
           <PageHeader
             title="Loan Management"
-            subtitle={
-              <div className="flex items-center space-x-6 mt-2">
-                <span className="text-muted-foreground">
-                  Total Active: {formatCurrency(totalActiveAmount)}
-                </span>
-                {criticalLoans > 0 && (
-                  <div className="flex items-center space-x-1 text-destructive">
-                    <AlertTriangle className="h-4 w-4" />
-                    <span className="text-sm font-medium">{criticalLoans} urgent loans</span>
-                  </div>
-                )}
-              </div>
-            }
+            subtitle={`Total Active: ${formatCurrency(totalActiveAmount)}${criticalLoans > 0 ? ` • ${criticalLoans} urgent loans` : ''}`}
             icon={<FileText className="h-6 w-6" />}
             actions={
               <div className="flex gap-2">
