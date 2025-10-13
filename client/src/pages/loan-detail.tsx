@@ -604,9 +604,9 @@ export default function LoanDetailPage() {
           </div>
 
           {/* Sidebar */}
-          <div className="space-y-6">
-            {/* Quick Actions */}
-            <Card className="shadow-lg">
+          <div className="space-y-6 lg:flex lg:flex-col lg:h-full">
+            {/* Quick Actions - Will stretch on desktop */}
+            <Card className="shadow-lg lg:flex-1">
               <CardHeader className="pb-3">
                 <CardTitle className="text-base">Quick Actions</CardTitle>
               </CardHeader>
@@ -683,13 +683,13 @@ export default function LoanDetailPage() {
               <RevolvingPeriodTracker 
                 loanId={loan.id}
                 maxRevolvingPeriod={facility.maxRevolvingPeriod}
-                className="shadow-lg"
+                className="shadow-lg lg:flex-shrink-0"
               />
             )}
 
             {/* Balance Information */}
             {balance && (
-              <Card className="shadow-lg">
+              <Card className="shadow-lg lg:flex-shrink-0">
                 <CardHeader className="pb-3">
                   <CardTitle className="text-base flex items-center space-x-2">
                     <DollarSign className="h-4 w-4" />
