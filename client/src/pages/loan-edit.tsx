@@ -4,7 +4,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { z } from "zod";
-import { ArrowLeft, DollarSign, Calendar, Receipt, AlertCircle, Building2, Save, X, FileText } from "lucide-react";
+import { ArrowLeft, DollarSign, Calendar, Receipt, AlertCircle, Building2, Save, X, FileText, Lock } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -14,6 +14,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient, invalidateLoans } from "@/lib/queryClient";
 import { insertLoanSchema } from "@shared/schema";
@@ -302,12 +303,25 @@ export default function LoanEditPage() {
                             name="margin"
                             render={({ field }) => (
                               <FormItem>
-                                <FormLabel>Margin (%) *</FormLabel>
+                                <FormLabel className="flex items-center gap-2">
+                                  Margin (%) *
+                                  <TooltipProvider>
+                                    <Tooltip>
+                                      <TooltipTrigger asChild>
+                                        <Lock className="h-3.5 w-3.5 text-muted-foreground" />
+                                      </TooltipTrigger>
+                                      <TooltipContent>
+                                        <p className="text-xs">Margin is set at facility level and cannot be changed here</p>
+                                      </TooltipContent>
+                                    </Tooltip>
+                                  </TooltipProvider>
+                                </FormLabel>
                                 <FormControl>
                                   <Input 
-                                    className="h-12"
+                                    className="h-12 bg-muted/50 cursor-not-allowed"
                                     data-testid="input-margin" 
                                     placeholder="e.g., 1.00" 
+                                    disabled
                                     {...field} 
                                   />
                                 </FormControl>
