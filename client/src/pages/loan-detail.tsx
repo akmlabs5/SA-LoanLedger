@@ -1,7 +1,7 @@
 import { useParams, useLocation } from "wouter";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useState, useEffect } from "react";
-import { ArrowLeft, Calendar, Building2, FileText, Clock, CheckCircle, AlertTriangle, TrendingUp, Edit, Trash2, Bell, DollarSign } from "lucide-react";
+import { ArrowLeft, Calendar, Building2, FileText, Clock, CheckCircle, AlertTriangle, TrendingUp, Edit, Trash2, Bell, DollarSign, Undo2 } from "lucide-react";
 import { LoanWithDetails } from "@shared/types";
 
 import { Button } from "@/components/ui/button";
@@ -51,6 +51,8 @@ export default function LoanDetailPage() {
   const [settlementDate, setSettlementDate] = useState(new Date().toISOString().split('T')[0]);
   const [settlementAmount, setSettlementAmount] = useState("");
   const [isManualAmount, setIsManualAmount] = useState(false);
+  const [reverseSettlementOpen, setReverseSettlementOpen] = useState(false);
+  const [reversalReason, setReversalReason] = useState("");
 
   // Fetch loan details (always needed for overview)
   const { data: loan, isLoading: loanLoading, isError: loanError } = useQuery<LoanWithDetails>({
@@ -169,6 +171,55 @@ export default function LoanDetailPage() {
         settledDate: settlementDate 
       });
       setSettleConfirmOpen(false);
+    }
+  };
+
+  // Reverse Settlement Mutation
+  const reverseSettlementMutation = useMutation({
+    mutationFn: async ({ loanId, reason }: { loanId: string; reason: string }) => {
+      await apiRequest("POST", `/api/loans/${loanId}/reverse-settlement`, { reason });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/loans"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/loans", "settled"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/loans", loanId] });
+      queryClient.invalidateQueries({ queryKey: ["/api/dashboard/portfolio"] });
+      toast({
+        title: "Success",
+        description: "Settlement reversed successfully - loan is now active again",
+      });
+      setReverseSettlementOpen(false);
+      setReversalReason("");
+    },
+    onError: (error) => {
+      if (isUnauthorizedError(error as Error)) {
+        toast({
+          title: "Unauthorized",
+          description: "You are logged out. Logging in again...",
+          variant: "destructive",
+        });
+        setTimeout(() => window.location.href = "/api/login", 500);
+        return;
+      }
+      toast({
+        title: "Reversal Failed",
+        description: error.message || "Failed to reverse settlement",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const handleReverseSettlement = () => {
+    setReversalReason("");
+    setReverseSettlementOpen(true);
+  };
+
+  const confirmReverseSettlement = () => {
+    if (loan && reversalReason.trim()) {
+      reverseSettlementMutation.mutate({ 
+        loanId: loan.id, 
+        reason: reversalReason 
+      });
     }
   };
 
@@ -605,11 +656,24 @@ export default function LoanDetailPage() {
                     </Button>
                   </>
                 ) : (
-                  <div className="text-center py-4">
-                    <CheckCircle className="h-12 w-12 text-emerald-500 mx-auto mb-2" />
-                    <p className="font-medium text-emerald-600">Loan Settled</p>
-                    <p className="text-sm text-muted-foreground">This loan has been successfully settled</p>
-                  </div>
+                  <>
+                    <div className="text-center py-4">
+                      <CheckCircle className="h-12 w-12 text-emerald-500 mx-auto mb-2" />
+                      <p className="font-medium text-emerald-600">Loan Settled</p>
+                      <p className="text-sm text-muted-foreground">This loan has been successfully settled</p>
+                    </div>
+                    <Separator />
+                    <Button 
+                      variant="outline" 
+                      className="w-full border-orange-300 text-orange-700 lg:hover:bg-orange-50"
+                      onClick={handleReverseSettlement}
+                      disabled={reverseSettlementMutation.isPending}
+                      data-testid="button-undo-settlement"
+                    >
+                      <Undo2 className="mr-2 h-4 w-4" />
+                      {reverseSettlementMutation.isPending ? 'Reversing...' : 'Undo Settlement'}
+                    </Button>
+                  </>
                 )}
               </CardContent>
             </Card>
@@ -772,6 +836,84 @@ export default function LoanDetailPage() {
                   <>
                     <CheckCircle className="mr-2 h-4 w-4" />
                     Settle Loan
+                  </>
+                )}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        {/* Reverse Settlement Dialog */}
+        <Dialog open={reverseSettlementOpen} onOpenChange={setReverseSettlementOpen}>
+          <DialogContent className="sm:max-w-[500px]">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <Undo2 className="h-5 w-5 text-orange-600" />
+                Undo Settlement
+              </DialogTitle>
+              <DialogDescription>
+                This will revert the loan back to active status. Please provide a reason for reversing the settlement.
+              </DialogDescription>
+            </DialogHeader>
+            
+            <div className="space-y-4 py-4">
+              <div className="space-y-2">
+                <Label htmlFor="reversal-reason">Reason for Reversal *</Label>
+                <Input
+                  id="reversal-reason"
+                  value={reversalReason}
+                  onChange={(e) => setReversalReason(e.target.value)}
+                  placeholder="e.g., Settlement was made by mistake, incorrect amount, etc."
+                  data-testid="input-reversal-reason"
+                />
+                <p className="text-xs text-muted-foreground">
+                  This reason will be recorded in the audit trail
+                </p>
+              </div>
+
+              <div className="bg-orange-50 dark:bg-orange-950/20 border border-orange-200 dark:border-orange-800 rounded-lg p-4">
+                <div className="flex items-start gap-2">
+                  <AlertTriangle className="h-5 w-5 text-orange-600 mt-0.5 flex-shrink-0" />
+                  <div className="text-sm">
+                    <p className="font-medium text-orange-900 dark:text-orange-100 mb-1">Important</p>
+                    <p className="text-orange-700 dark:text-orange-300">
+                      Reversing the settlement will:
+                    </p>
+                    <ul className="list-disc list-inside text-orange-700 dark:text-orange-300 mt-1 space-y-1">
+                      <li>Change loan status back to "Active"</li>
+                      <li>Remove settlement date and amount</li>
+                      <li>Create an audit log entry for tracking</li>
+                    </ul>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <DialogFooter>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setReverseSettlementOpen(false)}
+                data-testid="button-cancel-reversal"
+              >
+                Cancel
+              </Button>
+              <Button
+                type="button"
+                onClick={confirmReverseSettlement}
+                disabled={!reversalReason.trim() || reverseSettlementMutation.isPending}
+                className="bg-orange-600 lg:hover:bg-orange-700 text-white"
+                data-testid="button-confirm-reversal"
+              >
+                {reverseSettlementMutation.isPending ? (
+                  <>
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                    Reversing...
+                  </>
+                ) : (
+                  <>
+                    <Undo2 className="mr-2 h-4 w-4" />
+                    Undo Settlement
                   </>
                 )}
               </Button>
