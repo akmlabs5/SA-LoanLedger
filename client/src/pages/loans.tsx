@@ -1251,7 +1251,8 @@ export default function Loans() {
                   {filteredSettledLoans.map((loan: any) => (
                     <Card 
                       key={loan.id} 
-                      className="border-0 shadow-lg bg-white/50 dark:bg-gray-800/50 backdrop-blur-sm border-l-4 border-l-emerald-500 opacity-90"
+                      className="border-0 shadow-lg bg-white/50 dark:bg-gray-800/50 backdrop-blur-sm border-l-4 border-l-emerald-500 opacity-90 cursor-pointer lg:hover:shadow-xl transition-all duration-150"
+                      onClick={() => handleLoanCardClick(loan.id)}
                       data-testid={`card-settled-loan-${loan.id}`}
                     >
                       <CardContent className="p-6">
@@ -1282,7 +1283,7 @@ export default function Loans() {
                           </div>
                         </div>
                         
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
                           <div>
                             <p className="text-sm text-gray-600 dark:text-gray-400">Start Date</p>
                             <p className="font-semibold text-gray-900 dark:text-gray-100">
@@ -1301,6 +1302,22 @@ export default function Loans() {
                               {loan.settledDate ? new Date(loan.settledDate).toLocaleDateString() : 'Recently'}
                             </p>
                           </div>
+                        </div>
+
+                        <div className="pt-3 border-t border-gray-200 dark:border-gray-700">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="w-full border-red-300 text-red-700 lg:hover:bg-red-50 dark:border-red-800 dark:text-red-400 dark:lg:hover:bg-red-950/20"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setLoanToUndo(loan.id);
+                            }}
+                            data-testid={`button-undo-settlement-${loan.id}`}
+                          >
+                            <Undo2 className="mr-2 h-4 w-4" />
+                            Undo Settlement
+                          </Button>
                         </div>
                       </CardContent>
                     </Card>
