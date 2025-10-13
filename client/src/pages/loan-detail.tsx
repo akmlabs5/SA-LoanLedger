@@ -215,10 +215,10 @@ export default function LoanDetailPage() {
   };
 
   const confirmReverseSettlement = () => {
-    if (loan && reversalReason.trim()) {
+    if (loan) {
       reverseSettlementMutation.mutate({ 
         loanId: loan.id, 
-        reason: reversalReason 
+        reason: reversalReason || undefined
       });
     }
   };
@@ -852,13 +852,13 @@ export default function LoanDetailPage() {
                 Undo Settlement
               </DialogTitle>
               <DialogDescription>
-                This will revert the loan back to active status. Please provide a reason for reversing the settlement.
+                This will revert the loan back to active status. You can optionally provide a note explaining why.
               </DialogDescription>
             </DialogHeader>
             
             <div className="space-y-4 py-4">
               <div className="space-y-2">
-                <Label htmlFor="reversal-reason">Reason for Reversal *</Label>
+                <Label htmlFor="reversal-reason">Reason for Reversal (Optional)</Label>
                 <Input
                   id="reversal-reason"
                   value={reversalReason}
@@ -867,7 +867,7 @@ export default function LoanDetailPage() {
                   data-testid="input-reversal-reason"
                 />
                 <p className="text-xs text-muted-foreground">
-                  This reason will be recorded in the audit trail
+                  This note will be recorded in the audit trail if provided
                 </p>
               </div>
 
@@ -901,7 +901,7 @@ export default function LoanDetailPage() {
               <Button
                 type="button"
                 onClick={confirmReverseSettlement}
-                disabled={!reversalReason.trim() || reverseSettlementMutation.isPending}
+                disabled={reverseSettlementMutation.isPending}
                 className="bg-orange-600 lg:hover:bg-orange-700 text-white"
                 data-testid="button-confirm-reversal"
               >

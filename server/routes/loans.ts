@@ -305,10 +305,6 @@ export function registerLoansRoutes(app: Express, deps: AppDependencies) {
       const userId = req.user.claims.sub;
       const { reason } = req.body;
       
-      if (!reason || reason.trim().length === 0) {
-        return res.status(400).json({ message: "Reversal reason is required" });
-      }
-      
       // Verify loan belongs to organization before reversing
       const loan = await storage.getLoanById(loanId);
       if (!loan || loan.organizationId !== organizationId) {
