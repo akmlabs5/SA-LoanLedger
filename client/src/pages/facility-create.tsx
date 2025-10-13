@@ -352,9 +352,9 @@ export default function FacilityCreatePage() {
                         render={({ field }) => (
                           <FormItem className="flex flex-row items-center justify-between">
                             <div className="space-y-0.5">
-                              <FormLabel className="text-base">Revolving Period Tracking</FormLabel>
+                              <FormLabel className="text-base">Maximum Loan Tenor Limit</FormLabel>
                               <div className="text-sm text-muted-foreground">
-                                Track cumulative usage days across all loans (e.g., 360-day limit)
+                                Set the maximum duration allowed for each individual loan (e.g., 360 days per loan)
                               </div>
                             </div>
                             <FormControl>
@@ -375,7 +375,7 @@ export default function FacilityCreatePage() {
                             name="maxRevolvingPeriod"
                             render={({ field }) => (
                               <FormItem>
-                                <FormLabel>Maximum Revolving Period (days)</FormLabel>
+                                <FormLabel>Maximum Loan Tenor (days)</FormLabel>
                                 <FormControl>
                                   <Input
                                     {...field}
@@ -387,7 +387,7 @@ export default function FacilityCreatePage() {
                                   />
                                 </FormControl>
                                 <div className="text-xs text-muted-foreground">
-                                  Total days allowed for all loans combined (e.g., 360 days per year)
+                                  Maximum duration for each individual loan drawdown (e.g., 360 days per loan)
                                 </div>
                                 <FormMessage />
                               </FormItem>
