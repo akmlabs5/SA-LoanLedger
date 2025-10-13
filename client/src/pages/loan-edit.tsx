@@ -22,7 +22,8 @@ import { ModernDatePicker } from "@/components/ui/date-picker";
 const loanFormSchema = z.object({
   referenceNumber: z.string().min(1, "Reference number is required"),
   amount: z.string().min(1, "Amount is required"),
-  bankRate: z.string().min(1, "Bank rate is required"),
+  siborRate: z.string().min(1, "SIBOR rate is required"),
+  margin: z.string().min(1, "Margin is required"),
   startDate: z.string().min(1, "Start date is required"),
   dueDate: z.string().min(1, "Due date is required"),
   purpose: z.string().optional(),
@@ -60,7 +61,8 @@ export default function LoanEditPage() {
     defaultValues: {
       referenceNumber: "",
       amount: "",
-      bankRate: "",
+      siborRate: "",
+      margin: "",
       startDate: "",
       dueDate: "",
       purpose: "",
@@ -76,7 +78,8 @@ export default function LoanEditPage() {
       form.reset({
         referenceNumber: loanData.referenceNumber || "",
         amount: loanData.amount || "",
-        bankRate: loanData.bankRate || "",
+        siborRate: loanData.siborRate || "",
+        margin: loanData.margin || "",
         startDate: loanData.startDate || "",
         dueDate: loanData.dueDate || "",
         purpose: loanData.purpose || "",
@@ -88,8 +91,14 @@ export default function LoanEditPage() {
 
   const updateLoanMutation = useMutation({
     mutationFn: async (data: LoanFormData) => {
+      // Calculate bankRate from siborRate + margin
+      const siborRate = parseFloat(data.siborRate);
+      const margin = parseFloat(data.margin);
+      const bankRate = (siborRate + margin).toFixed(2);
+      
       return apiRequest('PATCH', `/api/loans/${loanId}`, {
         ...data,
+        bankRate,
         reason: "Loan details updated via edit form"
       });
     },
@@ -268,25 +277,58 @@ export default function LoanEditPage() {
                           )}
                         />
                         
-                        <FormField
-                          control={form.control}
-                          name="bankRate"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>Bank Margin (%) *</FormLabel>
-                              <FormControl>
-                                <Input 
-                                  className="h-12"
-                                  data-testid="input-bank-rate" 
-                                  placeholder="e.g., 2.5" 
-                                  {...field} 
-                                />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
+                        <div className="grid grid-cols-2 gap-2">
+                          <FormField
+                            control={form.control}
+                            name="siborRate"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>SIBOR Rate (%) *</FormLabel>
+                                <FormControl>
+                                  <Input 
+                                    className="h-12"
+                                    data-testid="input-sibor-rate" 
+                                    placeholder="e.g., 5.75" 
+                                    {...field} 
+                                  />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                          
+                          <FormField
+                            control={form.control}
+                            name="margin"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Margin (%) *</FormLabel>
+                                <FormControl>
+                                  <Input 
+                                    className="h-12"
+                                    data-testid="input-margin" 
+                                    placeholder="e.g., 1.00" 
+                                    {...field} 
+                                  />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                        </div>
                       </div>
+                      
+                      {/* Calculated Total Rate Display */}
+                      {form.watch("siborRate") && form.watch("margin") && (
+                        <div className="bg-muted/50 p-4 rounded-lg">
+                          <div className="flex items-center justify-between">
+                            <span className="text-sm font-medium text-muted-foreground">Total Bank Rate</span>
+                            <span className="text-lg font-semibold text-primary" data-testid="text-total-bank-rate">
+                              {(parseFloat(form.watch("siborRate") || "0") + parseFloat(form.watch("margin") || "0")).toFixed(2)}%
+                            </span>
+                          </div>
+                        </div>
+                      )}
                     </div>
 
                     <Separator />

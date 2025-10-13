@@ -1,7 +1,7 @@
 import { useParams, useLocation } from "wouter";
 import { useQuery, useMutation } from "@tanstack/react-query";
-import { useState } from "react";
-import { ArrowLeft, Calendar, Building2, FileText, Clock, CheckCircle, AlertTriangle, TrendingUp, Edit, Trash2, Bell } from "lucide-react";
+import { useState, useEffect } from "react";
+import { ArrowLeft, Calendar, Building2, FileText, Clock, CheckCircle, AlertTriangle, TrendingUp, Edit, Trash2, Bell, DollarSign } from "lucide-react";
 import { LoanWithDetails } from "@shared/types";
 
 import { Button } from "@/components/ui/button";
@@ -19,6 +19,16 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { apiRequest, queryClient } from "@/lib/queryClient";
@@ -28,6 +38,7 @@ import DocumentList from "@/components/DocumentList";
 import ReminderModal from "@/components/ReminderModal";
 import { RevolvingPeriodTracker } from "@/components/RevolvingPeriodTracker";
 import { WhatIfAnalysis } from "@/components/WhatIfAnalysis";
+import { ModernDatePicker } from "@/components/ui/date-picker";
 
 export default function LoanDetailPage() {
   const { id: loanId } = useParams<{ id: string }>();
@@ -37,6 +48,9 @@ export default function LoanDetailPage() {
   const [activeTab, setActiveTab] = useState("transactions");
   const [reminderModalOpen, setReminderModalOpen] = useState(false);
   const [settleConfirmOpen, setSettleConfirmOpen] = useState(false);
+  const [settlementDate, setSettlementDate] = useState(new Date().toISOString().split('T')[0]);
+  const [settlementAmount, setSettlementAmount] = useState("");
+  const [isManualAmount, setIsManualAmount] = useState(false);
 
   // Fetch loan details (always needed for overview)
   const { data: loan, isLoading: loanLoading, isError: loanError } = useQuery<LoanWithDetails>({
@@ -86,10 +100,30 @@ export default function LoanDetailPage() {
     enabled: !!loan?.facilityId && isAuthenticated,
   });
 
+  // Calculate accrued interest to settlement date
+  const calculateAccruedInterest = (principal: number, rate: number, startDate: string, endDate: string, basis: string = 'actual_365') => {
+    const start = new Date(startDate);
+    const end = new Date(endDate);
+    const daysDiff = Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
+    const basisDays = basis === 'actual_360' ? 360 : 365;
+    return (principal * rate / 100) * (daysDiff / basisDays);
+  };
+
+  // Auto-calculate settlement amount when date changes
+  useEffect(() => {
+    if (loan && settlementDate && !isManualAmount) {
+      const principal = parseFloat(loan.amount);
+      const rate = parseFloat(loan.bankRate);
+      const accruedInterest = calculateAccruedInterest(principal, rate, loan.startDate, settlementDate, loan.interestBasis || 'actual_365');
+      const totalAmount = principal + accruedInterest;
+      setSettlementAmount(totalAmount.toFixed(2));
+    }
+  }, [loan, settlementDate, isManualAmount]);
+
   // Settlement mutation
   const settleLoanMutation = useMutation({
-    mutationFn: async ({ loanId, settledAmount }: { loanId: string; settledAmount: number }) => {
-      await apiRequest("POST", `/api/loans/${loanId}/settle`, { date: new Date().toISOString().split('T')[0], amount: settledAmount.toString() });
+    mutationFn: async ({ loanId, settledAmount, settledDate }: { loanId: string; settledAmount: number; settledDate: string }) => {
+      await apiRequest("POST", `/api/loans/${loanId}/settle`, { date: settledDate, amount: settledAmount.toString() });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/loans"] });
@@ -121,12 +155,19 @@ export default function LoanDetailPage() {
   });
 
   const handleSettleLoan = () => {
+    // Reset to defaults when opening
+    setSettlementDate(new Date().toISOString().split('T')[0]);
+    setIsManualAmount(false);
     setSettleConfirmOpen(true);
   };
 
   const confirmSettle = () => {
-    if (loan) {
-      settleLoanMutation.mutate({ loanId: loan.id, settledAmount: parseFloat(loan.amount) });
+    if (loan && settlementAmount) {
+      settleLoanMutation.mutate({ 
+        loanId: loan.id, 
+        settledAmount: parseFloat(settlementAmount),
+        settledDate: settlementDate 
+      });
       setSettleConfirmOpen(false);
     }
   };
@@ -626,28 +667,117 @@ export default function LoanDetailPage() {
           />
         )}
 
-        {/* Settle Loan Confirmation Dialog */}
-        <AlertDialog open={settleConfirmOpen} onOpenChange={setSettleConfirmOpen}>
-          <AlertDialogContent>
-            <AlertDialogHeader>
-              <AlertDialogTitle>Settle Loan</AlertDialogTitle>
-              <AlertDialogDescription>
-                Are you sure you want to settle this loan for <span className="font-semibold">{formatCurrency(parseFloat(loan?.amount || "0"))}</span>?
-                <br /><br />
-                This will mark the loan as settled and close the loan cycle.
-              </AlertDialogDescription>
-            </AlertDialogHeader>
-            <AlertDialogFooter>
-              <AlertDialogCancel>Cancel</AlertDialogCancel>
-              <AlertDialogAction 
-                onClick={confirmSettle}
-                className="bg-emerald-600 lg:hover:bg-emerald-700"
-              >
+        {/* Enhanced Settle Loan Dialog */}
+        <Dialog open={settleConfirmOpen} onOpenChange={setSettleConfirmOpen}>
+          <DialogContent className="sm:max-w-[500px]">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <DollarSign className="h-5 w-5 text-emerald-600" />
                 Settle Loan
-              </AlertDialogAction>
-            </AlertDialogFooter>
-          </AlertDialogContent>
-        </AlertDialog>
+              </DialogTitle>
+              <DialogDescription>
+                Configure the settlement details for this loan.
+              </DialogDescription>
+            </DialogHeader>
+            
+            <div className="space-y-6 py-4">
+              {/* Settlement Date */}
+              <div className="space-y-2">
+                <Label htmlFor="settlement-date">Settlement Date *</Label>
+                <ModernDatePicker
+                  value={settlementDate}
+                  onChange={setSettlementDate}
+                  placeholder="Select settlement date"
+                  dataTestId="input-settlement-date"
+                />
+                <p className="text-xs text-muted-foreground">
+                  Select the actual date when the loan was settled
+                </p>
+              </div>
+
+              {/* Settlement Amount */}
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <Label htmlFor="settlement-amount">Settlement Amount (SAR) *</Label>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    className="h-6 text-xs"
+                    onClick={() => setIsManualAmount(!isManualAmount)}
+                    data-testid="button-toggle-manual-amount"
+                  >
+                    {isManualAmount ? "Auto Calculate" : "Manual Override"}
+                  </Button>
+                </div>
+                <Input
+                  id="settlement-amount"
+                  type="number"
+                  step="0.01"
+                  value={settlementAmount}
+                  onChange={(e) => {
+                    setSettlementAmount(e.target.value);
+                    setIsManualAmount(true);
+                  }}
+                  placeholder="Enter settlement amount"
+                  className="h-12"
+                  data-testid="input-settlement-amount"
+                />
+                {!isManualAmount && loan && (
+                  <div className="bg-emerald-50 dark:bg-emerald-950/20 p-3 rounded-lg border border-emerald-200 dark:border-emerald-800">
+                    <p className="text-xs text-emerald-700 dark:text-emerald-400 space-y-1">
+                      <span className="font-medium">Auto-Calculated:</span>
+                      <br />
+                      Principal: {formatCurrency(parseFloat(loan.amount))}
+                      <br />
+                      + Interest ({loan.bankRate}% from {new Date(loan.startDate).toLocaleDateString()} to {new Date(settlementDate).toLocaleDateString()}): {formatCurrency(calculateAccruedInterest(parseFloat(loan.amount), parseFloat(loan.bankRate), loan.startDate, settlementDate, loan.interestBasis || 'actual_365'))}
+                    </p>
+                  </div>
+                )}
+              </div>
+
+              {/* Total Summary */}
+              <div className="bg-muted/50 p-4 rounded-lg">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm font-medium">Total Settlement Amount</span>
+                  <span className="text-xl font-bold text-primary" data-testid="text-settlement-total">
+                    {formatCurrency(parseFloat(settlementAmount || "0"))}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            <DialogFooter>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setSettleConfirmOpen(false)}
+                data-testid="button-cancel-settlement"
+              >
+                Cancel
+              </Button>
+              <Button
+                type="button"
+                onClick={confirmSettle}
+                disabled={!settlementAmount || settleLoanMutation.isPending}
+                className="bg-emerald-600 lg:hover:bg-emerald-700 text-white"
+                data-testid="button-confirm-settlement"
+              >
+                {settleLoanMutation.isPending ? (
+                  <>
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                    Settling...
+                  </>
+                ) : (
+                  <>
+                    <CheckCircle className="mr-2 h-4 w-4" />
+                    Settle Loan
+                  </>
+                )}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </div>
     </div>
   );
