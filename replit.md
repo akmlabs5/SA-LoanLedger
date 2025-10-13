@@ -90,6 +90,15 @@ All settings persist to the database with Zod validation and are applied system-
 ## Key Features
 The system supports bank-level collateral assignment, optional facility durations, and a revolving period tracking system. Users can create loans that exceed facility credit limits with warning notifications, allowing for flexible credit management.
 
+### Revolving Facility Logic
+Revolving facilities support a **Maximum Loan Tenor** limit (e.g., 360 days) that applies to each individual loan independently, NOT cumulatively across all loans. This means:
+- Each loan drawdown must not exceed the configured max tenor (e.g., ≤360 days)
+- Multiple loans can coexist (e.g., two 180-day loans on a 360-day max tenor facility)
+- The tenor limit validates individual loan duration, not the sum of all loan durations
+- Credit limit remains the only cumulative constraint across all active loans
+
+The UI and validation logic enforce per-loan tenor limits, allowing users to configure facilities with custom maximum loan durations while supporting unlimited revolving drawdowns within credit limits.
+
 ## Deployment & Domain
 - **Production URL**: https://akm-labs.com (custom domain with SSL)
 - **Email Domains**: noreply@akm-labs.com (auth), reminders@akm-labs.com (alerts)
