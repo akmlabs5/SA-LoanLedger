@@ -620,10 +620,14 @@ export function registerLoansRoutes(app: Express, deps: AppDependencies) {
         styles: { fontSize: 8 }
       });
 
-      const pdfBuffer = Buffer.from(doc.output('arraybuffer'));
+      // Generate PDF as buffer
+      const pdfOutput = doc.output('arraybuffer');
+      const pdfBuffer = Buffer.from(pdfOutput);
+      
       res.setHeader('Content-Type', 'application/pdf');
-      res.setHeader('Content-Disposition', `attachment; filename=${statusLabel.toLowerCase()}-loans-${new Date().toISOString().split('T')[0]}.pdf`);
-      res.send(pdfBuffer);
+      res.setHeader('Content-Disposition', `attachment; filename="${statusLabel.toLowerCase()}-loans-${new Date().toISOString().split('T')[0]}.pdf"`);
+      res.setHeader('Content-Length', pdfBuffer.length.toString());
+      res.end(pdfBuffer, 'binary');
 
     } catch (error: any) {
       console.error('Error generating PDF export:', error);
