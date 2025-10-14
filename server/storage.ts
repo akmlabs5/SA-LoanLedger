@@ -89,7 +89,7 @@ import {
   type InsertOrganizationInvitation,
 } from "@shared/schema";
 import { db } from "./db";
-import { eq, and, or, desc, asc, sql, gte, lte, isNull, isNotNull, ne } from "drizzle-orm";
+import { eq, and, or, desc, asc, sql, gte, lte, isNull, isNotNull, ne, inArray } from "drizzle-orm";
 
 // Interface for storage operations
 export interface IStorage {
@@ -1699,7 +1699,7 @@ export class DatabaseStorage implements IStorage {
       .select()
       .from(loans)
       .where(and(
-        sql`${loans.facilityId} = ANY(${facilityIds})`,
+        inArray(loans.facilityId, facilityIds),
         or(
           eq(loans.status, 'settled'),
           eq(loans.status, 'active')
@@ -1753,7 +1753,7 @@ export class DatabaseStorage implements IStorage {
     const recentLoan = await db
       .select()
       .from(loans)
-      .where(sql`${loans.facilityId} = ANY(${facilityIds})`)
+      .where(inArray(loans.facilityId, facilityIds))
       .orderBy(desc(loans.createdAt))
       .limit(1);
 
