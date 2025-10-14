@@ -1704,7 +1704,7 @@ export class DatabaseStorage implements IStorage {
 
         averageRateByFacility.push({
           facilityId: facility.id,
-          facilityName: facility.name || `${facility.facilityType} - ${facility.creditLimit} SAR`,
+          facilityName: facility.name || this.formatFacilityType(facility.facilityType),
           avgAllInRate,
           loanCount: facilityLoans.length
         });
@@ -3072,7 +3072,7 @@ Reference: {loanReference}`,
 
         averageRateByFacility.push({
           facilityId: facility.id,
-          facilityName: facility.name || `${facility.facilityType} - ${facility.creditLimit} SAR`,
+          facilityName: facility.name || this.formatFacilityType(facility.facilityType),
           avgAllInRate,
           loanCount: facilityLoans.length
         });
@@ -3356,6 +3356,24 @@ Reference: {loanReference}`,
     const total = Math.max(0, principal + interest + fees);
 
     return { principal: Math.max(0, principal), interest, fees, total };
+  }
+
+  private formatFacilityType(facilityType: string): string {
+    const typeMap: Record<string, string> = {
+      'working_capital': 'Working Capital Facility',
+      'term_loan': 'Term Loan Facility',
+      'revolving_credit': 'Revolving Credit Facility',
+      'overdraft': 'Overdraft Facility',
+      'letter_of_credit': 'Letter of Credit Facility',
+      'guarantee': 'Guarantee Facility',
+      'murabaha': 'Murabaha Facility',
+      'tawarruq': 'Tawarruq Facility',
+      'ijara': 'Ijara Facility'
+    };
+    
+    return typeMap[facilityType] || facilityType.split('_').map(word => 
+      word.charAt(0).toUpperCase() + word.slice(1)
+    ).join(' ') + ' Facility';
   }
 
   async accrueInterest(loanId: string, toDate: string, userId: string): Promise<Transaction[]> {
