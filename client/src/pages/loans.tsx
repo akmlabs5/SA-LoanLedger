@@ -466,11 +466,56 @@ export default function Loans() {
     return (amount / 1000000).toFixed(3).replace(/\.?0+$/, '') + "M SAR";
   };
 
-  const exportLoans = () => {
-    toast({
-      title: "Export Started",
-      description: "Your loan data is being prepared for download",
-    });
+  const exportLoans = async (format: 'pdf' | 'excel') => {
+    try {
+      // Get current filters
+      const params = new URLSearchParams({
+        status: activeTab,
+        ...(selectedBank && { bankId: selectedBank }),
+        ...(searchQuery && { search: searchQuery })
+      });
+
+      const url = `/api/loans/export/${format}?${params.toString()}`;
+      
+      // Download file
+      const response = await fetch(url, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include'
+      });
+
+      if (!response.ok) {
+        throw new Error('Export failed');
+      }
+
+      // Create blob and download
+      const blob = await response.blob();
+      const downloadUrl = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = downloadUrl;
+      
+      const statusLabel = activeTab === 'settled' ? 'settled' : activeTab === 'cancelled' ? 'cancelled' : 'active';
+      const fileExtension = format === 'pdf' ? 'pdf' : 'xlsx';
+      a.download = `${statusLabel}-loans-${new Date().toISOString().split('T')[0]}.${fileExtension}`;
+      
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      window.URL.revokeObjectURL(downloadUrl);
+
+      toast({
+        title: "Export Complete",
+        description: `Your ${format.toUpperCase()} report has been downloaded`,
+      });
+    } catch (error) {
+      toast({
+        title: "Export Failed",
+        description: "There was an error exporting your data",
+        variant: "destructive",
+      });
+    }
   };
 
   const handleLoanCardClick = (loanId: string) => {
@@ -972,10 +1017,27 @@ export default function Loans() {
             icon={<FileText className="h-6 w-6" />}
             actions={
               <div className="flex gap-2">
-                <Button variant="outline" onClick={exportLoans} className="h-10">
-                  <Download className="mr-2 h-4 w-4" />
-                  Export
-                </Button>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="outline" className="h-10" data-testid="button-export">
+                      <Download className="mr-2 h-4 w-4" />
+                      Export
+                      <ChevronDown className="ml-2 h-4 w-4" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    <DropdownMenuLabel>Export Format</DropdownMenuLabel>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem onClick={() => exportLoans('pdf')} data-testid="export-pdf">
+                      <FileText className="mr-2 h-4 w-4" />
+                      PDF Document
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => exportLoans('excel')} data-testid="export-excel">
+                      <FileText className="mr-2 h-4 w-4" />
+                      Excel Spreadsheet
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
                 <Button 
                   onClick={() => setLocation("/loans/create")}
                   className="h-10 bg-gradient-to-r from-blue-600 to-blue-700 lg:hover:from-blue-700 lg:hover:to-blue-800 text-white shadow-lg"
