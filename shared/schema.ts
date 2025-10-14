@@ -47,7 +47,8 @@ export const collateralTypeEnum = pgEnum('collateral_type', [
 export const loanStatusEnum = pgEnum('loan_status', [
   'active',
   'settled',
-  'overdue'
+  'overdue',
+  'cancelled'
 ]);
 
 export const creditLineTypeEnum = pgEnum('credit_line_type', [
