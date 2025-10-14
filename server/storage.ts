@@ -251,6 +251,28 @@ export interface IStorage {
   }): Promise<number>;
   addTransaction(transaction: InsertTransaction): Promise<Transaction>;
   
+  // Bank Performance operations
+  getBankPerformance(bankId: string, organizationId: string): Promise<{
+    relationshipDuration: {
+      days: number;
+      years: number;
+    };
+    averageRateByFacility: Array<{
+      facilityId: string;
+      facilityName: string;
+      avgAllInRate: number;
+      loanCount: number;
+    }>;
+    paymentRecord: {
+      score: 'Excellent' | 'Good' | 'Fair' | 'Poor';
+      earlyCount: number;
+      onTimeCount: number;
+      lateCount: number;
+      totalCount: number;
+    };
+    lastActivity: string | null;
+  }>;
+  
   // Attachment operations
   getAttachmentsByOwner(ownerType: AttachmentOwnerType, ownerId: string, userId: string): Promise<Attachment[]>;
   createAttachment(attachment: InsertAttachment): Promise<Attachment>;
@@ -1584,6 +1606,172 @@ export class DatabaseStorage implements IStorage {
     return result;
   }
 
+  // Bank Performance operations
+  async getBankPerformance(bankId: string, organizationId: string): Promise<{
+    relationshipDuration: {
+      days: number;
+      years: number;
+    };
+    averageRateByFacility: Array<{
+      facilityId: string;
+      facilityName: string;
+      avgAllInRate: number;
+      loanCount: number;
+    }>;
+    paymentRecord: {
+      score: 'Excellent' | 'Good' | 'Fair' | 'Poor';
+      earlyCount: number;
+      onTimeCount: number;
+      lateCount: number;
+      totalCount: number;
+    };
+    lastActivity: string | null;
+  }> {
+    // Get all facilities for this bank and organization
+    const bankFacilities = await db
+      .select()
+      .from(facilities)
+      .where(and(
+        eq(facilities.bankId, bankId),
+        eq(facilities.organizationId, organizationId)
+      ))
+      .orderBy(asc(facilities.createdAt));
+
+    // 1. Calculate relationship duration from earliest facility
+    let relationshipDuration = { days: 0, years: 0 };
+    if (bankFacilities.length > 0) {
+      const earliestDate = new Date(bankFacilities[0].createdAt!);
+      const today = new Date();
+      const diffTime = Math.abs(today.getTime() - earliestDate.getTime());
+      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+      const diffYears = Number((diffDays / 365).toFixed(1));
+      relationshipDuration = { days: diffDays, years: diffYears };
+    }
+
+    // 2. Calculate average all-in rate per facility (weighted by outstanding)
+    const averageRateByFacility: Array<{
+      facilityId: string;
+      facilityName: string;
+      avgAllInRate: number;
+      loanCount: number;
+    }> = [];
+
+    for (const facility of bankFacilities) {
+      // Get active loans for this facility
+      const facilityLoans = await db
+        .select()
+        .from(loans)
+        .where(and(
+          eq(loans.facilityId, facility.id),
+          eq(loans.status, 'active')
+        ));
+
+      if (facilityLoans.length > 0) {
+        // Calculate weighted average rate
+        let totalWeightedRate = 0;
+        let totalOutstanding = 0;
+
+        for (const loan of facilityLoans) {
+          const balance = await this.calculateLoanBalance(loan.id);
+          const outstanding = parseFloat(balance.total);
+          const allInRate = parseFloat(loan.siborRate) + parseFloat(loan.marginRate);
+          
+          totalWeightedRate += allInRate * outstanding;
+          totalOutstanding += outstanding;
+        }
+
+        const avgAllInRate = totalOutstanding > 0 
+          ? Number((totalWeightedRate / totalOutstanding).toFixed(2))
+          : 0;
+
+        averageRateByFacility.push({
+          facilityId: facility.id,
+          facilityName: facility.name || `${facility.facilityType} - ${facility.creditLimit} SAR`,
+          avgAllInRate,
+          loanCount: facilityLoans.length
+        });
+      }
+    }
+
+    // 3. Calculate payment record score
+    const facilityIds = bankFacilities.map(f => f.id);
+    const allLoans = await db
+      .select()
+      .from(loans)
+      .where(and(
+        sql`${loans.facilityId} = ANY(${facilityIds})`,
+        or(
+          eq(loans.status, 'settled'),
+          eq(loans.status, 'active')
+        )
+      ));
+
+    let earlyCount = 0;
+    let onTimeCount = 0;
+    let lateCount = 0;
+
+    for (const loan of allLoans) {
+      if (loan.status === 'settled' && loan.settlementDate && loan.dueDate) {
+        const settleDate = new Date(loan.settlementDate);
+        const dueDate = new Date(loan.dueDate);
+        
+        if (settleDate < dueDate) {
+          earlyCount++;
+        } else if (settleDate.toDateString() === dueDate.toDateString()) {
+          onTimeCount++;
+        } else {
+          lateCount++;
+        }
+      } else if (loan.status === 'active' && loan.dueDate) {
+        const today = new Date();
+        const dueDate = new Date(loan.dueDate);
+        
+        if (today > dueDate) {
+          lateCount++;
+        }
+      }
+    }
+
+    const totalCount = earlyCount + onTimeCount + lateCount;
+    let score: 'Excellent' | 'Good' | 'Fair' | 'Poor' = 'Poor';
+
+    if (totalCount > 0) {
+      const earlyPercent = (earlyCount / totalCount) * 100;
+      const latePercent = (lateCount / totalCount) * 100;
+
+      if (earlyPercent >= 90 && latePercent === 0) {
+        score = 'Excellent';
+      } else if ((earlyCount + onTimeCount) / totalCount >= 0.7 && latePercent < 10) {
+        score = 'Good';
+      } else if ((earlyCount + onTimeCount) / totalCount >= 0.5 && latePercent < 30) {
+        score = 'Fair';
+      }
+    }
+
+    // 4. Get last activity (most recent loan drawdown)
+    const recentLoan = await db
+      .select()
+      .from(loans)
+      .where(sql`${loans.facilityId} = ANY(${facilityIds})`)
+      .orderBy(desc(loans.createdAt))
+      .limit(1);
+
+    const lastActivity = recentLoan.length > 0 ? recentLoan[0].createdAt!.toISOString() : null;
+
+    return {
+      relationshipDuration,
+      averageRateByFacility,
+      paymentRecord: {
+        score,
+        earlyCount,
+        onTimeCount,
+        lateCount,
+        totalCount
+      },
+      lastActivity
+    };
+  }
+
   // Attachment operations
   async getAttachmentsByOwner(ownerType: AttachmentOwnerType, ownerId: string, userId: string): Promise<Attachment[]> {
     return await db
@@ -2792,6 +2980,154 @@ Reference: {loanReference}`,
     };
     this.transactions.set(newTransaction.id, newTransaction);
     return newTransaction;
+  }
+
+  // Bank Performance operations
+  async getBankPerformance(bankId: string, organizationId: string): Promise<{
+    relationshipDuration: {
+      days: number;
+      years: number;
+    };
+    averageRateByFacility: Array<{
+      facilityId: string;
+      facilityName: string;
+      avgAllInRate: number;
+      loanCount: number;
+    }>;
+    paymentRecord: {
+      score: 'Excellent' | 'Good' | 'Fair' | 'Poor';
+      earlyCount: number;
+      onTimeCount: number;
+      lateCount: number;
+      totalCount: number;
+    };
+    lastActivity: string | null;
+  }> {
+    // Get all facilities for this bank and organization
+    const bankFacilities = Array.from(this.facilities.values())
+      .filter(f => f.bankId === bankId && f.organizationId === organizationId)
+      .sort((a, b) => (a.createdAt?.getTime() || 0) - (b.createdAt?.getTime() || 0));
+
+    // 1. Calculate relationship duration from earliest facility
+    let relationshipDuration = { days: 0, years: 0 };
+    if (bankFacilities.length > 0 && bankFacilities[0].createdAt) {
+      const earliestDate = new Date(bankFacilities[0].createdAt);
+      const today = new Date();
+      const diffTime = Math.abs(today.getTime() - earliestDate.getTime());
+      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+      const diffYears = Number((diffDays / 365).toFixed(1));
+      relationshipDuration = { days: diffDays, years: diffYears };
+    }
+
+    // 2. Calculate average all-in rate per facility (weighted by outstanding)
+    const averageRateByFacility: Array<{
+      facilityId: string;
+      facilityName: string;
+      avgAllInRate: number;
+      loanCount: number;
+    }> = [];
+
+    for (const facility of bankFacilities) {
+      // Get active loans for this facility
+      const facilityLoans = Array.from(this.loans.values()).filter(
+        l => l.facilityId === facility.id && l.status === 'active'
+      );
+
+      if (facilityLoans.length > 0) {
+        // Calculate weighted average rate (using loan amount as proxy for outstanding)
+        let totalWeightedRate = 0;
+        let totalOutstanding = 0;
+
+        for (const loan of facilityLoans) {
+          const outstanding = parseFloat(loan.amount);
+          const allInRate = parseFloat(loan.siborRate) + parseFloat(loan.marginRate);
+          
+          totalWeightedRate += allInRate * outstanding;
+          totalOutstanding += outstanding;
+        }
+
+        const avgAllInRate = totalOutstanding > 0 
+          ? Number((totalWeightedRate / totalOutstanding).toFixed(2))
+          : 0;
+
+        averageRateByFacility.push({
+          facilityId: facility.id,
+          facilityName: facility.name || `${facility.facilityType} - ${facility.creditLimit} SAR`,
+          avgAllInRate,
+          loanCount: facilityLoans.length
+        });
+      }
+    }
+
+    // 3. Calculate payment record score
+    const facilityIds = bankFacilities.map(f => f.id);
+    const allLoans = Array.from(this.loans.values()).filter(
+      l => facilityIds.includes(l.facilityId) && (l.status === 'settled' || l.status === 'active')
+    );
+
+    let earlyCount = 0;
+    let onTimeCount = 0;
+    let lateCount = 0;
+
+    for (const loan of allLoans) {
+      if (loan.status === 'settled' && loan.settlementDate && loan.dueDate) {
+        const settleDate = new Date(loan.settlementDate);
+        const dueDate = new Date(loan.dueDate);
+        
+        if (settleDate < dueDate) {
+          earlyCount++;
+        } else if (settleDate.toDateString() === dueDate.toDateString()) {
+          onTimeCount++;
+        } else {
+          lateCount++;
+        }
+      } else if (loan.status === 'active' && loan.dueDate) {
+        const today = new Date();
+        const dueDate = new Date(loan.dueDate);
+        
+        if (today > dueDate) {
+          lateCount++;
+        }
+      }
+    }
+
+    const totalCount = earlyCount + onTimeCount + lateCount;
+    let score: 'Excellent' | 'Good' | 'Fair' | 'Poor' = 'Poor';
+
+    if (totalCount > 0) {
+      const earlyPercent = (earlyCount / totalCount) * 100;
+      const latePercent = (lateCount / totalCount) * 100;
+
+      if (earlyPercent >= 90 && latePercent === 0) {
+        score = 'Excellent';
+      } else if ((earlyCount + onTimeCount) / totalCount >= 0.7 && latePercent < 10) {
+        score = 'Good';
+      } else if ((earlyCount + onTimeCount) / totalCount >= 0.5 && latePercent < 30) {
+        score = 'Fair';
+      }
+    }
+
+    // 4. Get last activity (most recent loan drawdown)
+    const recentLoans = Array.from(this.loans.values())
+      .filter(l => facilityIds.includes(l.facilityId))
+      .sort((a, b) => (b.createdAt?.getTime() || 0) - (a.createdAt?.getTime() || 0));
+
+    const lastActivity = recentLoans.length > 0 && recentLoans[0].createdAt 
+      ? recentLoans[0].createdAt.toISOString() 
+      : null;
+
+    return {
+      relationshipDuration,
+      averageRateByFacility,
+      paymentRecord: {
+        score,
+        earlyCount,
+        onTimeCount,
+        lateCount,
+        totalCount
+      },
+      lastActivity
+    };
   }
 
   // New methods for loan lifecycle management

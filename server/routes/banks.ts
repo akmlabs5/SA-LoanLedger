@@ -110,6 +110,19 @@ export function registerBanksRoutes(app: Express, deps: AppDependencies) {
     }
   });
 
+  app.get('/api/banks/:bankId/performance', isAuthenticated, attachOrganizationContext, requireOrganization, async (req: any, res) => {
+    try {
+      const organizationId = req.organizationId;
+      const { bankId } = req.params;
+
+      const performance = await storage.getBankPerformance(bankId, organizationId);
+      res.json(performance);
+    } catch (error) {
+      console.error("Error fetching bank performance:", error);
+      res.status(500).json({ message: "Failed to fetch bank performance" });
+    }
+  });
+
   app.get('/api/banks/:bankId/analytics', isAuthenticated, attachOrganizationContext, requireOrganization, async (req: any, res) => {
     try {
       const organizationId = req.organizationId;
