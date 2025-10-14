@@ -890,39 +890,6 @@ export default function BankDetail() {
               bankName={bank!.name} 
               isAuthenticated={isAuthenticated} 
             />
-            <Card className="border-0 shadow-lg bg-white/50 dark:bg-gray-800/50 backdrop-blur-sm">
-              <CardHeader>
-                <CardTitle className="text-xl font-semibold flex items-center space-x-2">
-                  <Building className="h-5 w-5 text-gray-600 dark:text-gray-400" />
-                  <span>Quick Actions</span>
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div>
-                  <p className="text-sm text-gray-600 dark:text-gray-400">Bank Code</p>
-                  <p className="font-semibold text-gray-900 dark:text-gray-100">{bank!.code}</p>
-                </div>
-                <div>
-                  <p className="text-sm text-gray-600 dark:text-gray-400">Full Name</p>
-                  <p className="font-semibold text-gray-900 dark:text-gray-100">{bank!.name}</p>
-                </div>
-                <Separator />
-                <div className="space-y-3">
-                  <div className="flex items-center space-x-2">
-                    <Phone className="h-4 w-4 text-gray-500" />
-                    <span className="text-sm text-gray-600 dark:text-gray-400">+966 11 123 4567</span>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <Mail className="h-4 w-4 text-gray-500" />
-                    <span className="text-sm text-gray-600 dark:text-gray-400">corporate@{bank!.code.toLowerCase()}.com.sa</span>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <MapPin className="h-4 w-4 text-gray-500" />
-                    <span className="text-sm text-gray-600 dark:text-gray-400">Riyadh, Saudi Arabia</span>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
 
             {/* Quick Actions */}
             <Card className="border-0 shadow-lg bg-white/50 dark:bg-gray-800/50 backdrop-blur-sm">
