@@ -8,7 +8,7 @@ interface PageContainerProps {
 export function PageContainer({ children, className = "" }: PageContainerProps) {
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-gray-100 dark:from-gray-900 dark:to-slate-900">
-      <div className={`max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 ${className}`}>
+      <div className={`max-w-7xl mx-auto px-3 sm:px-4 md:px-6 lg:px-8 py-4 sm:py-6 ${className}`}>
         {children}
       </div>
     </div>
@@ -50,5 +50,5 @@ interface SectionProps {
 }
 
 export function Section({ children, className = "" }: SectionProps) {
-  return <div className={`space-y-6 ${className}`}>{children}</div>;
+  return <div className={`space-y-4 sm:space-y-6 ${className}`}>{children}</div>;
 }
