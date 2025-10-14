@@ -41,7 +41,7 @@ export function generateCalendarInvite(
         reminderDate.getHours(),
         reminderDate.getMinutes()
       ],
-      duration: { hours: 0, minutes: 30 }, // 30-minute reminder
+      duration: { hours: 1, minutes: 0 }, // 1-hour reminder
       title: reminder.title || `Loan Payment Reminder - ${loan.referenceNumber}`,
       description: reminder.message || `Payment reminder for loan ${loan.referenceNumber}. Amount: ${loan.amount} SAR. Due: ${new Date(loan.dueDate).toLocaleDateString('en-SA')}`,
       location: bank?.name || 'Morouna Loans',

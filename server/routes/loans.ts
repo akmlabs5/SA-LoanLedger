@@ -110,13 +110,16 @@ export function registerLoansRoutes(app: Express, deps: AppDependencies) {
         (async () => {
           try {
             const { sendTemplateReminderEmail } = await import('../emailService');
-            const allUsers = await storage.getUsers();
-            const user = allUsers.find((u: any) => u.id === userId);
+            const user = await storage.getUser(userId);
             
             if (user) {
               const facilityWithBank = await storage.getFacilityWithBank(facility.id);
               
               // Create a temporary reminder object for email template
+              // Set reminder time to 9:00 AM on the due date
+              const reminderDate = new Date(loan.dueDate);
+              reminderDate.setHours(9, 0, 0, 0);
+              
               const tempReminder = {
                 id: 'temp-' + Date.now(),
                 loanId: loan.id,
@@ -124,7 +127,7 @@ export function registerLoansRoutes(app: Express, deps: AppDependencies) {
                 userId: userId,
                 type: 'due_date' as const,
                 title: 'New Loan Created - Payment Due Date',
-                reminderDate: new Date(loan.dueDate),
+                reminderDate: reminderDate,
                 message: `Your loan has been successfully created. Payment is due on ${new Date(loan.dueDate).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}`,
                 emailEnabled: true,
                 calendarEnabled: true,
@@ -133,7 +136,7 @@ export function registerLoansRoutes(app: Express, deps: AppDependencies) {
                 sentAt: new Date(),
                 createdAt: new Date(),
                 updatedAt: new Date(),
-                templateId: undefined
+                templateId: null
               };
               
               const emailSent = await sendTemplateReminderEmail(
