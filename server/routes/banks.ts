@@ -53,16 +53,28 @@ export function registerBanksRoutes(app: Express, deps: AppDependencies) {
   app.post('/api/banks/:bankId/contacts', isAuthenticated, attachOrganizationContext, requireOrganization, async (req: any, res) => {
     try {
       const organizationId = req.organizationId;
+      const userId = req.user.claims.sub;
       const { bankId } = req.params;
       const contactData = insertBankContactSchema.parse({ 
         ...req.body, 
         organizationId, 
-        bankId 
+        bankId,
+        userId
       });
       const contact = await storage.createBankContact(contactData);
       res.json(contact);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error creating bank contact:", error);
+      
+      // Handle Zod validation errors
+      if (error.name === 'ZodError') {
+        const missingFields = error.issues.map((issue: any) => issue.path.join('.')).join(', ');
+        return res.status(400).json({ 
+          message: `Missing required fields: ${missingFields}`,
+          details: error.issues
+        });
+      }
+      
       res.status(400).json({ message: "Failed to create bank contact" });
     }
   });

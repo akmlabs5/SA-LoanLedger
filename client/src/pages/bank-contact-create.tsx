@@ -84,10 +84,16 @@ export default function BankContactCreatePage() {
       });
       setLocation(`/banks/${bankId}`);
     },
-    onError: (error) => {
+    onError: (error: any) => {
+      // Show specific validation error if available
+      const errorMessage = error.message || "Failed to create contact";
+      const description = error.details 
+        ? `Validation error: ${error.details.map((d: any) => d.message).join(', ')}`
+        : errorMessage;
+      
       toast({ 
         title: "Failed to create contact", 
-        description: error.message,
+        description: description,
         variant: "destructive" 
       });
     },
