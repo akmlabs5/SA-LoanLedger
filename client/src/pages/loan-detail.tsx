@@ -662,7 +662,7 @@ export default function LoanDetailPage() {
                       Cancel Loan
                     </Button>
                   </>
-                ) : (
+                ) : loan.status === 'settled' ? (
                   <>
                     <div className="text-center py-4">
                       <CheckCircle className="h-12 w-12 text-emerald-500 mx-auto mb-2" />
@@ -680,6 +680,14 @@ export default function LoanDetailPage() {
                       <Undo2 className="mr-2 h-4 w-4" />
                       {reverseSettlementMutation.isPending ? 'Reversing...' : 'Undo Settlement'}
                     </Button>
+                  </>
+                ) : (
+                  <>
+                    <div className="text-center py-4">
+                      <Trash2 className="h-12 w-12 text-gray-400 dark:text-gray-600 mx-auto mb-2" />
+                      <p className="font-medium text-gray-600 dark:text-gray-400">Loan Cancelled</p>
+                      <p className="text-sm text-muted-foreground">This loan has been cancelled</p>
+                    </div>
                   </>
                 )}
               </CardContent>
