@@ -140,6 +140,7 @@ export interface IStorage {
   getUserLoans(organizationId: string): Promise<Loan[]>;
   getActiveLoansByUser(organizationId: string): Promise<(Loan & { facility: Facility & { bank: Bank } })[]>;
   getSettledLoansByUser(organizationId: string): Promise<(Loan & { facility: Facility & { bank: Bank } })[]>;
+  getCancelledLoansByUser(organizationId: string): Promise<(Loan & { facility: Facility & { bank: Bank } })[]>;
   getLoanById(loanId: string): Promise<(Loan & { facility: Facility & { bank: Bank } }) | undefined>;
   createLoan(loan: InsertLoan): Promise<Loan>;
   updateLoan(loanId: string, loan: Partial<InsertLoan>, userId: string, reason?: string): Promise<Loan>;
@@ -624,7 +625,10 @@ export class DatabaseStorage implements IStorage {
       .from(loans)
       .innerJoin(facilities, eq(loans.facilityId, facilities.id))
       .innerJoin(banks, eq(facilities.bankId, banks.id))
-      .where(and(eq(loans.organizationId, organizationId), ne(loans.status, 'settled')))
+      .where(and(
+        eq(loans.organizationId, organizationId), 
+        or(eq(loans.status, 'active'), eq(loans.status, 'overdue'))
+      ))
       .orderBy(asc(loans.dueDate));
 
     return result.map(row => ({
@@ -644,6 +648,24 @@ export class DatabaseStorage implements IStorage {
       .innerJoin(banks, eq(facilities.bankId, banks.id))
       .where(and(eq(loans.organizationId, organizationId), eq(loans.status, 'settled')))
       .orderBy(desc(loans.settledDate));
+
+    return result.map(row => ({
+      ...row.loans,
+      facility: {
+        ...row.facilities,
+        bank: row.banks,
+      },
+    }));
+  }
+
+  async getCancelledLoansByUser(organizationId: string): Promise<(Loan & { facility: Facility & { bank: Bank } })[]> {
+    const result = await db
+      .select()
+      .from(loans)
+      .innerJoin(facilities, eq(loans.facilityId, facilities.id))
+      .innerJoin(banks, eq(facilities.bankId, banks.id))
+      .where(and(eq(loans.organizationId, organizationId), eq(loans.status, 'cancelled')))
+      .orderBy(desc(loans.createdAt));
 
     return result.map(row => ({
       ...row.loans,
@@ -2329,7 +2351,10 @@ Reference: {loanReference}`,
   }
 
   async getActiveLoansByUser(organizationId: string): Promise<(Loan & { facility: Facility & { bank: Bank } })[]> {
-    const userLoans = Array.from(this.loans.values()).filter(loan => loan.organizationId === organizationId && loan.status !== 'settled');
+    const userLoans = Array.from(this.loans.values()).filter(loan => 
+      loan.organizationId === organizationId && 
+      (loan.status === 'active' || loan.status === 'overdue')
+    );
     
     // Join with facility and bank data
     return userLoans.map(loan => {
@@ -2355,6 +2380,31 @@ Reference: {loanReference}`,
 
   async getSettledLoansByUser(organizationId: string): Promise<(Loan & { facility: Facility & { bank: Bank } })[]> {
     const userLoans = Array.from(this.loans.values()).filter(loan => loan.organizationId === organizationId && loan.status === 'settled');
+    
+    // Join with facility and bank data
+    return userLoans.map(loan => {
+      const facility = this.facilities.get(loan.facilityId);
+      if (!facility) {
+        throw new Error(`Facility not found for loan ${loan.id}`);
+      }
+      
+      const bank = this.banks.get(facility.bankId);
+      if (!bank) {
+        throw new Error(`Bank not found for facility ${facility.id}`);
+      }
+      
+      return {
+        ...loan,
+        facility: {
+          ...facility,
+          bank,
+        },
+      };
+    });
+  }
+
+  async getCancelledLoansByUser(organizationId: string): Promise<(Loan & { facility: Facility & { bank: Bank } })[]> {
+    const userLoans = Array.from(this.loans.values()).filter(loan => loan.organizationId === organizationId && loan.status === 'cancelled');
     
     // Join with facility and bank data
     return userLoans.map(loan => {
