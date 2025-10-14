@@ -1,6 +1,14 @@
 # Overview
 Morouna Loans is a full-stack loan management system designed for the Saudi Arabian market. It integrates SIBOR-based calculations and AI-driven insights to manage loan portfolios, offering tools for risk management, concentration alerts, and LTV monitoring. The system handles bank facilities, collateral tracking, and the entire loan lifecycle within a mobile-responsive design. Its core purpose is to provide intelligent insights for financial portfolio optimization, specifically addressing the unique requirements of the Saudi banking sector. The project aims to deliver a robust, secure, and user-friendly platform that enhances financial decision-making for individuals and organizations in Saudi Arabia.
 
+# Recent Changes
+
+## October 14, 2025 - Bank Performance Metrics Bug Fixes
+- **Fixed Average Rate Calculation**: Corrected field name from `loan.marginRate` to `loan.margin` in getBankPerformance, resolving NaN/null avgAllInRate display (now correctly shows calculated rates like 7.15%)
+- **Fixed Payment Record Tracking**: Corrected settlement date field from `loan.settlementDate` to `loan.settledDate`, enabling proper settled loan counting in payment performance metrics
+- **Enhanced Facility Display**: Added formatFacilityType() helper function to transform raw database values (e.g., "working_capital") into user-friendly names (e.g., "Working Capital Facility"), supporting all Saudi banking facility types including Murabaha, Tawarruq, and Ijara
+- **Multi-tenant Validation**: Verified all performance calculations maintain proper organizationId filtering and data isolation
+
 # User Preferences
 Preferred communication style: Simple, everyday language.
 
