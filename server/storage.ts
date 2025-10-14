@@ -897,6 +897,24 @@ export class DatabaseStorage implements IStorage {
     };
   }
 
+  private formatFacilityType(facilityType: string): string {
+    const typeMap: Record<string, string> = {
+      'working_capital': 'Working Capital Facility',
+      'term_loan': 'Term Loan Facility',
+      'revolving_credit': 'Revolving Credit Facility',
+      'overdraft': 'Overdraft Facility',
+      'letter_of_credit': 'Letter of Credit Facility',
+      'guarantee': 'Guarantee Facility',
+      'murabaha': 'Murabaha Facility',
+      'tawarruq': 'Tawarruq Facility',
+      'ijara': 'Ijara Facility'
+    };
+    
+    return typeMap[facilityType] || facilityType.split('_').map(word => 
+      word.charAt(0).toUpperCase() + word.slice(1)
+    ).join(' ') + ' Facility';
+  }
+
   async getLoanLedger(loanId: string): Promise<Transaction[]> {
     const result = await db
       .select()
