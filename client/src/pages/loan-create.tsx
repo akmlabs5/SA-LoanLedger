@@ -10,6 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDescription } from "@/components/ui/form";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
@@ -19,7 +20,7 @@ import { z } from "zod";
 import { 
   ArrowLeft, 
   AlertCircle, 
- 
+  Mail,
   Calendar, 
   FileText, 
   Building,
@@ -49,6 +50,7 @@ const loanFormSchema = z.object({
   purpose: z.string().optional(),
   status: z.enum(["active", "settled", "overdue"]).default("active"),
   notes: z.string().optional(),
+  sendEmailReminder: z.boolean().default(false),
 });
 
 type LoanFormData = z.infer<typeof loanFormSchema>;
@@ -107,6 +109,7 @@ export default function LoanCreatePage() {
       siborTerm: "3M",
       customSiborMonths: "",
       notes: "",
+      sendEmailReminder: false,
     },
   });
 
@@ -706,6 +709,33 @@ export default function LoanCreatePage() {
                             />
                           </FormControl>
                           <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    {/* Email Reminder */}
+                    <FormField
+                      control={form.control}
+                      name="sendEmailReminder"
+                      render={({ field }) => (
+                        <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border border-gray-200 dark:border-gray-700 p-4 bg-gradient-to-r from-emerald-50 to-blue-50 dark:from-emerald-950/20 dark:to-blue-950/20">
+                          <FormControl>
+                            <Checkbox
+                              checked={field.value}
+                              onCheckedChange={field.onChange}
+                              data-testid="checkbox-send-email-reminder"
+                            />
+                          </FormControl>
+                          <div className="space-y-1 leading-none">
+                            <FormLabel className="flex items-center gap-2 font-medium text-sm cursor-pointer">
+                              <Mail className="h-4 w-4 text-emerald-600" />
+                              <Calendar className="h-4 w-4 text-blue-600" />
+                              Send Email Reminder with Calendar Invite
+                            </FormLabel>
+                            <FormDescription className="text-xs">
+                              Automatically send an email notification with a calendar invite when this loan is created. The invite will include the loan due date and payment details.
+                            </FormDescription>
+                          </div>
                         </FormItem>
                       )}
                     />

@@ -104,6 +104,57 @@ export function registerLoansRoutes(app: Express, deps: AppDependencies) {
       const finalLoanData = { ...loanData, creditLineId: finalCreditLineId };
       const loan = await storage.createLoan(finalLoanData);
 
+      // Send immediate email reminder with calendar invite if requested
+      if (req.body.sendEmailReminder === true) {
+        try {
+          const { sendTemplateReminderEmail } = await import('../emailService');
+          const allUsers = await storage.getUsers();
+          const user = allUsers.find((u: any) => u.id === userId);
+          
+          if (user) {
+            const facilityWithBank = await storage.getFacilityWithBank(facility.id);
+            
+            // Create a temporary reminder object for email template
+            const tempReminder = {
+              id: 'temp-' + Date.now(),
+              loanId: loan.id,
+              organizationId,
+              userId: userId,
+              type: 'due_date' as const,
+              title: 'New Loan Created - Payment Due Date',
+              reminderDate: new Date(loan.dueDate),
+              message: `Your loan has been successfully created. Payment is due on ${new Date(loan.dueDate).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}`,
+              emailEnabled: true,
+              calendarEnabled: true,
+              status: 'sent' as const,
+              isActive: true,
+              sentAt: new Date(),
+              createdAt: new Date(),
+              updatedAt: new Date(),
+              templateId: undefined
+            };
+            
+            const emailSent = await sendTemplateReminderEmail(
+              user,
+              loan,
+              tempReminder,
+              undefined,
+              facilityWithBank?.bank,
+              facilityWithBank
+            );
+            
+            if (emailSent) {
+              console.log(`✅ Loan creation email reminder sent to ${user.email} for loan ${loan.referenceNumber}`);
+            } else {
+              console.warn(`⚠️ Failed to send loan creation email reminder for loan ${loan.referenceNumber}`);
+            }
+          }
+        } catch (emailError) {
+          console.error('Error sending loan creation email reminder:', emailError);
+          // Don't fail the loan creation if email fails
+        }
+      }
+
       try {
         const userSettings = await storage.getUserReminderSettings(organizationId);
         
