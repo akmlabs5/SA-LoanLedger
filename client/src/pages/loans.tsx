@@ -97,6 +97,9 @@ export default function Loans() {
   // Undo settlement state
   const [loanToUndo, setLoanToUndo] = useState<string | null>(null);
 
+  // Permanent delete state
+  const [loanToPermanentlyDelete, setLoanToPermanentlyDelete] = useState<string | null>(null);
+
   // Reset visible loans when filters change
   useEffect(() => {
     setVisibleActiveLoans(8);
@@ -253,6 +256,39 @@ export default function Loans() {
       toast({
         title: "Error",
         description: "Failed to reverse settlement",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const permanentDeleteMutation = useMutation({
+    mutationFn: async (loanId: string) => {
+      return apiRequest('POST', `/api/loans/${loanId}/permanent-delete`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/loans", "cancelled"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/dashboard/portfolio"] });
+      setLoanToPermanentlyDelete(null);
+      toast({
+        title: "Success",
+        description: "Loan permanently deleted from system",
+      });
+    },
+    onError: (error: any) => {
+      if (isUnauthorizedError(error as Error)) {
+        toast({
+          title: "Unauthorized",
+          description: "You are logged out. Logging in again...",
+          variant: "destructive",
+        });
+        setTimeout(() => {
+          window.location.href = "/api/login";
+        }, 500);
+        return;
+      }
+      toast({
+        title: "Error",
+        description: error.message || "Failed to permanently delete loan",
         variant: "destructive",
       });
     },
@@ -871,7 +907,7 @@ export default function Loans() {
                             </div>
                           </div>
 
-                          <div className="grid grid-cols-2 gap-3 text-sm">
+                          <div className="grid grid-cols-2 gap-3 text-sm mb-3">
                             <div>
                               <p className="text-gray-600 dark:text-gray-400 text-xs">Start Date</p>
                               <p className="font-semibold text-gray-900 dark:text-gray-100">
@@ -885,6 +921,20 @@ export default function Loans() {
                               </p>
                             </div>
                           </div>
+
+                          <Button
+                            variant="destructive"
+                            size="sm"
+                            className="w-full h-11 active:scale-95"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setLoanToPermanentlyDelete(loan.id);
+                            }}
+                            data-testid={`button-mobile-permanent-delete-${loan.id}`}
+                          >
+                            <Trash2 className="mr-2 h-4 w-4" />
+                            Permanently Delete
+                          </Button>
                         </CardContent>
                       </Card>
                     ))}
@@ -1512,9 +1562,23 @@ export default function Loans() {
                         </div>
 
                         <div className="pt-3 border-t border-gray-200 dark:border-gray-700">
-                          <p className="text-sm text-gray-600 dark:text-gray-400 text-center">
-                            This loan has been cancelled. Click to view details or permanently delete from history.
-                          </p>
+                          <div className="flex items-center justify-between">
+                            <p className="text-sm text-gray-600 dark:text-gray-400">
+                              This loan has been cancelled
+                            </p>
+                            <Button
+                              variant="destructive"
+                              size="sm"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setLoanToPermanentlyDelete(loan.id);
+                              }}
+                              data-testid={`button-permanent-delete-${loan.id}`}
+                            >
+                              <Trash2 className="mr-2 h-4 w-4" />
+                              Permanently Delete
+                            </Button>
+                          </div>
                         </div>
                       </CardContent>
                     </Card>
@@ -1566,6 +1630,31 @@ export default function Loans() {
               disabled={reverseSettlementMutation.isPending}
             >
               {reverseSettlementMutation.isPending ? 'Undoing...' : 'Undo Settlement'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog open={!!loanToPermanentlyDelete} onOpenChange={(open) => !open && setLoanToPermanentlyDelete(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2">
+              <Trash2 className="h-5 w-5 text-red-600" />
+              Permanently Delete Loan
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              This will permanently delete this loan from the system. This action cannot be undone and all loan data will be lost forever. Are you absolutely sure?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => setLoanToPermanentlyDelete(null)}>Cancel</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={() => loanToPermanentlyDelete && permanentDeleteMutation.mutate(loanToPermanentlyDelete)}
+              className="bg-red-600 lg:hover:bg-red-700 text-white"
+              disabled={permanentDeleteMutation.isPending}
+              data-testid="button-confirm-permanent-delete"
+            >
+              {permanentDeleteMutation.isPending ? 'Deleting...' : 'Permanently Delete'}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
