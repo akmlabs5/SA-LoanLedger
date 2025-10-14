@@ -235,8 +235,8 @@ export default function Dashboard() {
 
         <Section>
           {/* Mobile: Horizontal Scrolling Metrics with Snap Points */}
-          <div className="overflow-x-auto -mx-4 px-4 pb-2">
-            <div className="flex gap-3 snap-x snap-mandatory" style={{ scrollbarWidth: 'none' }}>
+          <div className="overflow-x-auto -mx-3 px-3 pb-2">
+            <div className="flex gap-2.5 snap-x snap-mandatory" style={{ scrollbarWidth: 'none' }}>
               <Card 
                 className="min-w-[280px] snap-start bg-gradient-to-br from-emerald-500 to-teal-600 border-0 active:scale-95 transition-transform" 
                 data-testid="card-metric-outstanding"
@@ -361,7 +361,7 @@ export default function Dashboard() {
 
           {/* Mobile: Priority Loans List */}
           <div>
-            <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center justify-between mb-2.5">
               <h2 className="text-lg font-semibold">Priority Loans</h2>
               <Badge variant="outline">{sortedLoans.length} total</Badge>
             </div>
@@ -376,7 +376,7 @@ export default function Dashboard() {
                 <p className="text-muted-foreground">No active loans</p>
               </Card>
             ) : (
-              <div className="space-y-3">
+              <div className="space-y-2.5">
                 {sortedLoans.slice(0, visibleLoans).map((loan) => {
                   const urgency = getLoanUrgency(loan.dueDate);
                   const urgencyBorderClass = urgency.color === 'red' 
@@ -443,12 +443,12 @@ export default function Dashboard() {
 
           {/* Mobile: Bank Exposures Cards */}
           <div>
-            <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center justify-between mb-2.5">
               <h2 className="text-lg font-semibold">Bank Exposures</h2>
               <Badge variant="outline">{portfolioSummary?.bankExposures?.length || 0} banks</Badge>
             </div>
 
-            <div className="space-y-3">
+            <div className="space-y-2.5">
               {portfolioSummary?.bankExposures && portfolioSummary.bankExposures.length > 0 ? (
                 portfolioSummary.bankExposures.slice(0, visibleBanks).map((exposure) => (
                   <Card 
@@ -514,8 +514,8 @@ export default function Dashboard() {
 
           {/* Mobile: Quick Actions */}
           <div>
-            <h2 className="text-lg font-semibold mb-3">Quick Actions</h2>
-            <div className="grid grid-cols-2 gap-3">
+            <h2 className="text-lg font-semibold mb-2.5">Quick Actions</h2>
+            <div className="grid grid-cols-2 gap-2 sm:gap-3">
               <Card 
                 className="active:scale-95 active:bg-accent/50 transition-all cursor-pointer"
                 onClick={() => setLocation('/banks')}
