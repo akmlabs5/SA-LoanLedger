@@ -115,7 +115,12 @@ export default function ReminderModal({ loanId, isOpen, onClose, loanData }: Rem
   });
 
   const onSubmit = (data: ReminderFormData) => {
-    createReminderMutation.mutate(data);
+    // Remove templateId if it's "none" or empty
+    const submitData = {
+      ...data,
+      templateId: data.templateId === "none" || !data.templateId ? undefined : data.templateId,
+    };
+    createReminderMutation.mutate(submitData);
   };
 
   const handleQuickSetup = (days: number, type: "due_date" | "payment") => {

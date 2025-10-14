@@ -95,6 +95,11 @@ app.use((req, res, next) => {
   // Initialize application (database, storage, auth, defaults)
   const deps = await initializeApp(app);
 
+  // Start reminder scheduler for sending due reminders
+  const { ReminderScheduler } = await import('./reminderScheduler');
+  const reminderScheduler = new ReminderScheduler(deps.storage);
+  reminderScheduler.start();
+
   // Register all modular routes
   registerAllRoutes(app, deps);
 

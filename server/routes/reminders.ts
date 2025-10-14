@@ -67,18 +67,16 @@ export function registerRemindersRoutes(app: Express, deps: AppDependencies) {
           }
           
           // Get bank and facility data for template context
-          const facility = await storage.getFacilityById(loan.facilityId);
-          let bank = null;
-          if (facility?.bankId) {
-            bank = await storage.getBankById(facility.bankId);
-          }
+          const facilityWithBank = await storage.getFacilityWithBank(loan.facilityId);
+          const facility = facilityWithBank;
+          const bank = facilityWithBank?.bank || undefined;
           
           // Get template if specified
-          let template = null;
+          let template = undefined;
           if (reminderData.templateId) {
             try {
-              const templates = await storage.getReminderTemplates();
-              template = templates.find(t => t.id === reminderData.templateId) || null;
+              const templates = await storage.getAllReminderTemplates();
+              template = templates.find((t: any) => t.id === reminderData.templateId) || undefined;
             } catch (error) {
               console.log('Template not found, using default:', error);
             }

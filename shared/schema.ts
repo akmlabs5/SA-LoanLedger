@@ -667,6 +667,7 @@ export const loanReminders = pgTable("loan_reminders", {
   type: reminderTypeEnum("type").notNull(),
   title: varchar("title", { length: 200 }).notNull(),
   message: text("message"),
+  templateId: varchar("template_id").references(() => reminderTemplates.id),
   reminderDate: timestamp("reminder_date").notNull(),
   emailEnabled: boolean("email_enabled").default(true),
   calendarEnabled: boolean("calendar_enabled").default(false),
