@@ -519,7 +519,7 @@ export function registerLoansRoutes(app: Express, deps: AppDependencies) {
           const bank = allBanks.find((b: any) => b.id === facility?.bankId);
           return (
             bank?.name?.toLowerCase().includes(searchLower) ||
-            l.reference?.toLowerCase().includes(searchLower) ||
+            l.referenceNumber?.toLowerCase().includes(searchLower) ||
             l.amount?.toString().includes(searchLower)
           );
         });
@@ -550,7 +550,7 @@ export function registerLoansRoutes(app: Express, deps: AppDependencies) {
         const allInRate = parseFloat(loan.siborRate || 0) + parseFloat(loan.margin || 0);
         
         return {
-          reference: loan.reference || '-',
+          reference: loan.referenceNumber || '-',
           bankName: bank?.name || 'Unknown',
           amount: parseFloat(loan.amount),
           outstanding: balance.total,
@@ -674,7 +674,7 @@ export function registerLoansRoutes(app: Express, deps: AppDependencies) {
           const bank = allBanks.find((b: any) => b.id === facility?.bankId);
           return (
             bank?.name?.toLowerCase().includes(searchLower) ||
-            l.reference?.toLowerCase().includes(searchLower) ||
+            l.referenceNumber?.toLowerCase().includes(searchLower) ||
             l.amount?.toString().includes(searchLower)
           );
         });
@@ -705,7 +705,7 @@ export function registerLoansRoutes(app: Express, deps: AppDependencies) {
         const allInRate = parseFloat(loan.siborRate || 0) + parseFloat(loan.margin || 0);
         
         const baseData: any = {
-          'Reference': loan.reference || '-',
+          'Reference': loan.referenceNumber || '-',
           'Bank': bank?.name || 'Unknown',
           'Amount (SAR)': parseFloat(loan.amount),
           'All-in Rate (%)': allInRate.toFixed(2),
