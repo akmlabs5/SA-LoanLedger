@@ -1,6 +1,6 @@
 import { useState } from "react";
 import React from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation } from "@tanstack/react-query";
 import { useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -22,9 +22,12 @@ import {
   CheckCircle,
   AlertTriangle,
   Clock,
-  XCircle
+  XCircle,
+  Trash2
 } from "lucide-react";
 import { Link } from "wouter";
+import { apiRequest, queryClient } from "@/lib/queryClient";
+import { useToast } from "@/hooks/use-toast";
 
 type GuaranteeWithFacility = Guarantee & { 
   facility: Facility & { bank: Bank } 
@@ -34,10 +37,37 @@ export default function GuaranteesPage() {
   const [, setLocation] = useLocation();
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
+  const { toast } = useToast();
 
   const { data: guarantees, isLoading } = useQuery<GuaranteeWithFacility[]>({
     queryKey: ["/api/guarantees"],
   });
+
+  const deleteGuaranteeMutation = useMutation({
+    mutationFn: async (guaranteeId: string) => {
+      return apiRequest('DELETE', `/api/guarantees/${guaranteeId}`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/guarantees"] });
+      toast({
+        title: "Success",
+        description: "Guarantee deleted successfully",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to delete guarantee",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const handleDeleteGuarantee = (guaranteeId: string) => {
+    if (window.confirm("Are you sure you want to delete this guarantee? This action cannot be undone.")) {
+      deleteGuaranteeMutation.mutate(guaranteeId);
+    }
+  };
 
   const filteredGuarantees = guarantees?.filter(guarantee => {
     const matchesSearch = 
@@ -326,6 +356,16 @@ export default function GuaranteesPage() {
                           View Details
                         </Button>
                       </Link>
+                      <Button 
+                        variant="destructive" 
+                        size="sm"
+                        onClick={() => handleDeleteGuarantee(guarantee.id)}
+                        disabled={deleteGuaranteeMutation.isPending}
+                        data-testid={`button-delete-${guarantee.id}`}
+                      >
+                        <Trash2 className="h-4 w-4 mr-2" />
+                        Delete
+                      </Button>
                     </div>
                   </div>
                 </CardContent>
