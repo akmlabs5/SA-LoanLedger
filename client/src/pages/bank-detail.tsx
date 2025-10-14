@@ -1000,7 +1000,7 @@ export default function BankDetail() {
                               {facility.facilityName}
                             </span>
                             <span className="text-sm font-semibold text-gray-900 dark:text-gray-100">
-                              {facility.avgAllInRate.toFixed(2)}%
+                              {facility.avgAllInRate != null ? facility.avgAllInRate.toFixed(2) : 'N/A'}%
                               <span className="text-xs text-gray-500 ml-1">({facility.loanCount} {facility.loanCount === 1 ? 'loan' : 'loans'})</span>
                             </span>
                           </div>
