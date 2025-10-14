@@ -81,7 +81,7 @@ export default function Loans() {
   const [bankFilter, setBankFilter] = useState<string>('all');
   
   // Tab state management
-  const [activeTab, setActiveTab] = useState<"active" | "settled">("active");
+  const [activeTab, setActiveTab] = useState<"active" | "settled" | "cancelled">("active");
   
   // Load more state for active loans
   const [visibleActiveLoans, setVisibleActiveLoans] = useState(8);
@@ -127,6 +127,16 @@ export default function Loans() {
     queryFn: async () => {
       const response = await fetch("/api/loans?status=settled");
       if (!response.ok) throw new Error("Failed to fetch settled loans");
+      return response.json();
+    },
+    enabled: isAuthenticated,
+  });
+
+  const { data: cancelledLoans, isLoading: cancelledLoading } = useQuery({
+    queryKey: ["/api/loans", "cancelled"],
+    queryFn: async () => {
+      const response = await fetch("/api/loans?status=cancelled");
+      if (!response.ok) throw new Error("Failed to fetch cancelled loans");
       return response.json();
     },
     enabled: isAuthenticated,
@@ -183,10 +193,14 @@ export default function Loans() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/loans"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/loans", "cancelled"] });
       queryClient.invalidateQueries({ queryKey: ["/api/dashboard/portfolio"] });
+      
+      setActiveTab("cancelled");
+      
       toast({
         title: "Success",
-        description: "Loan cancelled successfully",
+        description: "Loan cancelled successfully - moved to Cancelled Loans tab",
       });
     },
     onError: (error) => {
@@ -363,6 +377,21 @@ export default function Loans() {
       return searchMatch && bankMatch;
     });
   }, [settledLoans, searchQuery, bankFilter]);
+
+  const filteredCancelledLoans = useMemo(() => {
+    if (!cancelledLoans) return [];
+    
+    return (cancelledLoans as any[]).filter((loan: any) => {
+      const searchLower = searchQuery.toLowerCase();
+      const searchMatch = !searchQuery || 
+        ((loan.referenceNumber || "").toLowerCase()).includes(searchLower) ||
+        ((loan.facility?.bank?.name || "").toLowerCase()).includes(searchLower);
+      
+      const bankMatch = bankFilter === 'all' || loan.facility?.bank?.id === bankFilter;
+      
+      return searchMatch && bankMatch;
+    });
+  }, [cancelledLoans, searchQuery, bankFilter]);
 
   const handleSort = (field: SortField) => {
     if (sortField === field) {
@@ -715,13 +744,16 @@ export default function Loans() {
               ))}
             </div>
 
-            <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as "active" | "settled")} className="space-y-4">
-              <TabsList className="grid w-full grid-cols-2 h-12">
-                <TabsTrigger value="active" className="h-10 text-base data-[state=active]:bg-blue-600 data-[state=active]:text-white">
+            <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as "active" | "settled" | "cancelled")} className="space-y-4">
+              <TabsList className="grid w-full grid-cols-3 h-12">
+                <TabsTrigger value="active" className="h-10 text-sm data-[state=active]:bg-blue-600 data-[state=active]:text-white">
                   Active ({filteredAndSortedActiveLoans.length})
                 </TabsTrigger>
-                <TabsTrigger value="settled" className="h-10 text-base data-[state=active]:bg-emerald-600 data-[state=active]:text-white">
+                <TabsTrigger value="settled" className="h-10 text-sm data-[state=active]:bg-emerald-600 data-[state=active]:text-white">
                   Settled ({filteredSettledLoans.length})
+                </TabsTrigger>
+                <TabsTrigger value="cancelled" className="h-10 text-sm data-[state=active]:bg-gray-600 data-[state=active]:text-white">
+                  Cancelled ({cancelledLoans?.length || 0})
                 </TabsTrigger>
               </TabsList>
 
@@ -782,6 +814,79 @@ export default function Loans() {
                   <div className="space-y-3">
                     {filteredSettledLoans.map((loan: any) => (
                       <MobileSettledLoanCard key={loan.id} loan={loan} />
+                    ))}
+                  </div>
+                )}
+              </TabsContent>
+
+              <TabsContent value="cancelled" className="space-y-3 mt-4">
+                {cancelledLoading ? (
+                  <Card className="border-0 shadow-md bg-white dark:bg-gray-800">
+                    <CardContent className="flex items-center justify-center py-12">
+                      <RefreshCw className="animate-spin h-8 w-8 text-gray-600 mr-3" />
+                      <span className="text-gray-600 dark:text-gray-400">Loading...</span>
+                    </CardContent>
+                  </Card>
+                ) : filteredCancelledLoans.length === 0 ? (
+                  <Card className="border-0 shadow-md bg-white dark:bg-gray-800">
+                    <CardContent className="text-center py-12">
+                      <Trash2 className="h-12 w-12 text-gray-300 dark:text-gray-600 mx-auto mb-4" />
+                      <p className="text-gray-600 dark:text-gray-400">No cancelled loans found</p>
+                    </CardContent>
+                  </Card>
+                ) : (
+                  <div className="space-y-3">
+                    {filteredCancelledLoans.map((loan: any) => (
+                      <Card 
+                        key={loan.id}
+                        className="border-0 shadow-md bg-white dark:bg-gray-800 border-l-4 border-l-gray-400 opacity-75"
+                        onClick={() => setLocation(`/loans/${loan.id}`)}
+                      >
+                        <CardContent className="p-4">
+                          <div className="flex items-start justify-between mb-3">
+                            <div className="flex items-start space-x-3 flex-1">
+                              <div className="w-10 h-10 bg-gray-400 rounded-lg flex items-center justify-center shrink-0">
+                                <Trash2 className="text-white h-5 w-5" />
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <h3 className="font-semibold text-gray-900 dark:text-gray-100 truncate">
+                                  {loan.facility?.bank?.name || 'Unknown Bank'}
+                                </h3>
+                                <p className="text-sm text-gray-600 dark:text-gray-400 truncate">
+                                  Ref: {loan.referenceNumber}
+                                </p>
+                              </div>
+                            </div>
+                            <Badge className="bg-gray-100 text-gray-800 dark:bg-gray-900/20 dark:text-gray-400 shrink-0 ml-2">
+                              Cancelled
+                            </Badge>
+                          </div>
+
+                          <div className="bg-gray-50 dark:bg-gray-900/50 rounded-lg p-3 mb-3">
+                            <div className="text-center">
+                              <p className="text-xs text-gray-600 dark:text-gray-400 mb-1">Loan Amount</p>
+                              <p className="text-lg font-bold text-gray-900 dark:text-gray-100 line-through">
+                                {formatCurrency(Number(loan.amount) || 0)}
+                              </p>
+                            </div>
+                          </div>
+
+                          <div className="grid grid-cols-2 gap-3 text-sm">
+                            <div>
+                              <p className="text-gray-600 dark:text-gray-400 text-xs">Start Date</p>
+                              <p className="font-semibold text-gray-900 dark:text-gray-100">
+                                {new Date(loan.startDate).toLocaleDateString()}
+                              </p>
+                            </div>
+                            <div>
+                              <p className="text-gray-600 dark:text-gray-400 text-xs">Due Date</p>
+                              <p className="font-semibold text-gray-900 dark:text-gray-100">
+                                {new Date(loan.dueDate).toLocaleDateString()}
+                              </p>
+                            </div>
+                          </div>
+                        </CardContent>
+                      </Card>
                     ))}
                   </div>
                 )}
@@ -947,13 +1052,16 @@ export default function Loans() {
             </CardContent>
           </Card>
 
-          <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as "active" | "settled")} className="space-y-6">
-            <TabsList className="grid w-full grid-cols-2 h-12">
+          <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as "active" | "settled" | "cancelled")} className="space-y-6">
+            <TabsList className="grid w-full grid-cols-3 h-12">
               <TabsTrigger value="active" className="h-10 data-[state=active]:bg-blue-600 data-[state=active]:text-white">
                 Active Loans ({filteredAndSortedActiveLoans.length})
               </TabsTrigger>
               <TabsTrigger value="settled" className="h-10 data-[state=active]:bg-emerald-600 data-[state=active]:text-white">
                 Settled Loans ({filteredSettledLoans.length})
+              </TabsTrigger>
+              <TabsTrigger value="cancelled" className="h-10 data-[state=active]:bg-gray-600 data-[state=active]:text-white">
+                Cancelled Loans ({cancelledLoans?.length || 0})
               </TabsTrigger>
             </TabsList>
 
@@ -1322,6 +1430,91 @@ export default function Loans() {
                             <Undo2 className="mr-2 h-4 w-4" />
                             Undo Settlement
                           </Button>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              )}
+            </TabsContent>
+
+            <TabsContent value="cancelled" className="space-y-4">
+              {cancelledLoading ? (
+                <Card className="border-0 shadow-lg bg-white/50 dark:bg-gray-800/50 backdrop-blur-sm">
+                  <CardContent className="flex items-center justify-center py-12">
+                    <RefreshCw className="animate-spin h-8 w-8 text-gray-600 mr-3" />
+                    <span className="text-gray-600 dark:text-gray-400">Loading cancelled loans...</span>
+                  </CardContent>
+                </Card>
+              ) : filteredCancelledLoans.length === 0 ? (
+                <Card className="border-0 shadow-lg bg-white/50 dark:bg-gray-800/50 backdrop-blur-sm">
+                  <CardContent className="text-center py-12">
+                    <Trash2 className="h-12 w-12 text-gray-300 dark:text-gray-600 mx-auto mb-4" />
+                    <p className="text-gray-600 dark:text-gray-400">No cancelled loans found</p>
+                  </CardContent>
+                </Card>
+              ) : (
+                <div className="grid gap-4">
+                  {filteredCancelledLoans.map((loan: any) => (
+                    <Card 
+                      key={loan.id} 
+                      className="border-0 shadow-lg bg-white/50 dark:bg-gray-800/50 backdrop-blur-sm border-l-4 border-l-gray-400 opacity-75 cursor-pointer lg:hover:shadow-xl transition-all duration-150"
+                      onClick={() => handleLoanCardClick(loan.id)}
+                      data-testid={`card-cancelled-loan-${loan.id}`}
+                    >
+                      <CardContent className="p-6">
+                        <div className="flex items-center justify-between mb-4">
+                          <div className="flex items-center space-x-4">
+                            <div className="w-12 h-12 bg-gradient-to-br from-gray-400 to-gray-500 rounded-xl flex items-center justify-center shadow-lg">
+                              <Trash2 className="text-white h-6 w-6" />
+                            </div>
+                            <div>
+                              <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100" data-testid={`text-cancelled-loan-bank-${loan.id}`}>
+                                {loan.facility?.bank?.name || 'Unknown Bank'}
+                              </h3>
+                              <p className="text-sm text-gray-600 dark:text-gray-400" data-testid={`text-cancelled-loan-reference-${loan.id}`}>
+                                Reference: {loan.referenceNumber}
+                              </p>
+                            </div>
+                            <Badge className="bg-gray-100 text-gray-800 lg:hover:bg-gray-200 dark:bg-gray-900/20 dark:text-gray-400">
+                              Cancelled
+                            </Badge>
+                          </div>
+                          <div className="text-right">
+                            <p className="text-2xl font-bold text-gray-900 dark:text-gray-100 line-through" data-testid={`text-cancelled-loan-amount-${loan.id}`}>
+                              {formatCurrency(Number(loan.amount) || 0)}
+                            </p>
+                            <p className="text-sm text-gray-600 dark:text-gray-400">
+                              Cancelled Loan
+                            </p>
+                          </div>
+                        </div>
+                        
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                          <div>
+                            <p className="text-sm text-gray-600 dark:text-gray-400">Start Date</p>
+                            <p className="font-semibold text-gray-900 dark:text-gray-100">
+                              {new Date(loan.startDate).toLocaleDateString()}
+                            </p>
+                          </div>
+                          <div>
+                            <p className="text-sm text-gray-600 dark:text-gray-400">Due Date</p>
+                            <p className="font-semibold text-gray-900 dark:text-gray-100">
+                              {new Date(loan.dueDate).toLocaleDateString()}
+                            </p>
+                          </div>
+                          <div>
+                            <p className="text-sm text-gray-600 dark:text-gray-400">Status</p>
+                            <p className="font-semibold text-gray-600 dark:text-gray-400">
+                              Cancelled
+                            </p>
+                          </div>
+                        </div>
+
+                        <div className="pt-3 border-t border-gray-200 dark:border-gray-700">
+                          <p className="text-sm text-gray-600 dark:text-gray-400 text-center">
+                            This loan has been cancelled. Click to view details or permanently delete from history.
+                          </p>
                         </div>
                       </CardContent>
                     </Card>

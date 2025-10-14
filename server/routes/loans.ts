@@ -21,6 +21,8 @@ export function registerLoansRoutes(app: Express, deps: AppDependencies) {
       let loans;
       if (status === 'settled') {
         loans = await storage.getSettledLoansByUser(organizationId);
+      } else if (status === 'cancelled') {
+        loans = await storage.getCancelledLoansByUser(organizationId);
       } else {
         loans = await storage.getActiveLoansByUser(organizationId);
       }
