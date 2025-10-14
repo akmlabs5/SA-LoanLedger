@@ -983,15 +983,15 @@ export default function BankDetail() {
                     <div className="flex items-center justify-between">
                       <span className="text-sm text-gray-600 dark:text-gray-400">Relationship Duration</span>
                       <span className="font-semibold text-gray-900 dark:text-gray-100">
-                        {bankPerformance.relationshipDuration.years > 0 
+                        {bankPerformance?.relationshipDuration?.years > 0 
                           ? `${bankPerformance.relationshipDuration.years} years`
-                          : `${bankPerformance.relationshipDuration.days} days`
+                          : `${bankPerformance?.relationshipDuration?.days || 0} days`
                         }
                       </span>
                     </div>
                     
                     {/* Show average rate per facility */}
-                    {bankPerformance.averageRateByFacility.length > 0 ? (
+                    {bankPerformance?.averageRateByFacility && bankPerformance.averageRateByFacility.length > 0 ? (
                       <div className="space-y-2">
                         <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Average Rates by Facility:</span>
                         {bankPerformance.averageRateByFacility.map((facility) => (
