@@ -953,7 +953,7 @@ export default function Loans() {
                             </div>
                           </div>
 
-                          <div className="grid grid-cols-2 gap-3 text-sm mb-3">
+                          <div className="grid grid-cols-2 gap-2 sm:gap-3 text-sm mb-3">
                             <div>
                               <p className="text-gray-600 dark:text-gray-400 text-xs">Start Date</p>
                               <p className="font-semibold text-gray-900 dark:text-gray-100">
