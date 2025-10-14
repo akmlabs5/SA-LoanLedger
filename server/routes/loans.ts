@@ -9,6 +9,9 @@ import {
   revolveRequestSchema
 } from "@shared/schema";
 import { sendTemplateReminderEmail } from "../emailService";
+import { jsPDF } from "jspdf";
+import autoTable from "jspdf-autotable";
+import xlsx from "xlsx";
 
 export function registerLoansRoutes(app: Express, deps: AppDependencies) {
   const { storage } = deps;
@@ -462,6 +465,244 @@ export function registerLoansRoutes(app: Express, deps: AppDependencies) {
         return res.status(400).json({ message: error.message });
       }
       res.status(500).json({ message: "Failed to permanently delete loan" });
+    }
+  });
+
+  // Export loans to PDF
+  app.get('/api/loans/export/pdf', isAuthenticated, attachOrganizationContext, requireOrganization, async (req: any, res) => {
+    try {
+      const organizationId = req.organizationId;
+      const status = req.query.status as string;
+      const bankId = req.query.bankId as string;
+      const search = req.query.search as string;
+
+      // Fetch loans based on status
+      let loans;
+      if (status === 'settled') {
+        loans = await storage.getSettledLoansByUser(organizationId);
+      } else if (status === 'cancelled') {
+        loans = await storage.getCancelledLoansByUser(organizationId);
+      } else {
+        loans = await storage.getActiveLoansByUser(organizationId);
+      }
+
+      // Get all facilities and banks for this organization
+      const facilities = await storage.getUserFacilities(organizationId);
+      const allBanks = await storage.getAllBanks();
+
+      // Apply filters
+      let filteredLoans = loans;
+      
+      if (bankId) {
+        const bankFacilities = facilities.filter((f: any) => f.bankId === bankId);
+        const facilityIds = bankFacilities.map((f: any) => f.id);
+        filteredLoans = filteredLoans.filter((l: any) => facilityIds.includes(l.facilityId));
+      }
+
+      if (search) {
+        const searchLower = search.toLowerCase();
+        filteredLoans = filteredLoans.filter((l: any) => {
+          const facility = facilities.find((f: any) => f.id === l.facilityId);
+          const bank = allBanks.find((b: any) => b.id === facility?.bankId);
+          return (
+            bank?.name?.toLowerCase().includes(searchLower) ||
+            l.reference?.toLowerCase().includes(searchLower) ||
+            l.amount?.toString().includes(searchLower)
+          );
+        });
+      }
+
+      // Prepare report data with calculations
+      const reportData = await Promise.all(filteredLoans.map(async (loan: any) => {
+        const facility = facilities.find((f: any) => f.id === loan.facilityId);
+        const bank = allBanks.find((b: any) => b.id === facility?.bankId);
+        
+        let balance = { total: parseFloat(loan.amount) };
+        if (status !== 'cancelled') {
+          try {
+            balance = await storage.calculateLoanBalance(loan.id);
+          } catch (e) {
+            // If balance calculation fails, use loan amount
+          }
+        }
+
+        const allInRate = parseFloat(loan.siborRate || 0) + parseFloat(loan.margin || 0);
+        
+        return {
+          reference: loan.reference || '-',
+          bankName: bank?.name || 'Unknown',
+          amount: parseFloat(loan.amount),
+          outstanding: balance.total,
+          allInRate: allInRate.toFixed(2),
+          startDate: loan.startDate || '-',
+          dueDate: loan.dueDate || '-',
+          status: loan.status,
+          settledDate: loan.settledDate || '-'
+        };
+      }));
+
+      // Generate PDF
+      const doc = new jsPDF();
+      
+      // Header
+      doc.setFontSize(20);
+      const statusLabel = status === 'settled' ? 'Settled' : status === 'cancelled' ? 'Cancelled' : 'Active';
+      doc.text(`${statusLabel} Loans Report`, 14, 20);
+      doc.setFontSize(10);
+      doc.text(`Generated: ${new Date().toLocaleDateString()}`, 14, 28);
+      doc.text(`Total Loans: ${reportData.length}`, 14, 34);
+
+      // Table headers based on status
+      let headers;
+      let body;
+      
+      if (status === 'settled') {
+        headers = [['Reference', 'Bank', 'Amount (SAR)', 'All-in Rate %', 'Start Date', 'Due Date', 'Settled Date']];
+        body = reportData.map((row: any) => [
+          row.reference,
+          row.bankName,
+          row.amount.toLocaleString(),
+          row.allInRate,
+          row.startDate,
+          row.dueDate,
+          row.settledDate
+        ]);
+      } else if (status === 'cancelled') {
+        headers = [['Reference', 'Bank', 'Amount (SAR)', 'All-in Rate %', 'Start Date', 'Due Date']];
+        body = reportData.map((row: any) => [
+          row.reference,
+          row.bankName,
+          row.amount.toLocaleString(),
+          row.allInRate,
+          row.startDate,
+          row.dueDate
+        ]);
+      } else {
+        headers = [['Reference', 'Bank', 'Amount (SAR)', 'Outstanding (SAR)', 'All-in Rate %', 'Start Date', 'Due Date']];
+        body = reportData.map((row: any) => [
+          row.reference,
+          row.bankName,
+          row.amount.toLocaleString(),
+          row.outstanding.toLocaleString(),
+          row.allInRate,
+          row.startDate,
+          row.dueDate
+        ]);
+      }
+
+      autoTable(doc, {
+        startY: 40,
+        head: headers,
+        body: body,
+        theme: 'grid',
+        headStyles: { fillColor: [22, 101, 52] }, // Saudi green
+        styles: { fontSize: 8 }
+      });
+
+      const pdfBuffer = Buffer.from(doc.output('arraybuffer'));
+      res.setHeader('Content-Type', 'application/pdf');
+      res.setHeader('Content-Disposition', `attachment; filename=${statusLabel.toLowerCase()}-loans-${new Date().toISOString().split('T')[0]}.pdf`);
+      res.send(pdfBuffer);
+
+    } catch (error: any) {
+      console.error('Error generating PDF export:', error);
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  // Export loans to Excel
+  app.get('/api/loans/export/excel', isAuthenticated, attachOrganizationContext, requireOrganization, async (req: any, res) => {
+    try {
+      const organizationId = req.organizationId;
+      const status = req.query.status as string;
+      const bankId = req.query.bankId as string;
+      const search = req.query.search as string;
+
+      // Fetch loans based on status
+      let loans;
+      if (status === 'settled') {
+        loans = await storage.getSettledLoansByUser(organizationId);
+      } else if (status === 'cancelled') {
+        loans = await storage.getCancelledLoansByUser(organizationId);
+      } else {
+        loans = await storage.getActiveLoansByUser(organizationId);
+      }
+
+      // Get all facilities and banks for this organization
+      const facilities = await storage.getUserFacilities(organizationId);
+      const allBanks = await storage.getAllBanks();
+
+      // Apply filters
+      let filteredLoans = loans;
+      
+      if (bankId) {
+        const bankFacilities = facilities.filter((f: any) => f.bankId === bankId);
+        const facilityIds = bankFacilities.map((f: any) => f.id);
+        filteredLoans = filteredLoans.filter((l: any) => facilityIds.includes(l.facilityId));
+      }
+
+      if (search) {
+        const searchLower = search.toLowerCase();
+        filteredLoans = filteredLoans.filter((l: any) => {
+          const facility = facilities.find((f: any) => f.id === l.facilityId);
+          const bank = allBanks.find((b: any) => b.id === facility?.bankId);
+          return (
+            bank?.name?.toLowerCase().includes(searchLower) ||
+            l.reference?.toLowerCase().includes(searchLower) ||
+            l.amount?.toString().includes(searchLower)
+          );
+        });
+      }
+
+      // Prepare report data with calculations
+      const reportData = await Promise.all(filteredLoans.map(async (loan: any) => {
+        const facility = facilities.find((f: any) => f.id === loan.facilityId);
+        const bank = allBanks.find((b: any) => b.id === facility?.bankId);
+        
+        let balance = { total: parseFloat(loan.amount) };
+        if (status !== 'cancelled') {
+          try {
+            balance = await storage.calculateLoanBalance(loan.id);
+          } catch (e) {
+            // If balance calculation fails, use loan amount
+          }
+        }
+
+        const allInRate = parseFloat(loan.siborRate || 0) + parseFloat(loan.margin || 0);
+        
+        const baseData: any = {
+          'Reference': loan.reference || '-',
+          'Bank': bank?.name || 'Unknown',
+          'Amount (SAR)': parseFloat(loan.amount),
+          'All-in Rate (%)': allInRate.toFixed(2),
+          'Start Date': loan.startDate || '-',
+          'Due Date': loan.dueDate || '-'
+        };
+
+        // Add conditional fields based on status
+        if (status === 'settled') {
+          baseData['Settled Date'] = loan.settledDate || '-';
+        } else if (status === 'active') {
+          baseData['Outstanding (SAR)'] = balance.total;
+        }
+
+        return baseData;
+      }));
+
+      const worksheet = xlsx.utils.json_to_sheet(reportData);
+      const workbook = xlsx.utils.book_new();
+      
+      const statusLabel = status === 'settled' ? 'Settled' : status === 'cancelled' ? 'Cancelled' : 'Active';
+      xlsx.utils.book_append_sheet(workbook, worksheet, `${statusLabel} Loans`);
+
+      const excelBuffer = xlsx.write(workbook, { type: 'buffer', bookType: 'xlsx' });
+      res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+      res.setHeader('Content-Disposition', `attachment; filename=${statusLabel.toLowerCase()}-loans-${new Date().toISOString().split('T')[0]}.xlsx`);
+      res.send(excelBuffer);
+
+    } catch (error: any) {
+      console.error('Error generating Excel export:', error);
+      res.status(500).json({ error: error.message });
     }
   });
 }
