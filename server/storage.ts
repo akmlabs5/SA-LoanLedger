@@ -1674,7 +1674,7 @@ export class DatabaseStorage implements IStorage {
         for (const loan of facilityLoans) {
           const balance = await this.calculateLoanBalance(loan.id);
           const outstanding = parseFloat(balance.total);
-          const allInRate = parseFloat(loan.siborRate) + parseFloat(loan.marginRate);
+          const allInRate = parseFloat(loan.siborRate) + parseFloat(loan.margin);
           
           totalWeightedRate += allInRate * outstanding;
           totalOutstanding += outstanding;
