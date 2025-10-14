@@ -10,8 +10,7 @@ import {
   AlertTriangle, 
   AlertCircle, 
   Lightbulb, 
-  TrendingUp, 
-  Eye
+  TrendingUp
 } from "lucide-react";
 import { isUnauthorizedError } from "@/lib/authUtils";
 
@@ -110,18 +109,10 @@ export default function AIInsightsPanel() {
   return (
     <Card className="mb-6" data-testid="card-ai-insights">
       <CardHeader>
-        <div className="flex items-center justify-between">
-          <CardTitle className="flex items-center text-lg font-semibold text-foreground">
-            <Bot className="text-primary mr-2 h-5 w-5" />
-            Intelligent Portfolio Insights
-          </CardTitle>
-          <div className="flex space-x-2">
-            <Button variant="ghost" size="sm" data-testid="button-view-all-insights">
-              <Eye className="h-4 w-4 mr-1" />
-              View All
-            </Button>
-          </div>
-        </div>
+        <CardTitle className="flex items-center text-lg font-semibold text-foreground">
+          <Bot className="text-primary mr-2 h-5 w-5" />
+          Intelligent Portfolio Insights
+        </CardTitle>
       </CardHeader>
       
       <CardContent className="space-y-4">
