@@ -1712,8 +1712,8 @@ export class DatabaseStorage implements IStorage {
     let lateCount = 0;
 
     for (const loan of allLoans) {
-      if (loan.status === 'settled' && loan.settlementDate && loan.dueDate) {
-        const settleDate = new Date(loan.settlementDate);
+      if (loan.status === 'settled' && loan.settledDate && loan.dueDate) {
+        const settleDate = new Date(loan.settledDate);
         const dueDate = new Date(loan.dueDate);
         
         if (settleDate < dueDate) {
@@ -3074,8 +3074,8 @@ Reference: {loanReference}`,
     let lateCount = 0;
 
     for (const loan of allLoans) {
-      if (loan.status === 'settled' && loan.settlementDate && loan.dueDate) {
-        const settleDate = new Date(loan.settlementDate);
+      if (loan.status === 'settled' && loan.settledDate && loan.dueDate) {
+        const settleDate = new Date(loan.settledDate);
         const dueDate = new Date(loan.dueDate);
         
         if (settleDate < dueDate) {
