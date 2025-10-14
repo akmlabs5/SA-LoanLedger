@@ -1703,7 +1703,8 @@ export class DatabaseStorage implements IStorage {
         or(
           eq(loans.status, 'settled'),
           eq(loans.status, 'active')
-        )
+        ),
+        isNotNull(loans.dueDate) // Only include loans with due dates
       ));
 
     let earlyCount = 0;
@@ -3034,7 +3035,8 @@ Reference: {loanReference}`,
       );
 
       if (facilityLoans.length > 0) {
-        // Calculate weighted average rate (using loan amount as proxy for outstanding)
+        // Calculate weighted average rate
+        // Note: MemoryStorage uses loan.amount as proxy for outstanding since it doesn't track balances
         let totalWeightedRate = 0;
         let totalOutstanding = 0;
 
@@ -3062,7 +3064,9 @@ Reference: {loanReference}`,
     // 3. Calculate payment record score
     const facilityIds = bankFacilities.map(f => f.id);
     const allLoans = Array.from(this.loans.values()).filter(
-      l => facilityIds.includes(l.facilityId) && (l.status === 'settled' || l.status === 'active')
+      l => facilityIds.includes(l.facilityId) && 
+      (l.status === 'settled' || l.status === 'active') &&
+      l.dueDate !== null && l.dueDate !== undefined // Only include loans with due dates
     );
 
     let earlyCount = 0;

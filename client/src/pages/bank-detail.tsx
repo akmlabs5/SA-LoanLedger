@@ -64,6 +64,27 @@ import DocumentUpload from "@/components/DocumentUpload";
 import DocumentList from "@/components/DocumentList";
 import { formatFacilityType } from "@/lib/formatters";
 
+type BankPerformance = {
+  relationshipDuration: {
+    days: number;
+    years: number;
+  };
+  averageRateByFacility: Array<{
+    facilityId: string;
+    facilityName: string;
+    avgAllInRate: number;
+    loanCount: number;
+  }>;
+  paymentRecord: {
+    score: 'Excellent' | 'Good' | 'Fair' | 'Poor';
+    earlyCount: number;
+    onTimeCount: number;
+    lateCount: number;
+    totalCount: number;
+  };
+  lastActivity: string | null;
+};
+
 export default function BankDetail() {
   const { id: bankId } = useParams();
   const [location, setLocation] = useLocation();
@@ -106,7 +127,7 @@ export default function BankDetail() {
   });
 
   // Fetch bank performance metrics
-  const { data: bankPerformance, isLoading: performanceLoading } = useQuery({
+  const { data: bankPerformance, isLoading: performanceLoading } = useQuery<BankPerformance>({
     queryKey: [`/api/banks/${bankId}/performance`],
     enabled: isAuthenticated && !!bankId,
   });
