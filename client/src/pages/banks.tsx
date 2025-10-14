@@ -166,7 +166,7 @@ export default function Banks() {
 
         <Section>
           {/* Summary Cards */}
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-2 gap-2 sm:gap-3">
             <Card className="bg-card border border-border">
               <CardContent className="p-4">
                 <p className="text-xs font-medium text-muted-foreground mb-1">Outstanding</p>
