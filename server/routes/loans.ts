@@ -448,4 +448,20 @@ export function registerLoansRoutes(app: Express, deps: AppDependencies) {
       res.status(500).json({ message: "Failed to cancel loan" });
     }
   });
+
+  app.post('/api/loans/:id/permanent-delete', isAuthenticated, attachOrganizationContext, requireOrganization, async (req: any, res) => {
+    try {
+      const loanId = req.params.id;
+      const organizationId = req.organizationId;
+      
+      await storage.permanentlyDeleteLoan(loanId, organizationId);
+      res.json({ message: "Loan permanently deleted successfully" });
+    } catch (error: any) {
+      console.error("Error permanently deleting loan:", error);
+      if (error.message === 'Only cancelled loans can be permanently deleted') {
+        return res.status(400).json({ message: error.message });
+      }
+      res.status(500).json({ message: "Failed to permanently delete loan" });
+    }
+  });
 }

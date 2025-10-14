@@ -145,6 +145,7 @@ export interface IStorage {
   createLoan(loan: InsertLoan): Promise<Loan>;
   updateLoan(loanId: string, loan: Partial<InsertLoan>, userId: string, reason?: string): Promise<Loan>;
   deleteLoan(loanId: string, organizationId: string, reason?: string): Promise<void>;
+  permanentlyDeleteLoan(loanId: string, organizationId: string): Promise<void>;
   
   // Payment and settlement operations
   processPayment(loanId: string, payment: PaymentRequest, userId: string): Promise<{ loan: Loan; transactions: Transaction[] }>;
@@ -828,6 +829,23 @@ export class DatabaseStorage implements IStorage {
         status: 'cancelled',
         updatedAt: new Date()
       })
+      .where(and(eq(loans.id, loanId), eq(loans.organizationId, organizationId)));
+  }
+
+  async permanentlyDeleteLoan(loanId: string, organizationId: string): Promise<void> {
+    // First verify the loan belongs to the organization and is cancelled
+    const loan = await this.getLoanById(loanId);
+    if (!loan || loan.organizationId !== organizationId) {
+      throw new Error('Loan not found or access denied');
+    }
+    
+    if (loan.status !== 'cancelled') {
+      throw new Error('Only cancelled loans can be permanently deleted');
+    }
+
+    // Permanently delete the loan from database
+    await db
+      .delete(loans)
       .where(and(eq(loans.id, loanId), eq(loans.organizationId, organizationId)));
   }
 
@@ -2464,6 +2482,20 @@ Reference: {loanReference}`,
     } else {
       throw new Error('Loan not found or access denied');
     }
+  }
+
+  async permanentlyDeleteLoan(loanId: string, organizationId: string): Promise<void> {
+    const loan = this.loans.get(loanId);
+    if (!loan || loan.organizationId !== organizationId) {
+      throw new Error('Loan not found or access denied');
+    }
+    
+    if (loan.status !== 'cancelled') {
+      throw new Error('Only cancelled loans can be permanently deleted');
+    }
+
+    // Permanently remove from memory
+    this.loans.delete(loanId);
   }
 
   async createDocument(document: InsertDocument): Promise<Document> {
