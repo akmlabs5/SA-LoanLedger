@@ -90,6 +90,21 @@ All settings persist to the database with Zod validation and are applied system-
 ## Key Features
 The system supports bank-level collateral assignment, optional facility durations, and a revolving period tracking system. Users can create loans that exceed facility credit limits with warning notifications, allowing for flexible credit management.
 
+### Cancelled Loan Management & Permanent Deletion
+A comprehensive 3-tab loan management system separates Active, Settled, and Cancelled loans for clear organization:
+- **Active Loans Tab**: Shows only active and overdue loans (excludes both settled and cancelled)
+- **Settled Loans Tab**: Displays fully settled loans with undo settlement capability
+- **Cancelled Loans Tab**: Lists cancelled loans with permanent deletion option
+
+The system implements safe permanent deletion with multi-layer validation:
+- **Safety Checks**: Only cancelled loans can be permanently deleted (validated at storage layer)
+- **Organization Scoping**: All delete operations enforce organizationId validation for multi-tenant security
+- **Confirmation Dialog**: Warns users about irreversible action before permanent deletion
+- **Analytics Integrity**: All reports, dashboard analytics, and AI agent analysis automatically exclude cancelled loans from calculations using `getActiveLoansByUser`
+- **Dual Implementation**: Both DbStorage (PostgreSQL) and MemStorage properly implement permanent deletion with identical safety checks
+
+Available on both mobile and desktop interfaces with touch-optimized "Permanently Delete" buttons and native confirmation dialogs.
+
 ### Revolving Facility Logic
 Revolving facilities support a **Maximum Loan Tenor** limit (e.g., 360 days) that applies to each individual loan independently, NOT cumulatively across all loans. This means:
 - Each loan drawdown must not exceed the configured max tenor (e.g., ≤360 days)
