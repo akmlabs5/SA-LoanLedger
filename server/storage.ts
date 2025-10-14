@@ -89,7 +89,7 @@ import {
   type InsertOrganizationInvitation,
 } from "@shared/schema";
 import { db } from "./db";
-import { eq, and, or, desc, asc, sql, gte, lte, isNull, isNotNull } from "drizzle-orm";
+import { eq, and, or, desc, asc, sql, gte, lte, isNull, isNotNull, ne } from "drizzle-orm";
 
 // Interface for storage operations
 export interface IStorage {
@@ -624,7 +624,7 @@ export class DatabaseStorage implements IStorage {
       .from(loans)
       .innerJoin(facilities, eq(loans.facilityId, facilities.id))
       .innerJoin(banks, eq(facilities.bankId, banks.id))
-      .where(and(eq(loans.organizationId, organizationId), eq(loans.status, 'active')))
+      .where(and(eq(loans.organizationId, organizationId), ne(loans.status, 'settled')))
       .orderBy(asc(loans.dueDate));
 
     return result.map(row => ({
@@ -2329,7 +2329,7 @@ Reference: {loanReference}`,
   }
 
   async getActiveLoansByUser(organizationId: string): Promise<(Loan & { facility: Facility & { bank: Bank } })[]> {
-    const userLoans = Array.from(this.loans.values()).filter(loan => loan.organizationId === organizationId && loan.status === 'active');
+    const userLoans = Array.from(this.loans.values()).filter(loan => loan.organizationId === organizationId && loan.status !== 'settled');
     
     // Join with facility and bank data
     return userLoans.map(loan => {
