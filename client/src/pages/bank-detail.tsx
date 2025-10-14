@@ -105,6 +105,12 @@ export default function BankDetail() {
     enabled: isAuthenticated && !!bankId,
   });
 
+  // Fetch bank performance metrics
+  const { data: bankPerformance, isLoading: performanceLoading } = useQuery({
+    queryKey: [`/api/banks/${bankId}/performance`],
+    enabled: isAuthenticated && !!bankId,
+  });
+
   // Fetch collateral and assignments for this bank
   const { data: collateral } = useQuery({
     queryKey: ["/api/collateral"],
@@ -947,24 +953,79 @@ export default function BankDetail() {
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <span className="text-sm text-gray-600 dark:text-gray-400">Relationship Duration</span>
-                  <span className="font-semibold text-gray-900 dark:text-gray-100">2.5 years</span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-sm text-gray-600 dark:text-gray-400">Average Rate</span>
-                  <span className="font-semibold text-gray-900 dark:text-gray-100">SIBOR + 2.75%</span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-sm text-gray-600 dark:text-gray-400">Payment Record</span>
-                  <Badge className="bg-emerald-100 text-emerald-800 dark:bg-emerald-900/20 dark:text-emerald-400">
-                    Excellent
-                  </Badge>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-sm text-gray-600 dark:text-gray-400">Last Activity</span>
-                  <span className="text-sm text-gray-600 dark:text-gray-400">2 days ago</span>
-                </div>
+                {performanceLoading ? (
+                  <div className="text-center py-4">
+                    <div className="inline-block h-6 w-6 animate-spin rounded-full border-2 border-solid border-emerald-600 border-r-transparent"></div>
+                  </div>
+                ) : bankPerformance ? (
+                  <>
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm text-gray-600 dark:text-gray-400">Relationship Duration</span>
+                      <span className="font-semibold text-gray-900 dark:text-gray-100">
+                        {bankPerformance.relationshipDuration.years > 0 
+                          ? `${bankPerformance.relationshipDuration.years} years`
+                          : `${bankPerformance.relationshipDuration.days} days`
+                        }
+                      </span>
+                    </div>
+                    
+                    {/* Show average rate per facility */}
+                    {bankPerformance.averageRateByFacility.length > 0 ? (
+                      <div className="space-y-2">
+                        <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Average Rates by Facility:</span>
+                        {bankPerformance.averageRateByFacility.map((facility) => (
+                          <div key={facility.facilityId} className="flex items-center justify-between pl-2">
+                            <span className="text-xs text-gray-600 dark:text-gray-400 truncate max-w-[180px]" title={facility.facilityName}>
+                              {facility.facilityName}
+                            </span>
+                            <span className="text-sm font-semibold text-gray-900 dark:text-gray-100">
+                              {facility.avgAllInRate.toFixed(2)}%
+                              <span className="text-xs text-gray-500 ml-1">({facility.loanCount} {facility.loanCount === 1 ? 'loan' : 'loans'})</span>
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm text-gray-600 dark:text-gray-400">Average Rate</span>
+                        <span className="text-sm text-gray-500 dark:text-gray-400">No active loans</span>
+                      </div>
+                    )}
+
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm text-gray-600 dark:text-gray-400">Payment Record</span>
+                      <Badge 
+                        className={
+                          bankPerformance.paymentRecord.score === 'Excellent' 
+                            ? "bg-emerald-100 text-emerald-800 dark:bg-emerald-900/20 dark:text-emerald-400"
+                            : bankPerformance.paymentRecord.score === 'Good'
+                            ? "bg-blue-100 text-blue-800 dark:bg-blue-900/20 dark:text-blue-400"
+                            : bankPerformance.paymentRecord.score === 'Fair'
+                            ? "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/20 dark:text-yellow-400"
+                            : "bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-400"
+                        }
+                        title={`${bankPerformance.paymentRecord.earlyCount} early, ${bankPerformance.paymentRecord.onTimeCount} on-time, ${bankPerformance.paymentRecord.lateCount} late (${bankPerformance.paymentRecord.totalCount} total)`}
+                      >
+                        {bankPerformance.paymentRecord.score}
+                      </Badge>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm text-gray-600 dark:text-gray-400">Last Activity</span>
+                      <span className="text-sm text-gray-600 dark:text-gray-400">
+                        {bankPerformance.lastActivity 
+                          ? new Date(bankPerformance.lastActivity).toLocaleDateString('en-US', { 
+                              month: 'short', 
+                              day: 'numeric',
+                              year: new Date(bankPerformance.lastActivity).getFullYear() !== new Date().getFullYear() ? 'numeric' : undefined
+                            })
+                          : 'No activity'
+                        }
+                      </span>
+                    </div>
+                  </>
+                ) : (
+                  <div className="text-center text-sm text-gray-500 py-2">No performance data available</div>
+                )}
               </CardContent>
             </Card>
           </div>
