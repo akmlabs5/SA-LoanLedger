@@ -256,6 +256,7 @@ export default function LoanDetailPage() {
   });
 
   const handleDeleteLoan = () => {
+    if (!loan) return;
     if (window.confirm("Are you sure you want to cancel this loan? This action cannot be undone.")) {
       deleteLoanMutation.mutate(loan.id);
     }
@@ -417,7 +418,13 @@ export default function LoanDetailPage() {
                   </div>
                   <div className="space-y-1">
                     <label className="text-sm font-medium text-muted-foreground">Status</label>
-                    <Badge className={`mt-1 px-3 py-1 ${loan.status === 'active' ? 'bg-blue-100 text-blue-800' : 'bg-emerald-100 text-emerald-800'}`}>
+                    <Badge className={`mt-1 px-3 py-1 ${
+                      loan.status === 'active' ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/20 dark:text-blue-400' : 
+                      loan.status === 'settled' ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/20 dark:text-emerald-400' :
+                      loan.status === 'overdue' ? 'bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-400' :
+                      loan.status === 'cancelled' ? 'bg-gray-100 text-gray-800 dark:bg-gray-900/20 dark:text-gray-400' :
+                      'bg-blue-100 text-blue-800'
+                    }`}>
                       {loan.status}
                     </Badge>
                   </div>

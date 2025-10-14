@@ -513,6 +513,7 @@ export default function Loans() {
     const loanAmount = Number(loan.amount) || 0;
     const totalRate = Number(loan.bankRate) || 0;
     const dailyInterest = (loanAmount * totalRate / 100) / 365;
+    const isCancelled = loan.status === 'cancelled';
 
     return (
       <Card 
@@ -520,7 +521,8 @@ export default function Loans() {
           border-0 shadow-md bg-white dark:bg-gray-800
           active:scale-[0.98] active:shadow-sm transition-all duration-150
           cursor-pointer min-h-[160px]
-          ${urgency.status === 'critical' ? 'border-l-4 border-l-red-500' :
+          ${isCancelled ? 'border-l-4 border-l-gray-400 dark:border-l-gray-600' :
+            urgency.status === 'critical' ? 'border-l-4 border-l-red-500' :
             urgency.status === 'warning' ? 'border-l-4 border-l-amber-500' :
             'border-l-4 border-l-emerald-500'}
         `}
@@ -581,15 +583,16 @@ export default function Loans() {
 
           <div className="flex items-center justify-between pt-2 border-t border-gray-200 dark:border-gray-700">
             <Badge 
-              variant={urgency.variant}
+              variant={isCancelled ? 'secondary' : urgency.variant}
               className={`text-xs ${
+                isCancelled ? 'bg-gray-100 text-gray-800 dark:bg-gray-900/20 dark:text-gray-400' :
                 urgency.status === 'critical' ? 'bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-400' :
                 urgency.status === 'warning' ? 'bg-amber-100 text-amber-800 dark:bg-amber-900/20 dark:text-amber-400' :
                 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/20 dark:text-emerald-400'
               }`}
               data-testid={`badge-mobile-loan-status-${loan.id}`}
             >
-              {urgency.label}
+              {isCancelled ? 'Cancelled' : urgency.label}
             </Badge>
             <p className="text-xs text-gray-600 dark:text-gray-400" data-testid={`text-mobile-loan-reference-${loan.id}`}>
               Ref: {loan.referenceNumber}
@@ -1001,11 +1004,13 @@ export default function Loans() {
                     const loanAmount = Number(loan.amount) || 0;
                     const totalRate = Number(loan.bankRate) || 0;
                     const dailyInterest = (loanAmount * totalRate / 100) / 365;
+                    const isCancelled = loan.status === 'cancelled';
                     
                     return (
                       <Card 
                         key={loan.id} 
                         className={`border-0 shadow-lg bg-white/50 dark:bg-gray-800/50 backdrop-blur-sm lg:hover:shadow-xl transition-all duration-300 ${
+                          isCancelled ? 'border-l-4 border-l-gray-400 dark:border-l-gray-600' :
                           urgency.status === 'critical' ? 'border-l-4 border-l-red-500' :
                           urgency.status === 'warning' ? 'border-l-4 border-l-amber-500' :
                           'border-l-4 border-l-emerald-500'
@@ -1031,15 +1036,16 @@ export default function Loans() {
                             </div>
                             <div className="flex items-center space-x-2">
                               <Badge 
-                                variant={urgency.variant} 
+                                variant={isCancelled ? 'secondary' : urgency.variant} 
                                 className={`text-xs ${
+                                  isCancelled ? 'bg-gray-100 text-gray-800 lg:hover:bg-gray-200 dark:bg-gray-900/20 dark:text-gray-400' :
                                   urgency.status === 'critical' ? 'bg-red-100 text-red-800 lg:hover:bg-red-200 dark:bg-red-900/20 dark:text-red-400' :
                                   urgency.status === 'warning' ? 'bg-amber-100 text-amber-800 lg:hover:bg-amber-200 dark:bg-amber-900/20 dark:text-amber-400' :
                                   'bg-emerald-100 text-emerald-800 lg:hover:bg-emerald-200 dark:bg-emerald-900/20 dark:text-emerald-400'
                                 }`}
                                 data-testid={`badge-loan-urgency-${loan.id}`}
                               >
-                                {urgency.label}
+                                {isCancelled ? 'Cancelled' : urgency.label}
                               </Badge>
                               <DropdownMenu>
                                 <DropdownMenuTrigger asChild>
