@@ -468,6 +468,18 @@ export function registerLoansRoutes(app: Express, deps: AppDependencies) {
     }
   });
 
+  // Helper function to calculate loan urgency
+  const getLoanUrgency = (dueDate: string | null): 'critical' | 'warning' | 'normal' => {
+    if (!dueDate) return 'normal';
+    const today = new Date();
+    const due = new Date(dueDate);
+    const daysDiff = Math.ceil((due.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+    
+    if (daysDiff < 0 || daysDiff <= 7) return 'critical';
+    if (daysDiff <= 15) return 'warning';
+    return 'normal';
+  };
+
   // Export loans to PDF
   app.get('/api/loans/export/pdf', isAuthenticated, attachOrganizationContext, requireOrganization, async (req: any, res) => {
     try {
@@ -475,6 +487,7 @@ export function registerLoansRoutes(app: Express, deps: AppDependencies) {
       const status = req.query.status as string;
       const bankId = req.query.bankId as string;
       const search = req.query.search as string;
+      const urgencyFilter = req.query.urgencyFilter as string;
 
       // Fetch loans based on status
       let loans;
@@ -509,6 +522,14 @@ export function registerLoansRoutes(app: Express, deps: AppDependencies) {
             l.reference?.toLowerCase().includes(searchLower) ||
             l.amount?.toString().includes(searchLower)
           );
+        });
+      }
+
+      // Apply urgency filter for active loans
+      if (urgencyFilter && status === 'active') {
+        filteredLoans = filteredLoans.filter((l: any) => {
+          const urgency = getLoanUrgency(l.dueDate);
+          return urgency === urgencyFilter;
         });
       }
 
@@ -617,6 +638,7 @@ export function registerLoansRoutes(app: Express, deps: AppDependencies) {
       const status = req.query.status as string;
       const bankId = req.query.bankId as string;
       const search = req.query.search as string;
+      const urgencyFilter = req.query.urgencyFilter as string;
 
       // Fetch loans based on status
       let loans;
@@ -651,6 +673,14 @@ export function registerLoansRoutes(app: Express, deps: AppDependencies) {
             l.reference?.toLowerCase().includes(searchLower) ||
             l.amount?.toString().includes(searchLower)
           );
+        });
+      }
+
+      // Apply urgency filter for active loans
+      if (urgencyFilter && status === 'active') {
+        filteredLoans = filteredLoans.filter((l: any) => {
+          const urgency = getLoanUrgency(l.dueDate);
+          return urgency === urgencyFilter;
         });
       }
 

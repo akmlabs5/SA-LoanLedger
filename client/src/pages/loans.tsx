@@ -471,8 +471,9 @@ export default function Loans() {
       // Get current filters
       const params = new URLSearchParams({
         status: activeTab,
-        ...(selectedBank && { bankId: selectedBank }),
-        ...(searchQuery && { search: searchQuery })
+        ...(bankFilter !== 'all' && { bankId: bankFilter }),
+        ...(searchQuery && { search: searchQuery }),
+        ...(statusFilter !== 'all' && activeTab === 'active' && { urgencyFilter: statusFilter })
       });
 
       const url = `/api/loans/export/${format}?${params.toString()}`;
