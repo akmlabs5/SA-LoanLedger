@@ -15,6 +15,7 @@ Morouna Loans is a full-stack loan management system designed for the Saudi Arab
 - **Enhanced AI Reasoning**: Upgraded AI system prompt to provide detailed, educational responses with Saudi Arabian banking context, examples with SAR currency, step-by-step explanations, and practical applications
 - **PDF Export Feature**: Added `/api/chat/conversations/:id/export-pdf` endpoint for downloading chat conversations as formatted PDF documents with proper pagination and branding
 - **File Upload Placeholder**: File upload endpoint exists but marked as not yet implemented for future enhancement
+- **Mobile Scroll Fix**: Fixed mobile chat scrolling with proper viewport height calculations (calc(100vh-4rem)), removed fixed input positioning, added overflow-y-auto with WebKit smooth scrolling for iOS
 
 ## October 14, 2025 - Bank Performance Metrics Bug Fixes
 - **Fixed Average Rate Calculation**: Corrected field name from `loan.marginRate` to `loan.margin` in getBankPerformance, resolving NaN/null avgAllInRate display (now correctly shows calculated rates like 7.15%)
