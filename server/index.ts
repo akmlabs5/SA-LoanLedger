@@ -100,6 +100,11 @@ app.use((req, res, next) => {
   const reminderScheduler = new ReminderScheduler(deps.storage);
   reminderScheduler.start();
 
+  // Start chat cleanup scheduler for deleting old conversations (30+ days)
+  const { ChatCleanupScheduler } = await import('./chatCleanupScheduler');
+  const chatCleanupScheduler = new ChatCleanupScheduler(deps.storage);
+  chatCleanupScheduler.start();
+
   // Register all modular routes
   registerAllRoutes(app, deps);
 

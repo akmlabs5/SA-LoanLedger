@@ -68,6 +68,56 @@ export function registerChatRoutes(app: Express, deps: AppDependencies) {
     }
   });
 
+  // Bulk save: Create conversation with all messages at once (transactional)
+  app.post('/api/chat/conversations/bulk-save', isAuthenticated, attachOrganizationContext, requireOrganization, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const organizationId = req.organizationId;
+      
+      const { title, messages } = req.body;
+      
+      if (!Array.isArray(messages) || messages.length === 0) {
+        return res.status(400).json({ message: "Messages array is required" });
+      }
+      
+      // Import db for transaction
+      const { db } = await import('../db');
+      const { chatConversations, chatMessages } = await import('@shared/schema');
+      
+      // Execute bulk save in a transaction for atomicity
+      const conversation = await db.transaction(async (tx) => {
+        // Create conversation
+        const conversationData = insertChatConversationSchema.parse({
+          userId,
+          organizationId,
+          title: title || 'New Conversation',
+          isActive: true,
+        });
+        
+        const [newConversation] = await tx.insert(chatConversations).values(conversationData).returning();
+        
+        // Bulk insert all messages in the same transaction
+        const messageData = messages.map((msg: any) => {
+          return insertChatMessageSchema.parse({
+            conversationId: newConversation.id,
+            role: msg.role,
+            content: msg.content,
+            metadata: msg.metadata,
+          });
+        });
+        
+        await tx.insert(chatMessages).values(messageData);
+        
+        return newConversation;
+      });
+      
+      res.json(conversation);
+    } catch (error) {
+      console.error("Error bulk saving conversation:", error);
+      res.status(500).json({ message: "Failed to save conversation" });
+    }
+  });
+
   // Add a message to a conversation
   app.post('/api/chat/conversations/:id/messages', isAuthenticated, attachOrganizationContext, requireOrganization, async (req: any, res) => {
     try {
