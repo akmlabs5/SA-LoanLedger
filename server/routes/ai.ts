@@ -14,6 +14,7 @@ export function registerAiRoutes(app: Express, deps: AppDependencies) {
   app.post('/api/ai/chat', isAuthenticated, attachOrganizationContext, requireOrganization, async (req: any, res) => {
     try {
       const { message, conversationHistory = [] } = req.body;
+      const organizationId = req.organizationId;
       
       if (!message || typeof message !== 'string') {
         return res.status(400).json({ message: "Message is required" });
@@ -26,44 +27,133 @@ export function registerAiRoutes(app: Express, deps: AppDependencies) {
         return res.status(500).json({ message: "AI service not configured" });
       }
 
+      // Fetch comprehensive portfolio data
+      const [activeLoans, settledLoans, cancelledLoans, facilities, banks, collateral, guarantees] = await Promise.all([
+        storage.getActiveLoansByUser(organizationId),
+        storage.getSettledLoansByUser(organizationId),
+        storage.getCancelledLoansByUser(organizationId),
+        storage.getUserFacilities(organizationId),
+        storage.getUserBanks(organizationId),
+        storage.getUserCollateral(organizationId),
+        storage.getUserGuarantees(organizationId),
+      ]);
+
+      // Calculate portfolio metrics - Safe BigInt/Decimal handling
+      const totalOutstanding = activeLoans.reduce((sum: number, loan: any) => sum + Number(loan.amount?.toString() ?? 0), 0);
+      const totalSettled = settledLoans.reduce((sum: number, loan: any) => sum + Number(loan.amount?.toString() ?? 0), 0);
+      const overdueLoans = activeLoans.filter((loan: any) => new Date(loan.dueDate) < new Date());
+      const totalOverdue = overdueLoans.reduce((sum: number, loan: any) => sum + Number(loan.amount?.toString() ?? 0), 0);
+      
+      // Calculate weighted average rate
+      let totalWeightedRate = 0;
+      let totalAmount = 0;
+      activeLoans.forEach((loan: any) => {
+        const amount = Number(loan.amount?.toString() ?? 0);
+        const rate = Number(loan.siborRate?.toString() ?? 0) + Number(loan.margin?.toString() ?? 0);
+        totalWeightedRate += amount * rate;
+        totalAmount += amount;
+      });
+      const avgRate = totalAmount > 0 ? (totalWeightedRate / totalAmount).toFixed(2) : '0.00';
+
+      // Bank exposure calculation
+      const bankExposures: any = {};
+      activeLoans.forEach((loan: any) => {
+        if (!bankExposures[loan.bankName]) {
+          bankExposures[loan.bankName] = 0;
+        }
+        bankExposures[loan.bankName] += Number(loan.amount?.toString() ?? 0);
+      });
+
+      // Format portfolio data for AI
+      const portfolioContext = `
+## USER'S PORTFOLIO DATA (as of ${new Date().toLocaleDateString('en-SA')})
+
+### ACTIVE LOANS (${activeLoans.length} loans)
+${activeLoans.map((loan: any) => {
+  const amount = Number(loan.amount?.toString() ?? 0);
+  const rate = Number(loan.siborRate?.toString() ?? 0) + Number(loan.margin?.toString() ?? 0);
+  return `- ${loan.bankName}: SAR ${amount.toLocaleString()} | Due: ${new Date(loan.dueDate).toLocaleDateString('en-SA')} | Rate: ${rate.toFixed(2)}% | Facility: ${loan.facilityType}`;
+}).join('\n') || 'No active loans'}
+
+### OVERDUE LOANS (${overdueLoans.length} loans)
+${overdueLoans.map((loan: any) => {
+  const amount = Number(loan.amount?.toString() ?? 0);
+  return `- ${loan.bankName}: SAR ${amount.toLocaleString()} | Was due: ${new Date(loan.dueDate).toLocaleDateString('en-SA')}`;
+}).join('\n') || 'No overdue loans'}
+
+### SETTLED LOANS (${settledLoans.length} loans)
+${settledLoans.slice(0, 5).map((loan: any) => {
+  const amount = Number(loan.amount?.toString() ?? 0);
+  return `- ${loan.bankName}: SAR ${amount.toLocaleString()} | Settled: ${loan.settledDate ? new Date(loan.settledDate).toLocaleDateString('en-SA') : 'N/A'}`;
+}).join('\n') || 'No settled loans'}
+
+### CANCELLED LOANS (${cancelledLoans.length} loans)
+${cancelledLoans.slice(0, 3).map((loan: any) => {
+  const amount = Number(loan.amount?.toString() ?? 0);
+  return `- ${loan.bankName}: SAR ${amount.toLocaleString()}`;
+}).join('\n') || 'No cancelled loans'}
+
+### FACILITIES (${facilities.length} facilities)
+${facilities.map((fac: any) => {
+  const facLoans = activeLoans.filter((l: any) => l.facilityId === fac.id);
+  const utilization = facLoans.reduce((sum: number, l: any) => sum + Number(l.amount?.toString() ?? 0), 0);
+  // Safe BigInt/Decimal handling - try both property names
+  const rawLimit = fac.creditLimit ?? fac.limit;
+  const limit = rawLimit ? Number(rawLimit.toString()) : 0;
+  const available = limit - utilization;
+  const bankName = fac.bank?.name || 'Unknown Bank';
+  const utilizationPct = limit > 0 ? ((utilization / limit) * 100).toFixed(1) : '0.0';
+  return `- ${bankName} ${fac.facilityType}: Limit SAR ${limit.toLocaleString()} | Used: SAR ${utilization.toLocaleString()} (${utilizationPct}%) | Available: SAR ${available.toLocaleString()}`;
+}).join('\n') || 'No facilities'}
+
+### COLLATERAL (${collateral.length} items)
+${collateral.map((col: any) => {
+  const value = Number(col.value?.toString() ?? 0);
+  return `- ${col.type}: Value SAR ${value.toLocaleString()} | LTV: ${col.ltvRatio}%`;
+}).join('\n') || 'No collateral'}
+
+### GUARANTEES (${guarantees.length} guarantees)
+${guarantees.map((guar: any) => {
+  const amount = Number(guar.amount?.toString() ?? 0);
+  return `- ${guar.guarantorName}: SAR ${amount.toLocaleString()} | Type: ${guar.guaranteeType}`;
+}).join('\n') || 'No guarantees'}
+
+### BANK EXPOSURES
+${Object.entries(bankExposures).map(([bank, amount]: [string, any]) => 
+  `- ${bank}: SAR ${amount.toLocaleString()} (${((amount / totalOutstanding) * 100).toFixed(1)}% of portfolio)`
+).join('\n') || 'No exposures'}
+
+### KEY METRICS
+- Total Outstanding: SAR ${totalOutstanding.toLocaleString()}
+- Total Settled (Paid): SAR ${totalSettled.toLocaleString()}
+- Total Overdue: SAR ${totalOverdue.toLocaleString()}
+- Active Loans: ${activeLoans.length}
+- Overdue Loans: ${overdueLoans.length}
+- Weighted Avg Rate: ${avgRate}%
+- Number of Banks: ${Object.keys(bankExposures).length}
+`;
+
       // Prepare messages for AI
       const messages = [
         {
           role: 'system',
-          content: `You are an AI Portfolio Assistant for Morouna Loans, a comprehensive loan management system designed specifically for the Saudi Arabian banking market.
+          content: `You are a data-driven AI Portfolio Assistant for Morouna Loans (Saudi Arabian loan management system).
 
-## Your Role & Expertise
-You are a knowledgeable financial assistant specializing in:
-- Saudi Arabian banking regulations and practices
-- SIBOR (Saudi Interbank Offered Rate) calculations and impact on loans
-- Bank facility structures (Working Capital, Term Loans, Murabaha, Tawarruq, Ijara)
-- Loan portfolio management and risk analysis
-- Collateral and guarantee assessment
-- Financial metrics and performance indicators
+## CRITICAL RULES
+1. ALWAYS use the user's actual data provided below - never give generic answers
+2. Be concise and data-focused - less explanation, more numbers
+3. When asked about loans, list ACTUAL loans with specific amounts, dates, banks
+4. Calculate from provided data - don't make assumptions
+5. Use SAR currency and Saudi date formats
 
-## How to Respond
-1. **Be Detailed & Educational**: Provide comprehensive explanations with examples
-2. **Use Numbers & Examples**: When discussing calculations, show specific examples with Saudi Riyal (SAR)
-3. **Explain the "Why"**: Don't just state facts - explain the reasoning and implications
-4. **Saudi Context**: Always frame answers within Saudi Arabian banking practices and regulations
-5. **Step-by-Step Guidance**: For complex topics, break down explanations into clear steps
-6. **Practical Application**: Show how concepts apply to real loan management scenarios
+${portfolioContext}
 
-## Key Concepts to Know
-- **SIBOR**: The benchmark rate for Saudi Arabian interbank lending (similar to LIBOR)
-- **All-in Rate**: SIBOR + Margin = Total interest rate charged
-- **Facilities**: Credit lines from banks (can be revolving or non-revolving)
-- **LTV**: Loan-to-Value ratio for collateral assessment
-- **Bank Concentration**: Risk management of exposure across different banks
-- **Murabaha/Tawarruq/Ijara**: Islamic finance structures common in Saudi Arabia
-
-## Response Format
-- Start with a clear, direct answer
-- Follow with detailed explanation
-- Include relevant examples or calculations when applicable
-- End with practical insights or next steps if relevant
-
-Be thorough, informative, and ensure users fully understand the concepts. Your goal is to educate and empower users to make better financial decisions.`
+## Response Guidelines
+- Answer with SPECIFIC data from the portfolio above
+- List actual amounts, dates, banks, rates
+- Show calculations when relevant
+- Keep responses short and actionable
+- If data is missing, say "No data available" - don't speculate`
         },
         ...conversationHistory,
         {
