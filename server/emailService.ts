@@ -347,6 +347,139 @@ Note: This is an automated reminder generated on {currentDate}`,
 }
 
 /**
+ * Send loan confirmation email with branded HTML template and calendar invite
+ */
+export async function sendLoanConfirmationEmail(
+  user: User,
+  loan: Loan,
+  bank?: Bank,
+  facility?: Facility
+): Promise<boolean> {
+  if (!config.has('SENDGRID_API_KEY')) {
+    console.log('Loan confirmation email would be sent to:', user.email);
+    console.log('Loan:', loan.referenceNumber);
+    return true;
+  }
+
+  try {
+    // Check if user has a valid email address
+    if (!user.email) {
+      console.error('Cannot send email: User has no email address');
+      return false;
+    }
+
+    // Import EmailTemplateService
+    const { EmailTemplateService, EmailTemplateType } = await import('./emailTemplates/templates');
+
+    // Calculate all-in rate
+    const siborRate = Number(loan.siborRate?.toString() ?? 0);
+    const margin = Number(loan.margin?.toString() ?? 0);
+    const allInRate = (siborRate + margin).toFixed(2);
+
+    // Format loan amount
+    const amount = Number(loan.amount?.toString() ?? 0);
+    const formattedAmount = `${amount.toLocaleString('en-US')} SAR`;
+
+    // Format due date
+    const dueDate = new Date(loan.dueDate);
+    const formattedDueDate = dueDate.toLocaleDateString('en-US', { 
+      year: 'numeric', 
+      month: 'long', 
+      day: 'numeric' 
+    });
+
+    // Format facility name from type
+    const facilityName = facility ? 
+      facility.facilityType.split('_').map(word => 
+        word.charAt(0).toUpperCase() + word.slice(1)
+      ).join(' ') + ' Facility' 
+      : 'N/A';
+
+    // Build template variables
+    const templateVars = {
+      user_name: user.firstName && user.lastName ? `${user.firstName} ${user.lastName}` : user.email,
+      reference_number: loan.referenceNumber || 'N/A',
+      bank_name: bank?.name || 'N/A',
+      facility_name: facilityName,
+      loan_amount: formattedAmount,
+      due_date: formattedDueDate,
+      all_in_rate: allInRate
+    };
+
+    // Render the email using the template service
+    const emailContent = EmailTemplateService.getTemplate(
+      EmailTemplateType.NEW_LOAN_CONFIRMATION,
+      templateVars
+    );
+
+    // Prepare email data
+    const emailData: any = {
+      to: user.email,
+      from: FROM_EMAIL_REMINDERS,
+      subject: emailContent.subject,
+      html: emailContent.html,
+    };
+
+    // Generate calendar invite for the due date
+    const reminderDate = new Date(loan.dueDate);
+    reminderDate.setHours(9, 0, 0, 0);
+
+    const event: EventAttributes = {
+      start: [
+        reminderDate.getFullYear(),
+        reminderDate.getMonth() + 1,
+        reminderDate.getDate(),
+        reminderDate.getHours(),
+        reminderDate.getMinutes()
+      ],
+      duration: { hours: 1, minutes: 0 },
+      title: `Loan Payment Due - ${bank?.name || 'Bank'} - ${loan.referenceNumber}`,
+      description: `Payment due for loan ${loan.referenceNumber}. Amount: ${formattedAmount}. Bank: ${bank?.name || 'N/A'}. Facility: ${facilityName}.`,
+      location: bank?.name || 'Morouna Loans',
+      status: 'CONFIRMED',
+      busyStatus: 'FREE',
+      organizer: { name: 'Morouna Loans', email: FROM_EMAIL },
+      attendees: [
+        {
+          name: templateVars.user_name,
+          email: user.email || '',
+          rsvp: true,
+          partstat: 'ACCEPTED',
+          role: 'REQ-PARTICIPANT'
+        }
+      ]
+    };
+
+    const { error, value } = createEvent(event);
+    
+    if (!error && value) {
+      // Attach .ics file
+      emailData.attachments = [
+        {
+          content: Buffer.from(value).toString('base64'),
+          filename: 'loan-payment-due.ics',
+          type: 'text/calendar',
+          disposition: 'attachment',
+          contentId: 'calendar-invite.ics'
+        }
+      ];
+      
+      console.log('Calendar invite attached to loan confirmation email');
+    }
+
+    await mailService.send(emailData);
+
+    console.log('Loan confirmation email sent successfully to:', user.email);
+    console.log('Subject:', emailContent.subject);
+    
+    return true;
+  } catch (error) {
+    console.error('SendGrid loan confirmation email error:', error);
+    return false;
+  }
+}
+
+/**
  * Send a simple reminder email without template (fallback)
  */
 export async function sendSimpleReminderEmail(

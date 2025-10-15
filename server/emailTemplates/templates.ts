@@ -17,6 +17,7 @@ export enum EmailTemplateType {
   WELCOME = 'welcome',
   PASSWORD_CHANGED = 'password_changed',
   LOAN_PAYMENT_REMINDER = 'loan_payment_reminder',
+  NEW_LOAN_CONFIRMATION = 'new_loan_confirmation',
   GENERAL_REMINDER = 'general_reminder',
 }
 
@@ -143,6 +144,29 @@ Due Date: ${variables.due_date}
 Days Until Due: ${variables.days_remaining} days
 
 Please ensure timely payment to avoid penalties.
+
+Need help? Contact us at Abdullah@akm-labs.com
+
+© 2025 Morouna Loans by AKM Labs. All rights reserved.`
+      },
+      [EmailTemplateType.NEW_LOAN_CONFIRMATION]: {
+        subject: 'New Loan Confirmation - {{reference_number}}',
+        html: NEW_LOAN_CONFIRMATION_TEMPLATE,
+        text: `New Loan Confirmation
+
+Hi ${variables.user_name || 'Valued Customer'},
+
+Your loan has been successfully created and is now active in the system.
+
+Loan Details:
+Reference Number: ${variables.reference_number}
+Bank: ${variables.bank_name}
+Facility: ${variables.facility_name}
+Amount: ${variables.loan_amount}
+Due Date: ${variables.due_date}
+All-in Rate: ${variables.all_in_rate}%
+
+Please mark your calendar for the payment due date. You will receive payment reminders as the due date approaches.
 
 Need help? Contact us at Abdullah@akm-labs.com
 
@@ -708,6 +732,97 @@ const GENERAL_REMINDER_TEMPLATE = `<!DOCTYPE html>
                             
                             <div style="background: linear-gradient(135deg, #E6F7F3 0%, #D1F2E8 100%); border: 2px solid #5FD4B3; border-radius: 12px; padding: 25px; margin: 30px 0;">
                                 {{additional_info}}
+                            </div>
+                        </td>
+                    </tr>
+                    
+                    <!-- Footer -->
+                    <tr>
+                        <td style="background-color: #F7FAFC; padding: 30px 40px; text-align: center;">
+                            <p style="color: #718096; font-size: 14px; margin: 0 0 10px 0;">
+                                Need help? Contact us at <a href="mailto:Abdullah@akm-labs.com" style="color: #5FD4B3; text-decoration: none;">Abdullah@akm-labs.com</a>
+                            </p>
+                            <p style="color: #A0AEC0; font-size: 12px; margin: 0;">
+                                © 2025 Morouna Loans by AKM Labs. All rights reserved.
+                            </p>
+                        </td>
+                    </tr>
+                    
+                </table>
+            </td>
+        </tr>
+    </table>
+</body>
+</html>`;
+
+const NEW_LOAN_CONFIRMATION_TEMPLATE = `<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>New Loan Confirmation - Morouna Loans</title>
+</head>
+<body style="margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f5f5f5;">
+    <table role="presentation" style="width: 100%; border-collapse: collapse;">
+        <tr>
+            <td align="center" style="padding: 40px 0;">
+                <table role="presentation" style="width: 600px; max-width: 100%; border-collapse: collapse; background-color: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
+                    
+                    <!-- Header with Background -->
+                    <tr>
+                        <td style="background: linear-gradient(135deg, #5FD4B3 0%, #3BA88F 100%); padding: 50px 40px; text-align: center;">
+                            <h1 style="color: #ffffff; font-size: 36px; margin: 0 0 10px 0; font-weight: 700; letter-spacing: -1px;">Morouna Loans</h1>
+                            <p style="color: #ffffff; font-size: 14px; margin: 0; opacity: 0.9;">by AKM Labs</p>
+                            <h1 style="color: #ffffff; font-size: 28px; margin: 15px 0 0 0; font-weight: 600;">Loan Confirmation</h1>
+                        </td>
+                    </tr>
+                    
+                    <!-- Content -->
+                    <tr>
+                        <td style="padding: 40px;">
+                            <h2 style="color: #2D3748; font-size: 24px; margin: 0 0 20px 0; font-weight: 600;">Your Loan Has Been Created</h2>
+                            
+                            <p style="color: #4A5568; font-size: 16px; line-height: 1.6; margin: 0 0 20px 0;">
+                                Hi <strong>{{user_name}}</strong>,
+                            </p>
+                            
+                            <p style="color: #4A5568; font-size: 16px; line-height: 1.6; margin: 0 0 30px 0;">
+                                Your loan has been successfully created and is now active in the system.
+                            </p>
+                            
+                            <div style="background: linear-gradient(135deg, #E6F7F3 0%, #D1F2E8 100%); border: 2px solid #5FD4B3; border-radius: 12px; padding: 25px; margin: 30px 0;">
+                                <table style="width: 100%; border-collapse: collapse;">
+                                    <tr>
+                                        <td style="padding: 10px 0; color: #2D3748; font-size: 14px; font-weight: 600;">Reference Number:</td>
+                                        <td style="padding: 10px 0; color: #2D3748; font-size: 14px; text-align: right;">{{reference_number}}</td>
+                                    </tr>
+                                    <tr>
+                                        <td style="padding: 10px 0; color: #2D3748; font-size: 14px; font-weight: 600;">Bank:</td>
+                                        <td style="padding: 10px 0; color: #2D3748; font-size: 14px; text-align: right;">{{bank_name}}</td>
+                                    </tr>
+                                    <tr>
+                                        <td style="padding: 10px 0; color: #2D3748; font-size: 14px; font-weight: 600;">Facility:</td>
+                                        <td style="padding: 10px 0; color: #2D3748; font-size: 14px; text-align: right;">{{facility_name}}</td>
+                                    </tr>
+                                    <tr style="border-top: 1px solid #5FD4B3;">
+                                        <td style="padding: 15px 0 10px 0; color: #2D3748; font-size: 16px; font-weight: 700;">Loan Amount:</td>
+                                        <td style="padding: 15px 0 10px 0; color: #2D3748; font-size: 20px; font-weight: 700; text-align: right;">{{loan_amount}}</td>
+                                    </tr>
+                                    <tr>
+                                        <td style="padding: 10px 0; color: #2D3748; font-size: 14px; font-weight: 600;">Due Date:</td>
+                                        <td style="padding: 10px 0; color: #2D3748; font-size: 14px; text-align: right;">{{due_date}}</td>
+                                    </tr>
+                                    <tr>
+                                        <td style="padding: 10px 0; color: #2D3748; font-size: 14px; font-weight: 600;">All-in Rate:</td>
+                                        <td style="padding: 10px 0; color: #2D3748; font-size: 14px; text-align: right;">{{all_in_rate}}%</td>
+                                    </tr>
+                                </table>
+                            </div>
+                            
+                            <div style="margin-top: 30px; padding: 20px; background-color: #EBF8FF; border-left: 4px solid #4299E1; border-radius: 4px;">
+                                <p style="color: #2C5282; font-size: 14px; line-height: 1.6; margin: 0;">
+                                    <strong>📅 Important:</strong> Please mark your calendar for the payment due date. You will receive payment reminders as the due date approaches.
+                                </p>
                             </div>
                         </td>
                     </tr>
