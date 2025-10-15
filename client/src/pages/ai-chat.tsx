@@ -540,7 +540,7 @@ export default function AIChatPage() {
 
           {/* Chat Area */}
           <Card className={`lg:col-span-3 flex flex-col ${
-            isMobile ? 'h-full rounded-none border-0' : ''
+            isMobile ? 'h-[calc(100vh-4rem)] rounded-none border-0' : ''
           }`}>
             {/* Desktop Header */}
             {!isMobile && (
@@ -593,7 +593,7 @@ export default function AIChatPage() {
 
             {/* Mobile: Conversations menu in sheet */}
             {isMobile && (
-              <div className="border-b p-3 bg-background">
+              <div className="border-b p-3 bg-background flex-shrink-0">
                 <Sheet open={isSidebarOpen} onOpenChange={setIsSidebarOpen}>
                   <SheetTrigger asChild>
                     <Button 
@@ -614,8 +614,12 @@ export default function AIChatPage() {
               </div>
             )}
 
-            <CardContent className="flex-1 flex flex-col p-0 overflow-hidden">
-              <div className={`flex-1 overflow-y-auto ${isMobile ? 'p-3 pb-32' : 'p-4'}`}>
+            <CardContent className={`flex-1 flex flex-col p-0 ${isMobile ? 'overflow-hidden' : 'overflow-hidden'}`}>
+              <div className={`flex-1 overflow-y-auto ${isMobile ? 'p-3' : 'p-4'}`} style={isMobile ? {
+                maxHeight: 'calc(100vh - 4rem - 3.5rem - 5rem)', // viewport - bottom nav - header - input area
+                overflowY: 'auto',
+                WebkitOverflowScrolling: 'touch'
+              } : {}}>
                 {isLoading ? (
                   <div className="flex items-center justify-center h-full">
                     <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
@@ -683,9 +687,9 @@ export default function AIChatPage() {
                 )}
               </div>
 
-              {/* Input Area - Fixed to bottom on mobile */}
-              <div className={`border-t bg-background ${
-                isMobile ? 'fixed bottom-16 left-0 right-0 p-3 z-30' : 'p-4'
+              {/* Input Area - Sticky to bottom */}
+              <div className={`border-t bg-background flex-shrink-0 ${
+                isMobile ? 'p-3' : 'p-4'
               }`}>
                 {uploadedFiles.length > 0 && (
                   <div className="mb-3 space-y-2">
