@@ -489,7 +489,7 @@ export default function AIChatPage() {
           <div className="mb-6">
             <h1 className="text-3xl font-bold text-foreground mb-2">AI Portfolio Assistant</h1>
             <p className="text-muted-foreground">
-              Ask questions about your loans, bank exposures, and portfolio analytics
+              Ask questions about your portfolio, analyze risks, and generate professional reports in PDF, Excel, or Word format
             </p>
           </div>
         )}
@@ -653,8 +653,59 @@ export default function AIChatPage() {
                     <MessageCircle className={`${isMobile ? 'h-12 w-12' : 'h-16 w-16'} text-muted-foreground mb-4`} />
                     <h3 className={`${isMobile ? 'text-base' : 'text-lg'} font-semibold mb-2`}>Welcome to AI Portfolio Assistant</h3>
                     <p className={`${isMobile ? 'text-sm' : ''} text-muted-foreground mb-4`}>
-                      Start chatting below. Your chat is temporary until you save it.
+                      Ask questions about your portfolio or generate professional reports. Your chat is temporary until you save it.
                     </p>
+                    
+                    {/* Quick Action Suggestions */}
+                    <div className={`grid ${isMobile ? 'grid-cols-1 gap-2 w-full' : 'grid-cols-2 gap-3'} mt-6 max-w-2xl`}>
+                      <button
+                        onClick={() => setInputMessage("Give me a comprehensive portfolio report in PDF")}
+                        className="p-3 text-left border rounded-lg hover:bg-accent hover:border-accent-foreground transition-colors active:bg-accent/70 active:scale-95"
+                        data-testid="suggestion-comprehensive-pdf"
+                      >
+                        <div className="flex items-center gap-2 mb-1">
+                          <FileText className="h-4 w-4 text-saudi" />
+                          <span className="font-medium text-sm">Comprehensive PDF Report</span>
+                        </div>
+                        <p className="text-xs text-muted-foreground">Full portfolio with all data</p>
+                      </button>
+                      
+                      <button
+                        onClick={() => setInputMessage("Export my active loans to Excel")}
+                        className="p-3 text-left border rounded-lg hover:bg-accent hover:border-accent-foreground transition-colors active:bg-accent/70 active:scale-95"
+                        data-testid="suggestion-loans-excel"
+                      >
+                        <div className="flex items-center gap-2 mb-1">
+                          <Download className="h-4 w-4 text-saudi" />
+                          <span className="font-medium text-sm">Loans Excel Export</span>
+                        </div>
+                        <p className="text-xs text-muted-foreground">Active & settled loans data</p>
+                      </button>
+                      
+                      <button
+                        onClick={() => setInputMessage("What's my current bank concentration risk?")}
+                        className="p-3 text-left border rounded-lg hover:bg-accent hover:border-accent-foreground transition-colors active:bg-accent/70 active:scale-95"
+                        data-testid="suggestion-concentration"
+                      >
+                        <div className="flex items-center gap-2 mb-1">
+                          <MessageCircle className="h-4 w-4 text-saudi" />
+                          <span className="font-medium text-sm">Concentration Analysis</span>
+                        </div>
+                        <p className="text-xs text-muted-foreground">Check bank exposure risk</p>
+                      </button>
+                      
+                      <button
+                        onClick={() => setInputMessage("Create a facilities summary report in Word")}
+                        className="p-3 text-left border rounded-lg hover:bg-accent hover:border-accent-foreground transition-colors active:bg-accent/70 active:scale-95"
+                        data-testid="suggestion-facilities-word"
+                      >
+                        <div className="flex items-center gap-2 mb-1">
+                          <FileText className="h-4 w-4 text-saudi" />
+                          <span className="font-medium text-sm">Facilities Word Report</span>
+                        </div>
+                        <p className="text-xs text-muted-foreground">Banking facilities analysis</p>
+                      </button>
+                    </div>
                   </div>
                 ) : (
                   <div className="space-y-4">

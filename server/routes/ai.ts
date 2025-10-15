@@ -398,9 +398,9 @@ Report Types Available:
       }
       
       const currentAmount = parseFloat(loan.amount.toString());
-      const currentRate = parseFloat(loan.interestRate.toString());
+      const currentRate = parseFloat(loan.bankRate.toString());
       const currentDueDate = new Date(loan.dueDate);
-      const drawdownDate = new Date(loan.drawdownDate);
+      const drawdownDate = new Date(loan.startDate);
       const currentDurationDays = Math.ceil((currentDueDate.getTime() - drawdownDate.getTime()) / (1000 * 60 * 60 * 24));
       
       // Calculate current loan cost
@@ -717,10 +717,15 @@ Report Types Available:
       
       if (!config) {
         config = {
+          id: '',
           userId,
+          updatedAt: null,
           concentrationRiskThreshold: '40',
           ltvOutstandingThreshold: '75',
-          ltvLimitThreshold: '90'
+          ltvLimitThreshold: '90',
+          cashFlowStrainThreshold: null,
+          rateDifferentialThreshold: null,
+          dueDateAlertDays: null
         };
       }
       

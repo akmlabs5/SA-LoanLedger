@@ -10,6 +10,8 @@ Morouna Loans is a full-stack loan management system designed for the Saudi Arab
 - **Professional Formatting**: PDF uses jsPDF with tables, Excel has multiple sheets, Word generates structured text documents
 - **Automatic Downloads**: Base64 encoding with proper MIME types, browser automatically downloads generated reports
 - **Safe BigInt Handling**: All amount calculations use Number(value?.toString() ?? 0) pattern throughout report generation
+- **Enhanced UI**: Added quick action suggestion cards on chat empty state showcasing document generation capabilities (Comprehensive PDF, Loans Excel, Concentration Analysis, Facilities Word)
+- **Bug Fixes**: Corrected loan property names in AI scenarios (interestRate→bankRate, drawdownDate→startDate) to match actual schema
 
 ## October 15, 2025 - AI Chat Complete Overhaul
 - **Temporary Chat Mode**: Chat now starts in temporary in-memory mode - messages stored in React state, not database by default
