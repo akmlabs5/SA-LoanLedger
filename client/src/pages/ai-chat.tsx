@@ -615,7 +615,7 @@ export default function AIChatPage() {
             )}
 
             <CardContent className="flex-1 flex flex-col p-0 overflow-hidden">
-              <ScrollArea className={`flex-1 ${isMobile ? 'p-3 pb-32' : 'p-4'}`}>
+              <div className={`flex-1 overflow-y-auto ${isMobile ? 'p-3 pb-32' : 'p-4'}`}>
                 {isLoading ? (
                   <div className="flex items-center justify-center h-full">
                     <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
@@ -681,7 +681,7 @@ export default function AIChatPage() {
                     <div ref={messagesEndRef} />
                   </div>
                 )}
-              </ScrollArea>
+              </div>
 
               {/* Input Area - Fixed to bottom on mobile */}
               <div className={`border-t bg-background ${
