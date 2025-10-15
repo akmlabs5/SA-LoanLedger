@@ -3,6 +3,16 @@ Morouna Loans is a full-stack loan management system designed for the Saudi Arab
 
 # Recent Changes
 
+## October 15, 2025 - New Loan Confirmation Email System
+- **Branded Email Template**: Created NEW_LOAN_CONFIRMATION email template with professional green HTML design matching existing branded templates
+- **Professional Wording**: Removed "friendly reminder" and "automatic deduction" language, replaced with professional confirmation message: "Your loan has been successfully created and is now active in the system"
+- **Calendar Invite Enhancement**: Updated calendar invite subject to include both bank and loan reference: "Loan Payment Due - {Bank Name} - {Loan Reference}"
+- **Dedicated Email Function**: Created sendLoanConfirmationEmail() function in emailService.ts for loan creation notifications with proper template rendering
+- **Facility Name Handling**: Safe facility name formatting from facilityType enum (facilities don't have name field) - transforms "working_capital" to "Working Capital Facility"
+- **Template Variables**: Includes reference_number, bank_name, facility_name, loan_amount, due_date, all_in_rate with proper formatting
+- **Subject Line Fix**: Fixed template syntax from ${variables.reference_number} to {{reference_number}} for proper variable replacement
+- **Email Details**: Shows loan reference, bank name, facility type, amount (formatted SAR), due date, and calculated all-in rate (SIBOR + margin)
+
 ## October 15, 2025 - AI-Powered Document Generation
 - **Portfolio Report Service**: Created comprehensive report generation service supporting PDF, Excel, and Word formats with all portfolio data (loans, facilities, collateral, guarantees, metrics)
 - **AI Function Calling**: Added generatePortfolioReport function to AI chat - users can ask "give me a report" and AI generates and downloads it
