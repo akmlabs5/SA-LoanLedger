@@ -404,6 +404,7 @@ export default function ReminderModal({ loanId, isOpen, onClose, loanData }: Rem
                           <FormControl>
                             <Input
                               placeholder="e.g., Loan payment due soon"
+                              className="h-10"
                               {...field}
                               data-testid="input-reminder-title"
                             />
