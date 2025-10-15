@@ -10,6 +10,78 @@ import { insertAiInsightConfigSchema } from "@shared/schema";
 export function registerAiRoutes(app: Express, deps: AppDependencies) {
   const { storage } = deps;
 
+  // AI Chat - Portfolio Assistant
+  app.post('/api/ai/chat', isAuthenticated, attachOrganizationContext, requireOrganization, async (req: any, res) => {
+    try {
+      const { message, conversationHistory = [] } = req.body;
+      
+      if (!message || typeof message !== 'string') {
+        return res.status(400).json({ message: "Message is required" });
+      }
+
+      const DEEPSEEK_API_KEY = process.env.DEEPSEEK_API_KEY;
+      const DEEPSEEK_API_URL = 'https://api.deepseek.com/v1/chat/completions';
+
+      if (!DEEPSEEK_API_KEY) {
+        return res.status(500).json({ message: "AI service not configured" });
+      }
+
+      // Prepare messages for AI
+      const messages = [
+        {
+          role: 'system',
+          content: `You are an AI Portfolio Assistant for Morouna Loans, a loan management system for the Saudi Arabian market. 
+          
+You help users with:
+- Understanding their loan portfolio and bank exposures
+- Answering questions about SIBOR rates and loan calculations
+- Providing insights on collateral and guarantees
+- Explaining loan terms, facilities, and financial metrics
+- Guiding users through the system features
+
+Be helpful, professional, and concise. Focus on Saudi Arabian banking context when relevant.`
+        },
+        ...conversationHistory,
+        {
+          role: 'user',
+          content: message
+        }
+      ];
+
+      // Call DeepSeek AI
+      const response = await fetch(DEEPSEEK_API_URL, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${DEEPSEEK_API_KEY}`
+        },
+        body: JSON.stringify({
+          model: 'deepseek-chat',
+          messages,
+          temperature: 0.7,
+          max_tokens: 1000
+        })
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('DeepSeek API error:', errorText);
+        return res.status(500).json({ message: "AI service error" });
+      }
+
+      const data = await response.json();
+      const aiResponse = data.choices[0].message.content;
+
+      res.json({ response: aiResponse });
+    } catch (error) {
+      console.error("Error processing AI chat:", error);
+      res.status(500).json({ 
+        message: "Failed to process chat request",
+        error: error instanceof Error ? error.message : 'Unknown error'
+      });
+    }
+  });
+
   // Natural Language Query
   app.post('/api/ai/natural-query', isAuthenticated, attachOrganizationContext, requireOrganization, async (req: any, res) => {
     try {
