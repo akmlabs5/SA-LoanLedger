@@ -149,6 +149,30 @@ export default function AIChatPage() {
         createdAt: new Date(),
       };
       setTempMessages(prev => [...prev, assistantMessage]);
+
+      // Handle report download if AI generated one
+      if (data.report) {
+        const { data: base64Data, fileName, mimeType } = data.report;
+        const binaryData = atob(base64Data);
+        const bytes = new Uint8Array(binaryData.length);
+        for (let i = 0; i < binaryData.length; i++) {
+          bytes[i] = binaryData.charCodeAt(i);
+        }
+        const blob = new Blob([bytes], { type: mimeType });
+        const url = window.URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = fileName;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        window.URL.revokeObjectURL(url);
+
+        toast({
+          title: "Report downloaded",
+          description: `${fileName} has been generated and downloaded`,
+        });
+      }
     },
     onError: () => {
       toast({

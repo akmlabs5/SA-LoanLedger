@@ -6,6 +6,8 @@ import { NLQProcessor } from "../nlqProcessor";
 import { DailyAlertsService } from "../dailyAlerts";
 import { generateAIInsights } from "../aiInsights";
 import { insertAiInsightConfigSchema } from "@shared/schema";
+import { PortfolioReportService } from "../portfolioReportService";
+import { nanoid } from "nanoid";
 
 export function registerAiRoutes(app: Express, deps: AppDependencies) {
   const { storage } = deps;
@@ -33,7 +35,7 @@ export function registerAiRoutes(app: Express, deps: AppDependencies) {
         storage.getSettledLoansByUser(organizationId),
         storage.getCancelledLoansByUser(organizationId),
         storage.getUserFacilities(organizationId),
-        storage.getUserBanks(organizationId),
+        storage.getAllBanks(),
         storage.getUserCollateral(organizationId),
         storage.getUserGuarantees(organizationId),
       ]);
@@ -148,12 +150,23 @@ ${Object.entries(bankExposures).map(([bank, amount]: [string, any]) =>
 
 ${portfolioContext}
 
+## Document Generation Capability
+You can generate professional portfolio reports in PDF, Excel, or Word formats with the user's actual data.
+When users ask for reports/documents (e.g., "give me a report", "export to PDF", "create a summary document"), use the generatePortfolioReport function.
+
+Report Types Available:
+- comprehensive: Full portfolio report (all loans, facilities, collateral, guarantees)
+- loans: Focus on active and settled loans
+- facilities: Focus on banking facilities and utilization
+- summary: High-level metrics and bank exposures
+
 ## Response Guidelines
 - Answer with SPECIFIC data from the portfolio above
 - List actual amounts, dates, banks, rates
 - Show calculations when relevant
 - Keep responses short and actionable
-- If data is missing, say "No data available" - don't speculate`
+- If data is missing, say "No data available" - don't speculate
+- When generating reports, tell user what you're creating and they'll get a download link`
         },
         ...conversationHistory,
         {
@@ -162,7 +175,34 @@ ${portfolioContext}
         }
       ];
 
-      // Call DeepSeek AI
+      // Function definitions for AI
+      const tools = [
+        {
+          type: "function",
+          function: {
+            name: "generatePortfolioReport",
+            description: "Generate a comprehensive portfolio report with the user's actual loan, facility, and financial data. Use this when users ask for reports, exports, or downloadable documents.",
+            parameters: {
+              type: "object",
+              properties: {
+                reportType: {
+                  type: "string",
+                  enum: ["comprehensive", "loans", "facilities", "summary"],
+                  description: "Type of report to generate: comprehensive (full portfolio), loans (active/settled loans), facilities (banking facilities), summary (high-level metrics)"
+                },
+                format: {
+                  type: "string",
+                  enum: ["pdf", "excel", "docx"],
+                  description: "Output format: pdf (portable document), excel (spreadsheet with multiple sheets), docx (word document)"
+                }
+              },
+              required: ["reportType", "format"]
+            }
+          }
+        }
+      ];
+
+      // Call DeepSeek AI with tools
       const response = await fetch(DEEPSEEK_API_URL, {
         method: 'POST',
         headers: {
@@ -172,6 +212,7 @@ ${portfolioContext}
         body: JSON.stringify({
           model: 'deepseek-chat',
           messages,
+          tools,
           temperature: 0.7,
           max_tokens: 1000
         })
@@ -184,8 +225,78 @@ ${portfolioContext}
       }
 
       const data = await response.json();
-      const aiResponse = data.choices[0].message.content;
+      const assistantMessage = data.choices[0].message;
 
+      // Check if AI wants to call a function
+      if (assistantMessage.tool_calls && assistantMessage.tool_calls.length > 0) {
+        const toolCall = assistantMessage.tool_calls[0];
+        const functionName = toolCall.function.name;
+        const functionArgs = JSON.parse(toolCall.function.arguments);
+
+        if (functionName === 'generatePortfolioReport') {
+          // Generate the report
+          const reportService = new PortfolioReportService(storage);
+          const reportBuffer = await reportService.generateReport({
+            organizationId,
+            reportType: functionArgs.reportType,
+            format: functionArgs.format,
+          });
+
+          // Convert to base64 for transmission
+          const base64Report = reportBuffer.toString('base64');
+          const fileExtension = functionArgs.format === 'excel' ? 'xlsx' : functionArgs.format;
+          const fileName = `portfolio-report-${functionArgs.reportType}-${new Date().toISOString().split('T')[0]}.${fileExtension}`;
+          const mimeType = functionArgs.format === 'pdf' ? 'application/pdf' : 
+                          functionArgs.format === 'excel' ? 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' :
+                          'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
+
+          // Add tool result to messages (for AI context)
+          messages.push(assistantMessage);
+          messages.push({
+            role: 'tool',
+            content: JSON.stringify({
+              success: true,
+              fileName,
+              reportType: functionArgs.reportType,
+              format: functionArgs.format,
+              fileSize: reportBuffer.length
+            }),
+            tool_call_id: toolCall.id
+          });
+
+          // Get final response from AI
+          const finalResponse = await fetch(DEEPSEEK_API_URL, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${DEEPSEEK_API_KEY}`
+            },
+            body: JSON.stringify({
+              model: 'deepseek-chat',
+              messages,
+              tools,
+              temperature: 0.7,
+              max_tokens: 1000
+            })
+          });
+
+          const finalData = await finalResponse.json();
+          const finalMessage = finalData.choices[0].message.content;
+
+          // Return BOTH the AI message AND the report data
+          return res.json({ 
+            response: finalMessage,
+            report: {
+              data: base64Report,
+              fileName,
+              mimeType
+            }
+          });
+        }
+      }
+
+      // Normal text response (no function call)
+      const aiResponse = assistantMessage.content;
       res.json({ response: aiResponse });
     } catch (error) {
       console.error("Error processing AI chat:", error);
