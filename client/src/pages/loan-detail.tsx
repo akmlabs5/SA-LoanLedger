@@ -338,9 +338,9 @@ export default function LoanDetailPage() {
               <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-blue-600 text-white rounded-lg flex items-center justify-center">
                 <FileText className="h-5 w-5" />
               </div>
-              <div>
+              <div className="min-w-0 flex-1">
                 <h1 className="text-xl font-bold text-foreground">Loan Details</h1>
-                <p className="text-sm text-muted-foreground">Reference: {loan.referenceNumber}</p>
+                <p className="text-sm text-muted-foreground truncate">Reference: {loan.referenceNumber}</p>
               </div>
             </div>
             

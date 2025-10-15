@@ -483,7 +483,7 @@ export default function LoanCreatePage() {
 
                     {/* SIBOR Terms Configuration */}
                     {form.watch("startDate") && (
-                      <div className="p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
+                      <div className="p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
                         <div className="flex items-center gap-2 mb-3">
                           <Calendar className="h-4 w-4 text-blue-600" />
                           <h4 className="font-medium text-blue-800 dark:text-blue-200">SIBOR Terms & Due Date Calculator</h4>
@@ -718,7 +718,7 @@ export default function LoanCreatePage() {
                       control={form.control}
                       name="sendEmailReminder"
                       render={({ field }) => (
-                        <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border border-gray-200 dark:border-gray-700 p-4 bg-gradient-to-r from-emerald-50 to-blue-50 dark:from-emerald-950/20 dark:to-blue-950/20">
+                        <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border border-gray-200 dark:border-gray-700 p-3 bg-gradient-to-r from-emerald-50 to-blue-50 dark:from-emerald-950/20 dark:to-blue-950/20">
                           <FormControl>
                             <Checkbox
                               checked={field.value}
