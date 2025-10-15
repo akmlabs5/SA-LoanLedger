@@ -3,7 +3,7 @@ Morouna Loans is a full-stack loan management system designed for the Saudi Arab
 
 # Recent Changes
 
-## October 15, 2025 - Temporary Chat with Optional Save Implementation
+## October 15, 2025 - AI Chat Complete Overhaul
 - **Temporary Chat Mode**: Chat now starts in temporary in-memory mode - messages stored in React state, not database by default
 - **Optional Save Feature**: Added "Save Conversation" button with title dialog - users can save important chats, quick questions don't clutter saved list
 - **Transactional Bulk Save**: Created `/api/chat/conversations/bulk-save` endpoint with proper database transaction for atomic save operations (all messages or none)
@@ -11,6 +11,10 @@ Morouna Loans is a full-stack loan management system designed for the Saudi Arab
 - **Auto-Cleanup Scheduler**: Background job runs every 24 hours to delete conversations older than 30 days, preventing database bloat
 - **Multi-tenant Safety**: All chat operations maintain organizationId filtering and data isolation
 - **Visual Indicators**: Clear UI shows unsaved vs saved conversation state with badges and helpful hints
+- **Missing AI Endpoint**: Created `/api/ai/chat` endpoint that was causing chat to fail - AI now responds properly to all messages
+- **Enhanced AI Reasoning**: Upgraded AI system prompt to provide detailed, educational responses with Saudi Arabian banking context, examples with SAR currency, step-by-step explanations, and practical applications
+- **PDF Export Feature**: Added `/api/chat/conversations/:id/export-pdf` endpoint for downloading chat conversations as formatted PDF documents with proper pagination and branding
+- **File Upload Placeholder**: File upload endpoint exists but marked as not yet implemented for future enhancement
 
 ## October 14, 2025 - Bank Performance Metrics Bug Fixes
 - **Fixed Average Rate Calculation**: Corrected field name from `loan.marginRate` to `loan.margin` in getBankPerformance, resolving NaN/null avgAllInRate display (now correctly shows calculated rates like 7.15%)

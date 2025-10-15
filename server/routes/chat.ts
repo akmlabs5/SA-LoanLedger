@@ -197,4 +197,97 @@ export function registerChatRoutes(app: Express, deps: AppDependencies) {
       res.status(500).json({ message: "Failed to upload file" });
     }
   });
+
+  // Export conversation as PDF
+  app.get('/api/chat/conversations/:id/export-pdf', isAuthenticated, attachOrganizationContext, requireOrganization, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const organizationId = req.organizationId;
+      const conversationId = req.params.id;
+      
+      const conversation = await storage.getConversation(conversationId);
+      
+      if (!conversation || conversation.userId !== userId || conversation.organizationId !== organizationId) {
+        return res.status(404).json({ message: "Conversation not found" });
+      }
+
+      // Get messages for this conversation
+      const conversationWithMessages = await storage.getConversationWithMessages(conversationId);
+      
+      if (!conversationWithMessages || !conversationWithMessages.messages) {
+        return res.status(404).json({ message: "No messages found" });
+      }
+
+      const { jsPDF } = await import('jspdf');
+      const doc = new jsPDF();
+      
+      // Title
+      doc.setFontSize(18);
+      doc.text(conversation.title || 'AI Chat Conversation', 20, 20);
+      
+      // Date
+      doc.setFontSize(10);
+      doc.text(`Date: ${new Date(conversation.createdAt).toLocaleDateString('en-SA')}`, 20, 30);
+      
+      // Messages
+      let yPos = 45;
+      const pageHeight = doc.internal.pageSize.height;
+      const margin = 20;
+      const maxWidth = doc.internal.pageSize.width - 2 * margin;
+      
+      conversationWithMessages.messages.forEach((msg: any, index: number) => {
+        // Check if we need a new page
+        if (yPos > pageHeight - 40) {
+          doc.addPage();
+          yPos = 20;
+        }
+        
+        // Role label
+        doc.setFontSize(12);
+        doc.setFont(undefined, 'bold');
+        const roleLabel = msg.role === 'user' ? 'You:' : 'AI Assistant:';
+        doc.text(roleLabel, margin, yPos);
+        
+        // Message content
+        doc.setFont(undefined, 'normal');
+        doc.setFontSize(10);
+        const lines = doc.splitTextToSize(msg.content, maxWidth);
+        yPos += 7;
+        
+        lines.forEach((line: string) => {
+          if (yPos > pageHeight - 30) {
+            doc.addPage();
+            yPos = 20;
+          }
+          doc.text(line, margin, yPos);
+          yPos += 6;
+        });
+        
+        yPos += 8; // Space between messages
+      });
+      
+      // Footer
+      const totalPages = doc.internal.pages.length - 1;
+      for (let i = 1; i <= totalPages; i++) {
+        doc.setPage(i);
+        doc.setFontSize(8);
+        doc.text(
+          `Page ${i} of ${totalPages} - Morouna Loans AI Assistant`, 
+          margin, 
+          pageHeight - 10
+        );
+      }
+      
+      // Send PDF
+      const pdfBuffer = doc.output('arraybuffer');
+      const fileName = `chat-${conversation.title?.replace(/[^a-z0-9]/gi, '-').toLowerCase() || 'conversation'}-${Date.now()}.pdf`;
+      
+      res.setHeader('Content-Type', 'application/pdf');
+      res.setHeader('Content-Disposition', `attachment; filename="${fileName}"`);
+      res.send(Buffer.from(pdfBuffer));
+    } catch (error) {
+      console.error("Error exporting PDF:", error);
+      res.status(500).json({ message: "Failed to export PDF" });
+    }
+  });
 }
