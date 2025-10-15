@@ -3,12 +3,14 @@ Morouna Loans is a full-stack loan management system designed for the Saudi Arab
 
 # Recent Changes
 
-## October 15, 2025 - Chat Conversation Routes Implementation
-- **Fixed Missing API Routes**: Created complete backend routes for chat conversations (server/routes/chat.ts) - GET/POST/DELETE endpoints for conversations and messages that were previously missing
-- **Multi-tenant Chat Support**: Added organizationId column (nullable) to chatConversations schema for proper data isolation across organizations
-- **Storage Layer Updates**: Updated both DatabaseStorage and MemoryStorage to support organizationId filtering in getUserConversations()
-- **Frontend UX Improvement**: Added disabled state and loading indicator to "Start New Chat" button to prevent double-click conversation creation
-- **Schema Migration**: Applied database changes safely with nullable organizationId to allow gradual migration
+## October 15, 2025 - Temporary Chat with Optional Save Implementation
+- **Temporary Chat Mode**: Chat now starts in temporary in-memory mode - messages stored in React state, not database by default
+- **Optional Save Feature**: Added "Save Conversation" button with title dialog - users can save important chats, quick questions don't clutter saved list
+- **Transactional Bulk Save**: Created `/api/chat/conversations/bulk-save` endpoint with proper database transaction for atomic save operations (all messages or none)
+- **AI Context Fix**: Fixed critical bug where AI didn't receive user's latest message - now properly includes complete conversation history
+- **Auto-Cleanup Scheduler**: Background job runs every 24 hours to delete conversations older than 30 days, preventing database bloat
+- **Multi-tenant Safety**: All chat operations maintain organizationId filtering and data isolation
+- **Visual Indicators**: Clear UI shows unsaved vs saved conversation state with badges and helpful hints
 
 ## October 14, 2025 - Bank Performance Metrics Bug Fixes
 - **Fixed Average Rate Calculation**: Corrected field name from `loan.marginRate` to `loan.margin` in getBankPerformance, resolving NaN/null avgAllInRate display (now correctly shows calculated rates like 7.15%)
