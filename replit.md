@@ -3,6 +3,13 @@ Morouna Loans is a full-stack loan management system designed for the Saudi Arab
 
 # Recent Changes
 
+## October 15, 2025 - Chat Conversation Routes Implementation
+- **Fixed Missing API Routes**: Created complete backend routes for chat conversations (server/routes/chat.ts) - GET/POST/DELETE endpoints for conversations and messages that were previously missing
+- **Multi-tenant Chat Support**: Added organizationId column (nullable) to chatConversations schema for proper data isolation across organizations
+- **Storage Layer Updates**: Updated both DatabaseStorage and MemoryStorage to support organizationId filtering in getUserConversations()
+- **Frontend UX Improvement**: Added disabled state and loading indicator to "Start New Chat" button to prevent double-click conversation creation
+- **Schema Migration**: Applied database changes safely with nullable organizationId to allow gradual migration
+
 ## October 14, 2025 - Bank Performance Metrics Bug Fixes
 - **Fixed Average Rate Calculation**: Corrected field name from `loan.marginRate` to `loan.margin` in getBankPerformance, resolving NaN/null avgAllInRate display (now correctly shows calculated rates like 7.15%)
 - **Fixed Payment Record Tracking**: Corrected settlement date field from `loan.settlementDate` to `loan.settledDate`, enabling proper settled loan counting in payment performance metrics

@@ -19,6 +19,7 @@ import { registerReportsRoutes } from "./reports";
 import { registerObjectStorageRoutes } from "./objectStorage";
 import { registerDocumentsRoutes } from "./documents";
 import { registerTestEmailRoutes } from "./test-emails";
+import { registerChatRoutes } from "./chat";
 
 export function registerAllRoutes(app: Express, deps: AppDependencies) {
   registerAuthRoutes(app, deps);
@@ -31,6 +32,7 @@ export function registerAllRoutes(app: Express, deps: AppDependencies) {
   registerAiRoutes(app, deps);
   registerAgentRoutes(app, deps);
   registerHelpDeskRoutes(app);
+  registerChatRoutes(app, deps);
   registerRemindersRoutes(app, deps);
   registerGuaranteesRoutes(app, deps);
   registerAttachmentsRoutes(app, deps);

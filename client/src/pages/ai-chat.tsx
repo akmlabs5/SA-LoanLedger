@@ -473,10 +473,15 @@ export default function AIChatPage() {
                     </p>
                     <Button 
                       onClick={() => createConversationMutation.mutate()} 
+                      disabled={createConversationMutation.isPending}
                       data-testid="button-start-chat"
                       className={isMobile ? 'h-12 active:bg-accent/50 active:scale-95' : ''}
                     >
-                      <Plus className="h-4 w-4 mr-2" />
+                      {createConversationMutation.isPending ? (
+                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      ) : (
+                        <Plus className="h-4 w-4 mr-2" />
+                      )}
                       Start New Chat
                     </Button>
                   </div>

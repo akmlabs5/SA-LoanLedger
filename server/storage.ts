@@ -285,7 +285,7 @@ export interface IStorage {
   getAttachmentAuditTrail(attachmentId: string): Promise<AttachmentAudit[]>;
   
   // Chat Conversation operations
-  getUserConversations(userId: string): Promise<ChatConversation[]>;
+  getUserConversations(userId: string, organizationId?: string): Promise<ChatConversation[]>;
   getConversation(conversationId: string): Promise<ChatConversation | undefined>;
   createConversation(conversation: InsertChatConversation): Promise<ChatConversation>;
   updateConversation(conversationId: string, updates: Partial<InsertChatConversation>): Promise<ChatConversation>;
@@ -1870,14 +1870,20 @@ export class DatabaseStorage implements IStorage {
   }
 
   // Chat Conversation operations
-  async getUserConversations(userId: string): Promise<ChatConversation[]> {
+  async getUserConversations(userId: string, organizationId?: string): Promise<ChatConversation[]> {
+    const conditions = [
+      eq(chatConversations.userId, userId),
+      eq(chatConversations.isActive, true)
+    ];
+    
+    if (organizationId) {
+      conditions.push(eq(chatConversations.organizationId, organizationId));
+    }
+    
     return await db
       .select()
       .from(chatConversations)
-      .where(and(
-        eq(chatConversations.userId, userId),
-        eq(chatConversations.isActive, true)
-      ))
+      .where(and(...conditions))
       .orderBy(desc(chatConversations.updatedAt));
   }
 
@@ -3455,9 +3461,13 @@ Reference: {loanReference}`,
   }
 
   // Chat Conversation operations
-  async getUserConversations(userId: string): Promise<ChatConversation[]> {
+  async getUserConversations(userId: string, organizationId?: string): Promise<ChatConversation[]> {
     return Array.from(this.chatConversations.values())
-      .filter(conv => conv.userId === userId && conv.isActive)
+      .filter(conv => 
+        conv.userId === userId && 
+        conv.isActive && 
+        (!organizationId || conv.organizationId === organizationId)
+      )
       .sort((a, b) => (b.updatedAt?.getTime() || 0) - (a.updatedAt?.getTime() || 0));
   }
 

@@ -509,12 +509,14 @@ export const dailyAlertsPreferences = pgTable("daily_alerts_preferences", {
 export const chatConversations = pgTable("chat_conversations", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   userId: varchar("user_id").references(() => users.id).notNull(),
+  organizationId: varchar("organization_id").references(() => organizations.id),
   title: varchar("title", { length: 255 }),
   isActive: boolean("is_active").default(true),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 }, (table) => [
   index("idx_chat_conversations_user").on(table.userId),
+  index("idx_chat_conversations_organization").on(table.organizationId),
   index("idx_chat_conversations_active").on(table.isActive),
 ]);
 
