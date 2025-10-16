@@ -1,7 +1,7 @@
 import { useParams, useLocation } from "wouter";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useState, useEffect } from "react";
-import { ArrowLeft, Calendar, Building2, FileText, Clock, CheckCircle, AlertTriangle, TrendingUp, Edit, Trash2, Bell, DollarSign, Undo2, RefreshCw } from "lucide-react";
+import { ArrowLeft, Calendar, Building2, FileText, Clock, CheckCircle, AlertTriangle, TrendingUp, Edit, Trash2, Bell, Wallet, Undo2, RefreshCw, Receipt } from "lucide-react";
 import { LoanWithDetails } from "@shared/types";
 
 import { Button } from "@/components/ui/button";
@@ -587,7 +587,7 @@ export default function LoanDetailPage() {
                             onClick={() => setPaymentModalOpen(true)}
                             data-testid="button-record-payment"
                           >
-                            <DollarSign className="mr-2 h-4 w-4" />
+                            <Receipt className="mr-2 h-4 w-4" />
                             Record Payment
                           </Button>
                         )}
@@ -639,7 +639,7 @@ export default function LoanDetailPage() {
                         </div>
                       ) : (
                         <div className="text-center py-8">
-                          <DollarSign className="h-12 w-12 text-gray-300 mx-auto mb-4" />
+                          <Receipt className="h-12 w-12 text-gray-300 mx-auto mb-4" />
                           <p className="text-gray-600 mb-3">No payments recorded yet</p>
                           {loan.status === 'active' && (
                             <Button 
@@ -825,7 +825,7 @@ export default function LoanDetailPage() {
               <Card className="shadow-lg lg:flex-shrink-0">
                 <CardHeader className="pb-3">
                   <CardTitle className="text-base flex items-center space-x-2">
-                    <DollarSign className="h-4 w-4" />
+                    <Wallet className="h-4 w-4" />
                     <span>Balance Breakdown</span>
                   </CardTitle>
                 </CardHeader>
@@ -874,7 +874,7 @@ export default function LoanDetailPage() {
           <DialogContent className="sm:max-w-[500px]">
             <DialogHeader>
               <DialogTitle className="flex items-center gap-2">
-                <DollarSign className="h-5 w-5 text-emerald-600" />
+                <CheckCircle className="h-5 w-5 text-emerald-600" />
                 Settle Loan
               </DialogTitle>
               <DialogDescription>

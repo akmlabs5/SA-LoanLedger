@@ -75,9 +75,11 @@ export default function BankContactCreatePage() {
     mutationFn: async (data: z.infer<typeof bankContactFormSchema>) => {
       return apiRequest('POST', `/api/banks/${bankId}/contacts`, data);
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/banks", bankId] });
-      queryClient.invalidateQueries({ queryKey: [`/api/banks/${bankId}/contacts`, (user as any)?.id] });
+    onSuccess: async () => {
+      // Invalidate all related queries for instant update
+      await queryClient.invalidateQueries({ queryKey: ["/api/banks", bankId] });
+      await queryClient.invalidateQueries({ queryKey: [`/api/banks/${bankId}/contacts`, (user as any)?.id] });
+      await queryClient.invalidateQueries({ queryKey: [`/api/banks/${bankId}/contacts`] });
       toast({ 
         title: "Contact created successfully",
         description: "The bank contact has been added to your system."
