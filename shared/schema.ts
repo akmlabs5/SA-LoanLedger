@@ -179,6 +179,15 @@ export const alertStatusEnum = pgEnum('alert_status', [
   'ignored'
 ]);
 
+export const paymentMethodEnum = pgEnum('payment_method', [
+  'bank_transfer',
+  'wire_transfer',
+  'check',
+  'cash',
+  'direct_debit',
+  'other'
+]);
+
 // Session storage table.
 // (IMPORTANT) This table is mandatory for Replit Auth, don't drop it.
 export const sessions = pgTable(
@@ -531,6 +540,45 @@ export const chatMessages = pgTable("chat_messages", {
 }, (table) => [
   index("idx_chat_messages_conversation").on(table.conversationId),
   index("idx_chat_messages_created").on(table.createdAt),
+]);
+
+// Loan Payments - Full audit trail for all payments made
+export const loanPayments = pgTable("loan_payments", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  organizationId: varchar("organization_id").references(() => organizations.id, { onDelete: 'cascade' }).notNull(),
+  loanId: varchar("loan_id").references(() => loans.id, { onDelete: 'restrict' }).notNull(),
+  paymentDate: date("payment_date").notNull(),
+  amount: decimal("amount", { precision: 15, scale: 2 }).notNull(),
+  principalAmount: decimal("principal_amount", { precision: 15, scale: 2 }),
+  interestAmount: decimal("interest_amount", { precision: 15, scale: 2 }),
+  paymentMethod: paymentMethodEnum("payment_method").notNull(),
+  referenceNumber: varchar("reference_number", { length: 100 }),
+  notes: text("notes"),
+  createdBy: varchar("created_by").references(() => users.id).notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
+}, (table) => [
+  index("idx_loan_payments_org").on(table.organizationId),
+  index("idx_loan_payments_loan").on(table.loanId),
+  index("idx_loan_payments_date").on(table.paymentDate),
+  index("idx_loan_payments_created_by").on(table.createdBy),
+]);
+
+// Portfolio Snapshots - Point-in-time portfolio state for historical analysis
+export const portfolioSnapshots = pgTable("portfolio_snapshots", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  organizationId: varchar("organization_id").references(() => organizations.id, { onDelete: 'cascade' }).notNull(),
+  snapshotDate: date("snapshot_date").notNull(),
+  totalOutstanding: decimal("total_outstanding", { precision: 15, scale: 2 }).notNull(),
+  totalCreditLimit: decimal("total_credit_limit", { precision: 15, scale: 2 }).notNull(),
+  portfolioLtv: decimal("portfolio_ltv", { precision: 5, scale: 2 }),
+  activeLoansCount: integer("active_loans_count").notNull(),
+  bankExposuresJson: jsonb("bank_exposures_json"), // Store bank-wise exposures
+  metricsJson: jsonb("metrics_json"), // Store additional calculated metrics
+  createdAt: timestamp("created_at").defaultNow(),
+}, (table) => [
+  index("idx_portfolio_snapshots_org").on(table.organizationId),
+  index("idx_portfolio_snapshots_date").on(table.snapshotDate),
+  uniqueIndex("idx_portfolio_snapshots_org_date").on(table.organizationId, table.snapshotDate),
 ]);
 
 // Modern Attachment System
@@ -930,6 +978,30 @@ export const chatMessagesRelations = relations(chatMessages, ({ one }) => ({
   }),
 }));
 
+// Loan Payment Relations
+export const loanPaymentsRelations = relations(loanPayments, ({ one }) => ({
+  organization: one(organizations, {
+    fields: [loanPayments.organizationId],
+    references: [organizations.id],
+  }),
+  loan: one(loans, {
+    fields: [loanPayments.loanId],
+    references: [loans.id],
+  }),
+  createdByUser: one(users, {
+    fields: [loanPayments.createdBy],
+    references: [users.id],
+  }),
+}));
+
+// Portfolio Snapshot Relations
+export const portfolioSnapshotsRelations = relations(portfolioSnapshots, ({ one }) => ({
+  organization: one(organizations, {
+    fields: [portfolioSnapshots.organizationId],
+    references: [organizations.id],
+  }),
+}));
+
 // Attachment Relations
 export const attachmentsRelations = relations(attachments, ({ one }) => ({
   user: one(users, {
@@ -1223,6 +1295,28 @@ export const insertChatMessageSchema = createInsertSchema(chatMessages).omit({
   role: messageRoleZodEnum,
 });
 
+// Loan Payment Insert Schemas
+export const insertLoanPaymentSchema = createInsertSchema(loanPayments)
+  .omit({ id: true, createdAt: true })
+  .extend({
+    paymentDate: z.string().refine((val) => !isNaN(Date.parse(val)), "Must be a valid date"),
+    amount: positiveDecimalString(15, 2),
+    principalAmount: decimalString(15, 2).optional(),
+    interestAmount: decimalString(15, 2).optional(),
+    referenceNumber: z.string().max(100).optional(),
+  });
+
+// Portfolio Snapshot Insert Schemas
+export const insertPortfolioSnapshotSchema = createInsertSchema(portfolioSnapshots)
+  .omit({ id: true, createdAt: true })
+  .extend({
+    snapshotDate: z.string().refine((val) => !isNaN(Date.parse(val)), "Must be a valid date"),
+    totalOutstanding: decimalString(15, 2),
+    totalCreditLimit: decimalString(15, 2),
+    portfolioLtv: decimalString(5, 2).optional(),
+    activeLoansCount: z.number().int().min(0),
+  });
+
 // Attachment Insert Schemas
 export const insertAttachmentSchema = createInsertSchema(attachments)
   .omit({ id: true, createdAt: true, deletedAt: true })
@@ -1456,6 +1550,14 @@ export type InsertChatConversation = z.infer<typeof insertChatConversationSchema
 export type ChatMessage = typeof chatMessages.$inferSelect;
 export type InsertChatMessage = z.infer<typeof insertChatMessageSchema>;
 export type MessageRole = z.infer<typeof messageRoleZodEnum>;
+
+// Loan Payment Types
+export type LoanPayment = typeof loanPayments.$inferSelect;
+export type InsertLoanPayment = z.infer<typeof insertLoanPaymentSchema>;
+
+// Portfolio Snapshot Types
+export type PortfolioSnapshot = typeof portfolioSnapshots.$inferSelect;
+export type InsertPortfolioSnapshot = z.infer<typeof insertPortfolioSnapshotSchema>;
 
 // Organization Schemas
 export const insertOrganizationSchema = createInsertSchema(organizations).omit({
