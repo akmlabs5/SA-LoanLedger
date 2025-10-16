@@ -48,9 +48,9 @@ export default function BankContactsSection({ bankId, bankName, isAuthenticated 
   const [, setLocation] = useLocation();
   const { user } = useAuth();
 
-  // Query for bank contacts - include user ID in key for cache isolation
+  // Query for bank contacts
   const { data: bankContacts, isLoading: contactsLoading } = useQuery({
-    queryKey: [`/api/banks/${bankId}/contacts`, (user as any)?.id],
+    queryKey: [`/api/banks/${bankId}/contacts`],
     enabled: isAuthenticated && !!bankId,
   });
 
@@ -62,7 +62,7 @@ export default function BankContactsSection({ bankId, bankName, isAuthenticated 
       return apiRequest('DELETE', `/api/bank-contacts/${contactId}`);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: [`/api/banks/${bankId}/contacts`, (user as any)?.id] });
+      queryClient.invalidateQueries({ queryKey: [`/api/banks/${bankId}/contacts`] });
       toast({ title: "Contact deleted successfully" });
     },
     onError: (error: any) => {
@@ -79,7 +79,7 @@ export default function BankContactsSection({ bankId, bankName, isAuthenticated 
       return apiRequest('PUT', `/api/bank-contacts/${contactId}/set-primary`, { bankId });
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: [`/api/banks/${bankId}/contacts`, (user as any)?.id] });
+      queryClient.invalidateQueries({ queryKey: [`/api/banks/${bankId}/contacts`] });
       toast({ title: "Primary contact updated successfully" });
     },
     onError: (error: any) => {

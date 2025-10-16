@@ -396,7 +396,7 @@ export class DatabaseStorage implements IStorage {
       .leftJoin(banks, eq(bankContacts.bankId, banks.id))
       .where(and(
         eq(bankContacts.bankId, bankId),
-        eq(banks.organizationId, organizationId),
+        eq(bankContacts.organizationId, organizationId),
         eq(bankContacts.isActive, true)
       ))
       .orderBy(desc(bankContacts.isPrimary), asc(bankContacts.name))

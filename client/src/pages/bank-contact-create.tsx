@@ -78,7 +78,6 @@ export default function BankContactCreatePage() {
     onSuccess: async () => {
       // Invalidate all related queries for instant update
       await queryClient.invalidateQueries({ queryKey: ["/api/banks", bankId] });
-      await queryClient.invalidateQueries({ queryKey: [`/api/banks/${bankId}/contacts`, (user as any)?.id] });
       await queryClient.invalidateQueries({ queryKey: [`/api/banks/${bankId}/contacts`] });
       toast({ 
         title: "Contact created successfully",
