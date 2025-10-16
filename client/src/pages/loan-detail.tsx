@@ -39,6 +39,7 @@ import ReminderModal from "@/components/ReminderModal";
 import { RevolvingPeriodTracker } from "@/components/RevolvingPeriodTracker";
 import { WhatIfAnalysis } from "@/components/WhatIfAnalysis";
 import { ModernDatePicker } from "@/components/ui/date-picker";
+import { PaymentRecordingModal } from "@/components/PaymentRecordingModal";
 
 export default function LoanDetailPage() {
   const { id: loanId } = useParams<{ id: string }>();
@@ -53,6 +54,7 @@ export default function LoanDetailPage() {
   const [isManualAmount, setIsManualAmount] = useState(false);
   const [reverseSettlementOpen, setReverseSettlementOpen] = useState(false);
   const [reversalReason, setReversalReason] = useState("");
+  const [paymentModalOpen, setPaymentModalOpen] = useState(false);
 
   // Fetch loan details (always needed for overview)
   const { data: loan, isLoading: loanLoading, isError: loanError } = useQuery<LoanWithDetails>({
@@ -100,6 +102,15 @@ export default function LoanDetailPage() {
   const { data: facility } = useQuery({
     queryKey: ["/api/facilities", loan?.facilityId],
     enabled: !!loan?.facilityId && isAuthenticated,
+  });
+
+  // Fetch payment history
+  const { data: payments, isLoading: paymentsLoading } = useQuery({
+    queryKey: ["/api/payments/loan", loanId],
+    enabled: !!loanId && isAuthenticated,
+    staleTime: 5 * 60 * 1000,
+    gcTime: 15 * 60 * 1000,
+    refetchOnWindowFocus: false,
   });
 
   // Calculate accrued interest to settlement date
@@ -469,7 +480,7 @@ export default function LoanDetailPage() {
             <Card className="shadow-lg">
               <CardContent className="p-0">
                 <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-                  <TabsList className="grid w-full grid-cols-3">
+                  <TabsList className="grid w-full grid-cols-4">
                     <TabsTrigger 
                       value="transactions"
                       onMouseEnter={() => {
@@ -479,7 +490,18 @@ export default function LoanDetailPage() {
                         });
                       }}
                     >
-                      Transaction History
+                      Transactions
+                    </TabsTrigger>
+                    <TabsTrigger 
+                      value="payments"
+                      onMouseEnter={() => {
+                        // Prefetch payment data on hover
+                        queryClient.prefetchQuery({
+                          queryKey: ["/api/payments/loan", loanId],
+                        });
+                      }}
+                    >
+                      Payments
                     </TabsTrigger>
                     <TabsTrigger 
                       value="documents"
@@ -540,6 +562,84 @@ export default function LoanDetailPage() {
                         <div className="text-center py-8">
                           <Clock className="h-12 w-12 text-gray-300 mx-auto mb-4" />
                           <p className="text-gray-600">No transactions found</p>
+                        </div>
+                      )}
+                    </div>
+                  </TabsContent>
+                  
+                  <TabsContent value="payments" className="p-6">
+                    <div className="space-y-4">
+                      <div className="flex items-center justify-between">
+                        <h3 className="text-base font-semibold">Payment History</h3>
+                        {loan.status === 'active' && (
+                          <Button 
+                            size="sm"
+                            onClick={() => setPaymentModalOpen(true)}
+                            data-testid="button-record-payment"
+                          >
+                            <DollarSign className="mr-2 h-4 w-4" />
+                            Record Payment
+                          </Button>
+                        )}
+                      </div>
+                      
+                      {paymentsLoading ? (
+                        <div className="text-center py-8">
+                          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600 mx-auto mb-4"></div>
+                          <p className="text-gray-600">Loading payments...</p>
+                        </div>
+                      ) : payments && payments.length > 0 ? (
+                        <div className="overflow-x-auto">
+                          <table className="w-full">
+                            <thead>
+                              <tr className="border-b">
+                                <th className="text-left py-3 px-2 text-sm font-semibold text-muted-foreground">Date</th>
+                                <th className="text-left py-3 px-2 text-sm font-semibold text-muted-foreground">Amount</th>
+                                <th className="text-left py-3 px-2 text-sm font-semibold text-muted-foreground">Principal</th>
+                                <th className="text-left py-3 px-2 text-sm font-semibold text-muted-foreground">Interest</th>
+                                <th className="text-left py-3 px-2 text-sm font-semibold text-muted-foreground">Method</th>
+                                <th className="text-left py-3 px-2 text-sm font-semibold text-muted-foreground">Reference</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {payments.map((payment: any) => (
+                                <tr key={payment.id} className="border-b hover:bg-muted/50" data-testid={`row-payment-${payment.id}`}>
+                                  <td className="py-3 px-2 text-sm">
+                                    {new Date(payment.paymentDate).toLocaleDateString()}
+                                  </td>
+                                  <td className="py-3 px-2 text-sm font-semibold">
+                                    {formatCurrency(parseFloat(payment.amount))}
+                                  </td>
+                                  <td className="py-3 px-2 text-sm">
+                                    {formatCurrency(parseFloat(payment.principalAmount))}
+                                  </td>
+                                  <td className="py-3 px-2 text-sm">
+                                    {formatCurrency(parseFloat(payment.interestAmount))}
+                                  </td>
+                                  <td className="py-3 px-2 text-sm capitalize">
+                                    {payment.paymentMethod.replace('_', ' ')}
+                                  </td>
+                                  <td className="py-3 px-2 text-sm text-muted-foreground">
+                                    {payment.referenceNumber || '-'}
+                                  </td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                        </div>
+                      ) : (
+                        <div className="text-center py-8">
+                          <DollarSign className="h-12 w-12 text-gray-300 mx-auto mb-4" />
+                          <p className="text-gray-600 mb-3">No payments recorded yet</p>
+                          {loan.status === 'active' && (
+                            <Button 
+                              size="sm"
+                              onClick={() => setPaymentModalOpen(true)}
+                              data-testid="button-record-first-payment"
+                            >
+                              Record First Payment
+                            </Button>
+                          )}
                         </div>
                       )}
                     </div>
@@ -940,6 +1040,16 @@ export default function LoanDetailPage() {
             </DialogFooter>
           </DialogContent>
         </Dialog>
+
+        {/* Payment Recording Modal */}
+        {loanId && (
+          <PaymentRecordingModal
+            isOpen={paymentModalOpen}
+            onClose={() => setPaymentModalOpen(false)}
+            loanId={loanId}
+            loanAmount={loan ? parseFloat(loan.amount) : 0}
+          />
+        )}
       </div>
     </div>
   );
