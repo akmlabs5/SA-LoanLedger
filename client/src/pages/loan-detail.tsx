@@ -364,8 +364,8 @@ export default function LoanDetailPage() {
                   <WhatIfAnalysis 
                     loanId={loan.id}
                     loanAmount={parseFloat(loan.amount)}
-                    currentRate={parseFloat(loan.interestRate)}
-                    durationDays={Math.ceil((new Date(loan.dueDate).getTime() - new Date(loan.drawdownDate).getTime()) / (1000 * 60 * 60 * 24))}
+                    currentRate={parseFloat(loan.bankRate)}
+                    durationDays={Math.ceil((new Date(loan.dueDate).getTime() - new Date(loan.startDate).getTime()) / (1000 * 60 * 60 * 24))}
                   />
                   <Button 
                     variant="outline" 
