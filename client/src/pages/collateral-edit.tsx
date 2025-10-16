@@ -51,6 +51,29 @@ const collateralFormSchema = z.object({
   valuationSource: z.string().optional(),
   notes: z.string().optional(),
   isActive: z.boolean().default(true),
+  assignmentType: z.enum(["facility", "bank"]).default("facility"),
+  facilityId: z.string().optional(),
+  bankId: z.string().optional(),
+  pledgeType: z.enum(["first_lien", "second_lien", "blanket"]).default("first_lien"),
+  desiredLtv: z.string().optional().refine(
+    (val) => !val || (!isNaN(Number(val)) && Number(val) > 0),
+    "LTV must be greater than 0"
+  ),
+}).superRefine((data, ctx) => {
+  if (data.assignmentType === "facility" && !data.facilityId) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: "Please select a facility",
+      path: ["facilityId"],
+    });
+  }
+  if (data.assignmentType === "bank" && !data.bankId) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: "Please select a bank",
+      path: ["bankId"],
+    });
+  }
 });
 
 type CollateralFormData = z.infer<typeof collateralFormSchema>;
@@ -66,6 +89,15 @@ export default function CollateralEditPage() {
     enabled: !!collateralId,
   });
 
+  // Fetch facilities and banks for selection
+  const { data: facilities, isLoading: facilitiesLoading } = useQuery({
+    queryKey: ["/api/facilities"],
+  });
+  
+  const { data: banks, isLoading: banksLoading } = useQuery({
+    queryKey: ["/api/banks"],
+  });
+
   const form = useForm<CollateralFormData>({
     resolver: zodResolver(collateralFormSchema),
     defaultValues: {
@@ -77,6 +109,11 @@ export default function CollateralEditPage() {
       valuationSource: "",
       notes: "",
       isActive: true,
+      assignmentType: "facility",
+      facilityId: "",
+      bankId: "",
+      pledgeType: "first_lien",
+      desiredLtv: "",
     },
   });
 
@@ -92,16 +129,40 @@ export default function CollateralEditPage() {
         valuationSource: collateral.valuationSource || "",
         notes: collateral.notes || "",
         isActive: collateral.isActive,
+        assignmentType: collateral.facilityId ? "facility" : "bank",
+        facilityId: collateral.facilityId || "",
+        bankId: collateral.bankId || "",
+        pledgeType: collateral.pledgeType || "first_lien",
+        desiredLtv: collateral.desiredLtv?.toString() || "",
       });
     }
   }, [collateral, form]);
 
   const updateCollateralMutation = useMutation({
     mutationFn: async (data: CollateralFormData) => {
-      return await apiRequest("PUT", `/api/collateral/${collateralId}`, {
-        ...data,
+      const payload: any = {
+        type: data.type,
+        name: data.name,
+        description: data.description,
         currentValue: parseFloat(data.currentValue).toString(),
-      });
+        valuationDate: data.valuationDate,
+        valuationSource: data.valuationSource,
+        notes: data.notes,
+        isActive: data.isActive,
+        pledgeType: data.pledgeType,
+        desiredLtv: data.desiredLtv ? parseFloat(data.desiredLtv) : null,
+      };
+      
+      // Add either facilityId or bankId based on assignment type
+      if (data.assignmentType === "facility") {
+        payload.facilityId = data.facilityId;
+        payload.bankId = null;
+      } else {
+        payload.bankId = data.bankId;
+        payload.facilityId = null;
+      }
+      
+      return await apiRequest("PUT", `/api/collateral/${collateralId}`, payload);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/collateral"] });
@@ -229,6 +290,144 @@ export default function CollateralEditPage() {
                       </p>
                     </div>
                   )}
+
+                  <Separator />
+
+                  {/* Assignment Section */}
+                  <div className="space-y-6">
+                    <div>
+                      <h3 className="text-lg font-semibold mb-4">Collateral Assignment</h3>
+                      
+                      {/* Assignment Type */}
+                      <FormField
+                        control={form.control}
+                        name="assignmentType"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Assign to *</FormLabel>
+                            <Select onValueChange={field.onChange} value={field.value}>
+                              <FormControl>
+                                <SelectTrigger data-testid="select-assignment-type">
+                                  <SelectValue />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                <SelectItem value="facility">Specific Facility</SelectItem>
+                                <SelectItem value="bank">Bank Level (All Exposure)</SelectItem>
+                              </SelectContent>
+                            </Select>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+
+                      {/* Facility Selection */}
+                      {form.watch("assignmentType") === "facility" && (
+                        <FormField
+                          control={form.control}
+                          name="facilityId"
+                          render={({ field }) => (
+                            <FormItem className="mt-4">
+                              <FormLabel>Select Facility *</FormLabel>
+                              <Select onValueChange={field.onChange} value={field.value || ""}>
+                                <FormControl>
+                                  <SelectTrigger data-testid="select-facility">
+                                    <SelectValue placeholder="Choose a facility" />
+                                  </SelectTrigger>
+                                </FormControl>
+                                <SelectContent>
+                                  {facilities?.map((facility: any) => (
+                                    <SelectItem key={facility.id} value={facility.id}>
+                                      {facility.bank?.name} - {facility.facilityType.replace('_', ' ')}
+                                    </SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      )}
+
+                      {/* Bank Selection */}
+                      {form.watch("assignmentType") === "bank" && (
+                        <FormField
+                          control={form.control}
+                          name="bankId"
+                          render={({ field }) => (
+                            <FormItem className="mt-4">
+                              <FormLabel>Select Bank *</FormLabel>
+                              <Select onValueChange={field.onChange} value={field.value || ""}>
+                                <FormControl>
+                                  <SelectTrigger data-testid="select-bank">
+                                    <SelectValue placeholder="Choose a bank" />
+                                  </SelectTrigger>
+                                </FormControl>
+                                <SelectContent>
+                                  {banks?.map((bank: any) => (
+                                    <SelectItem key={bank.id} value={bank.id}>
+                                      {bank.name}
+                                    </SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      )}
+
+                      {/* Pledge Type */}
+                      <FormField
+                        control={form.control}
+                        name="pledgeType"
+                        render={({ field }) => (
+                          <FormItem className="mt-4">
+                            <FormLabel>Pledge Type *</FormLabel>
+                            <Select onValueChange={field.onChange} value={field.value}>
+                              <FormControl>
+                                <SelectTrigger data-testid="select-pledge-type">
+                                  <SelectValue />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                <SelectItem value="first_lien">First Lien</SelectItem>
+                                <SelectItem value="second_lien">Second Lien</SelectItem>
+                                <SelectItem value="blanket">Blanket Lien</SelectItem>
+                              </SelectContent>
+                            </Select>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+
+                      {/* Desired LTV */}
+                      <FormField
+                        control={form.control}
+                        name="desiredLtv"
+                        render={({ field }) => (
+                          <FormItem className="mt-4">
+                            <FormLabel>Desired LTV (%)</FormLabel>
+                            <FormControl>
+                              <Input
+                                {...field}
+                                type="number"
+                                step="0.1"
+                                min="0"
+                                value={field.value || ""}
+                                placeholder="e.g., 70 or 150 for additional coverage"
+                                data-testid="input-desired-ltv"
+                              />
+                            </FormControl>
+                            <p className="text-xs text-muted-foreground mt-1">
+                              Enter LTV above 100% if bank requires additional coverage
+                            </p>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+                  </div>
 
                   <Separator />
 

@@ -120,6 +120,7 @@ export default function CollateralCreatePage() {
         notes: data.notes,
         isActive: data.isActive,
         pledgeType: data.pledgeType,
+        desiredLtv: data.desiredLtv ? parseFloat(data.desiredLtv) : null,
       };
       
       // Add either facilityId or bankId based on assignment type
