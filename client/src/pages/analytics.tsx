@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
-import { TrendingUp, TrendingDown, Calendar, ArrowUp, ArrowDown, ChevronLeft, ChevronRight, DollarSign, Receipt, BarChart3, Activity } from "lucide-react";
+import { TrendingUp, TrendingDown, Calendar, ArrowUp, ArrowDown, ChevronLeft, ChevronRight, Coins, Receipt, BarChart3, Activity } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 
 type PeriodType = 'month' | 'quarter' | 'year';
@@ -360,7 +360,7 @@ export default function AnalyticsPage() {
                   </p>
                   {formatChange(viewingData?.comparison?.loansAmountChange)}
                 </div>
-                <DollarSign className="h-10 w-10 text-green-500" />
+                <Coins className="h-10 w-10 text-green-500" />
               </div>
             </CardContent>
           </Card>
