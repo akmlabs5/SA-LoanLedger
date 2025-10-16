@@ -10,6 +10,9 @@ import {
   ChevronRight,
   Shield,
   Sparkles,
+  TrendingUp,
+  FileText,
+  Clock,
 } from "lucide-react";
 import { MobileHeader } from "@/components/mobile/MobileHeader";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -65,6 +68,29 @@ export default function MorePage() {
           label: "Team Settings",
           icon: Users,
           path: "/settings?tab=team",
+        },
+      ],
+    },
+    {
+      title: "Reports & Analytics",
+      items: [
+        {
+          id: "reports",
+          label: "Reports",
+          icon: FileText,
+          path: "/reports",
+        },
+        {
+          id: "history",
+          label: "History",
+          icon: Clock,
+          path: "/history",
+        },
+        {
+          id: "analytics",
+          label: "Analytics",
+          icon: TrendingUp,
+          path: "/analytics",
         },
       ],
     },

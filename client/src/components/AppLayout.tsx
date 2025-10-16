@@ -19,7 +19,8 @@ import {
   Home,
   Boxes,
   Lightbulb,
-  HelpCircle
+  HelpCircle,
+  TrendingUp
 } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import {
@@ -107,6 +108,11 @@ const navigation = [
         title: "History",
         url: "/history",
         icon: History,
+      },
+      {
+        title: "Analytics",
+        url: "/analytics",
+        icon: TrendingUp,
       },
     ],
   },
