@@ -3,6 +3,13 @@ Morouna Loans is a full-stack loan management system designed for the Saudi Arab
 
 # Recent Changes
 
+## October 16, 2025 - AI Chat Bank Name Display Fix
+- **Bank Relationship Fix**: Fixed critical AI chat bug where all loans showed as "undefined" bank - AI was trying to access non-existent `loan.bankName` field
+- **Correct Data Path**: Updated all AI chat portfolio context to properly access bank names via nested structure: `loan.facility?.bank?.name`
+- **Affected Sections**: Fixed bank exposure calculations, active/overdue/settled/cancelled loan listings, and portfolio summaries
+- **Result**: AI can now correctly identify which bank each loan belongs to and properly answer questions like "What loans are due in November grouped by bank?"
+- **Data Structure**: Loans are linked to banks through facilities (loan → facility → bank), matching the storage layer's join implementation
+
 ## October 16, 2025 - Historical Payment Tracking & Multi-Year Reporting
 - **Payment Tracking Database Schema**: Created loanPayments table with comprehensive audit trail - paymentDate, amount, principalAmount, interestAmount, paymentMethod enum (bank_transfer, check, cash, wire, ach, other), referenceNumber, notes, createdBy, organizationId
 - **Portfolio Snapshots Schema**: Created portfolioSnapshots table for point-in-time portfolio state - snapshotDate (unique per org), totalOutstanding, totalCreditLimit, portfolioLtv, activeLoansCount, bankExposuresJson (bank breakdown), metricsJson (metrics), organizationId
