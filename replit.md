@@ -3,6 +3,20 @@ Morouna Loans is a full-stack loan management system designed for the Saudi Arab
 
 # Recent Changes
 
+## October 16, 2025 - Historical Payment Tracking & Multi-Year Reporting
+- **Payment Tracking Database Schema**: Created loanPayments table with comprehensive audit trail - paymentDate, amount, principalAmount, interestAmount, paymentMethod enum (bank_transfer, check, cash, wire, ach, other), referenceNumber, notes, createdBy, organizationId
+- **Portfolio Snapshots Schema**: Created portfolioSnapshots table for point-in-time portfolio state - snapshotDate (unique per org), totalOutstanding, totalCreditLimit, portfolioLtv, activeLoansCount, bankExposuresJson (bank breakdown), metricsJson (metrics), organizationId
+- **Storage Layer Enhancements**: Added 8 new IStorage methods - recordPayment, getPaymentsByLoan, getPaymentHistory (with filters), calculatePaymentSummary, createPortfolioSnapshot, getSnapshotByDate, getSnapshotsInRange, getLatestSnapshot - implemented in both DatabaseStorage and MemoryStorage
+- **Payment API Routes**: Created /api/payments endpoints - POST (record payment), GET /loan/:loanId (payment history), GET /history (all payments with date/loan filters), GET /summary/:loanId (payment summary with totals)
+- **Snapshot API Routes**: Created /api/snapshots endpoints - POST /capture (manual snapshot with portfolio calculations), GET /date/:date (snapshot by date), GET /range (snapshots in range), GET /latest (most recent snapshot)
+- **Analytics API Routes**: Created /api/analytics/year-over-year endpoint - aggregates loans/payments/snapshots by year/quarter/month with period-over-period % change calculations, returns combined data with summary totals
+- **Automated Snapshot Scheduler**: Created SnapshotScheduler class following ReminderScheduler pattern - runs every 24 hours, captures daily snapshots for all organizations, calculates portfolio metrics (LTV, utilization, bank exposures), handles errors gracefully per-org
+- **Scheduler Integration**: Added snapshot scheduler to server/index.ts startup sequence alongside reminder and chat cleanup schedulers - logs "📸 Starting snapshot scheduler" and confirms snapshot creation per organization
+- **Payment Recording UI**: Created PaymentRecordingModal component with date picker, total/principal/interest split (auto-calculates interest), payment method dropdown, reference number, notes textarea, proper validation and error handling
+- **Multi-tenant Safety**: All new storage methods enforce organizationId filtering, API routes validate organization access before returning data, scheduler processes each organization independently
+- **BigInt Handling**: All numeric conversions use Number(value?.toString() ?? 0) pattern to prevent BigInt serialization errors in JSON responses and calculations
+- **Database Migration**: Successfully ran npm run db:push to sync new loanPayments and portfolioSnapshots tables to PostgreSQL database
+
 ## October 15, 2025 - New Loan Confirmation Email System
 - **Branded Email Template**: Created NEW_LOAN_CONFIRMATION email template with professional green HTML design matching existing branded templates
 - **Professional Wording**: Removed "friendly reminder" and "automatic deduction" language, replaced with professional confirmation message: "Your loan has been successfully created and is now active in the system"
