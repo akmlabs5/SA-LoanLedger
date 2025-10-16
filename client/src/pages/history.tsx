@@ -121,6 +121,79 @@ interface SettlementResponse {
 
 type TimeframeType = '30D' | '6M' | '1Y' | 'MAX';
 
+type DatePreset = 
+  | 'custom'
+  | 'this_quarter'
+  | 'last_quarter'
+  | 'this_year'
+  | 'last_year'
+  | '2024_q1'
+  | '2024_q2'
+  | '2024_q3'
+  | '2024_q4'
+  | '2025_q1'
+  | '2025_q2'
+  | '2025_q3'
+  | '2025_q4';
+
+const getPresetDateRange = (preset: DatePreset): { from: string; to: string } => {
+  const today = new Date();
+  const currentYear = today.getFullYear();
+  const currentMonth = today.getMonth(); // 0-11
+  const currentQuarter = Math.floor(currentMonth / 3); // 0-3
+
+  switch (preset) {
+    case 'this_quarter': {
+      const quarterStart = new Date(currentYear, currentQuarter * 3, 1);
+      const quarterEnd = new Date(currentYear, (currentQuarter + 1) * 3, 0);
+      return {
+        from: format(quarterStart, 'yyyy-MM-dd'),
+        to: format(quarterEnd, 'yyyy-MM-dd'),
+      };
+    }
+    case 'last_quarter': {
+      const lastQuarter = currentQuarter === 0 ? 3 : currentQuarter - 1;
+      const lastQuarterYear = currentQuarter === 0 ? currentYear - 1 : currentYear;
+      const quarterStart = new Date(lastQuarterYear, lastQuarter * 3, 1);
+      const quarterEnd = new Date(lastQuarterYear, (lastQuarter + 1) * 3, 0);
+      return {
+        from: format(quarterStart, 'yyyy-MM-dd'),
+        to: format(quarterEnd, 'yyyy-MM-dd'),
+      };
+    }
+    case 'this_year': {
+      return {
+        from: `${currentYear}-01-01`,
+        to: format(today, 'yyyy-MM-dd'),
+      };
+    }
+    case 'last_year': {
+      return {
+        from: `${currentYear - 1}-01-01`,
+        to: `${currentYear - 1}-12-31`,
+      };
+    }
+    case '2024_q1':
+      return { from: '2024-01-01', to: '2024-03-31' };
+    case '2024_q2':
+      return { from: '2024-04-01', to: '2024-06-30' };
+    case '2024_q3':
+      return { from: '2024-07-01', to: '2024-09-30' };
+    case '2024_q4':
+      return { from: '2024-10-01', to: '2024-12-31' };
+    case '2025_q1':
+      return { from: '2025-01-01', to: '2025-03-31' };
+    case '2025_q2':
+      return { from: '2025-04-01', to: '2025-06-30' };
+    case '2025_q3':
+      return { from: '2025-07-01', to: '2025-09-30' };
+    case '2025_q4':
+      return { from: '2025-10-01', to: '2025-12-31' };
+    default:
+      return { from: '', to: '' };
+  }
+};
+
 export default function HistoryPage() {
   // Fetch user preferences for items per page
   const { data: userPreferences } = useQuery({
@@ -134,6 +207,7 @@ export default function HistoryPage() {
   const [visibleBanks, setVisibleBanks] = useState<Set<string>>(new Set());
   const [showTop5Only, setShowTop5Only] = useState(true);
   const [selectedTimeframe, setSelectedTimeframe] = useState<TimeframeType>('1Y');
+  const [selectedDatePreset, setSelectedDatePreset] = useState<DatePreset>('custom');
   const [filters, setFilters] = useState<HistoryFilters>({
     dateFrom: format(subYears(new Date(), 1), 'yyyy-MM-dd'),
     dateTo: format(new Date(), 'yyyy-MM-dd'),
@@ -185,6 +259,19 @@ export default function HistoryPage() {
       dateFrom: dateRange.from,
       dateTo: dateRange.to,
     }));
+  };
+
+  // Handle date preset selection
+  const handleDatePresetChange = (preset: DatePreset) => {
+    setSelectedDatePreset(preset);
+    if (preset !== 'custom') {
+      const dateRange = getPresetDateRange(preset);
+      setFilters(prev => ({
+        ...prev,
+        dateFrom: dateRange.from,
+        dateTo: dateRange.to,
+      }));
+    }
   };
 
   // Reset visible transactions when filters change
@@ -610,12 +697,42 @@ export default function HistoryPage() {
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-4">
+              <div className="space-y-2">
+                <Label>Date Preset</Label>
+                <Select
+                  value={selectedDatePreset}
+                  onValueChange={(value) => handleDatePresetChange(value as DatePreset)}
+                  data-testid="select-date-preset"
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Custom" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="custom">Custom</SelectItem>
+                    <SelectItem value="this_quarter">This Quarter</SelectItem>
+                    <SelectItem value="last_quarter">Last Quarter</SelectItem>
+                    <SelectItem value="this_year">This Year</SelectItem>
+                    <SelectItem value="last_year">Last Year</SelectItem>
+                    <SelectItem value="2024_q1">2024 Q1</SelectItem>
+                    <SelectItem value="2024_q2">2024 Q2</SelectItem>
+                    <SelectItem value="2024_q3">2024 Q3</SelectItem>
+                    <SelectItem value="2024_q4">2024 Q4</SelectItem>
+                    <SelectItem value="2025_q1">2025 Q1</SelectItem>
+                    <SelectItem value="2025_q2">2025 Q2</SelectItem>
+                    <SelectItem value="2025_q3">2025 Q3</SelectItem>
+                    <SelectItem value="2025_q4">2025 Q4</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
               <div className="space-y-2">
                 <Label htmlFor="date-from">From Date</Label>
                 <ModernDatePicker
                   value={filters.dateFrom}
-                  onChange={(value) => setFilters(prev => ({ ...prev, dateFrom: value }))}
+                  onChange={(value) => {
+                    setFilters(prev => ({ ...prev, dateFrom: value }));
+                    setSelectedDatePreset('custom');
+                  }}
                   placeholder="Select from date"
                   dataTestId="input-date-from"
                 />
@@ -624,7 +741,10 @@ export default function HistoryPage() {
                 <Label htmlFor="date-to">To Date</Label>
                 <ModernDatePicker
                   value={filters.dateTo}
-                  onChange={(value) => setFilters(prev => ({ ...prev, dateTo: value }))}
+                  onChange={(value) => {
+                    setFilters(prev => ({ ...prev, dateTo: value }));
+                    setSelectedDatePreset('custom');
+                  }}
                   placeholder="Select to date"
                   dataTestId="input-date-to"
                 />
