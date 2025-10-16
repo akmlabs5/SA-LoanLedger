@@ -99,6 +99,9 @@ export default function BankDetail() {
   const [revolveDialogOpen, setRevolveDialogOpen] = useState(false);
   const [ledgerDialogOpen, setLedgerDialogOpen] = useState(false);
   const [cancelDialogOpen, setCancelDialogOpen] = useState(false);
+  
+  // Pagination state for loans list
+  const [visibleLoansCount, setVisibleLoansCount] = useState(5);
 
   const { data: bank, isLoading: bankLoading, error: bankError } = useQuery<Bank>({
     queryKey: ["/api/banks", bankId],
@@ -658,7 +661,7 @@ export default function BankDetail() {
                   </div>
                 ) : (
                   <div className="space-y-3">
-                    {bankLoans.slice(0, 5).map((loan: any) => {
+                    {bankLoans.slice(0, visibleLoansCount).map((loan: any) => {
                       const daysUntilDue = Math.ceil((new Date(loan.dueDate).getTime() - new Date().getTime()) / (1000 * 3600 * 24));
                       const urgency = daysUntilDue <= 7 ? 'critical' : daysUntilDue <= 15 ? 'warning' : 'normal';
                       
@@ -747,6 +750,20 @@ export default function BankDetail() {
                         </div>
                       );
                     })}
+                    
+                    {/* Load More Button */}
+                    {bankLoans.length > visibleLoansCount && (
+                      <div className="mt-4 text-center">
+                        <Button
+                          variant="outline"
+                          onClick={() => setVisibleLoansCount(prev => prev + 5)}
+                          className="w-full lg:w-auto"
+                          data-testid="button-load-more-loans"
+                        >
+                          Load More ({bankLoans.length - visibleLoansCount} more)
+                        </Button>
+                      </div>
+                    )}
                   </div>
                 )}
               </CardContent>
