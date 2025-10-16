@@ -20,6 +20,8 @@ import { registerObjectStorageRoutes } from "./objectStorage";
 import { registerDocumentsRoutes } from "./documents";
 import { registerTestEmailRoutes } from "./test-emails";
 import { registerChatRoutes } from "./chat";
+import { registerPaymentRoutes } from "./payments";
+import { registerSnapshotRoutes } from "./snapshots";
 
 export function registerAllRoutes(app: Express, deps: AppDependencies) {
   registerAuthRoutes(app, deps);
@@ -41,6 +43,8 @@ export function registerAllRoutes(app: Express, deps: AppDependencies) {
   registerOrganizationRoutes(app, deps);
   registerReportsRoutes(app, deps);
   registerObjectStorageRoutes(app, deps);
+  registerPaymentRoutes(app, deps);
+  registerSnapshotRoutes(app, deps);
   
   // Only register test endpoints in development
   if (process.env.NODE_ENV !== 'production') {
