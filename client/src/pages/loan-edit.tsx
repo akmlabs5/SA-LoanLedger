@@ -287,10 +287,15 @@ export default function LoanEditPage() {
                                 <FormLabel>SIBOR Rate (%) *</FormLabel>
                                 <FormControl>
                                   <Input 
+                                    type="number"
+                                    step="0.01"
                                     className="h-12"
                                     data-testid="input-sibor-rate" 
-                                    placeholder="e.g., 5.75" 
-                                    {...field} 
+                                    placeholder="e.g., 5.75"
+                                    value={field.value}
+                                    onChange={(e) => field.onChange(e.target.value)}
+                                    onBlur={field.onBlur}
+                                    name={field.name}
                                   />
                                 </FormControl>
                                 <FormMessage />

@@ -89,7 +89,7 @@ type BankPerformance = {
 export default function BankDetail() {
   const { id: bankId } = useParams();
   const [location, setLocation] = useLocation();
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, user } = useAuth();
   const { toast } = useToast();
   const facilitiesRef = useRef<HTMLDivElement>(null);
   
