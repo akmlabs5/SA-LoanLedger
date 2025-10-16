@@ -237,12 +237,16 @@ export async function setupSupabaseAuth(app: Express, databaseAvailable = true) 
       }
       
       // Generate email verification link using Supabase
+      const redirectUrl = process.env.REPLIT_DEV_DOMAIN 
+        ? `https://${process.env.REPLIT_DEV_DOMAIN}/dashboard`
+        : 'https://akm-labs.com/dashboard';
+      
       const { data: linkData, error: linkError } = await adminClient.auth.admin.generateLink({
         type: 'signup',
         email: email,
         password: password, // Required for signup type
         options: {
-          redirectTo: `${process.env.REPLIT_DEV_DOMAIN || 'https://akm-labs.com'}/dashboard`
+          redirectTo: redirectUrl
         }
       });
       
@@ -606,8 +610,12 @@ export async function setupSupabaseAuth(app: Express, databaseAvailable = true) 
       }
       
       // Trigger Supabase password reset email
+      const resetRedirectUrl = process.env.REPLIT_DEV_DOMAIN 
+        ? `https://${process.env.REPLIT_DEV_DOMAIN}/reset-password`
+        : 'https://akm-labs.com/reset-password';
+      
       const { error } = await supabase.auth.resetPasswordForEmail(user.email, {
-        redirectTo: `${process.env.REPLIT_DEV_DOMAIN || 'http://localhost:5000'}/reset-password`
+        redirectTo: resetRedirectUrl
       });
       
       if (error) {
