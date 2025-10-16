@@ -134,10 +134,11 @@ export function registerAiRoutes(app: Express, deps: AppDependencies) {
       // Bank exposure calculation
       const bankExposures: any = {};
       activeLoans.forEach((loan: any) => {
-        if (!bankExposures[loan.bankName]) {
-          bankExposures[loan.bankName] = 0;
+        const bankName = loan.facility?.bank?.name || 'Unknown Bank';
+        if (!bankExposures[bankName]) {
+          bankExposures[bankName] = 0;
         }
-        bankExposures[loan.bankName] += Number(loan.amount?.toString() ?? 0);
+        bankExposures[bankName] += Number(loan.amount?.toString() ?? 0);
       });
 
       // Format portfolio data for AI
@@ -148,25 +149,29 @@ export function registerAiRoutes(app: Express, deps: AppDependencies) {
 ${activeLoans.map((loan: any) => {
   const amount = Number(loan.amount?.toString() ?? 0);
   const rate = Number(loan.siborRate?.toString() ?? 0) + Number(loan.margin?.toString() ?? 0);
-  return `- ${loan.bankName}: SAR ${amount.toLocaleString()} | Due: ${new Date(loan.dueDate).toLocaleDateString('en-SA')} | Rate: ${rate.toFixed(2)}% | Facility: ${loan.facilityType}`;
+  const bankName = loan.facility?.bank?.name || 'Unknown Bank';
+  return `- ${bankName}: SAR ${amount.toLocaleString()} | Due: ${new Date(loan.dueDate).toLocaleDateString('en-SA')} | Rate: ${rate.toFixed(2)}% | Facility: ${loan.facilityType}`;
 }).join('\n') || 'No active loans'}
 
 ### OVERDUE LOANS (${overdueLoans.length} loans)
 ${overdueLoans.map((loan: any) => {
   const amount = Number(loan.amount?.toString() ?? 0);
-  return `- ${loan.bankName}: SAR ${amount.toLocaleString()} | Was due: ${new Date(loan.dueDate).toLocaleDateString('en-SA')}`;
+  const bankName = loan.facility?.bank?.name || 'Unknown Bank';
+  return `- ${bankName}: SAR ${amount.toLocaleString()} | Was due: ${new Date(loan.dueDate).toLocaleDateString('en-SA')}`;
 }).join('\n') || 'No overdue loans'}
 
 ### SETTLED LOANS (${settledLoans.length} loans)
 ${settledLoans.slice(0, 5).map((loan: any) => {
   const amount = Number(loan.amount?.toString() ?? 0);
-  return `- ${loan.bankName}: SAR ${amount.toLocaleString()} | Settled: ${loan.settledDate ? new Date(loan.settledDate).toLocaleDateString('en-SA') : 'N/A'}`;
+  const bankName = loan.facility?.bank?.name || 'Unknown Bank';
+  return `- ${bankName}: SAR ${amount.toLocaleString()} | Settled: ${loan.settledDate ? new Date(loan.settledDate).toLocaleDateString('en-SA') : 'N/A'}`;
 }).join('\n') || 'No settled loans'}
 
 ### CANCELLED LOANS (${cancelledLoans.length} loans)
 ${cancelledLoans.slice(0, 3).map((loan: any) => {
   const amount = Number(loan.amount?.toString() ?? 0);
-  return `- ${loan.bankName}: SAR ${amount.toLocaleString()}`;
+  const bankName = loan.facility?.bank?.name || 'Unknown Bank';
+  return `- ${bankName}: SAR ${amount.toLocaleString()}`;
 }).join('\n') || 'No cancelled loans'}
 
 ### FACILITIES (${facilities.length} facilities)
