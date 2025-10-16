@@ -51,6 +51,7 @@ export default function AnalyticsPage() {
   const { isAuthenticated } = useAuth();
   const [periodType, setPeriodType] = useState<PeriodType>('quarter');
   const [selectedMetric, setSelectedMetric] = useState<MetricType>('loan_amount');
+  const [periodOffset, setPeriodOffset] = useState(0); // 0 = current period, -1 = previous, etc.
   
   // Calculate date range for API call (last 3 years)
   const today = new Date();
@@ -62,6 +63,56 @@ export default function AnalyticsPage() {
     queryKey: ['/api/analytics/year-over-year', { from, to, groupBy: periodType }],
     enabled: isAuthenticated,
   });
+  
+  // Get current viewing period based on offset
+  const getCurrentViewingPeriod = () => {
+    const now = new Date();
+    
+    if (periodType === 'month') {
+      const targetMonth = new Date(now.getFullYear(), now.getMonth() + periodOffset, 1);
+      const year = targetMonth.getFullYear();
+      const month = targetMonth.getMonth() + 1;
+      return `${year}-${String(month).padStart(2, '0')}`;
+    } else if (periodType === 'quarter') {
+      const currentQuarter = Math.floor((now.getMonth()) / 3) + 1;
+      let targetQuarter = currentQuarter + periodOffset;
+      let targetYear = now.getFullYear();
+      
+      while (targetQuarter < 1) {
+        targetQuarter += 4;
+        targetYear -= 1;
+      }
+      while (targetQuarter > 4) {
+        targetQuarter -= 4;
+        targetYear += 1;
+      }
+      
+      return `${targetYear}-Q${targetQuarter}`;
+    } else if (periodType === 'year') {
+      const targetYear = now.getFullYear() + periodOffset;
+      return `${targetYear}`;
+    }
+    
+    return '';
+  };
+  
+  const handlePreviousPeriod = () => {
+    setPeriodOffset(prev => prev - 1);
+  };
+  
+  const handleNextPeriod = () => {
+    if (periodOffset < 0) {
+      setPeriodOffset(prev => prev + 1);
+    }
+  };
+  
+  const handlePeriodTypeChange = (val: PeriodType) => {
+    setPeriodType(val);
+    setPeriodOffset(0); // Reset to current period when changing type
+  };
+  
+  const currentViewingPeriod = getCurrentViewingPeriod();
+  const isCurrentPeriod = periodOffset === 0;
 
   const formatCurrency = (value: string | number) => {
     const num = typeof value === 'string' ? parseFloat(value) : value;
@@ -91,10 +142,63 @@ export default function AnalyticsPage() {
   };
 
   const getPeriodLabel = () => {
-    if (periodType === 'month') return 'This Month';
-    if (periodType === 'quarter') return 'This Quarter';
-    return 'This Year';
+    if (isCurrentPeriod) {
+      if (periodType === 'month') return 'This Month';
+      if (periodType === 'quarter') return 'This Quarter';
+      return 'This Year';
+    } else {
+      // For historical periods, show the actual period
+      return currentViewingPeriod;
+    }
   };
+  
+  const getPeriodTypeLabel = () => {
+    if (periodType === 'month') return 'Month';
+    if (periodType === 'quarter') return 'Quarter';
+    return 'Year';
+  };
+  
+  // Get data for the currently viewing period
+  const getViewingPeriodData = () => {
+    if (!analytics?.data) return null;
+    
+    const periodData = analytics.data.find(p => p.period === currentViewingPeriod);
+    if (!periodData) return null;
+    
+    // Find previous period for comparison
+    const periodIndex = analytics.data.findIndex(p => p.period === currentViewingPeriod);
+    const prevPeriodData = periodIndex > 0 ? analytics.data[periodIndex - 1] : null;
+    
+    const calculateChange = (curr: number, prev: number) => {
+      if (prev === 0) return curr > 0 ? 100 : 0;
+      return ((curr - prev) / prev) * 100;
+    };
+    
+    return {
+      loans: {
+        count: periodData.loans.loansCreated,
+        amount: periodData.loans.totalDisbursed.toString(),
+      },
+      payments: {
+        count: periodData.payments.paymentCount,
+        amount: periodData.payments.totalPaid.toString(),
+      },
+      comparison: prevPeriodData ? {
+        loansCountChange: calculateChange(periodData.loans.loansCreated, prevPeriodData.loans.loansCreated),
+        loansAmountChange: calculateChange(periodData.loans.totalDisbursed, prevPeriodData.loans.totalDisbursed),
+        paymentsCountChange: calculateChange(periodData.payments.paymentCount, prevPeriodData.payments.paymentCount),
+        paymentsAmountChange: calculateChange(periodData.payments.totalPaid, prevPeriodData.payments.totalPaid),
+      } : null
+    };
+  };
+  
+  const viewingData = isCurrentPeriod && analytics?.currentPeriod 
+    ? {
+        loans: analytics.currentPeriod.loans,
+        payments: analytics.currentPeriod.payments,
+        comparison: analytics.periodComparison
+      }
+    : getViewingPeriodData();
 
   const getChartData = () => {
     if (!analytics?.data) return [];
@@ -173,7 +277,7 @@ export default function AnalyticsPage() {
           </div>
           
           <div className="flex items-center gap-3">
-            <Select value={periodType} onValueChange={(val) => setPeriodType(val as PeriodType)}>
+            <Select value={periodType} onValueChange={handlePeriodTypeChange}>
               <SelectTrigger className="w-[140px]" data-testid="select-period-type">
                 <SelectValue />
               </SelectTrigger>
@@ -186,6 +290,43 @@ export default function AnalyticsPage() {
           </div>
         </div>
 
+        {/* Period Navigation */}
+        <Card className="bg-gradient-to-r from-indigo-50 to-blue-50 dark:from-indigo-950/30 dark:to-blue-950/30 border-indigo-200 dark:border-indigo-800">
+          <CardContent className="pt-6">
+            <div className="flex items-center justify-between">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handlePreviousPeriod}
+                data-testid="button-previous-period"
+                className="flex items-center gap-2"
+              >
+                <ChevronLeft className="h-4 w-4" />
+                Previous {getPeriodTypeLabel()}
+              </Button>
+              
+              <div className="text-center">
+                <p className="text-sm text-muted-foreground">Viewing</p>
+                <p className="text-lg font-bold text-indigo-700 dark:text-indigo-400" data-testid="text-current-viewing-period">
+                  {getPeriodLabel()}
+                </p>
+              </div>
+              
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleNextPeriod}
+                disabled={isCurrentPeriod}
+                data-testid="button-next-period"
+                className="flex items-center gap-2"
+              >
+                Next {getPeriodTypeLabel()}
+                <ChevronRight className="h-4 w-4" />
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+
         {/* Dynamic Period Summary Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           <Card>
@@ -194,9 +335,9 @@ export default function AnalyticsPage() {
                 <div className="flex-1">
                   <p className="text-sm font-medium text-muted-foreground">{getPeriodLabel()} - Loans</p>
                   <p className="text-2xl font-bold mt-1" data-testid="text-current-loans">
-                    {analytics?.currentPeriod?.loans.count || 0}
+                    {viewingData?.loans.count || 0}
                   </p>
-                  {formatChange(analytics?.periodComparison?.loansCountChange)}
+                  {formatChange(viewingData?.comparison?.loansCountChange)}
                 </div>
                 <BarChart3 className="h-10 w-10 text-blue-500" />
               </div>
@@ -209,9 +350,9 @@ export default function AnalyticsPage() {
                 <div className="flex-1">
                   <p className="text-sm font-medium text-muted-foreground">{getPeriodLabel()} - Amount</p>
                   <p className="text-2xl font-bold mt-1" data-testid="text-current-loan-amount">
-                    {analytics?.currentPeriod?.loans.amount ? formatCurrency(analytics.currentPeriod.loans.amount) : formatCurrency(0)}
+                    {viewingData?.loans.amount ? formatCurrency(viewingData.loans.amount) : formatCurrency(0)}
                   </p>
-                  {formatChange(analytics?.periodComparison?.loansAmountChange)}
+                  {formatChange(viewingData?.comparison?.loansAmountChange)}
                 </div>
                 <DollarSign className="h-10 w-10 text-green-500" />
               </div>
@@ -224,9 +365,9 @@ export default function AnalyticsPage() {
                 <div className="flex-1">
                   <p className="text-sm font-medium text-muted-foreground">{getPeriodLabel()} - Payments</p>
                   <p className="text-2xl font-bold mt-1" data-testid="text-current-payments">
-                    {analytics?.currentPeriod?.payments.count || 0}
+                    {viewingData?.payments.count || 0}
                   </p>
-                  {formatChange(analytics?.periodComparison?.paymentsCountChange)}
+                  {formatChange(viewingData?.comparison?.paymentsCountChange)}
                 </div>
                 <Receipt className="h-10 w-10 text-purple-500" />
               </div>
@@ -239,9 +380,9 @@ export default function AnalyticsPage() {
                 <div className="flex-1">
                   <p className="text-sm font-medium text-muted-foreground">{getPeriodLabel()} - Paid</p>
                   <p className="text-2xl font-bold mt-1" data-testid="text-current-payment-amount">
-                    {analytics?.currentPeriod?.payments.amount ? formatCurrency(analytics.currentPeriod.payments.amount) : formatCurrency(0)}
+                    {viewingData?.payments.amount ? formatCurrency(viewingData.payments.amount) : formatCurrency(0)}
                   </p>
-                  {formatChange(analytics?.periodComparison?.paymentsAmountChange)}
+                  {formatChange(viewingData?.comparison?.paymentsAmountChange)}
                 </div>
                 <Activity className="h-10 w-10 text-orange-500" />
               </div>
