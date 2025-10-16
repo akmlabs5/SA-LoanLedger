@@ -102,6 +102,9 @@ export default function BankDetail() {
   
   // Pagination state for loans list
   const [visibleLoansCount, setVisibleLoansCount] = useState(5);
+  
+  // Pagination state for collateral list
+  const [visibleCollateralCount, setVisibleCollateralCount] = useState(4);
 
   const { data: bank, isLoading: bankLoading, error: bankError } = useQuery<Bank>({
     queryKey: ["/api/banks", bankId],
@@ -802,7 +805,7 @@ export default function BankDetail() {
                   </div>
                 ) : (
                   <div className="space-y-4">
-                    {bankCollateral.map((asset: any) => (
+                    {bankCollateral.slice(0, visibleCollateralCount).map((asset: any) => (
                       <div key={asset.id} className="p-4 border border-gray-200 dark:border-gray-700 rounded-xl">
                         <div className="flex items-center justify-between mb-3">
                           <div>
@@ -889,6 +892,19 @@ export default function BankDetail() {
                         </div>
                       </div>
                     ))}
+                    
+                    {bankCollateral.length > visibleCollateralCount && (
+                      <div className="mt-4 text-center">
+                        <Button
+                          variant="outline"
+                          onClick={() => setVisibleCollateralCount(prev => prev + 4)}
+                          className="w-full lg:w-auto"
+                          data-testid="button-load-more-collateral"
+                        >
+                          Load More ({bankCollateral.length - visibleCollateralCount} more)
+                        </Button>
+                      </div>
+                    )}
                   </div>
                 )}
               </CardContent>
