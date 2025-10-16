@@ -624,6 +624,15 @@ export default function Loans() {
     const loanAmount = Number(loan.amount) || 0;
     const totalRate = Number(loan.bankRate) || 0;
     const dailyInterest = (loanAmount * totalRate / 100) / 365;
+    
+    // Calculate accrued interest (from start date to today)
+    const daysSinceStart = Math.max(0, Math.ceil((new Date().getTime() - new Date(loan.startDate).getTime()) / (1000 * 3600 * 24)));
+    const accruedInterest = dailyInterest * daysSinceStart;
+    
+    // Calculate projected total interest (full tenor)
+    const totalDays = Math.ceil((new Date(loan.dueDate).getTime() - new Date(loan.startDate).getTime()) / (1000 * 3600 * 24));
+    const projectedTotalInterest = dailyInterest * totalDays;
+    
     const isCancelled = loan.status === 'cancelled';
 
     return (
@@ -682,9 +691,18 @@ export default function Loans() {
               </span>
             </div>
             <div className="flex items-center justify-between">
-              <span className="text-xs text-gray-600 dark:text-gray-400">Daily Interest</span>
+              <span className="text-xs text-gray-600 dark:text-gray-400">Accrued Interest (to date)</span>
               <span className="text-sm font-semibold text-red-600 dark:text-red-400">
-                {dailyInterest.toLocaleString('en-SA', { 
+                {accruedInterest.toLocaleString('en-SA', { 
+                  minimumFractionDigits: 0, 
+                  maximumFractionDigits: 0 
+                })} SAR
+              </span>
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-xs text-gray-600 dark:text-gray-400">Projected Total Interest (full tenor)</span>
+              <span className="text-sm font-semibold text-orange-600 dark:text-orange-400">
+                {projectedTotalInterest.toLocaleString('en-SA', { 
                   minimumFractionDigits: 0, 
                   maximumFractionDigits: 0 
                 })} SAR
