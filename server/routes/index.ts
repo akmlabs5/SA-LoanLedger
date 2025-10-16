@@ -22,6 +22,7 @@ import { registerTestEmailRoutes } from "./test-emails";
 import { registerChatRoutes } from "./chat";
 import { registerPaymentRoutes } from "./payments";
 import { registerSnapshotRoutes } from "./snapshots";
+import { registerAnalyticsRoutes } from "./analytics";
 
 export function registerAllRoutes(app: Express, deps: AppDependencies) {
   registerAuthRoutes(app, deps);
@@ -45,6 +46,7 @@ export function registerAllRoutes(app: Express, deps: AppDependencies) {
   registerObjectStorageRoutes(app, deps);
   registerPaymentRoutes(app, deps);
   registerSnapshotRoutes(app, deps);
+  registerAnalyticsRoutes(app, deps);
   
   // Only register test endpoints in development
   if (process.env.NODE_ENV !== 'production') {
