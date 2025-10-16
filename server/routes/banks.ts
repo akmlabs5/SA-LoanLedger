@@ -163,6 +163,26 @@ export function registerBanksRoutes(app: Express, deps: AppDependencies) {
       const totalCreditLimit = facilities.reduce((sum, f) => sum + parseFloat(f.creditLimit), 0);
       const utilizationRate = totalCreditLimit > 0 ? (totalOutstanding / totalCreditLimit) * 100 : 0;
 
+      // Get collateral for this bank
+      const allCollateral = await storage.getUserCollateral(organizationId);
+      const allAssignments = await storage.getCollateralAssignments(organizationId);
+      
+      const bankAssignments = allAssignments.filter((assignment: any) => {
+        // Include if assigned directly to this bank
+        if (assignment.bankId === bankId) return true;
+        // Include if assigned to a facility of this bank
+        const facility = facilities.find(f => f.id === assignment.facilityId);
+        return !!facility;
+      });
+      
+      const totalCollateralValue = bankAssignments.reduce((sum: number, assignment: any) => {
+        const asset = allCollateral.find((c: any) => c.id === assignment.collateralId);
+        if (asset && asset.isActive) {
+          return sum + Number(asset.currentValue?.toString() ?? 0);
+        }
+        return sum;
+      }, 0);
+
       const loanIds = loans.map(l => l.id);
       const transactionPromises = loanIds.map(loanId => storage.listTransactions({ loanId }));
       const transactionArrays = await Promise.all(transactionPromises);
@@ -218,7 +238,8 @@ export function registerBanksRoutes(app: Express, deps: AppDependencies) {
           activeLoans,
           settledLoans,
           cancelledLoans,
-          facilitiesCount: facilities.length
+          facilitiesCount: facilities.length,
+          totalCollateralValue
         },
         facilityUtilization,
         paymentsByMonth,

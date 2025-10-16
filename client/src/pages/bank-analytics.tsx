@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { useParams, useLocation } from "wouter";
-import { ArrowLeft, DollarSign, Briefcase, FileText, Activity } from "lucide-react";
+import { ArrowLeft, DollarSign, Briefcase, FileText, Activity, Gem } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { PieChart, Pie, Cell, BarChart, Bar, LineChart, Line, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
@@ -16,6 +16,7 @@ interface BankAnalytics {
     settledLoans: number;
     cancelledLoans: number;
     facilitiesCount: number;
+    totalCollateralValue: number;
   };
   facilityUtilization: Array<{
     facilityId: string;
@@ -73,7 +74,8 @@ export default function BankAnalyticsPage() {
       activeLoans: 0,
       settledLoans: 0,
       cancelledLoans: 0,
-      facilitiesCount: 0
+      facilitiesCount: 0,
+      totalCollateralValue: 0
     },
     facilityUtilization: [],
     paymentsByMonth: {},
@@ -136,7 +138,7 @@ export default function BankAnalyticsPage() {
         </div>
 
         {/* Summary Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
           <Card data-testid="card-total-outstanding">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Total Outstanding</CardTitle>
@@ -193,6 +195,21 @@ export default function BankAnalyticsPage() {
               </div>
               <p className="text-xs text-muted-foreground mt-1">
                 {analyticsData.summary.settledLoans} settled, {analyticsData.summary.cancelledLoans} cancelled
+              </p>
+            </CardContent>
+          </Card>
+
+          <Card data-testid="card-total-collateral">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Total Collateral</CardTitle>
+              <Gem className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold" data-testid="text-total-collateral">
+                {formatCurrency(analyticsData.summary.totalCollateralValue)}
+              </div>
+              <p className="text-xs text-muted-foreground mt-1">
+                Assigned to this bank
               </p>
             </CardContent>
           </Card>
