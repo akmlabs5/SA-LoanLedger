@@ -56,8 +56,8 @@ const collateralFormSchema = z.object({
   bankId: z.string().optional(),
   pledgeType: z.enum(["first_lien", "second_lien", "blanket"]).default("first_lien"),
   desiredLtv: z.string().optional().refine(
-    (val) => !val || (!isNaN(Number(val)) && Number(val) > 0 && Number(val) <= 100),
-    "LTV must be between 0 and 100"
+    (val) => !val || (!isNaN(Number(val)) && Number(val) > 0),
+    "LTV must be greater than 0"
   ),
 }).refine(
   (data) => {
@@ -558,7 +558,6 @@ export default function CollateralCreatePage() {
                               type="number"
                               step="0.1"
                               min="0"
-                              max="100"
                               value={field.value || ""}
                               placeholder={`e.g., ${bankTargetLtv} (Bank target: ${bankTargetLtv}%)`}
                               data-testid="input-desired-ltv"
