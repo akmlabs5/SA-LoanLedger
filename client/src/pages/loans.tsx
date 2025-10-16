@@ -630,7 +630,7 @@ export default function Loans() {
     const accruedInterest = dailyInterest * daysSinceStart;
     
     // Calculate projected total interest (full tenor)
-    const totalDays = Math.ceil((new Date(loan.dueDate).getTime() - new Date(loan.startDate).getTime()) / (1000 * 3600 * 24));
+    const totalDays = Math.max(0, Math.ceil((new Date(loan.dueDate).getTime() - new Date(loan.startDate).getTime()) / (1000 * 3600 * 24)));
     const projectedTotalInterest = dailyInterest * totalDays;
     
     const isCancelled = loan.status === 'cancelled';
@@ -1249,7 +1249,7 @@ export default function Loans() {
                     const accruedInterest = dailyInterest * daysSinceStart;
                     
                     // Calculate projected total interest (full tenor)
-                    const totalDays = Math.ceil((new Date(loan.dueDate).getTime() - new Date(loan.startDate).getTime()) / (1000 * 3600 * 24));
+                    const totalDays = Math.max(0, Math.ceil((new Date(loan.dueDate).getTime() - new Date(loan.startDate).getTime()) / (1000 * 3600 * 24)));
                     const projectedTotalInterest = dailyInterest * totalDays;
                     
                     const isCancelled = loan.status === 'cancelled';
