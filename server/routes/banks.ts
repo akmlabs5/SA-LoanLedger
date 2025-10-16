@@ -157,15 +157,15 @@ export function registerBanksRoutes(app: Express, deps: AppDependencies) {
       const balances = await Promise.all(balancePromises);
 
       const totalOutstanding = balances.reduce((sum, balance) => {
-        return sum + (balance ? parseFloat(balance.total) : 0);
+        return sum + (balance ? Number(balance.total?.toString() ?? 0) : 0);
       }, 0);
 
-      const totalCreditLimit = facilities.reduce((sum, f) => sum + parseFloat(f.creditLimit), 0);
+      const totalCreditLimit = facilities.reduce((sum, f) => sum + Number(f.creditLimit?.toString() ?? 0), 0);
       const utilizationRate = totalCreditLimit > 0 ? (totalOutstanding / totalCreditLimit) * 100 : 0;
 
       // Get collateral for this bank
       const allCollateral = await storage.getUserCollateral(organizationId);
-      const allAssignments = await storage.getCollateralAssignments(organizationId);
+      const allAssignments = await storage.getUserCollateralAssignments(organizationId);
       
       const bankAssignments = allAssignments.filter((assignment: any) => {
         // Include if assigned directly to this bank
@@ -184,7 +184,10 @@ export function registerBanksRoutes(app: Express, deps: AppDependencies) {
       }, 0);
 
       const loanIds = loans.map(l => l.id);
-      const transactionPromises = loanIds.map(loanId => storage.listTransactions({ loanId }));
+      const transactionPromises = loanIds.map(loanId => storage.listTransactions({ 
+        userId: req.user?.claims?.sub || organizationId,
+        loanId 
+      }));
       const transactionArrays = await Promise.all(transactionPromises);
       const transactions = transactionArrays.flat();
 
@@ -195,12 +198,12 @@ export function registerBanksRoutes(app: Express, deps: AppDependencies) {
         const date = new Date(t.date);
         const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
         
-        if (t.transactionType === 'payment' || t.transactionType === 'settlement') {
-          paymentsByMonth[monthKey] = (paymentsByMonth[monthKey] || 0) + parseFloat(t.amount);
+        if (t.type === 'repayment') {
+          paymentsByMonth[monthKey] = (paymentsByMonth[monthKey] || 0) + Number(t.amount?.toString() ?? 0);
         }
         
-        if (t.transactionType === 'interest_accrual') {
-          interestByMonth[monthKey] = (interestByMonth[monthKey] || 0) + parseFloat(t.amount);
+        if (t.type === 'interest') {
+          interestByMonth[monthKey] = (interestByMonth[monthKey] || 0) + Number(t.amount?.toString() ?? 0);
         }
       });
 
@@ -212,17 +215,18 @@ export function registerBanksRoutes(app: Express, deps: AppDependencies) {
           const facilityBalances = await Promise.all(facilityBalancePromises);
           
           const facilityOutstanding = facilityBalances.reduce((sum, balance) => {
-            return sum + (balance ? parseFloat(balance.total) : 0);
+            return sum + (balance ? Number(balance.total?.toString() ?? 0) : 0);
           }, 0);
           
-          const utilization = parseFloat(facility.creditLimit) > 0 
-            ? (facilityOutstanding / parseFloat(facility.creditLimit)) * 100 
+          const creditLimit = Number(facility.creditLimit?.toString() ?? 0);
+          const utilization = creditLimit > 0 
+            ? (facilityOutstanding / creditLimit) * 100 
             : 0;
 
           return {
             facilityId: facility.id,
-            facilityName: `${(facility.facilityType || 'facility').replace('_', ' ').toUpperCase()} - ${parseFloat(facility.creditLimit).toLocaleString('en-SA')} SAR`,
-            limit: parseFloat(facility.creditLimit),
+            facilityName: `${(facility.facilityType || 'facility').replace('_', ' ').toUpperCase()} - ${creditLimit.toLocaleString('en-SA')} SAR`,
+            limit: creditLimit,
             outstanding: facilityOutstanding,
             utilization: Math.round(utilization * 10) / 10,
             activeLoans: facilityLoans.length
