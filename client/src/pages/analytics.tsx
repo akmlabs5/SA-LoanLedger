@@ -269,10 +269,10 @@ export default function AnalyticsPage() {
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
           <div>
             <h1 className="text-3xl font-bold text-gray-900 dark:text-white" data-testid="text-analytics-title">
-              Portfolio Analytics
+              Portfolio Trends
             </h1>
             <p className="text-muted-foreground mt-1">
-              Track performance trends across different time periods
+              Navigate through time to analyze performance patterns and growth trends
             </p>
           </div>
           

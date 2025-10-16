@@ -110,7 +110,7 @@ const navigation = [
         icon: History,
       },
       {
-        title: "Analytics",
+        title: "Trends",
         url: "/analytics",
         icon: TrendingUp,
       },

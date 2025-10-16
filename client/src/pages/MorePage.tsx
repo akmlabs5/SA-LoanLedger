@@ -87,8 +87,8 @@ export default function MorePage() {
           path: "/history",
         },
         {
-          id: "analytics",
-          label: "Analytics",
+          id: "trends",
+          label: "Trends",
           icon: TrendingUp,
           path: "/analytics",
         },
