@@ -47,7 +47,7 @@ const bankContactFormSchema = z.object({
 export default function BankContactCreatePage() {
   const { bankId } = useParams();
   const [, setLocation] = useLocation();
-  const { isAuthenticated, isLoading } = useAuth();
+  const { isAuthenticated, isLoading, user } = useAuth();
   const { toast } = useToast();
 
   // Get bank details for context
@@ -77,7 +77,7 @@ export default function BankContactCreatePage() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/banks", bankId] });
-      queryClient.invalidateQueries({ queryKey: [`/api/banks/${bankId}/contacts`] });
+      queryClient.invalidateQueries({ queryKey: [`/api/banks/${bankId}/contacts`, (user as any)?.id] });
       toast({ 
         title: "Contact created successfully",
         description: "The bank contact has been added to your system."

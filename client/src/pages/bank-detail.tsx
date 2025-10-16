@@ -132,7 +132,7 @@ export default function BankDetail() {
   });
 
   const { data: bankContacts, isLoading: contactsLoading } = useQuery({
-    queryKey: [`/api/banks/${bankId}/contacts`],
+    queryKey: [`/api/banks/${bankId}/contacts`, (user as any)?.id],
     enabled: isAuthenticated && !!bankId,
   });
 

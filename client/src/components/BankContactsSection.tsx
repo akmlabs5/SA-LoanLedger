@@ -3,6 +3,7 @@ import { useQuery, useMutation } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { useLocation } from "wouter";
+import { useAuth } from "@/hooks/useAuth";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -45,10 +46,11 @@ interface BankContactsSectionProps {
 export default function BankContactsSection({ bankId, bankName, isAuthenticated }: BankContactsSectionProps) {
   const { toast } = useToast();
   const [, setLocation] = useLocation();
+  const { user } = useAuth();
 
-  // Query for bank contacts
+  // Query for bank contacts - include user ID in key for cache isolation
   const { data: bankContacts, isLoading: contactsLoading } = useQuery({
-    queryKey: [`/api/banks/${bankId}/contacts`],
+    queryKey: [`/api/banks/${bankId}/contacts`, (user as any)?.id],
     enabled: isAuthenticated && !!bankId,
   });
 
@@ -60,7 +62,7 @@ export default function BankContactsSection({ bankId, bankName, isAuthenticated 
       return apiRequest('DELETE', `/api/bank-contacts/${contactId}`);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: [`/api/banks/${bankId}/contacts`] });
+      queryClient.invalidateQueries({ queryKey: [`/api/banks/${bankId}/contacts`, (user as any)?.id] });
       toast({ title: "Contact deleted successfully" });
     },
     onError: (error: any) => {
@@ -77,7 +79,7 @@ export default function BankContactsSection({ bankId, bankName, isAuthenticated 
       return apiRequest('PUT', `/api/bank-contacts/${contactId}/set-primary`, { bankId });
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: [`/api/banks/${bankId}/contacts`] });
+      queryClient.invalidateQueries({ queryKey: [`/api/banks/${bankId}/contacts`, (user as any)?.id] });
       toast({ title: "Primary contact updated successfully" });
     },
     onError: (error: any) => {
