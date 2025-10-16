@@ -136,6 +136,15 @@ export default function AnalyticsPage() {
     return `${num.toFixed(1)}%`;
   };
 
+  const formatAxisValue = (value: number) => {
+    if (value >= 1000000) {
+      return `${(value / 1000000).toFixed(1)}M`;
+    } else if (value >= 1000) {
+      return `${(value / 1000).toFixed(0)}K`;
+    }
+    return value.toString();
+  };
+
   const formatChange = (change: number | undefined | null) => {
     if (change === undefined || change === null) return null;
     const isPositive = change >= 0;
@@ -430,7 +439,7 @@ export default function AnalyticsPage() {
                 <BarChart data={getChartData()}>
                   <CartesianGrid strokeDasharray="3 3" className="stroke-gray-200 dark:stroke-gray-700" />
                   <XAxis dataKey="period" className="text-sm" />
-                  <YAxis className="text-sm" />
+                  <YAxis className="text-sm" tickFormatter={formatAxisValue} />
                   <Tooltip 
                     formatter={(value: any) => 
                       selectedMetric.includes('amount') 
@@ -447,7 +456,7 @@ export default function AnalyticsPage() {
                 <LineChart data={getChartData()}>
                   <CartesianGrid strokeDasharray="3 3" className="stroke-gray-200 dark:stroke-gray-700" />
                   <XAxis dataKey="period" className="text-sm" />
-                  <YAxis className="text-sm" />
+                  <YAxis className="text-sm" tickFormatter={formatAxisValue} />
                   <Tooltip 
                     formatter={(value: any) => 
                       selectedMetric.includes('ltv') || selectedMetric.includes('utilization')
