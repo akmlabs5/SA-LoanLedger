@@ -110,7 +110,7 @@ export default function Banks() {
   };
 
   const formatCurrency = (amount: number) => {
-    return (amount / 1000000).toFixed(3).replace(/\.?0+$/, '') + ",000";
+    return (amount / 1000000).toFixed(3).replace(/\.?0+$/, '') + "M";
   };
 
   const toggleBankExpanded = (bankId: string) => {
