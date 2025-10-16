@@ -1243,6 +1243,15 @@ export default function Loans() {
                     const loanAmount = Number(loan.amount) || 0;
                     const totalRate = Number(loan.bankRate) || 0;
                     const dailyInterest = (loanAmount * totalRate / 100) / 365;
+                    
+                    // Calculate accrued interest (from start date to today)
+                    const daysSinceStart = Math.max(0, Math.ceil((new Date().getTime() - new Date(loan.startDate).getTime()) / (1000 * 3600 * 24)));
+                    const accruedInterest = dailyInterest * daysSinceStart;
+                    
+                    // Calculate projected total interest (full tenor)
+                    const totalDays = Math.ceil((new Date(loan.dueDate).getTime() - new Date(loan.startDate).getTime()) / (1000 * 3600 * 24));
+                    const projectedTotalInterest = dailyInterest * totalDays;
+                    
                     const isCancelled = loan.status === 'cancelled';
                     
                     return (
@@ -1336,15 +1345,15 @@ export default function Loans() {
                               </p>
                             </div>
                             <div>
-                              <p className="text-xs text-gray-600 dark:text-gray-400 mb-1">Daily Interest Cost</p>
+                              <p className="text-xs text-gray-600 dark:text-gray-400 mb-1">Accrued Interest (to date)</p>
                               <p className="text-xl font-bold text-red-600 dark:text-red-400">
-                                {dailyInterest.toLocaleString('en-SA', { 
+                                {accruedInterest.toLocaleString('en-SA', { 
                                   minimumFractionDigits: 0, 
                                   maximumFractionDigits: 0 
                                 })} SAR
                               </p>
                               <p className="text-xs text-gray-600 dark:text-gray-400">
-                                Monthly: {(dailyInterest * 30).toLocaleString('en-SA', { 
+                                Projected Total Interest (full tenor): {projectedTotalInterest.toLocaleString('en-SA', { 
                                   minimumFractionDigits: 0, 
                                   maximumFractionDigits: 0 
                                 })} SAR
