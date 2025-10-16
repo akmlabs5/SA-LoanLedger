@@ -39,6 +39,21 @@ export function registerAiRoutes(app: Express, deps: AppDependencies) {
         storage.getUserCollateral(organizationId),
         storage.getUserGuarantees(organizationId),
       ]);
+      
+      // Fetch trends/analytics data for the past 2 years
+      const twoYearsAgo = new Date();
+      twoYearsAgo.setFullYear(twoYearsAgo.getFullYear() - 2);
+      const from = twoYearsAgo.toISOString().split('T')[0];
+      const to = new Date().toISOString().split('T')[0];
+      
+      const paymentHistory = await storage.getPaymentHistory(organizationId, {
+        from,
+        to,
+        limit: 1000
+      });
+      
+      const snapshots = await storage.getSnapshotsInRange(organizationId, from, to);
+      const latestSnapshot = await storage.getLatestSnapshot(organizationId);
 
       // Calculate portfolio metrics - Safe BigInt/Decimal handling
       const totalOutstanding = activeLoans.reduce((sum: number, loan: any) => sum + Number(loan.amount?.toString() ?? 0), 0);
@@ -133,6 +148,21 @@ ${Object.entries(bankExposures).map(([bank, amount]: [string, any]) =>
 - Overdue Loans: ${overdueLoans.length}
 - Weighted Avg Rate: ${avgRate}%
 - Number of Banks: ${Object.keys(bankExposures).length}
+
+### HISTORICAL TRENDS (Past 2 Years)
+${latestSnapshot ? `Latest Portfolio Snapshot (${new Date(latestSnapshot.snapshotDate).toLocaleDateString('en-SA')}):
+- Portfolio LTV: ${Number(latestSnapshot.portfolioLtv?.toString() ?? 0).toFixed(1)}%
+- Total Credit Limit: SAR ${Number(latestSnapshot.totalCreditLimit?.toString() ?? 0).toLocaleString()}
+- Utilization: ${latestSnapshot.totalCreditLimit && Number(latestSnapshot.totalCreditLimit?.toString() ?? 0) > 0 ? ((Number(latestSnapshot.totalOutstanding?.toString() ?? 0) / Number(latestSnapshot.totalCreditLimit?.toString() ?? 0)) * 100).toFixed(1) : '0.0'}%` : 'No snapshots available'}
+
+Payment History (${paymentHistory.data.length} payments in past 2 years):
+- Total Payments Made: SAR ${paymentHistory.data.reduce((sum: number, p: any) => sum + Number(p.amount?.toString() ?? 0), 0).toLocaleString()}
+- Principal Paid: SAR ${paymentHistory.data.reduce((sum: number, p: any) => sum + Number(p.principalAmount?.toString() ?? 0), 0).toLocaleString()}
+- Interest Paid: SAR ${paymentHistory.data.reduce((sum: number, p: any) => sum + Number(p.interestAmount?.toString() ?? 0), 0).toLocaleString()}
+
+Loan Activity Trends:
+- This Year: ${[...activeLoans, ...settledLoans, ...cancelledLoans].filter((l: any) => new Date(l.startDate).getFullYear() === new Date().getFullYear()).length} loans created
+- Last Year: ${[...activeLoans, ...settledLoans, ...cancelledLoans].filter((l: any) => new Date(l.startDate).getFullYear() === new Date().getFullYear() - 1).length} loans created
 `;
 
       // Prepare messages for AI
@@ -150,6 +180,10 @@ ${Object.entries(bankExposures).map(([bank, amount]: [string, any]) =>
 
 ${portfolioContext}
 
+## Historical Trends & Analytics
+You have access to the user's historical payment data and portfolio snapshots from the past 2 years.
+When users ask about trends (e.g., "How much did I borrow last year vs this year?", "What are my payment trends?"), use the HISTORICAL TRENDS section above to provide accurate year-over-year comparisons with specific numbers.
+
 ## Document Generation Capability
 You can generate professional portfolio reports in PDF, Excel, or Word formats with the user's actual data.
 When users ask for reports/documents (e.g., "give me a report", "export to PDF", "create a summary document"), use the generatePortfolioReport function.
@@ -166,7 +200,8 @@ Report Types Available:
 - Show calculations when relevant
 - Keep responses short and actionable
 - If data is missing, say "No data available" - don't speculate
-- When generating reports, tell user what you're creating and they'll get a download link`
+- When generating reports, tell user what you're creating and they'll get a download link
+- For trend questions, cite specific year-over-year numbers from the historical data`
         },
         ...conversationHistory,
         {
