@@ -838,7 +838,7 @@ export default function BankDetail() {
                                     <CheckSquare className="mr-2 h-4 w-4" />
                                     Settle Loan
                                   </DropdownMenuItem>
-                                  <DropdownMenuItem onClick={(e) => { e.stopPropagation(); setSelectedLoan(loan); setRevolveDialogOpen(true); }} data-testid={`button-revolve-loan-${loan.id}`}>
+                                  <DropdownMenuItem onClick={(e) => { e.stopPropagation(); setLocation(`/loans/${loan.id}/revolve`); }} data-testid={`button-revolve-loan-${loan.id}`}>
                                     <RotateCcw className="mr-2 h-4 w-4" />
                                     Revolve Loan
                                   </DropdownMenuItem>

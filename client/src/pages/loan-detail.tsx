@@ -1,7 +1,7 @@
 import { useParams, useLocation } from "wouter";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useState, useEffect } from "react";
-import { ArrowLeft, Calendar, Building2, FileText, Clock, CheckCircle, AlertTriangle, TrendingUp, Edit, Trash2, Bell, DollarSign, Undo2 } from "lucide-react";
+import { ArrowLeft, Calendar, Building2, FileText, Clock, CheckCircle, AlertTriangle, TrendingUp, Edit, Trash2, Bell, DollarSign, Undo2, RefreshCw } from "lucide-react";
 import { LoanWithDetails } from "@shared/types";
 
 import { Button } from "@/components/ui/button";
@@ -377,6 +377,16 @@ export default function LoanDetailPage() {
                     Edit
                   </Button>
                   <Button 
+                    variant="outline" 
+                    size="sm"
+                    onClick={() => setLocation(`/loans/${loan.id}/revolve`)}
+                    data-testid="button-revolve-loan"
+                    className="bg-blue-600 lg:hover:bg-blue-700 text-white border-blue-600"
+                  >
+                    <RefreshCw className="mr-2 h-4 w-4" />
+                    Revolve
+                  </Button>
+                  <Button 
                     onClick={handleSettleLoan}
                     disabled={settleLoanMutation.isPending}
                     className="bg-emerald-600 lg:hover:bg-emerald-700 text-white"
@@ -742,6 +752,14 @@ export default function LoanDetailPage() {
                     >
                       <Edit className="mr-2 h-4 w-4" />
                       Edit Loan
+                    </Button>
+                    <Button 
+                      className="w-full bg-blue-600 lg:hover:bg-blue-700 text-white"
+                      onClick={() => setLocation(`/loans/${loan.id}/revolve`)}
+                      data-testid="button-revolve-loan-mobile"
+                    >
+                      <RefreshCw className="mr-2 h-4 w-4" />
+                      Revolve Loan
                     </Button>
                     <Button 
                       variant="outline" 

@@ -362,6 +362,37 @@ export function registerLoansRoutes(app: Express, deps: AppDependencies) {
     }
   });
 
+  // Simple revolve endpoint - updates loan in-place with new dates and SIBOR
+  app.put('/api/loans/:id/revolve', isAuthenticated, attachOrganizationContext, requireOrganization, async (req: any, res) => {
+    try {
+      const loanId = req.params.id;
+      const organizationId = req.organizationId;
+      const { startDate, dueDate, siborRate, bankRate, memo } = req.body;
+      
+      // Verify loan belongs to organization
+      const loan = await storage.getLoanById(loanId);
+      if (!loan || loan.organizationId !== organizationId) {
+        return res.status(404).json({ message: "Loan not found" });
+      }
+      
+      // Update loan with new revolving period details
+      const updateData = {
+        startDate,
+        dueDate,
+        siborRate,
+        bankRate,
+      };
+      
+      const reason = memo || `Loan revolved - New period: ${startDate} to ${dueDate}`;
+      const updatedLoan = await storage.updateLoan(loanId, updateData, organizationId, reason);
+      
+      res.json(updatedLoan);
+    } catch (error) {
+      console.error("Error revolving loan:", error);
+      res.status(400).json({ message: "Failed to revolve loan" });
+    }
+  });
+
   app.post('/api/loans/:id/repayments', isAuthenticated, attachOrganizationContext, requireOrganization, async (req: any, res) => {
     try {
       const loanId = req.params.id;

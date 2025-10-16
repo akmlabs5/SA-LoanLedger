@@ -18,6 +18,7 @@ import LoanCreatePage from "@/pages/loan-create";
 import LoanCreateGeneralPage from "@/pages/loan-create-general";
 import LoanDetailPage from "@/pages/loan-detail";
 import LoanEditPage from "@/pages/loan-edit";
+import LoanRevolvePage from "@/pages/loan-revolve";
 import PaymentCreatePage from "@/pages/payment-create";
 import CollateralPage from "@/pages/collateral";
 import CollateralCreatePage from "@/pages/collateral-create";
@@ -147,6 +148,7 @@ function App() {
           <Route path="/loans/create-general" component={LoanCreateGeneralPage} />
           <Route path="/loans/:id" component={LoanDetailPage} />
           <Route path="/loans/:id/edit" component={LoanEditPage} />
+          <Route path="/loans/:id/revolve" component={LoanRevolvePage} />
           <Route path="/loans/:id/payment/create" component={PaymentCreatePage} />
           <Route path="/banks" component={BanksPage} />
           <Route path="/banks/:bankId/analytics" component={BankAnalyticsPage} />
