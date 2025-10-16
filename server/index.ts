@@ -105,6 +105,11 @@ app.use((req, res, next) => {
   const chatCleanupScheduler = new ChatCleanupScheduler(deps.storage);
   chatCleanupScheduler.start();
 
+  // Start snapshot scheduler for daily portfolio snapshots
+  const { SnapshotScheduler } = await import('./snapshotScheduler');
+  const snapshotScheduler = new SnapshotScheduler(deps.storage);
+  snapshotScheduler.start();
+
   // Register all modular routes
   registerAllRoutes(app, deps);
 
