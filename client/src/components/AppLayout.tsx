@@ -46,6 +46,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useSupabaseAuth } from "@/contexts/SupabaseAuthContext";
 import { User as UserType } from "@shared/schema";
 import { cn } from "@/lib/utils";
+import morounaLogo from "@assets/with_padding (1)_1760617881648.png";
 import { FloatingAgentChat } from "./FloatingAgentChat";
 import { useQuery } from "@tanstack/react-query";
 // import { HelpDeskChat } from "./HelpDeskChat"; // Removed - will be added to landing page later
@@ -312,9 +313,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
           <SidebarHeader className="border-b border-border">
             <div className="flex items-center justify-between px-4 py-4">
               <div className="flex items-center gap-3">
-                <div className="h-10 w-10 rounded-full bg-emerald-600 dark:bg-emerald-500 flex items-center justify-center flex-shrink-0">
-                  <Building2 className="h-6 w-6 text-white" />
-                </div>
+                <img src={morounaLogo} alt="Morouna Loans" className="h-12 w-auto object-contain" />
                 <div className="flex flex-col">
                   <h1 className="text-sm font-semibold text-gray-900 dark:text-white leading-tight">
                     Saudi Loan Portfolio Management
