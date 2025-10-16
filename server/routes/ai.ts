@@ -54,6 +54,65 @@ export function registerAiRoutes(app: Express, deps: AppDependencies) {
       
       const snapshots = await storage.getSnapshotsInRange(organizationId, from, to);
       const latestSnapshot = await storage.getLatestSnapshot(organizationId);
+      
+      // Fetch aggregated year-over-year analytics (same data as frontend Trends page)
+      let yearOverYearData = null;
+      try {
+        // Calculate metrics by period like the frontend does
+        const getPeriodKey = (date: Date, groupBy: string) => {
+          const year = date.getFullYear();
+          const month = date.getMonth() + 1;
+          const quarter = Math.floor((month - 1) / 3) + 1;
+          
+          if (groupBy === 'year') return `${year}`;
+          if (groupBy === 'quarter') return `${year}-Q${quarter}`;
+          return `${year}-${String(month).padStart(2, '0')}`;
+        };
+        
+        const today = new Date();
+        const thisYear = today.getFullYear();
+        const lastYear = thisYear - 1;
+        
+        const allLoans = [...activeLoans, ...settledLoans, ...cancelledLoans];
+        
+        const thisYearLoans = allLoans.filter(l => new Date(l.startDate).getFullYear() === thisYear);
+        const lastYearLoans = allLoans.filter(l => new Date(l.startDate).getFullYear() === lastYear);
+        
+        const thisYearAmount = thisYearLoans.reduce((sum, l) => sum + Number(l.amount?.toString() ?? 0), 0);
+        const lastYearAmount = lastYearLoans.reduce((sum, l) => sum + Number(l.amount?.toString() ?? 0), 0);
+        
+        const thisYearPayments = paymentHistory.data.filter(p => new Date(p.paymentDate).getFullYear() === thisYear);
+        const lastYearPayments = paymentHistory.data.filter(p => new Date(p.paymentDate).getFullYear() === lastYear);
+        
+        const thisYearPaid = thisYearPayments.reduce((sum, p) => sum + Number(p.amount?.toString() ?? 0), 0);
+        const lastYearPaid = lastYearPayments.reduce((sum, p) => sum + Number(p.amount?.toString() ?? 0), 0);
+        
+        const loanGrowth = lastYearAmount > 0 ? ((thisYearAmount - lastYearAmount) / lastYearAmount * 100).toFixed(1) : 'N/A';
+        const paymentGrowth = lastYearPaid > 0 ? ((thisYearPaid - lastYearPaid) / lastYearPaid * 100).toFixed(1) : 'N/A';
+        
+        yearOverYearData = {
+          thisYear: {
+            loans: thisYearLoans.length,
+            amount: thisYearAmount,
+            payments: thisYearPayments.length,
+            paid: thisYearPaid
+          },
+          lastYear: {
+            loans: lastYearLoans.length,
+            amount: lastYearAmount,
+            payments: lastYearPayments.length,
+            paid: lastYearPaid
+          },
+          growth: {
+            loanCount: thisYearLoans.length - lastYearLoans.length,
+            loanAmount: loanGrowth,
+            paymentCount: thisYearPayments.length - lastYearPayments.length,
+            paymentAmount: paymentGrowth
+          }
+        };
+      } catch (error) {
+        console.error("Error calculating year-over-year data for AI:", error);
+      }
 
       // Calculate portfolio metrics - Safe BigInt/Decimal handling
       const totalOutstanding = activeLoans.reduce((sum: number, loan: any) => sum + Number(loan.amount?.toString() ?? 0), 0);
@@ -160,9 +219,21 @@ Payment History (${paymentHistory.data.length} payments in past 2 years):
 - Principal Paid: SAR ${paymentHistory.data.reduce((sum: number, p: any) => sum + Number(p.principalAmount?.toString() ?? 0), 0).toLocaleString()}
 - Interest Paid: SAR ${paymentHistory.data.reduce((sum: number, p: any) => sum + Number(p.interestAmount?.toString() ?? 0), 0).toLocaleString()}
 
-Loan Activity Trends:
-- This Year: ${[...activeLoans, ...settledLoans, ...cancelledLoans].filter((l: any) => new Date(l.startDate).getFullYear() === new Date().getFullYear()).length} loans created
-- Last Year: ${[...activeLoans, ...settledLoans, ...cancelledLoans].filter((l: any) => new Date(l.startDate).getFullYear() === new Date().getFullYear() - 1).length} loans created
+${yearOverYearData ? `Year-over-Year Comparison (${new Date().getFullYear()} vs ${new Date().getFullYear() - 1}):
+
+THIS YEAR (${new Date().getFullYear()}):
+- Loans Created: ${yearOverYearData.thisYear.loans} loans | SAR ${yearOverYearData.thisYear.amount.toLocaleString()}
+- Payments Made: ${yearOverYearData.thisYear.payments} payments | SAR ${yearOverYearData.thisYear.paid.toLocaleString()}
+
+LAST YEAR (${new Date().getFullYear() - 1}):
+- Loans Created: ${yearOverYearData.lastYear.loans} loans | SAR ${yearOverYearData.lastYear.amount.toLocaleString()}
+- Payments Made: ${yearOverYearData.lastYear.payments} payments | SAR ${yearOverYearData.lastYear.paid.toLocaleString()}
+
+GROWTH TRENDS:
+- Loan Count Change: ${yearOverYearData.growth.loanCount > 0 ? '+' : ''}${yearOverYearData.growth.loanCount} loans
+- Loan Amount Change: ${yearOverYearData.growth.loanAmount !== 'N/A' ? (parseFloat(yearOverYearData.growth.loanAmount) > 0 ? '+' : '') + yearOverYearData.growth.loanAmount + '%' : 'N/A'}
+- Payment Count Change: ${yearOverYearData.growth.paymentCount > 0 ? '+' : ''}${yearOverYearData.growth.paymentCount} payments
+- Payment Amount Change: ${yearOverYearData.growth.paymentAmount !== 'N/A' ? (parseFloat(yearOverYearData.growth.paymentAmount) > 0 ? '+' : '') + yearOverYearData.growth.paymentAmount + '%' : 'N/A'}` : 'Calculating year-over-year trends...'}
 `;
 
       // Prepare messages for AI

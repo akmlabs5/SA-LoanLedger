@@ -14,7 +14,7 @@ import {
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Calculator, TrendingDown, TrendingUp, Loader2, Calendar, Percent, DollarSign } from "lucide-react";
+import { Calculator, TrendingDown, TrendingUp, Loader2, Calendar, Percent, Coins } from "lucide-react";
 import { apiRequest } from "@/lib/queryClient";
 
 interface WhatIfAnalysisProps {
@@ -144,7 +144,7 @@ export function WhatIfAnalysis({ loanId, loanAmount, currentRate, durationDays }
                   Refinance
                 </TabsTrigger>
                 <TabsTrigger value="earlyPayment" data-testid="tab-early-payment" className="h-12">
-                  <DollarSign className="h-3 w-3 mr-1" />
+                  <Coins className="h-3 w-3 mr-1" />
                   Early Pay
                 </TabsTrigger>
                 <TabsTrigger value="termChange" data-testid="tab-term-change" className="h-12">

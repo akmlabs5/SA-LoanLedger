@@ -60,7 +60,13 @@ export default function AnalyticsPage() {
   const to = today.toISOString().split('T')[0];
   
   const { data: analytics, isLoading } = useQuery<AnalyticsResponse>({
-    queryKey: ['/api/analytics/year-over-year', { from, to, groupBy: periodType }],
+    queryKey: ['/api/analytics/year-over-year', from, to, periodType],
+    queryFn: async () => {
+      const params = new URLSearchParams({ from, to, groupBy: periodType });
+      const res = await fetch(`/api/analytics/year-over-year?${params}`);
+      if (!res.ok) throw new Error('Failed to fetch analytics');
+      return res.json();
+    },
     enabled: isAuthenticated,
   });
   
@@ -263,7 +269,7 @@ export default function AnalyticsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 p-4 md:p-8">
+    <div className="min-h-screen bg-gradient-to-br from-green-50 via-white to-emerald-50 dark:from-gray-900 dark:via-gray-900 dark:to-gray-800 p-4 md:p-8">
       <div className="max-w-7xl mx-auto space-y-6">
         {/* Header */}
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
@@ -394,10 +400,15 @@ export default function AnalyticsPage() {
         <Card>
           <CardHeader>
             <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-              <CardTitle className="flex items-center gap-2">
-                <TrendingUp className="h-5 w-5" />
-                Performance Trends
-              </CardTitle>
+              <div>
+                <CardTitle className="flex items-center gap-2">
+                  <TrendingUp className="h-5 w-5" />
+                  Performance Trends
+                </CardTitle>
+                <p className="text-sm text-muted-foreground mt-1">
+                  Visualize portfolio metrics across time periods to identify growth patterns
+                </p>
+              </div>
               <Select value={selectedMetric} onValueChange={(val) => setSelectedMetric(val as MetricType)}>
                 <SelectTrigger className="w-[220px]" data-testid="select-metric">
                   <SelectValue />
@@ -462,6 +473,9 @@ export default function AnalyticsPage() {
         <Card>
           <CardHeader>
             <CardTitle>Period-over-Period Comparison</CardTitle>
+            <p className="text-sm text-muted-foreground mt-1">
+              Historical data showing growth rates and changes between consecutive periods
+            </p>
           </CardHeader>
           <CardContent>
             <div className="overflow-x-auto">
