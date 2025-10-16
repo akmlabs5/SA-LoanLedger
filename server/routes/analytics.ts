@@ -169,11 +169,81 @@ export function registerAnalyticsRoutes(app: Express, deps: AppDependencies) {
         };
       });
       
+      // Calculate current period and previous period stats
+      const today = new Date();
+      const currentPeriodKey = getPeriodKey(today, groupBy as string);
+      const currentPeriodData = combinedData.find(d => d.period === currentPeriodKey);
+      
+      // Get previous period key
+      let prevPeriodKey = '';
+      if (groupBy === 'month') {
+        const prevMonth = new Date(today.getFullYear(), today.getMonth() - 1, 1);
+        prevPeriodKey = getPeriodKey(prevMonth, groupBy as string);
+      } else if (groupBy === 'quarter') {
+        const currentQuarter = Math.floor((today.getMonth()) / 3) + 1;
+        let prevQuarter = currentQuarter - 1;
+        let prevYear = today.getFullYear();
+        if (prevQuarter === 0) {
+          prevQuarter = 4;
+          prevYear -= 1;
+        }
+        prevPeriodKey = `${prevYear}-Q${prevQuarter}`;
+      } else if (groupBy === 'year') {
+        prevPeriodKey = `${today.getFullYear() - 1}`;
+      }
+      
+      const previousPeriodData = combinedData.find(d => d.period === prevPeriodKey);
+      
+      const calculatePercentChange = (current: number, previous: number) => {
+        if (previous === 0) return current > 0 ? 100 : 0;
+        return ((current - previous) / previous) * 100;
+      };
+      
+      const currentPeriod = currentPeriodData ? {
+        period: currentPeriodData.period,
+        loans: {
+          count: currentPeriodData.loans.loansCreated,
+          amount: currentPeriodData.loans.totalDisbursed.toString()
+        },
+        payments: {
+          count: currentPeriodData.payments.paymentCount,
+          amount: currentPeriodData.payments.totalPaid.toString()
+        },
+        snapshot: currentPeriodData.snapshot ? {
+          portfolioLtv: currentPeriodData.snapshot.portfolioLtv.toString(),
+          utilization: currentPeriodData.snapshot.totalCreditLimit > 0 
+            ? ((currentPeriodData.snapshot.totalOutstanding / currentPeriodData.snapshot.totalCreditLimit) * 100).toString()
+            : '0'
+        } : null
+      } : null;
+      
+      const previousPeriod = previousPeriodData ? {
+        period: previousPeriodData.period,
+        loans: {
+          count: previousPeriodData.loans.loansCreated,
+          amount: previousPeriodData.loans.totalDisbursed.toString()
+        },
+        payments: {
+          count: previousPeriodData.payments.paymentCount,
+          amount: previousPeriodData.payments.totalPaid.toString()
+        }
+      } : null;
+      
+      const periodComparison = currentPeriod && previousPeriod ? {
+        loansCountChange: calculatePercentChange(currentPeriod.loans.count, previousPeriod.loans.count),
+        loansAmountChange: calculatePercentChange(parseFloat(currentPeriod.loans.amount), parseFloat(previousPeriod.loans.amount)),
+        paymentsCountChange: calculatePercentChange(currentPeriod.payments.count, previousPeriod.payments.count),
+        paymentsAmountChange: calculatePercentChange(parseFloat(currentPeriod.payments.amount), parseFloat(previousPeriod.payments.amount))
+      } : null;
+      
       res.json({
         groupBy,
         from,
         to,
         data: dataWithChanges,
+        currentPeriod,
+        previousPeriod,
+        periodComparison,
         summary: {
           totalLoansCreated: Object.values(loansByPeriod).reduce((sum: number, p: any) => sum + p.loansCreated, 0),
           totalDisbursed: Object.values(loansByPeriod).reduce((sum: number, p: any) => sum + p.totalDisbursed, 0),
