@@ -22,6 +22,8 @@ import {
   auditLogs,
   chatConversations,
   chatMessages,
+  loanPayments,
+  portfolioSnapshots,
   type User,
   type UpsertUser,
   type Bank,
@@ -78,6 +80,10 @@ import {
   type InsertChatConversation,
   type ChatMessage,
   type InsertChatMessage,
+  type LoanPayment,
+  type InsertLoanPayment,
+  type PortfolioSnapshot,
+  type InsertPortfolioSnapshot,
   organizations,
   organizationMembers,
   organizationInvitations,
@@ -313,6 +319,29 @@ export interface IStorage {
   getInvitation(token: string): Promise<OrganizationInvitation | undefined>;
   deleteInvitation(invitationId: string): Promise<void>;
   getOrganizationInvitations(organizationId: string): Promise<OrganizationInvitation[]>;
+  
+  // Loan Payment operations
+  recordPayment(payment: InsertLoanPayment): Promise<LoanPayment>;
+  getPaymentsByLoan(loanId: string): Promise<LoanPayment[]>;
+  getPaymentHistory(organizationId: string, filters?: {
+    from?: string;
+    to?: string;
+    loanId?: string;
+    limit?: number;
+    offset?: number;
+  }): Promise<{ data: LoanPayment[]; total: number }>;
+  calculatePaymentSummary(loanId: string): Promise<{
+    totalPaid: number;
+    principalPaid: number;
+    interestPaid: number;
+    paymentCount: number;
+  }>;
+  
+  // Portfolio Snapshot operations
+  createPortfolioSnapshot(snapshot: InsertPortfolioSnapshot): Promise<PortfolioSnapshot>;
+  getSnapshotByDate(organizationId: string, date: string): Promise<PortfolioSnapshot | undefined>;
+  getSnapshotsInRange(organizationId: string, from: string, to: string): Promise<PortfolioSnapshot[]>;
+  getLatestSnapshot(organizationId: string): Promise<PortfolioSnapshot | undefined>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -2076,6 +2105,127 @@ export class DatabaseStorage implements IStorage {
       .where(eq(organizationInvitations.organizationId, organizationId))
       .orderBy(desc(organizationInvitations.createdAt));
   }
+  
+  // Loan Payment operations
+  async recordPayment(payment: InsertLoanPayment): Promise<LoanPayment> {
+    const [result] = await db
+      .insert(loanPayments)
+      .values(payment)
+      .returning();
+    return result;
+  }
+  
+  async getPaymentsByLoan(loanId: string): Promise<LoanPayment[]> {
+    return await db
+      .select()
+      .from(loanPayments)
+      .where(eq(loanPayments.loanId, loanId))
+      .orderBy(desc(loanPayments.paymentDate));
+  }
+  
+  async getPaymentHistory(organizationId: string, filters?: {
+    from?: string;
+    to?: string;
+    loanId?: string;
+    limit?: number;
+    offset?: number;
+  }): Promise<{ data: LoanPayment[]; total: number }> {
+    const conditions = [eq(loanPayments.organizationId, organizationId)];
+    
+    if (filters?.from) {
+      conditions.push(gte(loanPayments.paymentDate, filters.from));
+    }
+    if (filters?.to) {
+      conditions.push(lte(loanPayments.paymentDate, filters.to));
+    }
+    if (filters?.loanId) {
+      conditions.push(eq(loanPayments.loanId, filters.loanId));
+    }
+    
+    const [countResult] = await db
+      .select({ count: sql<number>`count(*)` })
+      .from(loanPayments)
+      .where(and(...conditions));
+    
+    const data = await db
+      .select()
+      .from(loanPayments)
+      .where(and(...conditions))
+      .orderBy(desc(loanPayments.paymentDate))
+      .limit(filters?.limit || 50)
+      .offset(filters?.offset || 0);
+    
+    return {
+      data,
+      total: Number(countResult?.count || 0)
+    };
+  }
+  
+  async calculatePaymentSummary(loanId: string): Promise<{
+    totalPaid: number;
+    principalPaid: number;
+    interestPaid: number;
+    paymentCount: number;
+  }> {
+    const payments = await db
+      .select()
+      .from(loanPayments)
+      .where(eq(loanPayments.loanId, loanId));
+    
+    const totalPaid = payments.reduce((sum, p) => sum + Number(p.amount?.toString() || 0), 0);
+    const principalPaid = payments.reduce((sum, p) => sum + Number(p.principalAmount?.toString() || 0), 0);
+    const interestPaid = payments.reduce((sum, p) => sum + Number(p.interestAmount?.toString() || 0), 0);
+    
+    return {
+      totalPaid,
+      principalPaid,
+      interestPaid,
+      paymentCount: payments.length
+    };
+  }
+  
+  // Portfolio Snapshot operations
+  async createPortfolioSnapshot(snapshot: InsertPortfolioSnapshot): Promise<PortfolioSnapshot> {
+    const [result] = await db
+      .insert(portfolioSnapshots)
+      .values(snapshot)
+      .returning();
+    return result;
+  }
+  
+  async getSnapshotByDate(organizationId: string, date: string): Promise<PortfolioSnapshot | undefined> {
+    const [result] = await db
+      .select()
+      .from(portfolioSnapshots)
+      .where(and(
+        eq(portfolioSnapshots.organizationId, organizationId),
+        eq(portfolioSnapshots.snapshotDate, date)
+      ))
+      .limit(1);
+    return result;
+  }
+  
+  async getSnapshotsInRange(organizationId: string, from: string, to: string): Promise<PortfolioSnapshot[]> {
+    return await db
+      .select()
+      .from(portfolioSnapshots)
+      .where(and(
+        eq(portfolioSnapshots.organizationId, organizationId),
+        gte(portfolioSnapshots.snapshotDate, from),
+        lte(portfolioSnapshots.snapshotDate, to)
+      ))
+      .orderBy(asc(portfolioSnapshots.snapshotDate));
+  }
+  
+  async getLatestSnapshot(organizationId: string): Promise<PortfolioSnapshot | undefined> {
+    const [result] = await db
+      .select()
+      .from(portfolioSnapshots)
+      .where(eq(portfolioSnapshots.organizationId, organizationId))
+      .orderBy(desc(portfolioSnapshots.snapshotDate))
+      .limit(1);
+    return result;
+  }
 }
 
 // In-memory storage fallback implementation
@@ -2102,6 +2252,8 @@ export class MemoryStorage implements IStorage {
   private attachmentAudits = new Map<string, AttachmentAudit>();
   private chatConversations = new Map<string, ChatConversation>();
   private chatMessages = new Map<string, ChatMessage>();
+  private loanPayments = new Map<string, LoanPayment>();
+  private portfolioSnapshots = new Map<string, PortfolioSnapshot>();
   private organizations = new Map<string, Organization>();
   private organizationMembers = new Map<string, OrganizationMember>();
   private organizationInvitations = new Map<string, OrganizationInvitation>();
@@ -3796,6 +3948,108 @@ Reference: {loanReference}`,
     return Array.from(this.organizationInvitations.values())
       .filter(inv => inv.organizationId === organizationId)
       .sort((a, b) => (b.createdAt?.getTime() || 0) - (a.createdAt?.getTime() || 0));
+  }
+  
+  // Loan Payment operations
+  async recordPayment(payment: InsertLoanPayment): Promise<LoanPayment> {
+    const newPayment: LoanPayment = {
+      ...payment,
+      id: this.generateId(),
+      createdAt: new Date(),
+    };
+    this.loanPayments.set(newPayment.id, newPayment);
+    return newPayment;
+  }
+  
+  async getPaymentsByLoan(loanId: string): Promise<LoanPayment[]> {
+    return Array.from(this.loanPayments.values())
+      .filter(p => p.loanId === loanId)
+      .sort((a, b) => (b.paymentDate?.getTime() || 0) - (a.paymentDate?.getTime() || 0));
+  }
+  
+  async getPaymentHistory(organizationId: string, filters?: {
+    from?: string;
+    to?: string;
+    loanId?: string;
+    limit?: number;
+    offset?: number;
+  }): Promise<{ data: LoanPayment[]; total: number }> {
+    let filtered = Array.from(this.loanPayments.values())
+      .filter(p => p.organizationId === organizationId);
+    
+    if (filters?.from) {
+      filtered = filtered.filter(p => new Date(p.paymentDate) >= new Date(filters.from!));
+    }
+    if (filters?.to) {
+      filtered = filtered.filter(p => new Date(p.paymentDate) <= new Date(filters.to!));
+    }
+    if (filters?.loanId) {
+      filtered = filtered.filter(p => p.loanId === filters.loanId);
+    }
+    
+    filtered.sort((a, b) => (b.paymentDate?.getTime() || 0) - (a.paymentDate?.getTime() || 0));
+    
+    const total = filtered.length;
+    const offset = filters?.offset || 0;
+    const limit = filters?.limit || 50;
+    const data = filtered.slice(offset, offset + limit);
+    
+    return { data, total };
+  }
+  
+  async calculatePaymentSummary(loanId: string): Promise<{
+    totalPaid: number;
+    principalPaid: number;
+    interestPaid: number;
+    paymentCount: number;
+  }> {
+    const payments = Array.from(this.loanPayments.values())
+      .filter(p => p.loanId === loanId);
+    
+    const totalPaid = payments.reduce((sum, p) => sum + Number(p.amount || 0), 0);
+    const principalPaid = payments.reduce((sum, p) => sum + Number(p.principalAmount || 0), 0);
+    const interestPaid = payments.reduce((sum, p) => sum + Number(p.interestAmount || 0), 0);
+    
+    return {
+      totalPaid,
+      principalPaid,
+      interestPaid,
+      paymentCount: payments.length
+    };
+  }
+  
+  // Portfolio Snapshot operations
+  async createPortfolioSnapshot(snapshot: InsertPortfolioSnapshot): Promise<PortfolioSnapshot> {
+    const newSnapshot: PortfolioSnapshot = {
+      ...snapshot,
+      id: this.generateId(),
+      createdAt: new Date(),
+    };
+    this.portfolioSnapshots.set(newSnapshot.id, newSnapshot);
+    return newSnapshot;
+  }
+  
+  async getSnapshotByDate(organizationId: string, date: string): Promise<PortfolioSnapshot | undefined> {
+    return Array.from(this.portfolioSnapshots.values())
+      .find(s => s.organizationId === organizationId && s.snapshotDate === date);
+  }
+  
+  async getSnapshotsInRange(organizationId: string, from: string, to: string): Promise<PortfolioSnapshot[]> {
+    return Array.from(this.portfolioSnapshots.values())
+      .filter(s => 
+        s.organizationId === organizationId &&
+        new Date(s.snapshotDate) >= new Date(from) &&
+        new Date(s.snapshotDate) <= new Date(to)
+      )
+      .sort((a, b) => new Date(a.snapshotDate).getTime() - new Date(b.snapshotDate).getTime());
+  }
+  
+  async getLatestSnapshot(organizationId: string): Promise<PortfolioSnapshot | undefined> {
+    const snapshots = Array.from(this.portfolioSnapshots.values())
+      .filter(s => s.organizationId === organizationId)
+      .sort((a, b) => new Date(b.snapshotDate).getTime() - new Date(a.snapshotDate).getTime());
+    
+    return snapshots[0];
   }
 }
 
