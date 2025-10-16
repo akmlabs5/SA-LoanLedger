@@ -289,6 +289,7 @@ export const banks = pgTable("banks", {
 // Bank Contacts (Account Managers)
 export const bankContacts = pgTable("bank_contacts", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  organizationId: varchar("organization_id").references(() => organizations.id, { onDelete: 'cascade' }),
   bankId: varchar("bank_id").references(() => banks.id).notNull(),
   userId: varchar("user_id").references(() => users.id).notNull(),
   name: varchar("name", { length: 100 }).notNull(),
@@ -304,6 +305,7 @@ export const bankContacts = pgTable("bank_contacts", {
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 }, (table) => [
+  index("idx_bank_contacts_org").on(table.organizationId),
   index("idx_bank_contacts_bank").on(table.bankId),
   index("idx_bank_contacts_user").on(table.userId),
 ]);
@@ -1114,7 +1116,7 @@ export const insertBankContactSchema = createInsertSchema(bankContacts)
     name: z.string().min(1, "Name is required").max(100, "Name must be less than 100 characters"),
     title: z.string().max(100, "Title must be less than 100 characters").optional(),
     department: z.string().max(100, "Department must be less than 100 characters").optional(),
-    email: z.string().email("Must be a valid email address").optional(),
+    email: z.string().email("Must be a valid email address").optional().or(z.literal("")),
     phone: z.string().max(50, "Phone must be less than 50 characters").optional(),
     mobile: z.string().max(50, "Mobile must be less than 50 characters").optional(),
     extension: z.string().max(20, "Extension must be less than 20 characters").optional(),
