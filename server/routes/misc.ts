@@ -344,6 +344,63 @@ export function registerMiscRoutes(app: Express, deps: AppDependencies) {
     }
   });
 
+  // Test Supabase configuration endpoint
+  app.get('/api/test-supabase-config', async (req, res) => {
+    try {
+      const supabaseUrl = process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL;
+      const supabaseAnonKey = process.env.VITE_SUPABASE_ANON_KEY || process.env.SUPABASE_ANON_KEY;
+      const currentDomain = process.env.REPLIT_DEV_DOMAIN;
+      
+      // Check if Supabase is configured
+      const isConfigured = !!(supabaseUrl && supabaseAnonKey);
+      
+      // Validate URL format
+      const isValidUrl = (url: string) => {
+        try {
+          new URL(url);
+          return true;
+        } catch {
+          return false;
+        }
+      };
+      
+      const urlValid = supabaseUrl ? isValidUrl(supabaseUrl) : false;
+      const expectedRedirectUrl = currentDomain ? `https://${currentDomain}` : 'Not available';
+      
+      res.json({
+        configured: isConfigured,
+        supabase: {
+          url: supabaseUrl ? {
+            value: supabaseUrl,
+            valid: urlValid
+          } : 'Not set',
+          anonKey: supabaseAnonKey ? {
+            configured: true,
+            length: supabaseAnonKey.length,
+            preview: `${supabaseAnonKey.substring(0, 20)}...`
+          } : 'Not set'
+        },
+        replit: {
+          domain: currentDomain || 'Not available',
+          expectedRedirectUrl,
+          expectedSiteUrl: expectedRedirectUrl
+        },
+        recommendations: [
+          ...(supabaseUrl && urlValid ? [] : ['Set valid SUPABASE_URL in environment']),
+          ...(supabaseAnonKey ? [] : ['Set SUPABASE_ANON_KEY in environment']),
+          ...(currentDomain ? [
+            `Ensure your Supabase Site URL is set to: ${expectedRedirectUrl}`,
+            `Ensure your Supabase Redirect URLs include: ${expectedRedirectUrl}/*`
+          ] : ['Replit domain not detected'])
+        ],
+        status: isConfigured && urlValid ? 'ready' : 'needs_configuration'
+      });
+    } catch (error) {
+      console.error("Error checking Supabase config:", error);
+      res.status(500).json({ message: "Failed to check Supabase configuration" });
+    }
+  });
+
   // Test email endpoint
   app.post('/api/test-emails', async (req, res) => {
     try {

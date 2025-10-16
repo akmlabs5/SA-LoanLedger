@@ -54,6 +54,7 @@ import FeaturesTipsPage from "@/pages/features-tips";
 import HelpDeskPage from "@/pages/help-desk";
 import AcceptInvitePage from "@/pages/accept-invite";
 import MorePage from "@/pages/MorePage";
+import TestSupabasePage from "@/pages/test-supabase";
 
 import AppLayout from "@/components/AppLayout";
 import { MobileLayout } from "@/components/mobile";
@@ -169,6 +170,7 @@ function App() {
           <Route path="/user-settings" component={UserSettingsPage} />
           <Route path="/features-tips" component={FeaturesTipsPage} />
           <Route path="/help-desk" component={HelpDeskPage} />
+          <Route path="/test-supabase" component={TestSupabasePage} />
           <Route component={NotFoundPage} />
         </Switch>
       </MobileLayout>
