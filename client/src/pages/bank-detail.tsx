@@ -48,7 +48,8 @@ import {
   Receipt,
   RotateCcw,
   CheckSquare,
-  History
+  History,
+  ChevronDown
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -105,6 +106,9 @@ export default function BankDetail() {
   
   // Pagination state for collateral list
   const [visibleCollateralCount, setVisibleCollateralCount] = useState(4);
+  
+  // Expandable facilities state
+  const [expandedFacilities, setExpandedFacilities] = useState<Set<string>>(new Set());
 
   const { data: bank, isLoading: bankLoading, error: bankError } = useQuery<Bank>({
     queryKey: ["/api/banks", bankId],
@@ -355,6 +359,19 @@ export default function BankDetail() {
   };
 
   const connectionStatus = getConnectionStatus();
+  
+  // Toggle facility expansion
+  const toggleFacilityExpanded = (facilityId: string) => {
+    setExpandedFacilities(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(facilityId)) {
+        newSet.delete(facilityId);
+      } else {
+        newSet.add(facilityId);
+      }
+      return newSet;
+    });
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-gray-100 dark:from-gray-900 dark:to-slate-900">
@@ -542,89 +559,185 @@ export default function BankDetail() {
                   </div>
                 ) : (
                   <div className="space-y-4">
-                    {bankFacilities.map((facility: any) => (
-                      <div key={facility.id} className="p-4 border border-gray-200 dark:border-gray-700 rounded-xl">
-                        <div className="flex items-center justify-between mb-3">
-                          <div>
-                            <h4 className="font-semibold text-gray-900 dark:text-gray-100 capitalize">
-                              {formatFacilityType(facility.facilityType)} Facility
-                            </h4>
-                            <p className="text-sm text-gray-600 dark:text-gray-400">
-                              Active since {new Date(facility.startDate).toLocaleDateString()}
-                            </p>
+                    {bankFacilities.map((facility: any) => {
+                      const isExpanded = expandedFacilities.has(facility.id);
+                      const facilityLoans = bankLoans.filter(loan => loan.facilityId === facility.id && loan.status === 'active');
+                      const facilityOutstanding = facilityLoans.reduce((sum, loan) => sum + parseFloat(loan.amount), 0);
+                      const facilityAvailable = parseFloat(facility.creditLimit) - facilityOutstanding;
+                      const facilityUtilization = parseFloat(facility.creditLimit) > 0 
+                        ? (facilityOutstanding / parseFloat(facility.creditLimit)) * 100 
+                        : 0;
+                      
+                      return (
+                      <div key={facility.id} className="border border-gray-200 dark:border-gray-700 rounded-xl overflow-hidden">
+                        <div 
+                          className="p-4 cursor-pointer lg:hover:bg-gray-50 dark:lg:hover:bg-gray-800/50 transition-colors"
+                          onClick={() => toggleFacilityExpanded(facility.id)}
+                        >
+                          <div className="flex items-center justify-between mb-3">
+                            <div className="flex items-center gap-3 flex-1">
+                              <div className="flex-1">
+                                <h4 className="font-semibold text-gray-900 dark:text-gray-100 capitalize">
+                                  {formatFacilityType(facility.facilityType)} Facility
+                                </h4>
+                                <p className="text-sm text-gray-600 dark:text-gray-400">
+                                  Active since {new Date(facility.startDate).toLocaleDateString()}
+                                </p>
+                              </div>
+                              <ChevronDown className={`h-5 w-5 text-gray-500 transition-transform ${isExpanded ? 'rotate-180' : ''}`} />
+                            </div>
+                            <Badge className={facility.isActive 
+                              ? "bg-emerald-100 text-emerald-800 dark:bg-emerald-900/20 dark:text-emerald-400"
+                              : "bg-gray-100 text-gray-800 dark:bg-gray-900/20 dark:text-gray-400"
+                            }>
+                              {facility.isActive ? 'Active' : 'Inactive'}
+                            </Badge>
                           </div>
-                          <Badge className={facility.isActive 
-                            ? "bg-emerald-100 text-emerald-800 dark:bg-emerald-900/20 dark:text-emerald-400"
-                            : "bg-gray-100 text-gray-800 dark:bg-gray-900/20 dark:text-gray-400"
-                          }>
-                            {facility.isActive ? 'Active' : 'Inactive'}
-                          </Badge>
-                        </div>
                         
-                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-3">
-                          <div>
-                            <p className="text-xs text-gray-500 dark:text-gray-400">Credit Limit</p>
-                            <p className="font-semibold text-gray-900 dark:text-gray-100">
-                              {formatCurrency(parseFloat(facility.creditLimit))}
-                            </p>
-                          </div>
-                          <div>
-                            <p className="text-xs text-gray-500 dark:text-gray-400">Cost of Funding</p>
-                            <p className="font-semibold text-gray-900 dark:text-gray-100">
-                              SIBOR + {facility.costOfFunding}%
-                            </p>
-                          </div>
-                          <div>
-                            <p className="text-xs text-gray-500 dark:text-gray-400">Start Date</p>
-                            <p className="font-semibold text-gray-900 dark:text-gray-100">
-                              {new Date(facility.startDate).toLocaleDateString()}
-                            </p>
-                          </div>
-                          <div>
-                            <p className="text-xs text-gray-500 dark:text-gray-400">Expiry Date</p>
-                            <p className="font-semibold text-gray-900 dark:text-gray-100">
-                              {facility.expiryDate 
-                                ? new Date(facility.expiryDate).toLocaleDateString()
-                                : <span className="text-blue-600 dark:text-blue-400 text-sm">Flexible Term</span>
-                              }
-                            </p>
+                          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                            <div>
+                              <p className="text-xs text-gray-500 dark:text-gray-400">Credit Limit</p>
+                              <p className="font-semibold text-gray-900 dark:text-gray-100">
+                                {formatCurrency(parseFloat(facility.creditLimit))}
+                              </p>
+                            </div>
+                            <div>
+                              <p className="text-xs text-gray-500 dark:text-gray-400">Utilization</p>
+                              <p className="font-semibold text-gray-900 dark:text-gray-100">
+                                {facilityUtilization.toFixed(1)}%
+                              </p>
+                            </div>
+                            <div>
+                              <p className="text-xs text-gray-500 dark:text-gray-400">Cost of Funding</p>
+                              <p className="font-semibold text-gray-900 dark:text-gray-100">
+                                SIBOR + {facility.costOfFunding}%
+                              </p>
+                            </div>
+                            <div>
+                              <p className="text-xs text-gray-500 dark:text-gray-400">Active Loans</p>
+                              <p className="font-semibold text-gray-900 dark:text-gray-100">
+                                {facilityLoans.length}
+                              </p>
+                            </div>
                           </div>
                         </div>
-                        
-                        {facility.terms && (
-                          <div className="mt-3">
-                            <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">Terms & Conditions</p>
-                            <p className="text-sm text-gray-700 dark:text-gray-300 bg-gray-50 dark:bg-gray-800 p-3 rounded-lg">
-                              {facility.terms}
-                            </p>
+
+                        {/* Expanded Section */}
+                        {isExpanded && (
+                          <div className="px-4 pb-4 space-y-4 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/30">
+                            {/* Available Limit */}
+                            <div className="pt-4">
+                              <h5 className="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-3">Facility Metrics</h5>
+                              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                <div className="bg-white dark:bg-gray-800 p-3 rounded-lg border border-gray-200 dark:border-gray-700">
+                                  <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">Available Limit</p>
+                                  <p className="text-xl font-bold text-emerald-600 dark:text-emerald-400">
+                                    {formatCurrency(facilityAvailable)}
+                                  </p>
+                                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                                    {((facilityAvailable / parseFloat(facility.creditLimit)) * 100).toFixed(1)}% available
+                                  </p>
+                                </div>
+                                <div className="bg-white dark:bg-gray-800 p-3 rounded-lg border border-gray-200 dark:border-gray-700">
+                                  <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">Outstanding</p>
+                                  <p className="text-xl font-bold text-gray-900 dark:text-gray-100">
+                                    {formatCurrency(facilityOutstanding)}
+                                  </p>
+                                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                                    {facilityUtilization.toFixed(1)}% utilized
+                                  </p>
+                                </div>
+                                <div className="bg-white dark:bg-gray-800 p-3 rounded-lg border border-gray-200 dark:border-gray-700">
+                                  <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">Expiry Date</p>
+                                  <p className="text-lg font-semibold text-gray-900 dark:text-gray-100">
+                                    {facility.expiryDate 
+                                      ? new Date(facility.expiryDate).toLocaleDateString()
+                                      : <span className="text-blue-600 dark:text-blue-400 text-sm">Flexible</span>
+                                    }
+                                  </p>
+                                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                                    Started {new Date(facility.startDate).toLocaleDateString()}
+                                  </p>
+                                </div>
+                              </div>
+                            </div>
+
+                            {/* Active Loans Under Facility */}
+                            {facilityLoans.length > 0 && (
+                              <div>
+                                <h5 className="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-3">Active Loans ({facilityLoans.length})</h5>
+                                <div className="space-y-2">
+                                  {facilityLoans.map((loan: any) => (
+                                    <div 
+                                      key={loan.id}
+                                      className="bg-white dark:bg-gray-800 p-3 rounded-lg border border-gray-200 dark:border-gray-700 lg:hover:shadow-sm transition-shadow cursor-pointer"
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        setLocation(`/loans/${loan.id}`);
+                                      }}
+                                    >
+                                      <div className="flex items-center justify-between">
+                                        <div>
+                                          <p className="font-medium text-gray-900 dark:text-gray-100">{loan.referenceNumber}</p>
+                                          <p className="text-xs text-gray-500 dark:text-gray-400">
+                                            Due: {new Date(loan.dueDate).toLocaleDateString()}
+                                          </p>
+                                        </div>
+                                        <p className="font-semibold text-gray-900 dark:text-gray-100">
+                                          {formatCurrency(parseFloat(loan.amount))}
+                                        </p>
+                                      </div>
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
+
+                            {/* Terms & Conditions */}
+                            {facility.terms && (
+                              <div>
+                                <h5 className="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-2">Terms & Conditions</h5>
+                                <p className="text-sm text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 p-3 rounded-lg border border-gray-200 dark:border-gray-700">
+                                  {facility.terms}
+                                </p>
+                              </div>
+                            )}
+
+                            {/* Actions */}
+                            <div className="flex justify-end space-x-2 pt-3 border-t border-gray-200 dark:border-gray-700">
+                              <Button 
+                                variant="outline" 
+                                size="sm"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setLocation(`/banks/${bankId}/facility/${facility.id}/edit`);
+                                }}
+                                className="min-h-[44px] w-24 touch-manipulation"
+                                data-testid={`button-edit-facility-${facility.id}`}
+                              >
+                                <Edit className="mr-1 h-4 w-4" />
+                                Edit
+                              </Button>
+                              <Button 
+                                variant="destructive" 
+                                size="sm"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleDeleteFacility(facility.id);
+                                }}
+                                disabled={deleteFacilityMutation.isPending}
+                                className="min-h-[44px] w-24 touch-manipulation"
+                                data-testid={`button-delete-facility-${facility.id}`}
+                              >
+                                <Trash2 className="mr-1 h-4 w-4" />
+                                Delete
+                              </Button>
+                            </div>
                           </div>
                         )}
-                        
-                        <div className="flex justify-end space-x-2 mt-4 pt-3 border-t border-gray-200 dark:border-gray-700">
-                          <Button 
-                            variant="outline" 
-                            size="sm"
-                            onClick={() => setLocation(`/banks/${bankId}/facility/${facility.id}/edit`)}
-                            className="min-h-[44px] w-24 touch-manipulation"
-                            data-testid={`button-edit-facility-${facility.id}`}
-                          >
-                            <Edit className="mr-1 h-4 w-4" />
-                            Edit
-                          </Button>
-                          <Button 
-                            variant="destructive" 
-                            size="sm"
-                            onClick={() => handleDeleteFacility(facility.id)}
-                            disabled={deleteFacilityMutation.isPending}
-                            className="min-h-[44px] w-24 touch-manipulation"
-                            data-testid={`button-delete-facility-${facility.id}`}
-                          >
-                            <Trash2 className="mr-1 h-4 w-4" />
-                            Delete
-                          </Button>
-                        </div>
                       </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 )}
               </CardContent>
