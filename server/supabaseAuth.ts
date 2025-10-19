@@ -238,8 +238,8 @@ export async function setupSupabaseAuth(app: Express, databaseAvailable = true) 
       
       // Generate email verification link using Supabase
       const redirectUrl = process.env.REPLIT_DEV_DOMAIN 
-        ? `https://${process.env.REPLIT_DEV_DOMAIN}/dashboard`
-        : 'https://akm-labs.com/dashboard';
+        ? `https://${process.env.REPLIT_DEV_DOMAIN}/email-verified`
+        : 'https://akm-labs.com/email-verified';
       
       const { data: linkData, error: linkError } = await adminClient.auth.admin.generateLink({
         type: 'signup',

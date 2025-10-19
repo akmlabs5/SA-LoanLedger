@@ -39,6 +39,7 @@ import ForgotPasswordPage from "@/pages/auth/forgot-password";
 import SupabaseSignupPage from "@/pages/supabase-signup";
 import SupabaseSigninPage from "@/pages/supabase-signin";
 import UnifiedLoginPage from "@/pages/unified-login";
+import EmailVerifiedPage from "@/pages/email-verified";
 
 // Admin portal pages
 import AdminDashboardPage from "@/pages/admin-portal/dashboard";
@@ -132,6 +133,7 @@ function App() {
         <Route path="/landing" component={LandingPage} />
         <Route path="/login-hub" component={LoginHub} />
         <Route path="/accept-invite" component={AcceptInvitePage} />
+        <Route path="/email-verified" component={EmailVerifiedPage} />
         <Route component={UnifiedLoginPage} />
       </Switch>
     );
@@ -142,6 +144,7 @@ function App() {
     <AppLayout>
       <MobileLayout>
         <Switch>
+          <Route path="/email-verified" component={EmailVerifiedPage} />
           <Route path="/" component={DashboardPage} />
           <Route path="/loans" component={LoansPage} />
           <Route path="/loans/create" component={LoanCreatePage} />
