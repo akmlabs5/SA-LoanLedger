@@ -40,6 +40,7 @@ import SupabaseSignupPage from "@/pages/supabase-signup";
 import SupabaseSigninPage from "@/pages/supabase-signin";
 import UnifiedLoginPage from "@/pages/unified-login";
 import EmailVerifiedPage from "@/pages/email-verified";
+import ResetPasswordPage from "@/pages/reset-password";
 
 // Admin portal pages
 import AdminDashboardPage from "@/pages/admin-portal/dashboard";
@@ -124,6 +125,10 @@ function App() {
   // Handle standalone pages (no auth required, no layout)
   if (location.startsWith('/email-verified')) {
     return <EmailVerifiedPage />;
+  }
+
+  if (location.startsWith('/reset-password')) {
+    return <ResetPasswordPage />;
   }
 
   // Handle auth routing
