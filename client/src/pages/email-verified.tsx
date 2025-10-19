@@ -23,14 +23,15 @@ export default function EmailVerified() {
           </p>
 
           {/* Call to Action */}
-          <Button
-            size="lg"
-            className="w-full bg-emerald-600 hover:bg-emerald-700 dark:bg-emerald-700 dark:hover:bg-emerald-600 text-white font-semibold"
-            onClick={() => window.location.href = 'https://www.akm-labs.com'}
-            data-testid="button-goto-login"
-          >
-            Go to www.akm-labs.com to Login
-          </Button>
+          <a href="https://www.akm-labs.com" className="block w-full">
+            <Button
+              size="lg"
+              className="w-full bg-emerald-600 hover:bg-emerald-700 dark:bg-emerald-700 dark:hover:bg-emerald-600 text-white font-semibold"
+              data-testid="button-login-akmlabs"
+            >
+              Go to www.akm-labs.com to Login
+            </Button>
+          </a>
 
           {/* Additional Info */}
           <p className="text-sm text-gray-500 dark:text-gray-400 mt-6">

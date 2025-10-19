@@ -121,6 +121,11 @@ function App() {
     );
   }
 
+  // Handle standalone pages (no auth required, no layout)
+  if (location.startsWith('/email-verified')) {
+    return <EmailVerifiedPage />;
+  }
+
   // Handle auth routing
   if (!isAuthenticated) {
     return (
@@ -133,7 +138,6 @@ function App() {
         <Route path="/landing" component={LandingPage} />
         <Route path="/login-hub" component={LoginHub} />
         <Route path="/accept-invite" component={AcceptInvitePage} />
-        <Route path="/email-verified" component={EmailVerifiedPage} />
         <Route component={UnifiedLoginPage} />
       </Switch>
     );
@@ -144,7 +148,6 @@ function App() {
     <AppLayout>
       <MobileLayout>
         <Switch>
-          <Route path="/email-verified" component={EmailVerifiedPage} />
           <Route path="/" component={DashboardPage} />
           <Route path="/loans" component={LoansPage} />
           <Route path="/loans/create" component={LoanCreatePage} />
