@@ -739,6 +739,14 @@ export default function LoanDetailPage() {
                       {settleLoanMutation.isPending ? 'Settling...' : 'Settle Loan'}
                     </Button>
                     <Button 
+                      className="w-full bg-blue-600 lg:hover:bg-blue-700 text-white"
+                      onClick={() => setLocation(`/loans/${loan.id}/revolve`)}
+                      data-testid="button-revolve-loan-mobile"
+                    >
+                      <RefreshCw className="mr-2 h-4 w-4" />
+                      Revolve Loan
+                    </Button>
+                    <Button 
                       variant="outline" 
                       className="w-full"
                       onClick={() => setLocation(`/loans/${loan.id}/payment/create`)}
@@ -752,14 +760,6 @@ export default function LoanDetailPage() {
                     >
                       <Edit className="mr-2 h-4 w-4" />
                       Edit Loan
-                    </Button>
-                    <Button 
-                      className="w-full bg-blue-600 lg:hover:bg-blue-700 text-white"
-                      onClick={() => setLocation(`/loans/${loan.id}/revolve`)}
-                      data-testid="button-revolve-loan-mobile"
-                    >
-                      <RefreshCw className="mr-2 h-4 w-4" />
-                      Revolve Loan
                     </Button>
                     <Button 
                       variant="outline" 
