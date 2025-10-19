@@ -1722,6 +1722,11 @@ function TeamManagementSection() {
                     <div>
                       <p className="font-medium">{member.user?.firstName} {member.user?.lastName}</p>
                       <p className="text-sm text-muted-foreground">{member.user?.email}</p>
+                      {member.joinedAt && (
+                        <p className="text-xs text-muted-foreground mt-0.5">
+                          Joined {new Date(member.joinedAt).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' })}
+                        </p>
+                      )}
                     </div>
                   </div>
                   <div className="flex items-center gap-3">
