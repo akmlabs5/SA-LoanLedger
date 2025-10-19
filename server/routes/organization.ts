@@ -145,7 +145,10 @@ export function registerOrganizationRoutes(app: Express, deps: AppDependencies) 
         : 'A team member';
 
       // Send invitation email
-      const inviteUrl = `${process.env.REPL_SLUG ? `https://${process.env.REPL_SLUG}.${process.env.REPL_OWNER}.repl.co` : 'http://localhost:5000'}/accept-invite?token=${token}`;
+      const baseUrl = process.env.REPLIT_DEV_DOMAIN 
+        ? `https://${process.env.REPLIT_DEV_DOMAIN}`
+        : 'https://akm-labs.com';
+      const inviteUrl = `${baseUrl}/accept-invite?token=${token}`;
 
       const emailSent = await sendInvitationEmail(email, userOrg.name, inviterName, inviteUrl);
 
