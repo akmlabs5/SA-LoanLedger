@@ -492,6 +492,11 @@ export function registerOrganizationRoutes(app: Express, deps: AppDependencies) 
       // Get invitations
       const invitations = await storage.getOrganizationInvitations(userOrg.id);
 
+      // Prevent caching to ensure fresh data after invitations are cancelled
+      res.set('Cache-Control', 'no-store, no-cache, must-revalidate, private');
+      res.set('Pragma', 'no-cache');
+      res.set('Expires', '0');
+
       res.json({ 
         success: true, 
         invitations: invitations.map(inv => ({
