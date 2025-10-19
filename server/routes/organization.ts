@@ -511,4 +511,59 @@ export function registerOrganizationRoutes(app: Express, deps: AppDependencies) 
       });
     }
   });
+
+  // Cancel/delete pending invitation (owner only)
+  app.delete('/api/organization/invitations/:invitationId', isAuthenticated, async (req, res) => {
+    try {
+      const userId = (req as any).user.claims.sub;
+      const { invitationId } = req.params;
+
+      // Get user's organization
+      const userOrg = await storage.getUserOrganization(userId);
+
+      if (!userOrg) {
+        return res.status(404).json({ 
+          success: false, 
+          message: "Organization not found" 
+        });
+      }
+
+      // Check if user is owner
+      const members = await storage.getOrganizationMembers(userOrg.id);
+      const currentMember = members.find(m => m.userId === userId);
+
+      if (!currentMember?.isOwner) {
+        return res.status(403).json({ 
+          success: false, 
+          message: "Only organization owners can cancel invitations" 
+        });
+      }
+
+      // Get all invitations to verify this one belongs to the organization
+      const invitations = await storage.getOrganizationInvitations(userOrg.id);
+      const invitation = invitations.find(inv => inv.id === invitationId);
+
+      if (!invitation) {
+        return res.status(404).json({ 
+          success: false, 
+          message: "Invitation not found or does not belong to your organization" 
+        });
+      }
+
+      // Delete the invitation
+      await storage.deleteInvitation(invitationId);
+
+      res.json({ 
+        success: true, 
+        message: "Invitation cancelled successfully" 
+      });
+
+    } catch (error: any) {
+      console.error("Cancel invitation error:", error);
+      res.status(500).json({ 
+        success: false, 
+        message: error.message || "Failed to cancel invitation" 
+      });
+    }
+  });
 }

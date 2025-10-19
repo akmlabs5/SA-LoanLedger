@@ -1628,6 +1628,27 @@ function TeamManagementSection() {
     },
   });
 
+  // Cancel invitation mutation
+  const cancelInvitationMutation = useMutation({
+    mutationFn: async (invitationId: string) => {
+      return await apiRequest('DELETE', `/api/organization/invitations/${invitationId}`);
+    },
+    onSuccess: () => {
+      toast({
+        title: "Invitation cancelled",
+        description: "The invitation has been cancelled successfully",
+      });
+      queryClient.invalidateQueries({ queryKey: ['/api/organization/invitations'] });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Failed to cancel invitation",
+        description: error.message || "Please try again",
+        variant: "destructive",
+      });
+    },
+  });
+
   // Fetch pending invitations
   const { data: invitationsResponse } = useQuery({
     queryKey: ['/api/organization/invitations'],
@@ -1650,6 +1671,12 @@ function TeamManagementSection() {
   const handleRemoveMember = async (userId: string, memberName: string) => {
     if (confirm(`Are you sure you want to remove ${memberName} from the team?`)) {
       await removeMemberMutation.mutateAsync(userId);
+    }
+  };
+
+  const handleCancelInvitation = async (invitationId: string, email: string) => {
+    if (confirm(`Are you sure you want to cancel the invitation to ${email}?`)) {
+      await cancelInvitationMutation.mutateAsync(invitationId);
     }
   };
 
@@ -1769,7 +1796,18 @@ function TeamManagementSection() {
                       Expires {new Date(invitation.expiresAt).toLocaleDateString()}
                     </p>
                   </div>
-                  <Badge variant="outline">Pending</Badge>
+                  <div className="flex items-center gap-3">
+                    <Badge variant="outline">Pending</Badge>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => handleCancelInvitation(invitation.id, invitation.email)}
+                      disabled={cancelInvitationMutation.isPending}
+                      data-testid={`button-cancel-invitation-${invitation.id}`}
+                    >
+                      Cancel
+                    </Button>
+                  </div>
                 </div>
               ))}
             </div>
