@@ -51,6 +51,16 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Separator } from "@/components/ui/separator";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { useToast } from "@/hooks/use-toast";
 import { useSoundEffects } from "@/hooks/useSoundEffects";
 import { apiRequest, queryClient } from "@/lib/queryClient";
@@ -1576,6 +1586,10 @@ function TeamManagementSection() {
   const { toast } = useToast();
   const [inviteEmail, setInviteEmail] = useState("");
   const [isInviting, setIsInviting] = useState(false);
+  
+  // Dialog states
+  const [removeMemberDialog, setRemoveMemberDialog] = useState<{ open: boolean; userId: string; memberName: string } | null>(null);
+  const [cancelInvitationDialog, setCancelInvitationDialog] = useState<{ open: boolean; invitationId: string; email: string } | null>(null);
 
   // Fetch organization members
   const { data: membersResponse, isLoading: membersLoading } = useQuery({
@@ -1618,6 +1632,7 @@ function TeamManagementSection() {
         description: "The team member has been removed successfully",
       });
       queryClient.invalidateQueries({ queryKey: ['/api/organization/members'] });
+      setRemoveMemberDialog(null);
     },
     onError: (error: any) => {
       toast({
@@ -1625,6 +1640,7 @@ function TeamManagementSection() {
         description: error.message || "Please try again",
         variant: "destructive",
       });
+      setRemoveMemberDialog(null);
     },
   });
 
@@ -1639,6 +1655,7 @@ function TeamManagementSection() {
         description: "The invitation has been cancelled successfully",
       });
       queryClient.invalidateQueries({ queryKey: ['/api/organization/invitations'] });
+      setCancelInvitationDialog(null);
     },
     onError: (error: any) => {
       toast({
@@ -1646,6 +1663,7 @@ function TeamManagementSection() {
         description: error.message || "Please try again",
         variant: "destructive",
       });
+      setCancelInvitationDialog(null);
     },
   });
 
@@ -1668,15 +1686,15 @@ function TeamManagementSection() {
     }
   };
 
-  const handleRemoveMember = async (userId: string, memberName: string) => {
-    if (confirm(`Are you sure you want to remove ${memberName} from the team?`)) {
-      await removeMemberMutation.mutateAsync(userId);
+  const handleRemoveMemberConfirm = async () => {
+    if (removeMemberDialog) {
+      await removeMemberMutation.mutateAsync(removeMemberDialog.userId);
     }
   };
 
-  const handleCancelInvitation = async (invitationId: string, email: string) => {
-    if (confirm(`Are you sure you want to cancel the invitation to ${email}?`)) {
-      await cancelInvitationMutation.mutateAsync(invitationId);
+  const handleCancelInvitationConfirm = async () => {
+    if (cancelInvitationDialog) {
+      await cancelInvitationMutation.mutateAsync(cancelInvitationDialog.invitationId);
     }
   };
 
@@ -1737,7 +1755,11 @@ function TeamManagementSection() {
                       <Button
                         variant="ghost"
                         size="sm"
-                        onClick={() => handleRemoveMember(member.userId, `${member.user?.firstName} ${member.user?.lastName}`)}
+                        onClick={() => setRemoveMemberDialog({ 
+                          open: true, 
+                          userId: member.userId, 
+                          memberName: `${member.user?.firstName} ${member.user?.lastName}` 
+                        })}
                         disabled={removeMemberMutation.isPending}
                         data-testid={`button-remove-member-${member.userId}`}
                       >
@@ -1806,7 +1828,11 @@ function TeamManagementSection() {
                     <Button
                       variant="ghost"
                       size="sm"
-                      onClick={() => handleCancelInvitation(invitation.id, invitation.email)}
+                      onClick={() => setCancelInvitationDialog({ 
+                        open: true, 
+                        invitationId: invitation.id, 
+                        email: invitation.email 
+                      })}
                       disabled={cancelInvitationMutation.isPending}
                       data-testid={`button-cancel-invitation-${invitation.id}`}
                     >
@@ -1819,6 +1845,48 @@ function TeamManagementSection() {
           </CardContent>
         </Card>
       )}
+
+      {/* Remove Member Confirmation Dialog */}
+      <AlertDialog open={!!removeMemberDialog} onOpenChange={(open) => !open && setRemoveMemberDialog(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Remove Team Member</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to remove <strong>{removeMemberDialog?.memberName}</strong> from the team? This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={handleRemoveMemberConfirm}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Remove Member
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Cancel Invitation Confirmation Dialog */}
+      <AlertDialog open={!!cancelInvitationDialog} onOpenChange={(open) => !open && setCancelInvitationDialog(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Cancel Invitation</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to cancel the invitation to <strong>{cancelInvitationDialog?.email}</strong>? They will not be able to join using this invitation link.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={handleCancelInvitationConfirm}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Cancel Invitation
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
